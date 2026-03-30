@@ -1,8 +1,8 @@
-package com.maxrave.data.di
+package com.sakayori.data.di
 
-import com.maxrave.common.Config
-import com.maxrave.data.mediaservice.createMediaServiceHandler
-import com.maxrave.domain.mediaservice.handler.MediaPlayerHandler
+import com.sakayori.common.Config
+import com.sakayori.data.mediaservice.createMediaServiceHandler
+import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
 import kotlinx.coroutines.CoroutineScope
 import org.koin.core.qualifier.named
 import org.koin.dsl.module

@@ -1,2 +1,3 @@
 # core
-SimpMusic app's core modules
+SakayoriMusic app's core modules
+

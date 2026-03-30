@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.home.chart
+package com.sakayori.domain.data.model.home.chart
 
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class ItemArtist(
     val browseId: String,

@@ -1,4 +1,4 @@
-package com.maxrave.media3.audio
+package com.sakayori.media3.audio
 
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
@@ -166,3 +166,4 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         filter.reset()
     }
 }
+

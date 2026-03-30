@@ -1,7 +1,7 @@
-package com.maxrave.domain.data.model.podcast
+package com.sakayori.domain.data.model.podcast
 
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class PodcastBrowse(
     val title: String,

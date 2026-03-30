@@ -184,7 +184,7 @@ vlcSetup {
 
 compose.resources {
     publicResClass = true
-    packageOfResClass = "sakayorimusic.composeapp.generated.resources"
+    packageOfResClass = "com.sakayori.music.generated.resources"
 }
 
 compose.desktop {
@@ -212,6 +212,7 @@ compose.desktop {
                             .withZone(ZoneId.of("UTC"))
                             .format(it)
                     }
+                bundleID = "com.sakayori.music"
                 includeAllModules = true
                 packageVersion = formatedDate
                 iconFile.set(project.file("icon/circle_app_icon.icns"))
@@ -231,10 +232,10 @@ compose.desktop {
                             <key>CFBundleTypeRole</key>
                             <string>Viewer</string>
                             <key>CFBundleURLName</key>
-                            <string>com.maxrave.simpmusic.deeplink</string>
+                            <string>com.sakayori.music.deeplink</string>
                             <key>CFBundleURLSchemes</key>
                             <array>
-                                <string>simpmusic</string>
+                                <string>SakayoriMusic</string>
                             </array>
                         </dict>
                     </array>
@@ -401,11 +402,11 @@ afterEvaluate {
         FileUtils.copyDirectory(appDirSrc, appDir)
         FileUtils.copyDirectory(packageOutput, appDir)
 
-        // Generate simpmusic.desktop dynamically
+        // Generate SakayoriMusic.desktop dynamically
         val versionName =
             libs.versions.version.name
                 .get()
-        val desktopFile = appDir.resolve("simpmusic.desktop")
+        val desktopFile = appDir.resolve("SakayoriMusic.desktop")
         desktopFile.writeText(
             """[Desktop Entry]
             |Type=Application
@@ -413,11 +414,11 @@ afterEvaluate {
             |Name=SakayoriMusic
             |Comment=SakayoriMusic v$versionName - FOSS YouTube Music Client
             |Exec=bin/SakayoriMusic %u
-            |Icon=simpmusic
+            |Icon=SakayoriMusic
             |Terminal=false
             |Categories=Audio;AudioVideo;
-            |StartupWMClass=com-maxrave-simpmusic-MainKt
-            |MimeType=x-scheme-handler/simpmusic;
+            |StartupWMClass=com.sakayori.music.MainKt
+            |MimeType=x-scheme-handler/SakayoriMusic;
             |
             """.trimMargin(),
         )
@@ -432,9 +433,9 @@ afterEvaluate {
             |
             |# Install icon to XDG icon directories for desktop integration
             |ICON_DIR="${'$'}HOME/.local/share/icons/hicolor/256x256/apps"
-            |if [ ! -f "${'$'}ICON_DIR/simpmusic.png" ] || [ "${'$'}HERE/simpmusic.png" -nt "${'$'}ICON_DIR/simpmusic.png" ]; then
+            |if [ ! -f "${'$'}ICON_DIR/sakayorimusic.png" ] || [ "${'$'}HERE/sakayorimusic.png" -nt "${'$'}ICON_DIR/sakayorimusic.png" ]; then
             |    mkdir -p "${'$'}ICON_DIR"
-            |    cp "${'$'}HERE/simpmusic.png" "${'$'}ICON_DIR/simpmusic.png"
+            |    cp "${'$'}HERE/sakayorimusic.png" "${'$'}ICON_DIR/sakayorimusic.png"
             |    gtk-update-icon-cache -f -t "${'$'}HOME/.local/share/icons/hicolor" 2>/dev/null || true
             |fi
             |
@@ -442,7 +443,7 @@ afterEvaluate {
             |DESKTOP_DIR="${'$'}HOME/.local/share/applications"
             |mkdir -p "${'$'}DESKTOP_DIR"
             |APPIMAGE_PATH="${'$'}{APPIMAGE:-${'$'}SELF}"
-            |sed "s|Exec=bin/SakayoriMusic|Exec=${'$'}APPIMAGE_PATH|" "${'$'}HERE/simpmusic.desktop" > "${'$'}DESKTOP_DIR/com-maxrave-simpmusic-MainKt.desktop"
+            |sed "s|Exec=bin/SakayoriMusic|Exec=${'$'}APPIMAGE_PATH|" "${'$'}HERE/SakayoriMusic.desktop" > "${'$'}DESKTOP_DIR/com.sakayori.music.MainKt.desktop"
             |update-desktop-database "${'$'}DESKTOP_DIR" 2>/dev/null || true
             |
             |cd "${'$'}HERE"

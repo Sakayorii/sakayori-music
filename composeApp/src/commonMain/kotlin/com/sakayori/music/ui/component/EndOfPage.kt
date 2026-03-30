@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,13 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.maxrave.domain.extension.now
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.utils.VersionManager
+import com.sakayori.domain.extension.now
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.utils.VersionManager
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.app_name
-import simpmusic.composeapp.generated.resources.version_format
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.app_name
+import com.sakayori.music.generated.resources.version_format
 
 @Composable
 fun EndOfPage(withoutCredit: Boolean = false) {

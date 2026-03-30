@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect
+package com.sakayori.music.expect
 
 import java.awt.Toolkit
 import java.awt.datatransfer.Clipboard

@@ -1,4 +1,4 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
 interface CacheRepository {
     suspend fun getCacheSize(cacheName: String): Long

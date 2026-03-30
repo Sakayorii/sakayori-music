@@ -1,8 +1,8 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.model.browse.artist.ArtistBrowse
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.model.browse.artist.ArtistBrowse
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 

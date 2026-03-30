@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.metadata
+package com.sakayori.domain.data.model.metadata
 
 import kotlinx.serialization.Serializable
 
@@ -7,11 +7,11 @@ data class Lyrics(
     val error: Boolean = false,
     val lines: List<Line>?,
     val syncType: String?,
-    val simpMusicLyrics: SimpMusicLyrics? = null,
+    val SakayoriMusicLyrics: SakayoriMusicLyrics? = null,
 )
 
 @Serializable
-data class SimpMusicLyrics(
+data class SakayoriMusicLyrics(
     val id: String,
     val vote: Int,
 )

@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.mood.genre
+package com.sakayori.domain.data.model.mood.genre
 
 data class GenreObject(
     val header: String,

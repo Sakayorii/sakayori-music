@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.type
+package com.sakayori.domain.data.type
 
 data class ChartItem(
     val country: Country,

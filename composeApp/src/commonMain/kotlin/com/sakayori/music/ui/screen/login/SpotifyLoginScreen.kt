@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.login
+package com.sakayori.music.ui.screen.login
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,18 +30,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.maxrave.common.Config
-import com.maxrave.simpmusic.expect.ui.PlatformWebView
-import com.maxrave.simpmusic.expect.ui.createWebViewCookieManager
-import com.maxrave.simpmusic.expect.ui.rememberWebViewState
-import com.maxrave.simpmusic.extension.getStringBlocking
-import com.maxrave.simpmusic.ui.component.DevCookieLogInBottomSheet
-import com.maxrave.simpmusic.ui.component.DevLogInBottomSheet
-import com.maxrave.simpmusic.ui.component.DevLogInType
-import com.maxrave.simpmusic.ui.component.RippleIconButton
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.LogInViewModel
-import com.maxrave.simpmusic.viewModel.SettingsViewModel
+import com.sakayori.common.Config
+import com.sakayori.music.expect.ui.PlatformWebView
+import com.sakayori.music.expect.ui.createWebViewCookieManager
+import com.sakayori.music.expect.ui.rememberWebViewState
+import com.sakayori.music.extension.getStringBlocking
+import com.sakayori.music.ui.component.DevCookieLogInBottomSheet
+import com.sakayori.music.ui.component.DevLogInBottomSheet
+import com.sakayori.music.ui.component.DevLogInType
+import com.sakayori.music.ui.component.RippleIconButton
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.LogInViewModel
+import com.sakayori.music.viewModel.SettingsViewModel
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -50,10 +50,10 @@ import dev.chrisbanes.haze.rememberHazeState
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.baseline_arrow_back_ios_new_24
-import simpmusic.composeapp.generated.resources.log_in_to_spotify
-import simpmusic.composeapp.generated.resources.login_success
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.baseline_arrow_back_ios_new_24
+import com.sakayori.music.generated.resources.log_in_to_spotify
+import com.sakayori.music.generated.resources.login_success
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable

@@ -1,4 +1,4 @@
-package com.maxrave.media3.exoplayer
+package com.sakayori.media3.exoplayer
 
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -8,7 +8,7 @@ import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 
 private const val TAG = "DelegatingForwardingPlayer"
 
@@ -380,3 +380,4 @@ internal class DelegatingForwardingPlayer(
         }
     }
 }
+

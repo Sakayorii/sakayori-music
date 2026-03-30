@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,11 +15,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.window.DialogProperties
-import com.maxrave.simpmusic.ui.theme.seed
-import com.maxrave.simpmusic.ui.theme.typo
+import com.sakayori.music.ui.theme.seed
+import com.sakayori.music.ui.theme.typo
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.*
+import com.sakayori.music.generated.resources.*
 
 @Composable
 @ExperimentalMaterial3Api
@@ -63,14 +63,14 @@ fun ReviewDialog(
         },
         title = {
             Text(
-                stringResource(Res.string.enjoying_simpmusic),
+                stringResource(Res.string.enjoying_SakayoriMusic),
                 style = typo().labelSmall,
             )
         },
         text = {
             Text(
                 buildAnnotatedString {
-                    append(stringResource(Res.string.if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on))
+                    append(stringResource(Res.string.if_you_enjoy_using_SakayoriMusic_star_SakayoriMusic_on_github_or_leave_a_review_on))
                     withLink(
                         LinkAnnotation.Url(
                             "https://www.producthunt.com/products/sakayorimusic",

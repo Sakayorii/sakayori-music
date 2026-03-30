@@ -1,9 +1,9 @@
 - Add Canvas subtitle sync display for lyrics
 - Add BPM, key, and scale display to player bottom sheet
-- Add simpmusic:// and simpmusic.org deep link support
+- Add SakayoriMusic:// and SakayoriMusic.org deep link support
 - Add Auto Crossfade mode (like AutoMix)
 - Redesign playback speed/pitch controls with improved animations
-- Standardize share URL to use simpmusic.org
+- Standardize share URL to use SakayoriMusic.org
 - Optimize rendering performance and UI drawing APIs
 - Improve local song cache checking before fetching from API
 - Fix media playback and streaming issues across platforms

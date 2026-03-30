@@ -50,15 +50,15 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent.inject
 import org.koin.mp.KoinPlatform.getKoin
-import sakayorimusic.composeapp.generated.resources.Res
-import sakayorimusic.composeapp.generated.resources.app_name
-import sakayorimusic.composeapp.generated.resources.circle_app_icon
-import sakayorimusic.composeapp.generated.resources.close_miniplayer
-import sakayorimusic.composeapp.generated.resources.explicit_content_blocked
-import sakayorimusic.composeapp.generated.resources.open_app
-import sakayorimusic.composeapp.generated.resources.open_miniplayer
-import sakayorimusic.composeapp.generated.resources.quit_app
-import sakayorimusic.composeapp.generated.resources.time_out_check_internet_connection_or_change_piped_instance_in_settings
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.app_name
+import com.sakayori.music.generated.resources.circle_app_icon
+import com.sakayori.music.generated.resources.close_miniplayer
+import com.sakayori.music.generated.resources.explicit_content_blocked
+import com.sakayori.music.generated.resources.open_app
+import com.sakayori.music.generated.resources.open_miniplayer
+import com.sakayori.music.generated.resources.quit_app
+import com.sakayori.music.generated.resources.time_out_check_internet_connection_or_change_piped_instance_in_settings
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun main(args: Array<String>) {
@@ -137,7 +137,7 @@ fun main(args: Array<String>) {
         }
     }
 
-    // Register simpmusic:// protocol handler on Windows (HKCU, no admin needed)
+    // Register SakayoriMusic:// protocol handler on Windows (HKCU, no admin needed)
     WindowsProtocolRegistrar.register()
 
     val sharedViewModel = getKoin().get<SharedViewModel>()

@@ -1,8 +1,8 @@
 @file:Suppress("ktlint:standard:class-naming")
 
-package com.maxrave.common
+package com.sakayori.common
 
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -495,8 +495,8 @@ object MEDIA_CUSTOM_COMMAND {
 
 object MEDIA_NOTIFICATION {
     const val NOTIFICATION_ID = 200
-    const val NOTIFICATION_CHANNEL_NAME = "SimpMusic Playback Notification"
-    const val NOTIFICATION_CHANNEL_ID = "SimpMusic Playback Notification ID"
+    const val NOTIFICATION_CHANNEL_NAME = "SakayoriMusic Playback Notification"
+    const val NOTIFICATION_CHANNEL_ID = "SakayoriMusic Playback Notification ID"
 }
 
 const val SETTINGS_FILENAME = "settings"

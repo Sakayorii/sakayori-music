@@ -1,17 +1,17 @@
-package com.maxrave.kotlinytmusicscraper.pages
+package com.sakayori.kotlinytmusicscraper.pages
 
-import com.maxrave.kotlinytmusicscraper.models.Album
-import com.maxrave.kotlinytmusicscraper.models.AlbumItem
-import com.maxrave.kotlinytmusicscraper.models.Artist
-import com.maxrave.kotlinytmusicscraper.models.ArtistItem
-import com.maxrave.kotlinytmusicscraper.models.MusicCardShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.YTItem
-import com.maxrave.kotlinytmusicscraper.models.oddElements
-import com.maxrave.kotlinytmusicscraper.models.splitBySeparator
-import com.maxrave.kotlinytmusicscraper.utils.parseTime
+import com.sakayori.kotlinytmusicscraper.models.Album
+import com.sakayori.kotlinytmusicscraper.models.AlbumItem
+import com.sakayori.kotlinytmusicscraper.models.Artist
+import com.sakayori.kotlinytmusicscraper.models.ArtistItem
+import com.sakayori.kotlinytmusicscraper.models.MusicCardShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.YTItem
+import com.sakayori.kotlinytmusicscraper.models.oddElements
+import com.sakayori.kotlinytmusicscraper.models.splitBySeparator
+import com.sakayori.kotlinytmusicscraper.utils.parseTime
 
 data class SearchSummary(
     val title: String,

@@ -1,4 +1,4 @@
-package com.maxrave.media3.ui.extension
+package com.sakayori.media3.ui.extension
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

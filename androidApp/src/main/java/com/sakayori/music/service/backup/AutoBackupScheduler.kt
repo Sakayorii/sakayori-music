@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.service.backup
+package com.sakayori.music.service.backup
 
 import android.content.Context
 import androidx.work.Constraints
@@ -6,8 +6,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.logger.Logger
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.concurrent.TimeUnit
@@ -82,3 +82,4 @@ class AutoBackupScheduler(
         const val WORK_TAG = "auto_backup"
     }
 }
+

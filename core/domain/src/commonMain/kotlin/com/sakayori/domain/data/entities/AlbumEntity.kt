@@ -1,10 +1,10 @@
-package com.maxrave.domain.data.entities
+package com.sakayori.domain.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.data.type.RecentlyType
-import com.maxrave.domain.extension.now
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.data.type.RecentlyType
+import com.sakayori.domain.extension.now
 import kotlinx.datetime.LocalDateTime
 
 @Entity(tableName = "album")

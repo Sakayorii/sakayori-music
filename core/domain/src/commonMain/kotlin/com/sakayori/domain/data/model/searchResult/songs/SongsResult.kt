@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.searchResult.songs
+package com.sakayori.domain.data.model.searchResult.songs
 
-import com.maxrave.domain.data.type.SearchResultType
+import com.sakayori.domain.data.type.SearchResultType
 
 data class SongsResult(
     val album: Album?,

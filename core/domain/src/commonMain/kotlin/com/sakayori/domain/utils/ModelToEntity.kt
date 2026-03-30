@@ -1,26 +1,26 @@
-package com.maxrave.domain.utils
+package com.sakayori.domain.utils
 
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.data.entities.LyricsEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.SearchHistory
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.entities.TranslatedLyricsEntity
-import com.maxrave.domain.data.model.browse.album.AlbumBrowse
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.browse.artist.ResultSong
-import com.maxrave.domain.data.model.browse.artist.ResultVideo
-import com.maxrave.domain.data.model.browse.playlist.PlaylistBrowse
-import com.maxrave.domain.data.model.home.Content
-import com.maxrave.domain.data.model.metadata.Line
-import com.maxrave.domain.data.model.metadata.Lyrics
-import com.maxrave.domain.data.model.podcast.PodcastBrowse
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.SongsResult
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.model.searchResult.videos.VideosResult
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.data.entities.LyricsEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.SearchHistory
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.TranslatedLyricsEntity
+import com.sakayori.domain.data.model.browse.album.AlbumBrowse
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.artist.ResultSong
+import com.sakayori.domain.data.model.browse.artist.ResultVideo
+import com.sakayori.domain.data.model.browse.playlist.PlaylistBrowse
+import com.sakayori.domain.data.model.home.Content
+import com.sakayori.domain.data.model.metadata.Line
+import com.sakayori.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.podcast.PodcastBrowse
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.SongsResult
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.videos.VideosResult
 import kotlin.jvm.JvmName
 
 fun SearchHistory.toQuery(): String = this.query
@@ -429,7 +429,7 @@ fun Lyrics.toSyncedLyrics(): Lyrics {
         error = this.error,
         lines = syncedLines,
         syncType = "LINE_SYNCED",
-        simpMusicLyrics = this.simpMusicLyrics,
+        SakayoriMusicLyrics = this.SakayoriMusicLyrics,
     )
 }
 

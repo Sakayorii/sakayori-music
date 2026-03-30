@@ -1,6 +1,6 @@
-package com.maxrave.simpmusic.extension
+package com.sakayori.music.extension
 
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 
 fun levenshtein(
     lhs: CharSequence,

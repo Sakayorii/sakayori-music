@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
@@ -27,11 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.maxrave.domain.mediaservice.handler.ControlState
-import com.maxrave.domain.mediaservice.handler.RepeatState
-import com.maxrave.simpmusic.ui.theme.seed
-import com.maxrave.simpmusic.ui.theme.transparent
-import com.maxrave.simpmusic.viewModel.UIEvent
+import com.sakayori.domain.mediaservice.handler.ControlState
+import com.sakayori.domain.mediaservice.handler.RepeatState
+import com.sakayori.music.ui.theme.seed
+import com.sakayori.music.ui.theme.transparent
+import com.sakayori.music.viewModel.UIEvent
 
 @Composable
 fun PlayerControlLayout(

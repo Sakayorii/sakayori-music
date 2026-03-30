@@ -13,3 +13,4 @@
 - Add save last played song and queue feature
 - Add sleep timer feature
 - Add SponsorBlock feature
+

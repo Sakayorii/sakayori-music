@@ -1,24 +1,24 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.Config
-import com.maxrave.common.Config.REMOVED_SONG_DATE_TIME
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.repository.ArtistRepository
-import com.maxrave.domain.repository.SongRepository
-import com.maxrave.domain.utils.toArrayListTrack
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.Config
+import com.sakayori.common.Config.REMOVED_SONG_DATE_TIME
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.repository.ArtistRepository
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.utils.toArrayListTrack
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.music.ui.screen.library.LibraryDynamicPlaylistType
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.playlist
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.playlist
 
 class LibraryDynamicPlaylistViewModel(
     private val songRepository: SongRepository,

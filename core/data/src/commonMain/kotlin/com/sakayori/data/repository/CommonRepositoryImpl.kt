@@ -1,17 +1,17 @@
-package com.maxrave.data.repository
+package com.sakayori.data.repository
 
-import com.maxrave.data.db.MusicDatabase
-import com.maxrave.data.db.datasource.LocalDataSource
-import com.maxrave.data.io.fileSystem
-import com.maxrave.domain.data.entities.NotificationEntity
-import com.maxrave.domain.data.model.cookie.CookieItem
-import com.maxrave.domain.data.type.RecentlyType
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.repository.CommonRepository
-import com.maxrave.kotlinytmusicscraper.YouTube
-import com.maxrave.kotlinytmusicscraper.models.YouTubeLocale
-import com.maxrave.logger.Logger
-import com.maxrave.spotify.Spotify
+import com.sakayori.data.db.MusicDatabase
+import com.sakayori.data.db.datasource.LocalDataSource
+import com.sakayori.data.io.fileSystem
+import com.sakayori.domain.data.entities.NotificationEntity
+import com.sakayori.domain.data.model.cookie.CookieItem
+import com.sakayori.domain.data.type.RecentlyType
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.repository.CommonRepository
+import com.sakayori.kotlinytmusicscraper.YouTube
+import com.sakayori.kotlinytmusicscraper.models.YouTubeLocale
+import com.sakayori.logger.Logger
+import com.sakayori.spotify.Spotify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -27,8 +27,8 @@ import okio.IOException
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.use
-import org.simpmusic.aiservice.AIHost
-import org.simpmusic.aiservice.AiClient
+import org.SakayoriMusic.aiservice.AIHost
+import org.SakayoriMusic.aiservice.AiClient
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -230,7 +230,7 @@ internal class CommonRepositoryImpl(
     }
 
     override fun getDatabasePath() =
-        com.maxrave.data.db
+        com.sakayori.data.db
             .getDatabasePath()
 
     override suspend fun databaseDaoCheckpoint() = localDataSource.checkpoint()

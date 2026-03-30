@@ -1,6 +1,6 @@
-package com.maxrave.domain.manager
+package com.sakayori.domain.manager
 
-import com.maxrave.domain.data.model.network.ProxyConfiguration
+import com.sakayori.domain.data.model.network.ProxyConfiguration
 import kotlinx.coroutines.flow.Flow
 
 interface DataStoreManager {
@@ -350,7 +350,7 @@ interface DataStoreManager {
     }
 
     companion object Values {
-        const val SIMPMUSIC = "simpmusic"
+        const val SakayoriMusic = "SakayoriMusic"
         const val YOUTUBE = "youtube"
         const val LRCLIB = "lrclib"
         const val BETTER_LYRICS = "better_lyrics"

@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.extension
+package com.sakayori.kotlinytmusicscraper.extension
 
 import java.security.MessageDigest
 import kotlin.random.Random

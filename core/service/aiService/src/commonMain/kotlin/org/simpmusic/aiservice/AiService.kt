@@ -1,4 +1,4 @@
-package org.simpmusic.aiservice
+package org.SakayoriMusic.aiservice
 
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatResponseFormat
@@ -9,7 +9,7 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import com.aallam.openai.client.OpenAIHost.Companion.Gemini
-import com.maxrave.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.metadata.Lyrics
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add

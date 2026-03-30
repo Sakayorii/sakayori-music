@@ -115,3 +115,4 @@ open class KizzyRPC(token: String) {
         }
     }
 }
+

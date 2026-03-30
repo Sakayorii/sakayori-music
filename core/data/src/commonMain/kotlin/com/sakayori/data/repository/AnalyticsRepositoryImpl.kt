@@ -1,11 +1,11 @@
-package com.maxrave.data.repository
+package com.sakayori.data.repository
 
-import com.maxrave.data.db.datasource.AnalyticsDatasource
-import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
-import com.maxrave.domain.data.entities.analytics.query.TopPlayedAlbum
-import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtist
-import com.maxrave.domain.data.entities.analytics.query.TopPlayedTracks
-import com.maxrave.domain.repository.AnalyticsRepository
+import com.sakayori.data.db.datasource.AnalyticsDatasource
+import com.sakayori.domain.data.entities.analytics.PlaybackEventEntity
+import com.sakayori.domain.data.entities.analytics.query.TopPlayedAlbum
+import com.sakayori.domain.data.entities.analytics.query.TopPlayedArtist
+import com.sakayori.domain.data.entities.analytics.query.TopPlayedTracks
+import com.sakayori.domain.repository.AnalyticsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow

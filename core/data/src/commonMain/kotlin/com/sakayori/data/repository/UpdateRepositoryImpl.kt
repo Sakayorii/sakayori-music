@@ -30,6 +30,4 @@ internal class UpdateRepositoryImpl(
                     emit(Resource.Error<UpdateData>(it.localizedMessage ?: "Unknown error"))
                 }
         }.flowOn(Dispatchers.IO)
-
-        }.flowOn(Dispatchers.IO)
 }

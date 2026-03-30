@@ -1,12 +1,12 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.model.browse.artist.ResultPlaylist
-import com.maxrave.domain.data.model.home.chart.Artists
-import com.maxrave.domain.data.model.home.chart.Chart
-import com.maxrave.domain.data.model.home.chart.ChartItemPlaylist
-import com.maxrave.domain.data.model.home.chart.ItemArtist
-import com.maxrave.kotlinytmusicscraper.models.MusicCarouselShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.SectionListRenderer
+import com.sakayori.domain.data.model.browse.artist.ResultPlaylist
+import com.sakayori.domain.data.model.home.chart.Artists
+import com.sakayori.domain.data.model.home.chart.Chart
+import com.sakayori.domain.data.model.home.chart.ChartItemPlaylist
+import com.sakayori.domain.data.model.home.chart.ItemArtist
+import com.sakayori.kotlinytmusicscraper.models.MusicCarouselShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.SectionListRenderer
 
 internal fun parseChart(data: SectionListRenderer?): Chart? {
     val content = data?.contents ?: return null

@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.searchResult.playlists
+package com.sakayori.domain.data.model.searchResult.playlists
 
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.data.type.SearchResultType
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.data.type.SearchResultType
 
 data class PlaylistsResult(
     val author: String,

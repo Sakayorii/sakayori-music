@@ -1,7 +1,7 @@
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import androidx.compose.runtime.Composable
-import com.maxrave.data.io.getHomeFolderPath
+import com.sakayori.data.io.getHomeFolderPath
 import java.io.File
 
 @Composable

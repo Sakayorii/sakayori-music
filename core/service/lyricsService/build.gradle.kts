@@ -12,7 +12,7 @@ kotlin {
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     androidLibrary {
-        namespace = "org.simpmusic.lyrics"
+        namespace = "org.SakayoriMusic.lyrics"
         compileSdk = 36
         minSdk = 26
     }

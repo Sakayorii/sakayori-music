@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.size

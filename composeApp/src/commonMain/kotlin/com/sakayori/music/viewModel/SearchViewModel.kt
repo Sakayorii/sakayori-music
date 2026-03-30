@@ -1,21 +1,21 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.SELECTED_LANGUAGE
-import com.maxrave.domain.data.entities.SearchHistory
-import com.maxrave.domain.data.model.searchResult.albums.AlbumsResult
-import com.maxrave.domain.data.model.searchResult.artists.ArtistsResult
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.SongsResult
-import com.maxrave.domain.data.model.searchResult.videos.VideosResult
-import com.maxrave.domain.data.type.SearchResultType
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.repository.SearchRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.domain.utils.toQueryList
-import com.maxrave.logger.LogLevel
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.SELECTED_LANGUAGE
+import com.sakayori.domain.data.entities.SearchHistory
+import com.sakayori.domain.data.model.searchResult.albums.AlbumsResult
+import com.sakayori.domain.data.model.searchResult.artists.ArtistsResult
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.SongsResult
+import com.sakayori.domain.data.model.searchResult.videos.VideosResult
+import com.sakayori.domain.data.type.SearchResultType
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.repository.SearchRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.domain.utils.toQueryList
+import com.sakayori.logger.LogLevel
+import com.sakayori.logger.Logger
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,15 +26,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.StringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.albums
-import simpmusic.composeapp.generated.resources.all
-import simpmusic.composeapp.generated.resources.artists
-import simpmusic.composeapp.generated.resources.featured_playlists
-import simpmusic.composeapp.generated.resources.playlists
-import simpmusic.composeapp.generated.resources.podcasts
-import simpmusic.composeapp.generated.resources.songs
-import simpmusic.composeapp.generated.resources.videos
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.albums
+import com.sakayori.music.generated.resources.all
+import com.sakayori.music.generated.resources.artists
+import com.sakayori.music.generated.resources.featured_playlists
+import com.sakayori.music.generated.resources.playlists
+import com.sakayori.music.generated.resources.podcasts
+import com.sakayori.music.generated.resources.songs
+import com.sakayori.music.generated.resources.videos
 
 // State cho tìm kiếm
 data class SearchScreenState(

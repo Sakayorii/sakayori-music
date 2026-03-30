@@ -1,4 +1,4 @@
-package com.maxrave.data.extension
+package com.sakayori.data.extension
 
 suspend fun <T> getFullDataFromDB(
     func: suspend (limit: Int, offset: Int) -> List<T>,

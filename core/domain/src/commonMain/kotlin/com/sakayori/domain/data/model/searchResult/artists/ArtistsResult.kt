@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.searchResult.artists
+package com.sakayori.domain.data.model.searchResult.artists
 
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.type.ArtistType
-import com.maxrave.domain.data.type.SearchResultType
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.type.ArtistType
+import com.sakayori.domain.data.type.SearchResultType
 
 data class ArtistsResult(
     val artist: String,

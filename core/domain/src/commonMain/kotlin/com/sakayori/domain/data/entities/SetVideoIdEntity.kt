@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.entities
+package com.sakayori.domain.data.entities
 
 import androidx.room.Entity
 

@@ -1,9 +1,9 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
-import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.music.expect.ui.PlatformBackdrop
+import com.sakayori.music.viewModel.SharedViewModel
 import kotlin.reflect.KClass
 
 @Composable

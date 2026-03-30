@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import androidx.compose.ui.graphics.ImageBitmap
 import coil3.Image

@@ -1,18 +1,18 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.Config
-import com.maxrave.domain.data.entities.EpisodeEntity
-import com.maxrave.domain.data.entities.PodcastsEntity
-import com.maxrave.domain.data.model.podcast.PodcastBrowse
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.repository.PodcastRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.simpmusic.expect.shareUrl
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.Config
+import com.sakayori.domain.data.entities.EpisodeEntity
+import com.sakayori.domain.data.entities.PodcastsEntity
+import com.sakayori.domain.data.model.podcast.PodcastBrowse
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.repository.PodcastRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.music.expect.shareUrl
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.share_url
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.share_url
 
 // UI state cho podcast
 sealed class PodcastUIState {
@@ -341,7 +341,7 @@ class PodcastViewModel(
             }
 
             is PodcastUIEvent.Share -> {
-                val url = "https://simpmusic.org/app/playlist?list=${event.podcastId}"
+                val url = "https://SakayoriMusic.org/app/playlist?list=${event.podcastId}"
                 shareUrl(
                     title = getString(Res.string.share_url),
                     url = url,

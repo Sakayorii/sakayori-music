@@ -1,12 +1,12 @@
-package com.maxrave.simpmusic.utils
+package com.sakayori.music.utils
 
 import org.jetbrains.compose.resources.getString
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.explicit_content_blocked
-import simpmusic.composeapp.generated.resources.new_albums
-import simpmusic.composeapp.generated.resources.new_singles
-import simpmusic.composeapp.generated.resources.this_app_needs_to_access_your_notification
-import simpmusic.composeapp.generated.resources.time_out_check_internet_connection_or_change_piped_instance_in_settings
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.explicit_content_blocked
+import com.sakayori.music.generated.resources.new_albums
+import com.sakayori.music.generated.resources.new_singles
+import com.sakayori.music.generated.resources.this_app_needs_to_access_your_notification
+import com.sakayori.music.generated.resources.time_out_check_internet_connection_or_change_piped_instance_in_settings
 
 object ComposeResUtils {
     suspend fun getResString(

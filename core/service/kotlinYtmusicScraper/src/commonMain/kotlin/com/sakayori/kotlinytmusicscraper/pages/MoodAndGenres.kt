@@ -1,9 +1,9 @@
-package com.maxrave.kotlinytmusicscraper.pages
+package com.sakayori.kotlinytmusicscraper.pages
 
-import com.maxrave.kotlinytmusicscraper.models.BrowseEndpoint
-import com.maxrave.kotlinytmusicscraper.models.GridRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicNavigationButtonRenderer
-import com.maxrave.kotlinytmusicscraper.models.SectionListRenderer
+import com.sakayori.kotlinytmusicscraper.models.BrowseEndpoint
+import com.sakayori.kotlinytmusicscraper.models.GridRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicNavigationButtonRenderer
+import com.sakayori.kotlinytmusicscraper.models.SectionListRenderer
 
 data class MoodAndGenres(
     val title: String,

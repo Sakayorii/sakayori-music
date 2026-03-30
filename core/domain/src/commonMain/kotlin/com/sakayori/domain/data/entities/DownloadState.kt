@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.entities
+package com.sakayori.domain.data.entities
 
 object DownloadState {
     const val STATE_NOT_DOWNLOADED = 0

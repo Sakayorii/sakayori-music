@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.entities
+package com.sakayori.domain.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.maxrave.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.album.Track
 
 @Entity(tableName = "queue")
 data class QueueEntity(

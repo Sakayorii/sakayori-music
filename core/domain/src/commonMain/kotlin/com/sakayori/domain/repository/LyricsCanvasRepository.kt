@@ -1,12 +1,12 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.LyricsEntity
-import com.maxrave.domain.data.entities.TranslatedLyricsEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.canvas.CanvasResult
-import com.maxrave.domain.data.model.metadata.Lyrics
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.LyricsEntity
+import com.sakayori.domain.data.entities.TranslatedLyricsEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.canvas.CanvasResult
+import com.sakayori.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface LyricsCanvasRepository {
@@ -70,31 +70,31 @@ interface LyricsCanvasRepository {
         targetLanguage: String,
     ): Flow<Resource<Lyrics>>
 
-    fun getSimpMusicLyrics(videoId: String): Flow<Resource<Lyrics>>
+    fun getSakayoriMusicLyrics(videoId: String): Flow<Resource<Lyrics>>
 
-    fun getSimpMusicTranslatedLyrics(
+    fun getSakayoriMusicTranslatedLyrics(
         videoId: String,
         language: String,
     ): Flow<Resource<Lyrics>>
 
-    fun voteSimpMusicLyrics(
+    fun voteSakayoriMusicLyrics(
         lyricsId: String,
         upvote: Boolean,
     ): Flow<Resource<String>>
 
-    fun voteSimpMusicTranslatedLyrics(
+    fun voteSakayoriMusicTranslatedLyrics(
         translatedLyricsId: String,
         upvote: Boolean,
     ): Flow<Resource<String>>
 
-    fun insertSimpMusicLyrics(
+    fun insertSakayoriMusicLyrics(
         dataStoreManager: DataStoreManager,
         track: Track,
         duration: Int,
         lyrics: Lyrics,
     ): Flow<Resource<String>>
 
-    fun insertSimpMusicTranslatedLyrics(
+    fun insertSakayoriMusicTranslatedLyrics(
         dataStoreManager: DataStoreManager,
         track: Track,
         translatedLyrics: Lyrics,

@@ -1,15 +1,15 @@
-package com.maxrave.simpmusic.ui.navigation.graph
+package com.sakayori.music.ui.navigation.graph
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.maxrave.simpmusic.ui.navigation.destination.login.DiscordLoginDestination
-import com.maxrave.simpmusic.ui.navigation.destination.login.LoginDestination
-import com.maxrave.simpmusic.ui.navigation.destination.login.SpotifyLoginDestination
-import com.maxrave.simpmusic.ui.screen.login.DiscordLoginScreen
-import com.maxrave.simpmusic.ui.screen.login.LoginScreen
-import com.maxrave.simpmusic.ui.screen.login.SpotifyLoginScreen
+import com.sakayori.music.ui.navigation.destination.login.DiscordLoginDestination
+import com.sakayori.music.ui.navigation.destination.login.LoginDestination
+import com.sakayori.music.ui.navigation.destination.login.SpotifyLoginDestination
+import com.sakayori.music.ui.screen.login.DiscordLoginScreen
+import com.sakayori.music.ui.screen.login.LoginScreen
+import com.sakayori.music.ui.screen.login.SpotifyLoginScreen
 
 fun NavGraphBuilder.loginScreenGraph(
     innerPadding: PaddingValues,

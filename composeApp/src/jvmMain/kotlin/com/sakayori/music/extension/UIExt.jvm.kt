@@ -1,9 +1,9 @@
-package com.maxrave.simpmusic.extension
+package com.sakayori.music.extension
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import com.maxrave.domain.data.model.ui.ScreenSizeInfo
+import com.sakayori.domain.data.model.ui.ScreenSizeInfo
 import kotlin.math.roundToInt
 
 @Composable

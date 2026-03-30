@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
@@ -7,13 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import com.maxrave.domain.data.model.metadata.Lyrics
-import com.maxrave.domain.data.model.streams.TimeLine
-import com.maxrave.media3.ui.MediaPlayerView
-import com.maxrave.media3.ui.MediaPlayerViewWithSubtitle
-import com.maxrave.simpmusic.extension.findActivity
-import com.maxrave.simpmusic.extension.getScreenSizeInfo
-import com.maxrave.simpmusic.ui.theme.typo
+import com.sakayori.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.streams.TimeLine
+import com.sakayori.media3.ui.MediaPlayerView
+import com.sakayori.media3.ui.MediaPlayerViewWithSubtitle
+import com.sakayori.music.extension.findActivity
+import com.sakayori.music.extension.getScreenSizeInfo
+import com.sakayori.music.ui.theme.typo
 
 @Composable
 actual fun MediaPlayerView(

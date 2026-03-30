@@ -1,9 +1,9 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.domain.data.entities.NotificationEntity
-import com.maxrave.domain.repository.CommonRepository
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.domain.data.entities.NotificationEntity
+import com.sakayori.domain.repository.CommonRepository
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

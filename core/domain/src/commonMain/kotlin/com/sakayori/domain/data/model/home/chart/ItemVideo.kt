@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.home.chart
+package com.sakayori.domain.data.model.home.chart
 
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class ItemVideo(
     val artists: List<Artist>?,

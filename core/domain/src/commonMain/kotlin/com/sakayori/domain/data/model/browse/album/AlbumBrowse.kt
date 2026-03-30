@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.browse.album
+package com.sakayori.domain.data.model.browse.album
 
-import com.maxrave.domain.data.model.browse.artist.ResultAlbum
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.browse.artist.ResultAlbum
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class AlbumBrowse(
     val artists: List<Artist>,

@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models.ytdlp
+package com.sakayori.kotlinytmusicscraper.models.ytdlp
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -1,9 +1,9 @@
-package com.maxrave.data.db
+package com.sakayori.data.db
 
 import androidx.room.ProvidedTypeConverter
 import androidx.room.TypeConverter
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.metadata.Line
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.metadata.Line
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant

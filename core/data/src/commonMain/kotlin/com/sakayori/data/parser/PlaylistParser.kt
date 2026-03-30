@@ -1,21 +1,21 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.entities.SetVideoIdEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.browse.playlist.Author
-import com.maxrave.domain.data.model.browse.playlist.PlaylistBrowse
-import com.maxrave.domain.data.model.podcast.PodcastBrowse
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.extension.now
-import com.maxrave.kotlinytmusicscraper.models.MusicShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.SectionListRenderer
-import com.maxrave.kotlinytmusicscraper.models.response.BrowseResponse
-import com.maxrave.kotlinytmusicscraper.models.response.SearchResponse
-import com.maxrave.kotlinytmusicscraper.pages.PodcastItem
-import com.maxrave.logger.Logger
+import com.sakayori.domain.data.entities.SetVideoIdEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.playlist.Author
+import com.sakayori.domain.data.model.browse.playlist.PlaylistBrowse
+import com.sakayori.domain.data.model.podcast.PodcastBrowse
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.extension.now
+import com.sakayori.kotlinytmusicscraper.models.MusicShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.SectionListRenderer
+import com.sakayori.kotlinytmusicscraper.models.response.BrowseResponse
+import com.sakayori.kotlinytmusicscraper.models.response.SearchResponse
+import com.sakayori.kotlinytmusicscraper.pages.PodcastItem
+import com.sakayori.logger.Logger
 import kotlinx.datetime.LocalDateTime
 
 internal fun parsePlaylistData(

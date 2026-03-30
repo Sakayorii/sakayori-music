@@ -1,24 +1,24 @@
-package com.maxrave.data.di
+package com.sakayori.data.di
 
 import DatabaseDao
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import com.maxrave.data.dataStore.DataStoreManagerImpl
-import com.maxrave.data.dataStore.createDataStoreInstance
-import com.maxrave.data.db.Converters
-import com.maxrave.data.db.MusicDatabase
-import com.maxrave.data.db.datasource.AnalyticsDatasource
-import com.maxrave.data.db.datasource.LocalDataSource
-import com.maxrave.data.db.getDatabaseBuilder
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.kotlinytmusicscraper.YouTube
-import com.maxrave.spotify.Spotify
+import com.sakayori.data.dataStore.DataStoreManagerImpl
+import com.sakayori.data.dataStore.createDataStoreInstance
+import com.sakayori.data.db.Converters
+import com.sakayori.data.db.MusicDatabase
+import com.sakayori.data.db.datasource.AnalyticsDatasource
+import com.sakayori.data.db.datasource.LocalDataSource
+import com.sakayori.data.db.getDatabaseBuilder
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.kotlinytmusicscraper.YouTube
+import com.sakayori.spotify.Spotify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.dsl.module
-import org.simpmusic.aiservice.AiClient
-import org.simpmusic.lyrics.SimpMusicLyricsClient
+import org.SakayoriMusic.aiservice.AiClient
+import org.SakayoriMusic.lyrics.SakayoriMusicLyricsClient
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -71,6 +71,6 @@ val databaseModule =
         }
 
         single(createdAtStart = true) {
-            SimpMusicLyricsClient()
+            SakayoriMusicLyricsClient()
         }
     }

@@ -1,7 +1,7 @@
-package com.maxrave.kotlinytmusicscraper.utils
+package com.sakayori.kotlinytmusicscraper.utils
 
-import com.maxrave.kotlinytmusicscraper.models.response.AudioData
-import com.maxrave.logger.Logger
+import com.sakayori.kotlinytmusicscraper.models.response.AudioData
+import com.sakayori.logger.Logger
 import kotlinx.serialization.json.Json
 import java.security.MessageDigest
 import java.time.Instant

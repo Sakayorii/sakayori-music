@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import android.app.Activity
 import android.content.Intent
@@ -7,7 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 
 @Composable
 actual fun photoPickerResult(onResultUri: (String?) -> Unit): PhotoPickerLauncher {

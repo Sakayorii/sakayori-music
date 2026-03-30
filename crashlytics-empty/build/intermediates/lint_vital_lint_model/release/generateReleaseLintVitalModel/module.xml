@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="C:\SimpMusic-gonna-rebuild\crashlytics-empty"
+    name=":crashlytics-empty"
+    type="LIBRARY"
+    maven="SakayoriMusic:crashlytics-empty:unspecified"
+    agpVersion="8.13.2"
+    buildFolder="build"
+    bootClassPath="C:\Users\sakayori\Android\Sdk\platforms\android-36\android.jar;C:\Users\sakayori\Android\Sdk\build-tools\35.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="21"
+    compileTarget="android-36"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

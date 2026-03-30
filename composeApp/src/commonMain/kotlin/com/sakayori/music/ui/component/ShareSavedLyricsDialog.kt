@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -31,16 +31,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import com.maxrave.simpmusic.ui.theme.typo
+import com.sakayori.music.ui.theme.typo
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.contributor_email
-import simpmusic.composeapp.generated.resources.contributor_name
-import simpmusic.composeapp.generated.resources.help_build_lyrics_database
-import simpmusic.composeapp.generated.resources.help_build_lyrics_database_description
-import simpmusic.composeapp.generated.resources.later
-import simpmusic.composeapp.generated.resources.ok
-import simpmusic.composeapp.generated.resources.use_anonymous
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.contributor_email
+import com.sakayori.music.generated.resources.contributor_name
+import com.sakayori.music.generated.resources.help_build_lyrics_database
+import com.sakayori.music.generated.resources.help_build_lyrics_database_description
+import com.sakayori.music.generated.resources.later
+import com.sakayori.music.generated.resources.ok
+import com.sakayori.music.generated.resources.use_anonymous
 
 @Composable
 @ExperimentalMaterial3Api

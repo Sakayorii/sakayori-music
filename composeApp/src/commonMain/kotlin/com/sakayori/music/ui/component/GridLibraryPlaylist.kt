@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.MarqueeAnimationMode
@@ -41,28 +41,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.PodcastsEntity
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.type.ChartItem
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.utils.LocalResource
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.extension.angledGradientBackground
-import com.maxrave.simpmusic.extension.isScrollingUp
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.LocalPlaylistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PodcastDestination
-import com.maxrave.simpmusic.ui.theme.seed
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.ui.theme.white
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.PodcastsEntity
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.type.ChartItem
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.utils.LocalResource
+import com.sakayori.logger.Logger
+import com.sakayori.music.extension.angledGradientBackground
+import com.sakayori.music.extension.isScrollingUp
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.LocalPlaylistDestination
+import com.sakayori.music.ui.navigation.destination.list.PlaylistDestination
+import com.sakayori.music.ui.navigation.destination.list.PodcastDestination
+import com.sakayori.music.ui.theme.seed
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.ui.theme.white
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.create
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.create
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -239,7 +239,7 @@ internal inline fun <reified T> GridLibraryPlaylist(
 
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         val uriHandler = LocalUriHandler.current
-                        SimpMusicChartButton(
+                        SakayoriMusicChartButton(
                             modifier =
                                 Modifier.wrapContentWidth().padding(
                                     vertical = 16.dp,

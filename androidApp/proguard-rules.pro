@@ -58,10 +58,10 @@
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn kotlinx.serialization.internal.ClassValueReferences
--keep class com.maxrave.simpmusic.data.model.** { *; }
--keep class com.maxrave.simpmusic.extension.AllExtKt { *; }
--keep class com.maxrave.simpmusic.extension.AllExtKt$* { *; }
--keep class com.maxrave.kotlinytmusicscraper.extension.MapExtKt$* { *; }
+-keep class com.sakayori.SakayoriMusic.data.model.** { *; }
+-keep class com.sakayori.SakayoriMusic.extension.AllExtKt { *; }
+-keep class com.sakayori.SakayoriMusic.extension.AllExtKt$* { *; }
+-keep class com.sakayori.kotlinytmusicscraper.extension.MapExtKt$* { *; }
 
 ## Removes all Logs as they cause perfomance issues in prod
 #-assumenosideeffects class android.util.Log {
@@ -147,7 +147,7 @@
 -keep class com.liskovsoft.** { *; }
 -keep interface com.liskovsoft.** { *; }
 -keep class com.eclipsesource.v8.** { *; }
--keep class com.maxrave.kotlinytmusicscraper.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.** { *; }
 
 -dontwarn javax.script.AbstractScriptEngine
 -dontwarn javax.script.Bindings
@@ -198,19 +198,19 @@
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
 
--dontwarn com.maxrave.data.di.loader.LoaderKt
--dontwarn com.maxrave.media3.ui.MediaPlayerViewKt
+-dontwarn com.sakayori.data.di.loader.LoaderKt
+-dontwarn com.sakayori.media3.ui.MediaPlayerViewKt
 
--keep class com.maxrave.data.di.loader.LoaderKt { *; }
--keep class com.maxrave.data.mapping.MappingKt { *; }
--keep class com.maxrave.data.extension.** { *; }
--keep class com.maxrave.data.di.** { *; }
+-keep class com.sakayori.data.di.loader.LoaderKt { *; }
+-keep class com.sakayori.data.mapping.MappingKt { *; }
+-keep class com.sakayori.data.extension.** { *; }
+-keep class com.sakayori.data.di.** { *; }
 
--keep class com.maxrave.kotlinytmusicscraper.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.** { *; }
 
--keep class org.simpmusic.lyrics.parser.** { *; }
--keep class org.simpmusic.lyrics.models.** { *; }
--keep class com.simpmusic.lyrics.parser.** { *; }
+-keep class org.SakayoriMusic.lyrics.parser.** { *; }
+-keep class org.SakayoriMusic.lyrics.models.** { *; }
+-keep class com.SakayoriMusic.lyrics.parser.** { *; }
 
 -keep class com.google.re2j.** { *; }
 -dontwarn com.google.re2j.Matcher

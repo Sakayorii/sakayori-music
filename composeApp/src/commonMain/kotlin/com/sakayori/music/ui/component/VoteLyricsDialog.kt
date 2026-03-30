@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,17 +21,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.VoteData
-import com.maxrave.simpmusic.viewModel.VoteState
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.VoteData
+import com.sakayori.music.viewModel.VoteState
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.cancel
-import simpmusic.composeapp.generated.resources.downvote
-import simpmusic.composeapp.generated.resources.rate_lyrics
-import simpmusic.composeapp.generated.resources.rate_translated_lyrics
-import simpmusic.composeapp.generated.resources.upvote
-import simpmusic.composeapp.generated.resources.vote_for_lyrics
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.cancel
+import com.sakayori.music.generated.resources.downvote
+import com.sakayori.music.generated.resources.rate_lyrics
+import com.sakayori.music.generated.resources.rate_translated_lyrics
+import com.sakayori.music.generated.resources.upvote
+import com.sakayori.music.generated.resources.vote_for_lyrics
 
 @Composable
 fun VoteLyricsDialog(

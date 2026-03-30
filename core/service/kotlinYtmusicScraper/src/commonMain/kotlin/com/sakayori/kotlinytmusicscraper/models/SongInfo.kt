@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
 data class SongInfo(
     val videoId: String,

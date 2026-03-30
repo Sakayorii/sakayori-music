@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -7,16 +7,16 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
-import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
-import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
-import com.maxrave.simpmusic.ui.navigation.destination.library.LibraryDestination
-import com.maxrave.simpmusic.ui.navigation.destination.search.SearchDestination
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.music.expect.ui.PlatformBackdrop
+import com.sakayori.music.ui.navigation.destination.home.HomeDestination
+import com.sakayori.music.ui.navigation.destination.library.LibraryDestination
+import com.sakayori.music.ui.navigation.destination.search.SearchDestination
+import com.sakayori.music.viewModel.SharedViewModel
 import org.jetbrains.compose.resources.StringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.home
-import simpmusic.composeapp.generated.resources.library
-import simpmusic.composeapp.generated.resources.search
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.home
+import com.sakayori.music.generated.resources.library
+import com.sakayori.music.generated.resources.search
 import kotlin.reflect.KClass
 
 @Composable

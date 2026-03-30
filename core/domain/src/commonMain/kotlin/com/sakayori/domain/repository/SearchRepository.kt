@@ -1,13 +1,13 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.SearchHistory
-import com.maxrave.domain.data.model.searchResult.SearchSuggestions
-import com.maxrave.domain.data.model.searchResult.albums.AlbumsResult
-import com.maxrave.domain.data.model.searchResult.artists.ArtistsResult
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.SongsResult
-import com.maxrave.domain.data.model.searchResult.videos.VideosResult
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.SearchHistory
+import com.sakayori.domain.data.model.searchResult.SearchSuggestions
+import com.sakayori.domain.data.model.searchResult.albums.AlbumsResult
+import com.sakayori.domain.data.model.searchResult.artists.ArtistsResult
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.SongsResult
+import com.sakayori.domain.data.model.searchResult.videos.VideosResult
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface SearchRepository {

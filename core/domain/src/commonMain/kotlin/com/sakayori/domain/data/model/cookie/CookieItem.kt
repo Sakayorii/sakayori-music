@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.cookie
+package com.sakayori.domain.data.model.cookie
 
 data class CookieItem(
     val url: String,

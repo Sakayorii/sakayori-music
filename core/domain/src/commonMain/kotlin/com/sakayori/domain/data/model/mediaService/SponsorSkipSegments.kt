@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.mediaService
+package com.sakayori.domain.data.model.mediaService
 
 data class SponsorSkipSegments(
     val actionType: String,

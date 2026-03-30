@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models.youtube
+package com.sakayori.kotlinytmusicscraper.models.youtube
 
 import com.mohamedrejeb.ksoup.entities.KsoupEntities
 import kotlinx.serialization.SerialName

@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.MarqueeAnimationMode
@@ -39,43 +39,43 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.maxrave.common.Config
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.PodcastsEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.type.LibraryType
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.data.type.RecentlyType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.utils.connectArtists
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.LocalPlaylistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PodcastDestination
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.LibraryViewModel
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.common.Config
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.PodcastsEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.type.LibraryType
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.data.type.RecentlyType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.utils.connectArtists
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.navigation.destination.list.LocalPlaylistDestination
+import com.sakayori.music.ui.navigation.destination.list.PlaylistDestination
+import com.sakayori.music.ui.navigation.destination.list.PodcastDestination
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.LibraryViewModel
+import com.sakayori.music.viewModel.SharedViewModel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.holder
-import simpmusic.composeapp.generated.resources.most_played
-import simpmusic.composeapp.generated.resources.no_favorite_playlists
-import simpmusic.composeapp.generated.resources.no_playlists_downloaded
-import simpmusic.composeapp.generated.resources.radio
-import simpmusic.composeapp.generated.resources.recently_added
-import com.maxrave.domain.mediaservice.handler.PlaylistType as DomainPlaylistType
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.holder
+import com.sakayori.music.generated.resources.most_played
+import com.sakayori.music.generated.resources.no_favorite_playlists
+import com.sakayori.music.generated.resources.no_playlists_downloaded
+import com.sakayori.music.generated.resources.radio
+import com.sakayori.music.generated.resources.recently_added
+import com.sakayori.domain.mediaservice.handler.PlaylistType as DomainPlaylistType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

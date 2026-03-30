@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.player
+package com.sakayori.domain.data.player
 
 /**
  * Generic playback parameters wrapper

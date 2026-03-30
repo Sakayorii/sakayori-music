@@ -1,7 +1,7 @@
-package com.maxrave.domain.mediaservice.player
+package com.sakayori.domain.mediaservice.player
 
-import com.maxrave.domain.data.player.GenericMediaItem
-import com.maxrave.domain.data.player.GenericPlaybackParameters
+import com.sakayori.domain.data.player.GenericMediaItem
+import com.sakayori.domain.data.player.GenericPlaybackParameters
 
 /**
  * Abstract interface for media player implementations

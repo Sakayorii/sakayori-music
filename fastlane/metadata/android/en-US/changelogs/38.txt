@@ -6,6 +6,7 @@
 - PIP support in Fullscreen
 - Subtitle inside every video
 - Option to backup downloaded songs
-- Removed Musixmatch - replaced by SimpMusic Lyrics
+- Removed Musixmatch - replaced by SakayoriMusic Lyrics
 - Removed Crossfade
 - New Charts UI
+

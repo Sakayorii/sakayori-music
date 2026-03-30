@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.browse.playlist
+package com.sakayori.domain.data.model.browse.playlist
 
-import com.maxrave.domain.data.model.streams.YouTubeWatchEndpoint
+import com.sakayori.domain.data.model.streams.YouTubeWatchEndpoint
 
 data class PlaylistState(
     val id: String,

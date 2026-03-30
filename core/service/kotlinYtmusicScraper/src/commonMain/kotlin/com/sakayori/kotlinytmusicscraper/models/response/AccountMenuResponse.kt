@@ -1,8 +1,8 @@
-package com.maxrave.kotlinytmusicscraper.models.response
+package com.sakayori.kotlinytmusicscraper.models.response
 
-import com.maxrave.kotlinytmusicscraper.models.AccountInfo
-import com.maxrave.kotlinytmusicscraper.models.Runs
-import com.maxrave.kotlinytmusicscraper.models.Thumbnails
+import com.sakayori.kotlinytmusicscraper.models.AccountInfo
+import com.sakayori.kotlinytmusicscraper.models.Runs
+import com.sakayori.kotlinytmusicscraper.models.Thumbnails
 import kotlinx.serialization.Serializable
 
 @Serializable

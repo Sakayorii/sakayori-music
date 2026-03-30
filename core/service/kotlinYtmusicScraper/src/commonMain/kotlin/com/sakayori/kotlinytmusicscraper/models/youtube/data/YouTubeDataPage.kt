@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.models.youtube.data
+package com.sakayori.kotlinytmusicscraper.models.youtube.data
 
-import com.maxrave.kotlinytmusicscraper.models.NavigationEndpoint
+import com.sakayori.kotlinytmusicscraper.models.NavigationEndpoint
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -152,7 +152,7 @@ data class YouTubeDataPage(
                                     @Serializable
                                     data class Thumbnail(
                                         @SerialName("thumbnails")
-                                        val thumbnails: List<com.maxrave.kotlinytmusicscraper.models.Thumbnail>? = null,
+                                        val thumbnails: List<com.sakayori.kotlinytmusicscraper.models.Thumbnail>? = null,
                                     )
 
                                     @Serializable

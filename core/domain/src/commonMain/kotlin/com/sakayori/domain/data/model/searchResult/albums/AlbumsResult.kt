@@ -1,9 +1,9 @@
-package com.maxrave.domain.data.model.searchResult.albums
+package com.sakayori.domain.data.model.searchResult.albums
 
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.data.type.SearchResultType
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.data.type.SearchResultType
 
 data class AlbumsResult(
     val artists: List<Artist>,

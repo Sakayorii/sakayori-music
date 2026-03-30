@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.maxrave.simpmusic.ui.screen.player
+package com.sakayori.music.ui.screen.player
 
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedContent
@@ -134,48 +134,48 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.toBitmap
 import com.kmpalette.rememberPaletteState
-import com.maxrave.common.Config.MAIN_PLAYER
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.Platform
-import com.maxrave.simpmusic.expect.toggleMiniPlayer
-import com.maxrave.simpmusic.expect.ui.MediaPlayerView
-import com.maxrave.simpmusic.expect.ui.MediaPlayerViewWithSubtitle
-import com.maxrave.simpmusic.extension.GradientAngle
-import com.maxrave.simpmusic.extension.GradientOffset
-import com.maxrave.simpmusic.extension.KeepScreenOn
-import com.maxrave.simpmusic.extension.formatDuration
-import com.maxrave.simpmusic.extension.getColorFromPalette
-import com.maxrave.simpmusic.extension.getScreenSizeInfo
-import com.maxrave.simpmusic.extension.getStringBlocking
-import com.maxrave.simpmusic.extension.hsvToColor
-import com.maxrave.simpmusic.extension.isElementVisible
-import com.maxrave.simpmusic.extension.parseTimestampToMilliseconds
-import com.maxrave.simpmusic.extension.rememberIsInPipMode
-import com.maxrave.simpmusic.getPlatform
-import com.maxrave.simpmusic.ui.component.AIBadge
-import com.maxrave.simpmusic.ui.component.AddToPlaylistModalBottomSheet
-import com.maxrave.simpmusic.ui.component.DescriptionView
-import com.maxrave.simpmusic.ui.component.ExplicitBadge
-import com.maxrave.simpmusic.ui.component.FullscreenLyricsSheet
-import com.maxrave.simpmusic.ui.component.HeartCheckBox
-import com.maxrave.simpmusic.ui.component.InfoPlayerBottomSheet
-import com.maxrave.simpmusic.ui.component.LyricsView
-import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
-import com.maxrave.simpmusic.ui.component.PlayPauseButton
-import com.maxrave.simpmusic.ui.component.PlayerControlLayout
-import com.maxrave.simpmusic.ui.component.QueueBottomSheet
-import com.maxrave.simpmusic.ui.component.VoteLyricsDialog
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.player.FullscreenDestination
-import com.maxrave.simpmusic.ui.theme.blackMoreOverlay
-import com.maxrave.simpmusic.ui.theme.md_theme_dark_background
-import com.maxrave.simpmusic.ui.theme.overlay
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.LyricsProvider
-import com.maxrave.simpmusic.viewModel.NowPlayingBottomSheetUIEvent
-import com.maxrave.simpmusic.viewModel.NowPlayingBottomSheetViewModel
-import com.maxrave.simpmusic.viewModel.SharedViewModel
-import com.maxrave.simpmusic.viewModel.UIEvent
+import com.sakayori.common.Config.MAIN_PLAYER
+import com.sakayori.logger.Logger
+import com.sakayori.music.Platform
+import com.sakayori.music.expect.toggleMiniPlayer
+import com.sakayori.music.expect.ui.MediaPlayerView
+import com.sakayori.music.expect.ui.MediaPlayerViewWithSubtitle
+import com.sakayori.music.extension.GradientAngle
+import com.sakayori.music.extension.GradientOffset
+import com.sakayori.music.extension.KeepScreenOn
+import com.sakayori.music.extension.formatDuration
+import com.sakayori.music.extension.getColorFromPalette
+import com.sakayori.music.extension.getScreenSizeInfo
+import com.sakayori.music.extension.getStringBlocking
+import com.sakayori.music.extension.hsvToColor
+import com.sakayori.music.extension.isElementVisible
+import com.sakayori.music.extension.parseTimestampToMilliseconds
+import com.sakayori.music.extension.rememberIsInPipMode
+import com.sakayori.music.getPlatform
+import com.sakayori.music.ui.component.AIBadge
+import com.sakayori.music.ui.component.AddToPlaylistModalBottomSheet
+import com.sakayori.music.ui.component.DescriptionView
+import com.sakayori.music.ui.component.ExplicitBadge
+import com.sakayori.music.ui.component.FullscreenLyricsSheet
+import com.sakayori.music.ui.component.HeartCheckBox
+import com.sakayori.music.ui.component.InfoPlayerBottomSheet
+import com.sakayori.music.ui.component.LyricsView
+import com.sakayori.music.ui.component.NowPlayingBottomSheet
+import com.sakayori.music.ui.component.PlayPauseButton
+import com.sakayori.music.ui.component.PlayerControlLayout
+import com.sakayori.music.ui.component.QueueBottomSheet
+import com.sakayori.music.ui.component.VoteLyricsDialog
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.navigation.destination.player.FullscreenDestination
+import com.sakayori.music.ui.theme.blackMoreOverlay
+import com.sakayori.music.ui.theme.md_theme_dark_background
+import com.sakayori.music.ui.theme.overlay
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.LyricsProvider
+import com.sakayori.music.viewModel.NowPlayingBottomSheetUIEvent
+import com.sakayori.music.viewModel.NowPlayingBottomSheetViewModel
+import com.sakayori.music.viewModel.SharedViewModel
+import com.sakayori.music.viewModel.UIEvent
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.CupertinoMaterials
@@ -190,36 +190,36 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.artists
-import simpmusic.composeapp.generated.resources.baseline_fullscreen_24
-import simpmusic.composeapp.generated.resources.baseline_more_vert_24
-import simpmusic.composeapp.generated.resources.baseline_playlist_add_24
-import simpmusic.composeapp.generated.resources.crossfading
-import simpmusic.composeapp.generated.resources.description
-import simpmusic.composeapp.generated.resources.downvote
-import simpmusic.composeapp.generated.resources.holder
-import simpmusic.composeapp.generated.resources.holder_video
-import simpmusic.composeapp.generated.resources.like_and_dislike
-import simpmusic.composeapp.generated.resources.line_synced
-import simpmusic.composeapp.generated.resources.lyrics
-import simpmusic.composeapp.generated.resources.lyrics_provider_betterlyrics
-import simpmusic.composeapp.generated.resources.lyrics_provider_lrc
-import simpmusic.composeapp.generated.resources.lyrics_provider_simpmusic
-import simpmusic.composeapp.generated.resources.lyrics_provider_youtube
-import simpmusic.composeapp.generated.resources.now_playing_upper
-import simpmusic.composeapp.generated.resources.offline_mode
-import simpmusic.composeapp.generated.resources.published_at
-import simpmusic.composeapp.generated.resources.rate_lyrics
-import simpmusic.composeapp.generated.resources.rate_translated_lyrics
-import simpmusic.composeapp.generated.resources.rich_synced
-import simpmusic.composeapp.generated.resources.show
-import simpmusic.composeapp.generated.resources.spotify_lyrics_provider
-import simpmusic.composeapp.generated.resources.unsynced
-import simpmusic.composeapp.generated.resources.upvote
-import simpmusic.composeapp.generated.resources.view_count
-import simpmusic.composeapp.generated.resources.vote_error
-import simpmusic.composeapp.generated.resources.vote_submitted
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.artists
+import com.sakayori.music.generated.resources.baseline_fullscreen_24
+import com.sakayori.music.generated.resources.baseline_more_vert_24
+import com.sakayori.music.generated.resources.baseline_playlist_add_24
+import com.sakayori.music.generated.resources.crossfading
+import com.sakayori.music.generated.resources.description
+import com.sakayori.music.generated.resources.downvote
+import com.sakayori.music.generated.resources.holder
+import com.sakayori.music.generated.resources.holder_video
+import com.sakayori.music.generated.resources.like_and_dislike
+import com.sakayori.music.generated.resources.line_synced
+import com.sakayori.music.generated.resources.lyrics
+import com.sakayori.music.generated.resources.lyrics_provider_betterlyrics
+import com.sakayori.music.generated.resources.lyrics_provider_lrc
+import com.sakayori.music.generated.resources.lyrics_provider_SakayoriMusic
+import com.sakayori.music.generated.resources.lyrics_provider_youtube
+import com.sakayori.music.generated.resources.now_playing_upper
+import com.sakayori.music.generated.resources.offline_mode
+import com.sakayori.music.generated.resources.published_at
+import com.sakayori.music.generated.resources.rate_lyrics
+import com.sakayori.music.generated.resources.rate_translated_lyrics
+import com.sakayori.music.generated.resources.rich_synced
+import com.sakayori.music.generated.resources.show
+import com.sakayori.music.generated.resources.spotify_lyrics_provider
+import com.sakayori.music.generated.resources.unsynced
+import com.sakayori.music.generated.resources.upvote
+import com.sakayori.music.generated.resources.view_count
+import com.sakayori.music.generated.resources.vote_error
+import com.sakayori.music.generated.resources.vote_submitted
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -648,16 +648,16 @@ fun NowPlayingScreenContent(
     // Vote Dialog
     if (showVoteDialog) {
         val canVoteLyrics =
-            screenDataState.lyricsData?.lyricsProvider == LyricsProvider.SIMPMUSIC &&
+            screenDataState.lyricsData?.lyricsProvider == LyricsProvider.SakayoriMusic &&
                 screenDataState.lyricsData
                     ?.lyrics
-                    ?.simpMusicLyrics != null
+                    ?.SakayoriMusicLyrics != null
         val canVoteTranslatedLyrics =
-            screenDataState.lyricsData?.translatedLyrics?.second == LyricsProvider.SIMPMUSIC &&
+            screenDataState.lyricsData?.translatedLyrics?.second == LyricsProvider.SakayoriMusic &&
                 screenDataState.lyricsData
                     ?.translatedLyrics
                     ?.first
-                    ?.simpMusicLyrics != null
+                    ?.SakayoriMusicLyrics != null
 
         VoteLyricsDialog(
             canVoteLyrics = canVoteLyrics,
@@ -1723,18 +1723,18 @@ fun NowPlayingScreenContent(
                                             AIBadge()
                                         }
                                         Spacer(modifier = Modifier.weight(1f))
-                                        // Vote button - only show if lyrics or translated lyrics from SimpMusic
+                                        // Vote button - only show if lyrics or translated lyrics from SakayoriMusic
                                         val canVoteLyrics =
-                                            screenDataState.lyricsData?.lyricsProvider == LyricsProvider.SIMPMUSIC &&
+                                            screenDataState.lyricsData?.lyricsProvider == LyricsProvider.SakayoriMusic &&
                                                 screenDataState.lyricsData
                                                     ?.lyrics
-                                                    ?.simpMusicLyrics != null
+                                                    ?.SakayoriMusicLyrics != null
                                         val canVoteTranslatedLyrics =
-                                            screenDataState.lyricsData?.translatedLyrics?.second == LyricsProvider.SIMPMUSIC &&
+                                            screenDataState.lyricsData?.translatedLyrics?.second == LyricsProvider.SakayoriMusic &&
                                                 screenDataState.lyricsData
                                                     ?.translatedLyrics
                                                     ?.first
-                                                    ?.simpMusicLyrics != null
+                                                    ?.SakayoriMusicLyrics != null
                                         if (canVoteLyrics || canVoteTranslatedLyrics) {
                                             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                                                 IconButton(
@@ -1804,8 +1804,8 @@ fun NowPlayingScreenContent(
                                         Text(
                                             text =
                                                 when (screenDataState.lyricsData?.lyricsProvider) {
-                                                    LyricsProvider.SIMPMUSIC -> {
-                                                        stringResource(Res.string.lyrics_provider_simpmusic)
+                                                    LyricsProvider.SakayoriMusic -> {
+                                                        stringResource(Res.string.lyrics_provider_SakayoriMusic)
                                                     }
 
                                                     LyricsProvider.LRCLIB -> {

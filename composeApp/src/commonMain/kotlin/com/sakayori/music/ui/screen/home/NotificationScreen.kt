@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.home
+package com.sakayori.music.ui.screen.home
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.MarqueeAnimationMode
@@ -40,26 +40,26 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.maxrave.domain.data.entities.NotificationEntity
-import com.maxrave.simpmusic.extension.formatTimeAgo
-import com.maxrave.simpmusic.ui.component.CenterLoadingBox
-import com.maxrave.simpmusic.ui.component.EndOfPage
-import com.maxrave.simpmusic.ui.component.RippleIconButton
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.NotificationViewModel
+import com.sakayori.domain.data.entities.NotificationEntity
+import com.sakayori.music.extension.formatTimeAgo
+import com.sakayori.music.ui.component.CenterLoadingBox
+import com.sakayori.music.ui.component.EndOfPage
+import com.sakayori.music.ui.component.RippleIconButton
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.NotificationViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.album
-import simpmusic.composeapp.generated.resources.baseline_arrow_back_ios_new_24
-import simpmusic.composeapp.generated.resources.holder
-import simpmusic.composeapp.generated.resources.new_release
-import simpmusic.composeapp.generated.resources.no_notification
-import simpmusic.composeapp.generated.resources.notification
-import simpmusic.composeapp.generated.resources.singles
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.album
+import com.sakayori.music.generated.resources.baseline_arrow_back_ios_new_24
+import com.sakayori.music.generated.resources.holder
+import com.sakayori.music.generated.resources.new_release
+import com.sakayori.music.generated.resources.no_notification
+import com.sakayori.music.generated.resources.notification
+import com.sakayori.music.generated.resources.singles
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

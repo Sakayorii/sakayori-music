@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.player
+package com.sakayori.music.ui.screen.player
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.MarqueeAnimationMode
@@ -74,24 +74,24 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.maxrave.common.Config.MAIN_PLAYER
-import com.maxrave.simpmusic.expect.ui.MediaPlayerViewWithSubtitle
-import com.maxrave.simpmusic.extension.formatDuration
-import com.maxrave.simpmusic.extension.rememberIsInPipMode
-import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
-import com.maxrave.simpmusic.ui.component.RippleIconButton
-import com.maxrave.simpmusic.ui.theme.overlay
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.SharedViewModel
-import com.maxrave.simpmusic.viewModel.UIEvent
+import com.sakayori.common.Config.MAIN_PLAYER
+import com.sakayori.music.expect.ui.MediaPlayerViewWithSubtitle
+import com.sakayori.music.extension.formatDuration
+import com.sakayori.music.extension.rememberIsInPipMode
+import com.sakayori.music.ui.component.NowPlayingBottomSheet
+import com.sakayori.music.ui.component.RippleIconButton
+import com.sakayori.music.ui.theme.overlay
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.SharedViewModel
+import com.sakayori.music.viewModel.UIEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.baseline_arrow_back_ios_new_24
-import simpmusic.composeapp.generated.resources.baseline_more_vert_24
-import simpmusic.composeapp.generated.resources.five_seconds
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.baseline_arrow_back_ios_new_24
+import com.sakayori.music.generated.resources.baseline_more_vert_24
+import com.sakayori.music.generated.resources.five_seconds
 import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)

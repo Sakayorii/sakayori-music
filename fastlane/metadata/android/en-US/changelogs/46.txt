@@ -1,7 +1,7 @@
 - Add Support for Custom OpenAI Compatible API in AI Lyrics Translate
 - Add BetterLyrics Lyrics Provider
 - Improve Word-by-word lyrics
-- Add SimpMusic Chart to Library screen
+- Add SakayoriMusic Chart to Library screen
 - Add 320kbps stream option
 - Improve full screen lyrics screen
 - Improve local playlist

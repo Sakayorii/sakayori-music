@@ -1,11 +1,11 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.model.home.HomeItem
-import com.maxrave.domain.data.model.home.chart.Chart
-import com.maxrave.domain.data.model.mood.Mood
-import com.maxrave.domain.data.model.mood.genre.GenreObject
-import com.maxrave.domain.data.model.mood.moodmoments.MoodsMomentObject
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.model.home.HomeItem
+import com.sakayori.domain.data.model.home.chart.Chart
+import com.sakayori.domain.data.model.mood.Mood
+import com.sakayori.domain.data.model.mood.genre.GenreObject
+import com.sakayori.domain.data.model.mood.moodmoments.MoodsMomentObject
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface HomeRepository {

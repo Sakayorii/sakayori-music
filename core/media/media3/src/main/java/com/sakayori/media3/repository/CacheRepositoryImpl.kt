@@ -1,9 +1,9 @@
-package com.maxrave.media3.repository
+package com.sakayori.media3.repository
 
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.cache.SimpleCache
-import com.maxrave.common.Config
-import com.maxrave.domain.repository.CacheRepository
+import com.sakayori.common.Config
+import com.sakayori.domain.repository.CacheRepository
 
 @UnstableApi
 internal class CacheRepositoryImpl(

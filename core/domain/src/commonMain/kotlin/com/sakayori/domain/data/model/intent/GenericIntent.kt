@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.intent
+package com.sakayori.domain.data.model.intent
 
 import com.eygraber.uri.Uri
 

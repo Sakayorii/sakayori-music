@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models.response
+package com.sakayori.kotlinytmusicscraper.models.response
 
 enum class LikeStatus {
     LIKE,

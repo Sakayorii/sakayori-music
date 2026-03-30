@@ -1,13 +1,13 @@
-package com.maxrave.kotlinytmusicscraper.models.body
+package com.sakayori.kotlinytmusicscraper.models.body
 
-import com.maxrave.kotlinytmusicscraper.models.Context
+import com.sakayori.kotlinytmusicscraper.models.Context
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreatePlaylistBody(
     val context: Context,
     val title: String,
-    val description: String? = "Created by SimpMusic",
+    val description: String? = "Created by SakayoriMusic",
     val privacyStatus: String = PrivacyStatus.PRIVATE,
     val videoIds: List<String>? = null,
 ) {

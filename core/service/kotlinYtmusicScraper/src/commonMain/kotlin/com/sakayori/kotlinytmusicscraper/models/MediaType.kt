@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
 sealed class MediaType {
     data object Song : MediaType()

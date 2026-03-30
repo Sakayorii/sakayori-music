@@ -1,4 +1,4 @@
-package com.maxrave.data.dataStore
+package com.sakayori.data.dataStore
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -7,23 +7,23 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.maxrave.common.SELECTED_LANGUAGE
-import com.maxrave.common.SUPPORTED_LANGUAGE
-import com.maxrave.common.SponsorBlockType
-import com.maxrave.domain.data.model.network.ProxyConfiguration
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.manager.DataStoreManager.Values.AI_PROVIDER_GEMINI
-import com.maxrave.domain.manager.DataStoreManager.Values.FALSE
-import com.maxrave.domain.manager.DataStoreManager.Values.GITHUB
-import com.maxrave.domain.manager.DataStoreManager.Values.LOCAL_PLAYLIST_FILTER_OLDER_FIRST
-import com.maxrave.domain.manager.DataStoreManager.Values.PROXY_TYPE_HTTP
-import com.maxrave.domain.manager.DataStoreManager.Values.PROXY_TYPE_SOCKS
-import com.maxrave.domain.manager.DataStoreManager.Values.REPEAT_ALL
-import com.maxrave.domain.manager.DataStoreManager.Values.REPEAT_MODE_OFF
-import com.maxrave.domain.manager.DataStoreManager.Values.REPEAT_ONE
-import com.maxrave.domain.manager.DataStoreManager.Values.SIMPMUSIC
-import com.maxrave.domain.manager.DataStoreManager.Values.TRUE
-import com.maxrave.logger.Logger
+import com.sakayori.common.SELECTED_LANGUAGE
+import com.sakayori.common.SUPPORTED_LANGUAGE
+import com.sakayori.common.SponsorBlockType
+import com.sakayori.domain.data.model.network.ProxyConfiguration
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.manager.DataStoreManager.Values.AI_PROVIDER_GEMINI
+import com.sakayori.domain.manager.DataStoreManager.Values.FALSE
+import com.sakayori.domain.manager.DataStoreManager.Values.GITHUB
+import com.sakayori.domain.manager.DataStoreManager.Values.LOCAL_PLAYLIST_FILTER_OLDER_FIRST
+import com.sakayori.domain.manager.DataStoreManager.Values.PROXY_TYPE_HTTP
+import com.sakayori.domain.manager.DataStoreManager.Values.PROXY_TYPE_SOCKS
+import com.sakayori.domain.manager.DataStoreManager.Values.REPEAT_ALL
+import com.sakayori.domain.manager.DataStoreManager.Values.REPEAT_MODE_OFF
+import com.sakayori.domain.manager.DataStoreManager.Values.REPEAT_ONE
+import com.sakayori.domain.manager.DataStoreManager.Values.SakayoriMusic
+import com.sakayori.domain.manager.DataStoreManager.Values.TRUE
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import com.maxrave.common.QUALITY as COMMON_QUALITY
+import com.sakayori.common.QUALITY as COMMON_QUALITY
 
 internal class DataStoreManagerImpl(
     private val settingsDataStore: DataStore<Preferences>,
@@ -419,7 +419,7 @@ internal class DataStoreManagerImpl(
 
     override val lyricsProvider =
         settingsDataStore.data.map { preferences ->
-            preferences[LYRICS_PROVIDER] ?: SIMPMUSIC
+            preferences[LYRICS_PROVIDER] ?: SakayoriMusic
         }
 
     override suspend fun setLyricsProvider(provider: String) {

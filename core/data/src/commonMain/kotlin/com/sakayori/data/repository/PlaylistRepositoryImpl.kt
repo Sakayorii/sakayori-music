@@ -1,39 +1,39 @@
-package com.maxrave.data.repository
+package com.sakayori.data.repository
 
-import com.maxrave.data.db.datasource.LocalDataSource
-import com.maxrave.data.extension.getFullDataFromDB
-import com.maxrave.data.mapping.toListTrack
-import com.maxrave.data.mapping.toTrack
-import com.maxrave.data.mapping.toYouTubeWatchEndpoint
-import com.maxrave.data.parser.parseLibraryPlaylist
-import com.maxrave.data.parser.parseNextLibraryPlaylist
-import com.maxrave.data.parser.parsePlaylistData
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.SetVideoIdEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.entities.YourYouTubePlaylistList
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.browse.playlist.Author
-import com.maxrave.domain.data.model.browse.playlist.PlaylistBrowse
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.type.ChartItem
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.extension.now
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.repository.PlaylistRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.kotlinytmusicscraper.YouTube
-import com.maxrave.kotlinytmusicscraper.models.MusicShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.WatchEndpoint
-import com.maxrave.kotlinytmusicscraper.pages.NextPage
-import com.maxrave.kotlinytmusicscraper.parser.getPlaylistContinuation
-import com.maxrave.kotlinytmusicscraper.parser.getPlaylistRadioEndpoint
-import com.maxrave.kotlinytmusicscraper.parser.getPlaylistShuffleEndpoint
-import com.maxrave.logger.Logger
+import com.sakayori.data.db.datasource.LocalDataSource
+import com.sakayori.data.extension.getFullDataFromDB
+import com.sakayori.data.mapping.toListTrack
+import com.sakayori.data.mapping.toTrack
+import com.sakayori.data.mapping.toYouTubeWatchEndpoint
+import com.sakayori.data.parser.parseLibraryPlaylist
+import com.sakayori.data.parser.parseNextLibraryPlaylist
+import com.sakayori.data.parser.parsePlaylistData
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.SetVideoIdEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.YourYouTubePlaylistList
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.playlist.Author
+import com.sakayori.domain.data.model.browse.playlist.PlaylistBrowse
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.type.ChartItem
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.extension.now
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.repository.PlaylistRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.kotlinytmusicscraper.YouTube
+import com.sakayori.kotlinytmusicscraper.models.MusicShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.WatchEndpoint
+import com.sakayori.kotlinytmusicscraper.pages.NextPage
+import com.sakayori.kotlinytmusicscraper.parser.getPlaylistContinuation
+import com.sakayori.kotlinytmusicscraper.parser.getPlaylistRadioEndpoint
+import com.sakayori.kotlinytmusicscraper.parser.getPlaylistShuffleEndpoint
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
@@ -772,7 +772,7 @@ internal class PlaylistRepositoryImpl(
     override fun getChartPlaylist(): Flow<Resource<List<ChartItem>>> =
         flow {
             youTube
-                .getSimpMusicChart()
+                .getSakayoriMusicChart()
                 .onSuccess { response ->
                     val data = response.data?.filterNotNull() ?: emptyList()
                     val result =

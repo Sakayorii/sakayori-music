@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.pages
+package com.sakayori.kotlinytmusicscraper.pages
 
-import com.maxrave.kotlinytmusicscraper.models.YTItem
+import com.sakayori.kotlinytmusicscraper.models.YTItem
 
 data class BrowseResult(
     val title: String?,

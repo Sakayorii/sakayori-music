@@ -1,13 +1,13 @@
-package com.maxrave.data.paging
+package com.sakayori.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.maxrave.data.db.Converters
-import com.maxrave.data.db.datasource.LocalDataSource
-import com.maxrave.domain.data.entities.PairSongLocalPlaylist
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.utils.FilterState
-import com.maxrave.logger.Logger
+import com.sakayori.data.db.Converters
+import com.sakayori.data.db.datasource.LocalDataSource
+import com.sakayori.domain.data.entities.PairSongLocalPlaylist
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.utils.FilterState
+import com.sakayori.logger.Logger
 
 internal class LocalPlaylistPagingSource(
     private val playlistId: Long,

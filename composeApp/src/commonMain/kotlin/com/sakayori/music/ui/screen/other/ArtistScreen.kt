@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.other
+package com.sakayori.music.ui.screen.other
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -50,57 +50,57 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.maxrave.common.Config
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.home.Content
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.utils.toSongEntity
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.simpmusic.expect.ui.MediaPlayerView
-import com.maxrave.simpmusic.extension.getStringBlocking
-import com.maxrave.simpmusic.extension.rgbFactor
-import com.maxrave.simpmusic.ui.component.CenterLoadingBox
-import com.maxrave.simpmusic.ui.component.CollapsingToolbarParallaxEffect
-import com.maxrave.simpmusic.ui.component.DescriptionView
-import com.maxrave.simpmusic.ui.component.EndOfPage
-import com.maxrave.simpmusic.ui.component.HomeItemArtist
-import com.maxrave.simpmusic.ui.component.HomeItemContentPlaylist
-import com.maxrave.simpmusic.ui.component.HomeItemVideo
-import com.maxrave.simpmusic.ui.component.LimitedBorderAnimationView
-import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
-import com.maxrave.simpmusic.ui.component.SongFullWidthItems
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.MoreAlbumsDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
-import com.maxrave.simpmusic.ui.theme.md_theme_dark_background
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.ArtistScreenState
-import com.maxrave.simpmusic.viewModel.ArtistViewModel
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.common.Config
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.home.Content
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.utils.toSongEntity
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.music.expect.ui.MediaPlayerView
+import com.sakayori.music.extension.getStringBlocking
+import com.sakayori.music.extension.rgbFactor
+import com.sakayori.music.ui.component.CenterLoadingBox
+import com.sakayori.music.ui.component.CollapsingToolbarParallaxEffect
+import com.sakayori.music.ui.component.DescriptionView
+import com.sakayori.music.ui.component.EndOfPage
+import com.sakayori.music.ui.component.HomeItemArtist
+import com.sakayori.music.ui.component.HomeItemContentPlaylist
+import com.sakayori.music.ui.component.HomeItemVideo
+import com.sakayori.music.ui.component.LimitedBorderAnimationView
+import com.sakayori.music.ui.component.NowPlayingBottomSheet
+import com.sakayori.music.ui.component.SongFullWidthItems
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.navigation.destination.list.MoreAlbumsDestination
+import com.sakayori.music.ui.navigation.destination.list.PlaylistDestination
+import com.sakayori.music.ui.theme.md_theme_dark_background
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.ArtistScreenState
+import com.sakayori.music.viewModel.ArtistViewModel
+import com.sakayori.music.viewModel.SharedViewModel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.albums
-import simpmusic.composeapp.generated.resources.description
-import simpmusic.composeapp.generated.resources.error
-import simpmusic.composeapp.generated.resources.featured_inArtist
-import simpmusic.composeapp.generated.resources.follow
-import simpmusic.composeapp.generated.resources.followed
-import simpmusic.composeapp.generated.resources.more
-import simpmusic.composeapp.generated.resources.no_description
-import simpmusic.composeapp.generated.resources.popular
-import simpmusic.composeapp.generated.resources.related_artists
-import simpmusic.composeapp.generated.resources.singles
-import simpmusic.composeapp.generated.resources.start_radio
-import simpmusic.composeapp.generated.resources.unknown
-import simpmusic.composeapp.generated.resources.videos
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.albums
+import com.sakayori.music.generated.resources.description
+import com.sakayori.music.generated.resources.error
+import com.sakayori.music.generated.resources.featured_inArtist
+import com.sakayori.music.generated.resources.follow
+import com.sakayori.music.generated.resources.followed
+import com.sakayori.music.generated.resources.more
+import com.sakayori.music.generated.resources.no_description
+import com.sakayori.music.generated.resources.popular
+import com.sakayori.music.generated.resources.related_artists
+import com.sakayori.music.generated.resources.singles
+import com.sakayori.music.generated.resources.start_radio
+import com.sakayori.music.generated.resources.unknown
+import com.sakayori.music.generated.resources.videos
 
 @Composable
 @ExperimentalMaterial3Api
@@ -761,3 +761,4 @@ fun ArtistScreen(
         }
     }
 }
+

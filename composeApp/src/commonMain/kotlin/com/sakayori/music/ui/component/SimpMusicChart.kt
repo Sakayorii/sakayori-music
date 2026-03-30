@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun SimpMusicChartButton(
+fun SakayoriMusicChartButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -56,13 +56,13 @@ fun SimpMusicChartButton(
 
 @Preview
 @Composable
-fun PreviewSimpMusicChartButton() {
+fun PreviewSakayoriMusicChartButton() {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        SimpMusicChartButton(onClick = {})
+        SakayoriMusicChartButton(onClick = {})
     }
 }

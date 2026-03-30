@@ -1,20 +1,20 @@
-package com.maxrave.kotlinytmusicscraper.pages
+package com.sakayori.kotlinytmusicscraper.pages
 
-import com.maxrave.kotlinytmusicscraper.models.Album
-import com.maxrave.kotlinytmusicscraper.models.AlbumItem
-import com.maxrave.kotlinytmusicscraper.models.Artist
-import com.maxrave.kotlinytmusicscraper.models.ArtistItem
-import com.maxrave.kotlinytmusicscraper.models.BrowseEndpoint
-import com.maxrave.kotlinytmusicscraper.models.MusicCarouselShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.models.SectionListRenderer
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.VideoItem
-import com.maxrave.kotlinytmusicscraper.models.YTItem
-import com.maxrave.kotlinytmusicscraper.models.oddElements
+import com.sakayori.kotlinytmusicscraper.models.Album
+import com.sakayori.kotlinytmusicscraper.models.AlbumItem
+import com.sakayori.kotlinytmusicscraper.models.Artist
+import com.sakayori.kotlinytmusicscraper.models.ArtistItem
+import com.sakayori.kotlinytmusicscraper.models.BrowseEndpoint
+import com.sakayori.kotlinytmusicscraper.models.MusicCarouselShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.models.SectionListRenderer
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.VideoItem
+import com.sakayori.kotlinytmusicscraper.models.YTItem
+import com.sakayori.kotlinytmusicscraper.models.oddElements
 
 data class ArtistSection(
     val title: String,

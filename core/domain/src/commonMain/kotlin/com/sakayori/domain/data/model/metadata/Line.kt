@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.metadata
+package com.sakayori.domain.data.model.metadata
 
 import kotlinx.serialization.Serializable
 

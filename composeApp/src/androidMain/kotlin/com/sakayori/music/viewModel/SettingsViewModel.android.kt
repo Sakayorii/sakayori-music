@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import android.app.usage.StorageStatsManager
 import android.content.Context
@@ -11,19 +11,19 @@ import androidx.core.os.LocaleListCompat
 import coil3.imageLoader
 import com.eygraber.uri.Uri
 import com.eygraber.uri.toAndroidUri
-import com.maxrave.common.Config
-import com.maxrave.common.DB_NAME
-import com.maxrave.common.DOWNLOAD_EXOPLAYER_FOLDER
-import com.maxrave.common.EXOPLAYER_DB_NAME
-import com.maxrave.common.SETTINGS_FILENAME
-import com.maxrave.domain.repository.CacheRepository
-import com.maxrave.domain.repository.CommonRepository
-import com.maxrave.logger.Logger
-import com.maxrave.media3.di.stopService
-import com.maxrave.simpmusic.extension.bytesToMB
-import com.maxrave.simpmusic.extension.getSizeOfFile
-import com.maxrave.simpmusic.extension.zipInputStream
-import com.maxrave.simpmusic.extension.zipOutputStream
+import com.sakayori.common.Config
+import com.sakayori.common.DB_NAME
+import com.sakayori.common.DOWNLOAD_EXOPLAYER_FOLDER
+import com.sakayori.common.EXOPLAYER_DB_NAME
+import com.sakayori.common.SETTINGS_FILENAME
+import com.sakayori.domain.repository.CacheRepository
+import com.sakayori.domain.repository.CommonRepository
+import com.sakayori.logger.Logger
+import com.sakayori.media3.di.stopService
+import com.sakayori.music.extension.bytesToMB
+import com.sakayori.music.extension.getSizeOfFile
+import com.sakayori.music.extension.zipInputStream
+import com.sakayori.music.extension.zipOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -31,8 +31,8 @@ import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
 import org.jetbrains.compose.resources.getString
 import org.koin.mp.KoinPlatform.getKoin
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.restore_success
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.restore_success
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -54,13 +54,13 @@ actual suspend fun calculateDataFraction(cacheRepository: CacheRepository): Sett
             val freeSpace =
                 mStorageStatsManager.getFreeBytes(StorageManager.UUID_DEFAULT).bytesToMB()
             val usedSpace = totalByte - freeSpace
-            val simpMusicSize = getSizeOfFile(application.filesDir).bytesToMB()
+            val SakayoriMusicSize = getSizeOfFile(application.filesDir).bytesToMB()
             val thumbSize = (application.imageLoader.diskCache?.size ?: 0L).bytesToMB()
-            val otherApp = simpMusicSize.let { usedSpace.minus(it) - thumbSize }
+            val otherApp = SakayoriMusicSize.let { usedSpace.minus(it) - thumbSize }
             val databaseSize =
-                simpMusicSize - playerCache.bytesToMB() - downloadCache.bytesToMB() - canvasCache.bytesToMB()
+                SakayoriMusicSize - playerCache.bytesToMB() - downloadCache.bytesToMB() - canvasCache.bytesToMB()
             if (totalByte ==
-                freeSpace + otherApp + simpMusicSize + thumbSize
+                freeSpace + otherApp + SakayoriMusicSize + thumbSize
             ) {
                 SettingsStorageSectionFraction(
                     otherApp = otherApp.toFloat().div(totalByte.toFloat()),

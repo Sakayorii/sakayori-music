@@ -5285,12 +5285,12 @@
             "artifactVersion": "6.0.1",
             "description": "FFmpeg Kit Audio for Android.",
             "scm": {
-                "connection": "scm:git@github.com:maxrave-dev/ffmpeg-kit-16KB.git",
-                "url": "https://github.com/maxrave-dev/ffmpeg-kit-16KB",
-                "developerConnection": "scm:git@github.com:maxrave-dev/ffmpeg-kit-16KB.git"
+                "connection": "scm:git@github.com.sakayori-dev/ffmpeg-kit-16KB.git",
+                "url": "https://github.com.sakayori-dev/ffmpeg-kit-16KB",
+                "developerConnection": "scm:git@github.com.sakayori-dev/ffmpeg-kit-16KB.git"
             },
             "name": "FFMPEG Android 16KB",
-            "website": "https://github.com/maxrave-dev/ffmpeg-kit-16KB",
+            "website": "https://github.com.sakayori-dev/ffmpeg-kit-16KB",
             "licenses": [
                 "c398818ee178152d6b9561ab9daa823a"
             ]
@@ -8144,7 +8144,7 @@
             ]
         },
         {
-            "uniqueId": "org.simpmusic.gemini-kotlin:openai-client",
+            "uniqueId": "org.SakayoriMusic.gemini-kotlin:openai-client",
             "funding": [
                 
             ],
@@ -8156,18 +8156,18 @@
             "artifactVersion": "4.0.2",
             "description": "Fork for Gemini",
             "scm": {
-                "connection": "scm:git:git://github.com/maxrave-dev/gemini-kotlin.git",
-                "url": "https://github.com/maxrave-dev/gemini-kotlin",
-                "developerConnection": "scm:git:ssh://github.com/maxrave-dev/gemini-kotlin.git"
+                "connection": "scm:git:git://github.com.sakayori-dev/gemini-kotlin.git",
+                "url": "https://github.com.sakayori-dev/gemini-kotlin",
+                "developerConnection": "scm:git:ssh://github.com.sakayori-dev/gemini-kotlin.git"
             },
             "name": "OpenAI API Kotlin Client",
-            "website": "https://github.com/maxrave-dev/gemini-kotlin",
+            "website": "https://github.com.sakayori-dev/gemini-kotlin",
             "licenses": [
                 "MIT"
             ]
         },
         {
-            "uniqueId": "org.simpmusic.gemini-kotlin:openai-core",
+            "uniqueId": "org.SakayoriMusic.gemini-kotlin:openai-core",
             "funding": [
                 
             ],
@@ -8179,12 +8179,12 @@
             "artifactVersion": "4.0.2",
             "description": "Fork for Gemini",
             "scm": {
-                "connection": "scm:git:git://github.com/maxrave-dev/gemini-kotlin.git",
-                "url": "https://github.com/maxrave-dev/gemini-kotlin",
-                "developerConnection": "scm:git:ssh://github.com/maxrave-dev/gemini-kotlin.git"
+                "connection": "scm:git:git://github.com.sakayori-dev/gemini-kotlin.git",
+                "url": "https://github.com.sakayori-dev/gemini-kotlin",
+                "developerConnection": "scm:git:ssh://github.com.sakayori-dev/gemini-kotlin.git"
             },
             "name": "OpenAI API Kotlin Client Core",
-            "website": "https://github.com/maxrave-dev/gemini-kotlin",
+            "website": "https://github.com.sakayori-dev/gemini-kotlin",
             "licenses": [
                 "MIT"
             ]

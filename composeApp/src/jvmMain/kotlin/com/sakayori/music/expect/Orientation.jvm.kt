@@ -1,3 +1,3 @@
-package com.maxrave.simpmusic.expect
+package com.sakayori.music.expect
 
 actual fun currentOrientation(): Orientation = Orientation.LANDSCAPE

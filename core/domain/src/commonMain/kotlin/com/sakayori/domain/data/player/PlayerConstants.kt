@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.player
+package com.sakayori.domain.data.player
 
 /**
  * Player constants to avoid Media3 dependencies

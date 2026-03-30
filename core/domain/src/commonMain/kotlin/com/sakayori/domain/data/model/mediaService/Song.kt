@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.mediaService
+package com.sakayori.domain.data.model.mediaService
 
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class Song(
     val title: String?,

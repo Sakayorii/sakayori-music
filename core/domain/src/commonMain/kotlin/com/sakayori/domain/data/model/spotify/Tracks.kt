@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.spotify
+package com.sakayori.domain.data.model.spotify
 
 data class Tracks(
     val href: String?,

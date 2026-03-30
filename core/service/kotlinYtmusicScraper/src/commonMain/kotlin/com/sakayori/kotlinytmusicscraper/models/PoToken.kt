@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
 class PoToken(
     val playerRequestPoToken: String,

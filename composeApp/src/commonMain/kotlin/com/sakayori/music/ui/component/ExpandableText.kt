@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 
 import androidx.compose.animation.animateContentSize
@@ -23,9 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.less
-import simpmusic.composeapp.generated.resources.more
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.less
+import com.sakayori.music.generated.resources.more
 
 @Composable
 fun ExpandableText(

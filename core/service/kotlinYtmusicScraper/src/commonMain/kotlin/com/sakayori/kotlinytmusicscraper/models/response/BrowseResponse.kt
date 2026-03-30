@@ -1,18 +1,18 @@
-package com.maxrave.kotlinytmusicscraper.models.response
+package com.sakayori.kotlinytmusicscraper.models.response
 
-import com.maxrave.kotlinytmusicscraper.models.Button
-import com.maxrave.kotlinytmusicscraper.models.Continuation
-import com.maxrave.kotlinytmusicscraper.models.Menu
-import com.maxrave.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.ResponseContext
-import com.maxrave.kotlinytmusicscraper.models.Runs
-import com.maxrave.kotlinytmusicscraper.models.SectionListRenderer
-import com.maxrave.kotlinytmusicscraper.models.SubscriptionButton
-import com.maxrave.kotlinytmusicscraper.models.Tabs
-import com.maxrave.kotlinytmusicscraper.models.ThumbnailRenderer
-import com.maxrave.kotlinytmusicscraper.models.youtube.data.YouTubeDataPage
+import com.sakayori.kotlinytmusicscraper.models.Button
+import com.sakayori.kotlinytmusicscraper.models.Continuation
+import com.sakayori.kotlinytmusicscraper.models.Menu
+import com.sakayori.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.ResponseContext
+import com.sakayori.kotlinytmusicscraper.models.Runs
+import com.sakayori.kotlinytmusicscraper.models.SectionListRenderer
+import com.sakayori.kotlinytmusicscraper.models.SubscriptionButton
+import com.sakayori.kotlinytmusicscraper.models.Tabs
+import com.sakayori.kotlinytmusicscraper.models.ThumbnailRenderer
+import com.sakayori.kotlinytmusicscraper.models.youtube.data.YouTubeDataPage
 import kotlinx.serialization.Serializable
 
 @Serializable

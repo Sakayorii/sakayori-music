@@ -1,27 +1,27 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.data.mapping.toYouTubeWatchEndpoint
-import com.maxrave.domain.data.model.browse.artist.Albums
-import com.maxrave.domain.data.model.browse.artist.ArtistBrowse
-import com.maxrave.domain.data.model.browse.artist.Related
-import com.maxrave.domain.data.model.browse.artist.ResultAlbum
-import com.maxrave.domain.data.model.browse.artist.ResultPlaylist
-import com.maxrave.domain.data.model.browse.artist.ResultRelated
-import com.maxrave.domain.data.model.browse.artist.ResultSingle
-import com.maxrave.domain.data.model.browse.artist.ResultSong
-import com.maxrave.domain.data.model.browse.artist.ResultVideo
-import com.maxrave.domain.data.model.browse.artist.Singles
-import com.maxrave.domain.data.model.browse.artist.Songs
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.kotlinytmusicscraper.models.AlbumItem
-import com.maxrave.kotlinytmusicscraper.models.ArtistItem
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.VideoItem
-import com.maxrave.kotlinytmusicscraper.pages.ArtistPage
-import com.maxrave.logger.Logger
+import com.sakayori.data.mapping.toYouTubeWatchEndpoint
+import com.sakayori.domain.data.model.browse.artist.Albums
+import com.sakayori.domain.data.model.browse.artist.ArtistBrowse
+import com.sakayori.domain.data.model.browse.artist.Related
+import com.sakayori.domain.data.model.browse.artist.ResultAlbum
+import com.sakayori.domain.data.model.browse.artist.ResultPlaylist
+import com.sakayori.domain.data.model.browse.artist.ResultRelated
+import com.sakayori.domain.data.model.browse.artist.ResultSingle
+import com.sakayori.domain.data.model.browse.artist.ResultSong
+import com.sakayori.domain.data.model.browse.artist.ResultVideo
+import com.sakayori.domain.data.model.browse.artist.Singles
+import com.sakayori.domain.data.model.browse.artist.Songs
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.kotlinytmusicscraper.models.AlbumItem
+import com.sakayori.kotlinytmusicscraper.models.ArtistItem
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.VideoItem
+import com.sakayori.kotlinytmusicscraper.pages.ArtistPage
+import com.sakayori.logger.Logger
 
 internal fun parseArtistData(data: ArtistPage): ArtistBrowse {
     for (i in data.sections) {

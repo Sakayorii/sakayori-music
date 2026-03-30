@@ -1,9 +1,9 @@
-package com.maxrave.domain.data.model.browse.album
+package com.sakayori.domain.data.model.browse.album
 
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.FeedbackTokens
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.FeedbackTokens
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 import kotlinx.serialization.Serializable
 
 @Serializable

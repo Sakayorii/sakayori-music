@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
@@ -34,7 +34,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.maxrave.simpmusic.ui.theme.md_theme_dark_background
+import com.sakayori.music.ui.theme.md_theme_dark_background
 import kotlinx.coroutines.delay
 
 /**

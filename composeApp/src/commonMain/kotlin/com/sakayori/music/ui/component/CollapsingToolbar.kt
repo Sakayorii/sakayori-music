@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 
 import androidx.compose.animation.AnimatedVisibility
@@ -68,16 +68,16 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.toBitmap
 import com.kmpalette.rememberPaletteState
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.extension.getColorFromPalette
-import com.maxrave.simpmusic.extension.getScreenSizeInfo
-import com.maxrave.simpmusic.extension.rgbFactor
-import com.maxrave.simpmusic.ui.theme.md_theme_dark_background
+import com.sakayori.logger.Logger
+import com.sakayori.music.extension.getColorFromPalette
+import com.sakayori.music.extension.getScreenSizeInfo
+import com.sakayori.music.extension.rgbFactor
+import com.sakayori.music.ui.theme.md_theme_dark_background
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.painterResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.holder_video
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.holder_video
 
 private val paddingMedium = 0.dp
 
@@ -461,3 +461,4 @@ private fun Title(
                 },
     )
 }
+

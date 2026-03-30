@@ -1,10 +1,10 @@
-package com.maxrave.kotlinytmusicscraper.pages
+package com.sakayori.kotlinytmusicscraper.pages
 
-import com.maxrave.kotlinytmusicscraper.models.AlbumItem
-import com.maxrave.kotlinytmusicscraper.models.Artist
-import com.maxrave.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.oddElements
-import com.maxrave.kotlinytmusicscraper.models.splitBySeparator
+import com.sakayori.kotlinytmusicscraper.models.AlbumItem
+import com.sakayori.kotlinytmusicscraper.models.Artist
+import com.sakayori.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.oddElements
+import com.sakayori.kotlinytmusicscraper.models.splitBySeparator
 
 object NewReleaseAlbumPage {
     fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): AlbumItem? {

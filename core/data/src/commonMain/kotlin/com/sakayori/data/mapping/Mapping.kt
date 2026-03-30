@@ -1,39 +1,39 @@
-package com.maxrave.data.mapping
+package com.sakayori.data.mapping
 
-import com.maxrave.data.parser.toListThumbnail
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.canvas.CanvasResult
-import com.maxrave.domain.data.model.mediaService.SponsorSkipSegments
-import com.maxrave.domain.data.model.metadata.Line
-import com.maxrave.domain.data.model.metadata.Lyrics
-import com.maxrave.domain.data.model.searchResult.albums.AlbumsResult
-import com.maxrave.domain.data.model.searchResult.artists.ArtistsResult
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.SongsResult
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.model.searchResult.videos.VideosResult
-import com.maxrave.domain.data.model.streams.YouTubeWatchEndpoint
-import com.maxrave.kotlinytmusicscraper.models.AccountInfo
-import com.maxrave.kotlinytmusicscraper.models.AlbumItem
-import com.maxrave.kotlinytmusicscraper.models.ArtistItem
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.models.SearchSuggestions
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.VideoItem
-import com.maxrave.kotlinytmusicscraper.models.WatchEndpoint
-import com.maxrave.kotlinytmusicscraper.models.response.PipedResponse
-import com.maxrave.kotlinytmusicscraper.models.sponsorblock.SkipSegments
-import com.maxrave.kotlinytmusicscraper.models.youtube.Transcript
-import com.maxrave.kotlinytmusicscraper.models.youtube.YouTubeInitialPage
-import com.maxrave.spotify.model.response.spotify.CanvasResponse
-import com.maxrave.spotify.model.response.spotify.SpotifyLyricsResponse
-import org.simpmusic.lyrics.models.response.LyricsResponse
-import org.simpmusic.lyrics.models.response.TranslatedLyricsResponse
-import org.simpmusic.lyrics.parser.parseRichSyncLyrics
-import org.simpmusic.lyrics.parser.parseSyncedLyrics
-import org.simpmusic.lyrics.parser.parseUnsyncedLyrics
+import com.sakayori.data.parser.toListThumbnail
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.canvas.CanvasResult
+import com.sakayori.domain.data.model.mediaService.SponsorSkipSegments
+import com.sakayori.domain.data.model.metadata.Line
+import com.sakayori.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.searchResult.albums.AlbumsResult
+import com.sakayori.domain.data.model.searchResult.artists.ArtistsResult
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.SongsResult
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.videos.VideosResult
+import com.sakayori.domain.data.model.streams.YouTubeWatchEndpoint
+import com.sakayori.kotlinytmusicscraper.models.AccountInfo
+import com.sakayori.kotlinytmusicscraper.models.AlbumItem
+import com.sakayori.kotlinytmusicscraper.models.ArtistItem
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.models.SearchSuggestions
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.VideoItem
+import com.sakayori.kotlinytmusicscraper.models.WatchEndpoint
+import com.sakayori.kotlinytmusicscraper.models.response.PipedResponse
+import com.sakayori.kotlinytmusicscraper.models.sponsorblock.SkipSegments
+import com.sakayori.kotlinytmusicscraper.models.youtube.Transcript
+import com.sakayori.kotlinytmusicscraper.models.youtube.YouTubeInitialPage
+import com.sakayori.spotify.model.response.spotify.CanvasResponse
+import com.sakayori.spotify.model.response.spotify.SpotifyLyricsResponse
+import org.SakayoriMusic.lyrics.models.response.LyricsResponse
+import org.SakayoriMusic.lyrics.models.response.TranslatedLyricsResponse
+import org.SakayoriMusic.lyrics.parser.parseRichSyncLyrics
+import org.SakayoriMusic.lyrics.parser.parseSyncedLyrics
+import org.SakayoriMusic.lyrics.parser.parseUnsyncedLyrics
 import kotlin.jvm.JvmName
 
 internal fun SongItem.toTrack(): Track =
@@ -91,13 +91,13 @@ internal fun Track.toSongItemForDownload(): SongItem =
         title = this.title,
         artists =
             this.artists?.map {
-                com.maxrave.kotlinytmusicscraper.models.Artist(
+                com.sakayori.kotlinytmusicscraper.models.Artist(
                     id = it.id ?: "",
                     name = it.name,
                 )
             } ?: emptyList(),
         album =
-            com.maxrave.kotlinytmusicscraper.models.Album(
+            com.sakayori.kotlinytmusicscraper.models.Album(
                 id = this.album?.id ?: "",
                 name = this.album?.name ?: "",
             ),
@@ -106,7 +106,7 @@ internal fun Track.toSongItemForDownload(): SongItem =
         explicit = this.isExplicit,
     )
 
-internal fun org.simpmusic.lyrics.domain.Lyrics.toLyrics(): Lyrics {
+internal fun org.SakayoriMusic.lyrics.domain.Lyrics.toLyrics(): Lyrics {
     val lines: ArrayList<Line> = arrayListOf()
     if (this.lyrics != null) {
         this.lyrics?.lines?.forEach {
@@ -133,13 +133,13 @@ internal fun org.simpmusic.lyrics.domain.Lyrics.toLyrics(): Lyrics {
     }
 }
 
-internal fun Lyrics.toLibraryLyrics(): org.simpmusic.lyrics.domain.Lyrics =
-    org.simpmusic.lyrics.domain.Lyrics(
+internal fun Lyrics.toLibraryLyrics(): org.SakayoriMusic.lyrics.domain.Lyrics =
+    org.SakayoriMusic.lyrics.domain.Lyrics(
         lyrics =
-            org.simpmusic.lyrics.domain.Lyrics.LyricsX(
+            org.SakayoriMusic.lyrics.domain.Lyrics.LyricsX(
                 lines =
                     this.lines?.map {
-                        org.simpmusic.lyrics.domain.Lyrics.LyricsX.Line(
+                        org.SakayoriMusic.lyrics.domain.Lyrics.LyricsX.Line(
                             endTimeMs = it.endTimeMs,
                             startTimeMs = it.startTimeMs,
                             syllables = listOf(),
@@ -278,7 +278,7 @@ internal fun AlbumItem.toAlbumsResult(): AlbumsResult =
         year = this.year?.toString() ?: "",
     )
 
-// SimpMusic Lyrics Extension
+// SakayoriMusic Lyrics Extension
 internal fun LyricsResponse.toLyrics(): Lyrics? =
     (
         richSyncLyrics?.takeIf { it.isNotEmpty() }?.let {
@@ -296,8 +296,8 @@ internal fun LyricsResponse.toLyrics(): Lyrics? =
 
 internal fun TranslatedLyricsResponse.toLyrics(): Lyrics = parseSyncedLyrics(this.translatedLyric).toLyrics()
 
-internal fun SearchSuggestions.toDomainSearchSuggestions(): com.maxrave.domain.data.model.searchResult.SearchSuggestions =
-    com.maxrave.domain.data.model.searchResult.SearchSuggestions(
+internal fun SearchSuggestions.toDomainSearchSuggestions(): com.sakayori.domain.data.model.searchResult.SearchSuggestions =
+    com.sakayori.domain.data.model.searchResult.SearchSuggestions(
         queries = this.queries,
         recommendedItems =
             this.recommendedItems.map {
@@ -494,8 +494,8 @@ internal fun SkipSegments.toSponsorSkipSegments(): SponsorSkipSegments =
         votes = this.votes,
     )
 
-internal fun AccountInfo.toDomainAccountInfo(): com.maxrave.domain.data.model.account.AccountInfo =
-    com.maxrave.domain.data.model.account.AccountInfo(
+internal fun AccountInfo.toDomainAccountInfo(): com.sakayori.domain.data.model.account.AccountInfo =
+    com.sakayori.domain.data.model.account.AccountInfo(
         name = this.name,
         email = this.email,
         pageId = this.pageId,

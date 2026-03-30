@@ -1,13 +1,13 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.model.browse.album.AlbumBrowse
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.browse.artist.ResultAlbum
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.kotlinytmusicscraper.pages.AlbumPage
-import com.maxrave.logger.Logger
+import com.sakayori.domain.data.model.browse.album.AlbumBrowse
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.artist.ResultAlbum
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.kotlinytmusicscraper.pages.AlbumPage
+import com.sakayori.logger.Logger
 
 internal fun parseAlbumData(data: AlbumPage): AlbumBrowse {
     val artist: ArrayList<Artist> = arrayListOf()

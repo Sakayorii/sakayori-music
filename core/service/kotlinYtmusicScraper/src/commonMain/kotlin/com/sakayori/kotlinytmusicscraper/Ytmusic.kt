@@ -1,32 +1,32 @@
-package com.maxrave.kotlinytmusicscraper
+package com.sakayori.kotlinytmusicscraper
 
-import com.maxrave.domain.extension.now
-import com.maxrave.kotlinytmusicscraper.extractor.Extractor
-import com.maxrave.kotlinytmusicscraper.models.Context
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.WatchEndpoint
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient.Companion.IOS
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient.Companion.TVHTML5
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB_REMIX
-import com.maxrave.kotlinytmusicscraper.models.YouTubeLocale
-import com.maxrave.kotlinytmusicscraper.models.body.AccountMenuBody
-import com.maxrave.kotlinytmusicscraper.models.body.BrowseBody
-import com.maxrave.kotlinytmusicscraper.models.body.CreatePlaylistBody
-import com.maxrave.kotlinytmusicscraper.models.body.EditPlaylistBody
-import com.maxrave.kotlinytmusicscraper.models.body.FormData
-import com.maxrave.kotlinytmusicscraper.models.body.GetQueueBody
-import com.maxrave.kotlinytmusicscraper.models.body.GetSearchSuggestionsBody
-import com.maxrave.kotlinytmusicscraper.models.body.LikeBody
-import com.maxrave.kotlinytmusicscraper.models.body.NextBody
-import com.maxrave.kotlinytmusicscraper.models.body.PlayerBody
-import com.maxrave.kotlinytmusicscraper.models.body.SearchBody
-import com.maxrave.kotlinytmusicscraper.models.response.DownloadProgress
-import com.maxrave.kotlinytmusicscraper.utils.parseCookieString
-import com.maxrave.kotlinytmusicscraper.utils.sha1
-import com.maxrave.ktorext.encoding.brotli
-import com.maxrave.ktorext.getEngine
-import com.maxrave.logger.Logger
+import com.sakayori.domain.extension.now
+import com.sakayori.kotlinytmusicscraper.extractor.Extractor
+import com.sakayori.kotlinytmusicscraper.models.Context
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.WatchEndpoint
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.IOS
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.TVHTML5
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB_REMIX
+import com.sakayori.kotlinytmusicscraper.models.YouTubeLocale
+import com.sakayori.kotlinytmusicscraper.models.body.AccountMenuBody
+import com.sakayori.kotlinytmusicscraper.models.body.BrowseBody
+import com.sakayori.kotlinytmusicscraper.models.body.CreatePlaylistBody
+import com.sakayori.kotlinytmusicscraper.models.body.EditPlaylistBody
+import com.sakayori.kotlinytmusicscraper.models.body.FormData
+import com.sakayori.kotlinytmusicscraper.models.body.GetQueueBody
+import com.sakayori.kotlinytmusicscraper.models.body.GetSearchSuggestionsBody
+import com.sakayori.kotlinytmusicscraper.models.body.LikeBody
+import com.sakayori.kotlinytmusicscraper.models.body.NextBody
+import com.sakayori.kotlinytmusicscraper.models.body.PlayerBody
+import com.sakayori.kotlinytmusicscraper.models.body.SearchBody
+import com.sakayori.kotlinytmusicscraper.models.response.DownloadProgress
+import com.sakayori.kotlinytmusicscraper.utils.parseCookieString
+import com.sakayori.kotlinytmusicscraper.utils.sha1
+import com.sakayori.ktorext.encoding.brotli
+import com.sakayori.ktorext.getEngine
+import com.sakayori.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.ProxyConfig
 import io.ktor.client.plugins.HttpRedirect
@@ -386,8 +386,8 @@ class Ytmusic {
         parameter("prettyPrint", false)
     }
 
-    suspend fun getSimpMusicChart() =
-        httpClient.get("https://chart.simpmusic.org/api/playlists") {
+    suspend fun getSakayoriMusicChart() =
+        httpClient.get("https://chart.SakayoriMusic.org/api/playlists") {
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
         }
@@ -542,7 +542,7 @@ class Ytmusic {
 
     /***
      * SponsorBlock testing
-     * @author maxrave-dev
+     * @author Sakayori
      */
 
     suspend fun getSkipSegments(videoId: String) =

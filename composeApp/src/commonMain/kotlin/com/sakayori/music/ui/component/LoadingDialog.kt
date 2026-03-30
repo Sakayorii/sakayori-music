@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.maxrave.simpmusic.ui.theme.typo
+import com.sakayori.music.ui.theme.typo
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.loading
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.loading
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

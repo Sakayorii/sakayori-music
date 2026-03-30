@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import android.view.ViewGroup
 import android.webkit.CookieManager

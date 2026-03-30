@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.entities.analytics.query
+package com.sakayori.domain.data.entities.analytics.query
 
 import androidx.room.ColumnInfo
 

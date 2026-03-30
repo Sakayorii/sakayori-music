@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.extension
+package com.sakayori.music.extension
 
 import android.app.Activity
 import android.content.Context
@@ -18,8 +18,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.core.app.PictureInPictureModeChangedInfo
 import androidx.core.util.Consumer
-import com.maxrave.domain.data.model.ui.ScreenSizeInfo
-import com.maxrave.logger.Logger
+import com.sakayori.domain.data.model.ui.ScreenSizeInfo
+import com.sakayori.logger.Logger
 
 fun Context.getActivityOrNull(): Activity? {
     var context = this

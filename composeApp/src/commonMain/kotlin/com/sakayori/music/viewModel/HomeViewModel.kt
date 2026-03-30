@@ -1,19 +1,19 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.SELECTED_LANGUAGE
-import com.maxrave.common.SUPPORTED_LANGUAGE
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.home.HomeDataCombine
-import com.maxrave.domain.data.model.home.HomeItem
-import com.maxrave.domain.data.model.home.chart.Chart
-import com.maxrave.domain.data.model.mood.Mood
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.manager.DataStoreManager.Values.TRUE
-import com.maxrave.domain.repository.HomeRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.SELECTED_LANGUAGE
+import com.sakayori.common.SUPPORTED_LANGUAGE
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.home.HomeDataCombine
+import com.sakayori.domain.data.model.home.HomeItem
+import com.sakayori.domain.data.model.home.chart.Chart
+import com.sakayori.domain.data.model.mood.Mood
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.manager.DataStoreManager.Values.TRUE
+import com.sakayori.domain.repository.HomeRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.logger.Logger
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,11 +28,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.music_video
-import simpmusic.composeapp.generated.resources.new_release
-import simpmusic.composeapp.generated.resources.song
-import simpmusic.composeapp.generated.resources.view_count
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.music_video
+import com.sakayori.music.generated.resources.new_release
+import com.sakayori.music.generated.resources.song
+import com.sakayori.music.generated.resources.view_count
 
 class HomeViewModel(
     private val dataStoreManager: DataStoreManager,

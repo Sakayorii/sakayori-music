@@ -1,14 +1,14 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.entities.YourYouTubePlaylistList
-import com.maxrave.domain.data.model.browse.playlist.PlaylistBrowse
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.type.ChartItem
-import com.maxrave.domain.data.type.PlaylistType
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.YourYouTubePlaylistList
+import com.sakayori.domain.data.model.browse.playlist.PlaylistBrowse
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.type.ChartItem
+import com.sakayori.domain.data.type.PlaylistType
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 

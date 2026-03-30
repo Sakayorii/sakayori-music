@@ -1,7 +1,7 @@
-package com.maxrave.kotlinytmusicscraper.extractor
+package com.sakayori.kotlinytmusicscraper.extractor
 
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.response.DownloadProgress
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.response.DownloadProgress
 
 expect class Extractor() {
     fun init()

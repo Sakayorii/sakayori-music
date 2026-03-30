@@ -1,14 +1,14 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
 import androidx.paging.PagingData
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.PairSongLocalPlaylist
-import com.maxrave.domain.data.entities.SetVideoIdEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.browse.playlist.PlaylistState
-import com.maxrave.domain.utils.FilterState
-import com.maxrave.domain.utils.LocalResource
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.PairSongLocalPlaylist
+import com.sakayori.domain.data.entities.SetVideoIdEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.playlist.PlaylistState
+import com.sakayori.domain.utils.FilterState
+import com.sakayori.domain.utils.LocalResource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 

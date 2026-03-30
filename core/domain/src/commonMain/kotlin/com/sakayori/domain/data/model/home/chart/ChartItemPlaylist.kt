@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.home.chart
+package com.sakayori.domain.data.model.home.chart
 
-import com.maxrave.domain.data.model.browse.artist.ResultPlaylist
+import com.sakayori.domain.data.model.browse.artist.ResultPlaylist
 
 data class ChartItemPlaylist(
     val title: String,

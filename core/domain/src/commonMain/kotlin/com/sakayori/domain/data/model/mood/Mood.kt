@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.mood
+package com.sakayori.domain.data.model.mood
 
 data class Mood(
     val genres: ArrayList<Genre>,

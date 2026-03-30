@@ -1,10 +1,10 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.EpisodeEntity
-import com.maxrave.domain.data.entities.PodcastWithEpisodes
-import com.maxrave.domain.data.entities.PodcastsEntity
-import com.maxrave.domain.data.model.podcast.PodcastBrowse
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.EpisodeEntity
+import com.sakayori.domain.data.entities.PodcastWithEpisodes
+import com.sakayori.domain.data.entities.PodcastsEntity
+import com.sakayori.domain.data.model.podcast.PodcastBrowse
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface PodcastRepository {

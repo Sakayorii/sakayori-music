@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.home
+package com.sakayori.domain.data.model.home
 
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class HomeItem(
     val contents: List<Content?>,
