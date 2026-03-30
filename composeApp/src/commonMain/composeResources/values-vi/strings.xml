@@ -276,7 +276,7 @@
     <string name="older_first">Cũ trước</string>
     <string name="newer_first">Mới trước</string>
     <string name="added_date">Ngày thêm vào</string>
-    <string name="credit_app">Một ứng dụng âm nhạc đơn giản sử dụng dữ liệu từ YouTube Music \n\nSakayoriMusic là một dự án nguồn mở để phát nhạc từ YouTube và YouTube Music mà không bị quảng cáo và theo dõi. SakayoriMusic cung cấp nhiều tính năng:\n\n - Phát nhạc \n - Lời bài hát được đồng bộ hóa\n - Cá nhân hóa dữ liệu\n - v.v… \n\nSakayoriMusic luôn miễn phí và không có quảng cáo\n\nXây dựng với ❤️ bởi Nguyên Đức Tuấn Minh (Sakayori)</string>
+    <string name="credit_app">Một ứng dụng âm nhạc đơn giản sử dụng dữ liệu từ YouTube Music \n\nSakayoriMusic là một dự án nguồn mở để phát nhạc từ YouTube và YouTube Music mà không bị quảng cáo và theo dõi. SakayoriMusic cung cấp nhiều tính năng:\n\n - Phát nhạc \n - Lời bài hát được đồng bộ hóa\n - Cá nhân hóa dữ liệu\n - v.v… \n\nSakayoriMusic luôn miễn phí và không có quảng cáo\n\nXây dựng với ❤️ bởi Iroha (Sakayori)</string>
     <string name="issue_tracker">Theo dõi lỗi</string>
     <string name="featured_playlists">Danh sách phát nổi bật</string>
     <string name="featured_inArtist">Nổi bật</string>
@@ -540,4 +540,6 @@
     <string name="key">Khóa</string>
     <string name="scale">Thang</string>
 </resources>
+
+
 

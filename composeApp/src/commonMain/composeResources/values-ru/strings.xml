@@ -275,7 +275,7 @@
     <string name="older_first">Сначала старые</string>
     <string name="newer_first">Сначала новые</string>
     <string name="added_date">Дата добавления</string>
-    <string name="credit_app">Простое музыкальное приложение, использующее YouTube Music в качестве серверной части. \n\nSakayoriMusic — это проект с открытым исходным кодом для потоковой передачи музыки с YouTube и YouTube Music без рекламы и отслеживания. SakayoriMusic предоставляет множество функций:\n\n - Потоковое воспроизведение музыки \n - Синхронизированные тексты песен\n - Персонализация данных\n - и т. д. \n\nSakayoriMusic бесплатен и без рекламы\n\nСоздал с ❤️ Туан Минь Нгуен Дык (Sakayori)</string>
+    <string name="credit_app">Простое музыкальное приложение, использующее YouTube Music в качестве серверной части. \n\nSakayoriMusic — это проект с открытым исходным кодом для потоковой передачи музыки с YouTube и YouTube Music без рекламы и отслеживания. SakayoriMusic предоставляет множество функций:\n\n - Потоковое воспроизведение музыки \n - Синхронизированные тексты песен\n - Персонализация данных\n - и т. д. \n\nSakayoriMusic бесплатен и без рекламы\n\nСоздал с ❤️ Iroha (Sakayori)</string>
     <string name="issue_tracker">Трекер проблем</string>
     <string name="featured_playlists">Избранные плейлисты</string>
     <string name="featured_inArtist">Где встречается</string>
@@ -535,4 +535,7 @@
     <string name="crossfading">Кроссфейд</string>
     <string name="your_320kbps_url">Ваш URL 320 кбит/с</string>
 </resources>
+
+
+
 

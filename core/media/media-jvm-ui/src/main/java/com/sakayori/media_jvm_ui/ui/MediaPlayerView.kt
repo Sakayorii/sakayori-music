@@ -40,8 +40,8 @@ import coil3.request.crossfade
 import com.sakayori.domain.data.model.metadata.Lyrics
 import com.sakayori.domain.data.model.streams.TimeLine
 import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
-import com.SakayoriMusic.media_jvm.VlcPlayerAdapter
-import com.SakayoriMusic.media_jvm.VlcVideoSurfacePanel
+import com.sakayori.music.media_jvm.VlcPlayerAdapter
+import com.sakayori.music.media_jvm.VlcVideoSurfacePanel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing

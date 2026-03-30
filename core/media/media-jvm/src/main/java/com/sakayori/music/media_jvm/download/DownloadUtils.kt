@@ -1,4 +1,4 @@
-package com.SakayoriMusic.media_jvm.download
+package com.sakayori.music.media_jvm.download
 
 import com.sakayori.common.MERGING_DATA_TYPE
 import com.sakayori.domain.data.entities.DownloadState

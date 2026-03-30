@@ -1,4 +1,4 @@
-package com.SakayoriMusic.media_jvm
+package com.sakayori.music.media_jvm
 
 import com.sakayori.common.MERGING_DATA_TYPE
 import com.sakayori.domain.data.player.GenericMediaItem
@@ -11,7 +11,7 @@ import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
 import com.sakayori.domain.mediaservice.player.MediaPlayerListener
 import com.sakayori.domain.repository.StreamRepository
 import com.sakayori.logger.Logger
-import com.SakayoriMusic.media_jvm.download.getDownloadPath
+import com.sakayori.music.media_jvm.download.getDownloadPath
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,16 +84,20 @@ class VlcPlayerAdapter(
     private val mediaPlayerFactory: MediaPlayerFactory
 
     init {
-        System
-            .getProperty("compose.application.resources.dir")
-            ?.let { System.setProperty("jna.library.path", it) }
-        // Use custom NativeDiscoveryStrategy to find bundled VLC libraries
-        // DefaultVlcDiscoverer handles Windows/Linux, MacOsVlcDiscoverer handles macOS
-        val discovery =
-            NativeDiscovery(
-                DefaultVlcDiscoverer(),
-                MacOsVlcDiscoverer(),
-            )
+        // 1. Find bundled VLC path first
+        val foundPath = DefaultVlcDiscoverer.findBundledVlcPath()
+        if (foundPath != null) {
+            Logger.i(TAG, "Setting jna.library.path to $foundPath")
+            System.setProperty("jna.library.path", foundPath)
+        } else {
+            // Fallback to resources dir if previous discovery failed
+            System.getProperty("compose.application.resources.dir")?.let { 
+                System.setProperty("jna.library.path", it) 
+            }
+        }
+
+        // 2. Discover VLC
+        val discovery = NativeDiscovery(DefaultVlcDiscoverer(), MacOsVlcDiscoverer())
         val found = discovery.discover()
         if (!found) {
             Logger.e(TAG, "VLC native libraries not found! Please install VLC media player.")

@@ -23,7 +23,6 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import com.kdroid.composetray.tray.api.Tray
-import com.kdroid.composetray.utils.SingleInstanceManager
 import com.sakayori.data.di.loader.loadAllModules
 import com.sakayori.domain.manager.DataStoreManager
 import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
@@ -43,6 +42,7 @@ import multiplatform.network.cmptoast.ToastHost
 import multiplatform.network.cmptoast.showToast
 import okhttp3.OkHttpClient
 import okio.FileSystem
+import okio.Path.Companion.toPath
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -59,244 +59,181 @@ import com.sakayori.music.generated.resources.open_app
 import com.sakayori.music.generated.resources.open_miniplayer
 import com.sakayori.music.generated.resources.quit_app
 import com.sakayori.music.generated.resources.time_out_check_internet_connection_or_change_piped_instance_in_settings
+import java.io.File
+import kotlin.system.exitProcess
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun main(args: Array<String>) {
-    // Install crash dialog handler first — catches all uncaught exceptions
-    CrashDialog.install()
+    try {
+        println("SakayoriMusic starting...")
+        
+        System.setProperty("compose.swing.render.on.graphics", "true")
+        System.setProperty("compose.interop.blending", "true")
+        System.setProperty("compose.layers.type", "COMPONENT")
 
-    System.setProperty("compose.swing.render.on.graphics", "true")
-    System.setProperty("compose.interop.blending", "true")
-    System.setProperty("compose.layers.type", "COMPONENT")
-
-    // Handle deep link URIs
-    // macOS: receives URI via Desktop open URI handler (app already running or launched via scheme)
-    // Windows/Linux: receives URI as command-line argument
-    val isMacOS = System.getProperty("os.name", "").contains("Mac", ignoreCase = true)
-    if (isMacOS && java.awt.Desktop.isDesktopSupported()) {
-        try {
-            java.awt.Desktop.getDesktop().setOpenURIHandler { event ->
-                DesktopDeepLinkHandler.onNewUri(event.uri.toString())
-            }
-        } catch (_: UnsupportedOperationException) {
-            // Shouldn't happen on macOS, but handle gracefully
+        // Set JNA library path for VLC
+        val osName = System.getProperty("os.name", "").lowercase()
+        val subDir = when {
+            osName.contains("win") -> "windows"
+            osName.contains("mac") -> "macos"
+            else -> "linux"
         }
-    }
-    // Handle URI passed as command-line argument (Windows/Linux, or explicit invocation)
-    // Note: macOS does NOT pass URI as args — it uses Apple Events via setOpenURIHandler
-    val deepLinkArg =
-        args.firstOrNull()?.takeIf { arg ->
-            arg.startsWith("sakayorimusic://") || arg.startsWith("http://") || arg.startsWith("https://")
+        
+        val packagedPath = System.getProperty("compose.application.resources.dir")
+        val appDir = System.getProperty("user.dir")
+        
+        // Cố gắng tìm libvlc.dll ở nhiều vị trí khác nhau
+        val potentialPaths = listOf(
+            File(packagedPath ?: "", subDir), // Thư mục resources/windows
+            File(appDir, "app/$subDir"),      // Thư mục app/windows
+            File(appDir, subDir),             // Thư mục windows ngay tại gốc
+            File("vlc-natives/$subDir")       // Thư mục Dev
+        )
+
+        val vlcPath = potentialPaths.firstOrNull { it.exists() && it.isDirectory }?.absolutePath
+        
+        if (vlcPath != null) {
+            println("VLC natives found at: $vlcPath")
+            System.setProperty("jna.library.path", vlcPath)
+        } else {
+            println("WARNING: VLC native libraries not found in any of: ${potentialPaths.joinToString { it.absolutePath }}")
         }
-    if (!isMacOS) {
-        deepLinkArg?.let { DesktopDeepLinkHandler.onNewUri(it) }
-    }
 
-    // Initialize Koin ONCE before application starts
-    startKoin {
-        loadAllModules()
-        loadKoinModules(viewModelModule)
-    }
+        startKoin {
+            loadKoinModules(listOf(viewModelModule))
+            loadAllModules()
+        }
 
-    val language =
-        runBlocking {
+        val language = runBlocking {
             getKoin()
                 .get<DataStoreManager>()
                 .language
                 .first()
                 .substring(0..1)
         }
-    changeLanguageNative(language)
+        changeLanguageNative(language)
 
-    VersionManager.initialize()
-    if (BuildKonfig.sentryDsn.isNotEmpty()) {
-        Sentry.init { options ->
-            options.dsn = BuildKonfig.sentryDsn
-            options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"
-            options.setDiagnosticLevel(SentryLevel.ERROR)
+        VersionManager.initialize()
+        if (BuildKonfig.sentryDsn.isNotEmpty()) {
+            Sentry.init { options ->
+                options.dsn = BuildKonfig.sentryDsn
+                options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"
+                options.setDiagnosticLevel(SentryLevel.ERROR)
+            }
         }
-    }
 
-    val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
-    mediaPlayerHandler.showToast = { type ->
-        showToast(
-            when (type) {
-                ToastType.ExplicitContent -> {
-                    runBlocking { getString(Res.string.explicit_content_blocked) }
+        val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
+        mediaPlayerHandler.showToast = { type ->
+            showToast(
+                when (type) {
+                    ToastType.ExplicitContent -> {
+                        runBlocking { getString(Res.string.explicit_content_blocked) }
+                    }
+                    is ToastType.PlayerError -> {
+                        runBlocking { getString(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error) }
+                    }
                 }
-
-                is ToastType.PlayerError -> {
-                    runBlocking { getString(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error) }
-                }
-            },
-        )
-    }
-    mediaPlayerHandler.pushPlayerError = { error ->
-        Sentry.withScope { scope ->
-            Sentry.captureMessage("Player Error: ${error.message}, code: ${error.errorCode}, code name: ${error.errorCodeName}")
+            )
         }
-    }
 
-    // Register SakayoriMusic:// protocol handler on Windows (HKCU, no admin needed)
-    WindowsProtocolRegistrar.register()
-
-    val sharedViewModel = getKoin().get<SharedViewModel>()
-    if (sharedViewModel.shouldCheckForUpdate()) {
-        sharedViewModel.checkForUpdate()
-    }
-
-    // Connect deep link handler to SharedViewModel
-    DesktopDeepLinkHandler.listener = { intent ->
-        sharedViewModel.setIntent(intent)
-    }
-
-    application {
-        // Main Window
-        val windowState =
-            rememberWindowState(
+        application {
+            val windowState = rememberWindowState(
                 size = DpSize(1500.dp, 860.dp),
             )
-        var isVisible by remember { mutableStateOf(true) }
-        // Single management
-        val isSingleInstance =
-            SingleInstanceManager.isSingleInstance(
-                onRestoreRequest = {
-                    isVisible = true
-                    windowState.isMinimized = false
-                    // Check if a second instance left a deep link URI for us
-                    DesktopDeepLinkHandler.consumePendingUri()
-                },
-            )
+            var isVisible by remember { mutableStateOf(true) }
 
-        if (!isSingleInstance) {
-            // If launched with a deep link URI, write it for the running instance to pick up
-            deepLinkArg?.let { DesktopDeepLinkHandler.writePendingUri(it) }
-            exitApplication()
-            return@application
-        }
-        val openAppString = stringResource(Res.string.open_app)
-        val quitAppString = stringResource(Res.string.quit_app)
-        val openMiniPlayer = stringResource(Res.string.open_miniplayer)
-        val closeMiniPlayer = stringResource(Res.string.close_miniplayer)
-        Tray(
-            icon = painterResource(Res.drawable.circle_app_icon),
-            tooltip = stringResource(Res.string.app_name),
-            primaryAction = {
-                isVisible = true
-                windowState.isMinimized = false
-            },
-        ) {
-            if (!isVisible) {
-                Item(openAppString) {
+            val openAppString = stringResource(Res.string.open_app)
+            val quitAppString = stringResource(Res.string.quit_app)
+            val openMiniPlayer = stringResource(Res.string.open_miniplayer)
+            val closeMiniPlayer = stringResource(Res.string.close_miniplayer)
+
+            Tray(
+                icon = painterResource(Res.drawable.circle_app_icon),
+                tooltip = stringResource(Res.string.app_name),
+                primaryAction = {
                     isVisible = true
                     windowState.isMinimized = false
-                }
-            }
-            if (MiniPlayerManager.isOpen) {
-                Item(closeMiniPlayer) {
-                    MiniPlayerManager.isOpen = false
-                }
-            } else {
-                Item(openMiniPlayer) {
-                    MiniPlayerManager.isOpen = true
-                }
-            }
-            Divider()
-            Item(quitAppString) {
-                mediaPlayerHandler.release()
-                exitApplication()
-            }
-        }
-        // Detect virtual machines (Parallels, VirtualBox, VMware, etc.)
-        // Transparent windows don't render properly on VM GPU drivers
-        val isVM =
-            remember {
-                val model = System.getProperty("os.name", "")
-                val vendor =
-                    try {
-                        val process =
-                            ProcessBuilder("wmic", "computersystem", "get", "model")
-                                .redirectErrorStream(true)
-                                .start()
-                        process.inputStream.bufferedReader().readText()
-                    } catch (_: Exception) {
-                        ""
-                    }
-                vendor.contains("Parallels", ignoreCase = true) ||
-                    vendor.contains("VirtualBox", ignoreCase = true) ||
-                    vendor.contains("VMware", ignoreCase = true) ||
-                    System.getProperty("compose.window.no-transparent", "false").toBooleanStrictOrNull() == true
-            }
-        Window(
-            onCloseRequest = {
-                isVisible = false
-            },
-            title = stringResource(Res.string.app_name),
-            icon = painterResource(Res.drawable.circle_app_icon),
-            undecorated = !isVM,
-            transparent = !isVM,
-            state = windowState,
-            visible = isVisible,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .then(
-                            if (!isVM) {
-                                Modifier.clip(RoundedCornerShape(12.dp))
-                            } else {
-                                Modifier
-                            },
-                        ),
+                },
             ) {
-                if (!isVM) {
+                if (!isVisible) {
+                    Item(openAppString) {
+                        isVisible = true
+                        windowState.isMinimized = false
+                    }
+                }
+                if (MiniPlayerManager.isOpen) {
+                    Item(closeMiniPlayer) {
+                        MiniPlayerManager.isOpen = false
+                    }
+                } else {
+                    Item(openMiniPlayer) {
+                        MiniPlayerManager.isOpen = true
+                    }
+                }
+                Divider()
+                Item(quitAppString) {
+                    mediaPlayerHandler.release()
+                    exitApplication()
+                }
+            }
+
+            Window(
+                onCloseRequest = { isVisible = false },
+                title = stringResource(Res.string.app_name),
+                icon = painterResource(Res.drawable.circle_app_icon),
+                undecorated = false,
+                transparent = false,
+                state = windowState,
+                visible = isVisible,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
                     CustomTitleBar(
                         title = stringResource(Res.string.app_name),
                         windowState = windowState,
                         window = window,
-                        onCloseRequest = {
-                            isVisible = false
-                        },
+                        onCloseRequest = { isVisible = false },
                     )
-                }
 
-                val context = LocalPlatformContext.current
-                setSingletonImageLoaderFactory {
-                    ImageLoader
-                        .Builder(context)
-                        .components {
-                            add(
-                                OkHttpNetworkFetcherFactory(
-                                    callFactory = {
-                                        OkHttpClient()
-                                    },
-                                ),
-                            )
-                        }.diskCachePolicy(CachePolicy.ENABLED)
-                        .networkCachePolicy(CachePolicy.ENABLED)
-                        .diskCache(
-                            DiskCache
-                                .Builder()
-                                .directory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "image_cache")
-                                .maxSizeBytes(512L * 1024 * 1024)
-                                .build(),
-                        ).crossfade(true)
-                        .build()
+                    val context = LocalPlatformContext.current
+                    setSingletonImageLoaderFactory {
+                        ImageLoader.Builder(context)
+                            .components {
+                                add(OkHttpNetworkFetcherFactory(callFactory = { OkHttpClient() }))
+                            }
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .networkCachePolicy(CachePolicy.ENABLED)
+                            .diskCache {
+                                DiskCache.Builder()
+                                    .directory(System.getProperty("java.io.tmpdir").toPath() / "image_cache")
+                                    .maxSizeBytes(512L * 1024 * 1024)
+                                    .build()
+                            }
+                            .crossfade(true)
+                            .build()
+                    }
+                    App()
+                    ToastHost()
                 }
-                App()
-                ToastHost()
+            }
+
+            if (MiniPlayerManager.isOpen) {
+                val sharedViewModel = getKoin().get<SharedViewModel>()
+                MiniPlayerWindow(
+                    sharedViewModel = sharedViewModel,
+                    onCloseRequest = { MiniPlayerManager.isOpen = false },
+                )
             }
         }
-
-        // Mini Player Window (separate window)
-        if (MiniPlayerManager.isOpen) {
-            MiniPlayerWindow(
-                sharedViewModel = sharedViewModel,
-                onCloseRequest = {
-                    MiniPlayerManager.isOpen = false
-                },
-            )
-        }
+    } catch (e: Exception) {
+        println("FATAL ERROR: ${e.message}")
+        e.printStackTrace()
+        exitProcess(1)
+    } catch (e: Error) {
+        println("FATAL ERROR (Native): ${e.message}")
+        e.printStackTrace()
+        exitProcess(1)
     }
 }

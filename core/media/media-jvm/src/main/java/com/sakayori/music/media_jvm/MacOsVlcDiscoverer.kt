@@ -1,4 +1,4 @@
-package com.SakayoriMusic.media_jvm
+package com.sakayori.music.media_jvm
 
 import com.sakayori.logger.Logger
 import com.sun.jna.NativeLibrary

@@ -1,8 +1,9 @@
-package com.SakayoriMusic.media_jvm
+package com.sakayori.music.media_jvm
 
 import com.sakayori.logger.Logger
 import uk.co.caprica.vlcj.factory.discovery.strategy.NativeDiscoveryStrategy
 import java.io.File
+import java.net.URISyntaxException
 
 /**
  * Custom NativeDiscoveryStrategy for Windows and Linux.
@@ -62,7 +63,28 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
                 }
             }
 
-            // 3. Fallback: relative to working directory
+            // 3. Search relative to the JAR location (important for packaged apps)
+            try {
+                val jarFile = File(DefaultVlcDiscoverer::class.java.protectionDomain.codeSource.location.toURI())
+                val jarDir = jarFile.parentFile
+                if (jarDir != null && jarDir.isDirectory) {
+                    // Check app/windows (standard jpackage layout) or just windows/
+                    val appDir = jarDir.parentFile
+                    if (appDir != null) {
+                        val foundInAppWin = findVlcInDirectory(File(appDir, "windows"))
+                        if (foundInAppWin != null) return foundInAppWin
+                    }
+                    val foundInJarDirWin = findVlcInDirectory(File(jarDir, "windows"))
+                    if (foundInJarDirWin != null) return foundInJarDirWin
+                    
+                    val foundInJarDir = findVlcInDirectory(jarDir)
+                    if (foundInJarDir != null) return foundInJarDir
+                }
+            } catch (e: URISyntaxException) {
+                Logger.e(TAG, "Failed to get JAR location: ${e.message}")
+            }
+
+            // 4. Fallback: relative to working directory
             val osName = System.getProperty("os.name", "").lowercase()
             val subDir = when {
                 osName.contains("win") -> "windows"

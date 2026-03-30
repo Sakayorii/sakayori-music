@@ -187,6 +187,8 @@ compose.resources {
     packageOfResClass = "com.sakayori.music.generated.resources"
 }
 
+layout.buildDirectory.set(project.file("C:/SakayoriMusic"))
+
 compose.desktop {
     application {
         mainClass = "com.sakayori.music.MainKt"
@@ -204,6 +206,7 @@ compose.desktop {
             targetFormats(*listTarget.toTypedArray())
             modules("jdk.unsupported")
             packageName = "SakayoriMusic"
+            vendor = "Iroha"
             macOS {
                 val formatedDate =
                     Instant.now().let {
@@ -251,6 +254,11 @@ compose.desktop {
                         .get()
                         .removeSuffix("-hf")
                 iconFile.set(project.file("icon/circle_app_icon.ico"))
+                shortcut = true
+                menu = true
+                menuGroup = "SakayoriMusic"
+                console = true
+                dirChooser = true
             }
             linux {
                 includeAllModules = true

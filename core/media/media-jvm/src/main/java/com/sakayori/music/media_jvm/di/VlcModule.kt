@@ -1,11 +1,11 @@
-package com.SakayoriMusic.media_jvm.di
+package com.sakayori.music.media_jvm.di
 
 import com.sakayori.common.Config.SERVICE_SCOPE
 import com.sakayori.domain.mediaservice.handler.DownloadHandler
 import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
 import com.sakayori.domain.repository.CacheRepository
-import com.SakayoriMusic.media_jvm.VlcPlayerAdapter
-import com.SakayoriMusic.media_jvm.download.DownloadUtils
+import com.sakayori.music.media_jvm.VlcPlayerAdapter
+import com.sakayori.music.media_jvm.download.DownloadUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher

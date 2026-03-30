@@ -456,3 +456,5 @@
     <string name="desktop_webview_description">A causa de les limitacions de Compose Multiplatform, no puc implementar WebView a l’entorn d’escriptori.\nLlegeix això per obtenir més informació sobre com iniciar sessió a l’escriptori:\n</string>
 </resources>
 
+
+

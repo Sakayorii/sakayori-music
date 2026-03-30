@@ -269,7 +269,7 @@
     <string name="older_first">由舊至新</string>
     <string name="newer_first">最新作品</string>
     <string name="added_date">已添加日期</string>
-    <string name="credit_app">SakayoriMusic是一個開放原始碼、零廣告、使用YouTube Music作為後端的簡單音樂應用程式 \n\n用於從YouTube和YouTube Music串流音樂。SakayoriMusic提供許多功能：\n\n - 串流音樂\n - 同步歌詞\n - 個人化資料\n - 等等... \n\nSakayoriMusic總是免費，無廣告\n\n由Sakayori (Sakayori) 開發 ❤️</string>
+    <string name="credit_app">SakayoriMusic是一個開放原始碼、零廣告、使用YouTube Music作為後端的簡單音樂應用程式 \n\n用於從YouTube和YouTube Music串流音樂。SakayoriMusic提供許多功能：\n\n - 串流音樂\n - 同步歌詞\n - 個人化資料\n - 等等... \n\nSakayoriMusic總是免費，無廣告\n\n由Iroha (Sakayori) 開發 ❤️</string>
     <string name="issue_tracker">回報問題</string>
     <string name="featured_playlists">精選播放清單</string>
     <string name="featured_inArtist">已發布</string>
@@ -458,4 +458,6 @@
     <string name="mix_for_you">為您準備</string>
     <string name="no_mixes_found">找不到合輯</string>
 </resources>
+
+
 
