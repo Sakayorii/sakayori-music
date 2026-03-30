@@ -1,11 +1,11 @@
-package com.maxrave.data.mediaservice
+package com.sakayori.data.mediaservice
 
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.mediaservice.handler.MediaPlayerHandler
-import com.maxrave.domain.repository.AnalyticsRepository
-import com.maxrave.domain.repository.LocalPlaylistRepository
-import com.maxrave.domain.repository.SongRepository
-import com.maxrave.domain.repository.StreamRepository
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
+import com.sakayori.domain.repository.AnalyticsRepository
+import com.sakayori.domain.repository.LocalPlaylistRepository
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.repository.StreamRepository
 import kotlinx.coroutines.CoroutineScope
 
 expect fun createMediaServiceHandler(

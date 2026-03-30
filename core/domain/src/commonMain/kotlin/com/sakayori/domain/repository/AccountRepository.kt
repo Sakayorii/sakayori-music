@@ -1,7 +1,7 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.GoogleAccountEntity
-import com.maxrave.domain.data.model.account.AccountInfo
+import com.sakayori.domain.data.entities.GoogleAccountEntity
+import com.sakayori.domain.data.model.account.AccountInfo
 import kotlinx.coroutines.flow.Flow
 
 interface AccountRepository {

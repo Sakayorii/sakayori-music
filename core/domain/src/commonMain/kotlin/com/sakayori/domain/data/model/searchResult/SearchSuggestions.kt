@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.searchResult
+package com.sakayori.domain.data.model.searchResult
 
-import com.maxrave.domain.data.type.SearchResultType
+import com.sakayori.domain.data.type.SearchResultType
 
 data class SearchSuggestions(
     val queries: List<String>,

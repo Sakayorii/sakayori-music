@@ -1,7 +1,7 @@
-package org.simpmusic.lyrics
+package org.SakayoriMusic.lyrics
 
-import com.maxrave.ktorext.encoding.brotli
-import com.maxrave.ktorext.getEngine
+import com.sakayori.ktorext.encoding.brotli
+import com.sakayori.ktorext.getEngine
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.ProxyConfig
 import io.ktor.client.plugins.HttpSend
@@ -21,11 +21,11 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import org.simpmusic.lyrics.models.request.LyricsBody
-import org.simpmusic.lyrics.models.request.TranslatedLyricsBody
-import org.simpmusic.lyrics.models.request.VoteBody
+import org.SakayoriMusic.lyrics.models.request.LyricsBody
+import org.SakayoriMusic.lyrics.models.request.TranslatedLyricsBody
+import org.SakayoriMusic.lyrics.models.request.VoteBody
 
-class SimpMusicLyrics {
+class SakayoriMusicLyrics {
     private var httpClient = createClient()
     var proxy: ProxyConfig? = null
         set(value) {
@@ -34,7 +34,7 @@ class SimpMusicLyrics {
             httpClient = createClient()
         }
 
-    private val baseUrl = "https://api-lyrics.simpmusic.org/v1/"
+    private val baseUrl = "https://api-lyrics.SakayoriMusic.org/v1/"
 
     private fun createClient() =
         HttpClient(getEngine()) {
@@ -64,11 +64,11 @@ class SimpMusicLyrics {
                 deflate(0.8F)
             }
             defaultRequest {
-                url("https://api-lyrics.simpmusic.org/v1")
+                url("https://api-lyrics.SakayoriMusic.org/v1")
             }
             if (proxy != null) {
                 engine {
-                    proxy = this@SimpMusicLyrics.proxy
+                    proxy = this@SakayoriMusicLyrics.proxy
                 }
             }
         }
@@ -79,7 +79,7 @@ class SimpMusicLyrics {
     ) {
         headers {
             header(HttpHeaders.Accept, "application/json")
-            header(HttpHeaders.UserAgent, "SimpMusicLyrics/1.0")
+            header(HttpHeaders.UserAgent, "SakayoriMusicLyrics/1.0")
             header(HttpHeaders.ContentType, "application/json")
             timestamp?.let {
                 header("X-Timestamp", it)

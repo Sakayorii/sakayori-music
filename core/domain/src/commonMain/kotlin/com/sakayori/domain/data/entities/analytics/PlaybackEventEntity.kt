@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.entities.analytics
+package com.sakayori.domain.data.entities.analytics
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.maxrave.domain.extension.now
+import com.sakayori.domain.extension.now
 import kotlinx.datetime.LocalDateTime
 
 @Entity("playback_event")

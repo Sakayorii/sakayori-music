@@ -1,8 +1,8 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.kotlinytmusicscraper.models.GridRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.kotlinytmusicscraper.models.GridRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
 
 internal fun parseLibraryPlaylist(input: List<GridRenderer.Item>): List<PlaylistsResult> {
     val list: MutableList<PlaylistsResult> = mutableListOf()

@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
-import com.maxrave.kotlinytmusicscraper.models.response.TidalStreamResponse
+import com.sakayori.kotlinytmusicscraper.models.response.TidalStreamResponse
 
 /**
  * Result of a Tidal stream search, including stream data and audio analysis metadata.
@@ -20,3 +20,4 @@ data class TidalMetadataResult(
     val musicKey: String?,
     val keyScale: String?,
 )
+

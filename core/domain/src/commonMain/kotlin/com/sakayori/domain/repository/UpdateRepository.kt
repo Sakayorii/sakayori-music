@@ -1,7 +1,7 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.model.update.UpdateData
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.model.update.UpdateData
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface UpdateRepository {

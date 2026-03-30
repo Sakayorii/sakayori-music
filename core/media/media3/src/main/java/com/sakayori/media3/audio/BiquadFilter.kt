@@ -1,4 +1,4 @@
-package com.maxrave.media3.audio
+package com.sakayori.media3.audio
 
 import kotlin.math.PI
 import kotlin.math.cos
@@ -161,3 +161,4 @@ class BiquadFilter {
         const val BUTTERWORTH_Q = 0.707f
     }
 }
+

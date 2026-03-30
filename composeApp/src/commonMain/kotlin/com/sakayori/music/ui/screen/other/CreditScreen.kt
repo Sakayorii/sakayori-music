@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.other
+package com.sakayori.music.ui.screen.other
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.MarqueeAnimationMode
@@ -35,10 +35,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.maxrave.simpmusic.expect.openUrl
-import com.maxrave.simpmusic.ui.component.RippleIconButton
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.utils.VersionManager
+import com.sakayori.music.expect.openUrl
+import com.sakayori.music.ui.component.RippleIconButton
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.utils.VersionManager
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -46,7 +46,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.*
+import com.sakayori.music.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -95,7 +95,7 @@ fun CreditScreen(
 
         // Developer
         Text(
-            text = stringResource(Res.string.maxrave_dev),
+            text = stringResource(Res.string.sakayori_dev),
             style = typo().bodyMedium,
         )
 

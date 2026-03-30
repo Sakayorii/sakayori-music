@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.account
+package com.sakayori.domain.data.model.account
 
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class AccountInfo(
     val name: String,

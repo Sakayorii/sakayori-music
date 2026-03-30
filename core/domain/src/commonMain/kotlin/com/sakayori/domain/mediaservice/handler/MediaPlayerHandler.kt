@@ -1,13 +1,13 @@
-package com.maxrave.domain.mediaservice.handler
+package com.sakayori.domain.mediaservice.handler
 
-import com.maxrave.domain.data.entities.NewFormatEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.mediaService.SponsorSkipSegments
-import com.maxrave.domain.data.player.GenericCommandButton
-import com.maxrave.domain.data.player.GenericMediaItem
-import com.maxrave.domain.data.player.PlayerError
-import com.maxrave.domain.mediaservice.player.MediaPlayerInterface
+import com.sakayori.domain.data.entities.NewFormatEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.mediaService.SponsorSkipSegments
+import com.sakayori.domain.data.player.GenericCommandButton
+import com.sakayori.domain.data.player.GenericMediaItem
+import com.sakayori.domain.data.player.PlayerError
+import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
 import kotlinx.coroutines.flow.StateFlow
 
 /**

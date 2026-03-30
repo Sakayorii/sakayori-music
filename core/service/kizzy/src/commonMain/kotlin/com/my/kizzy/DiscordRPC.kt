@@ -1,6 +1,6 @@
 package com.my.kizzy
 
-import com.maxrave.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.SongEntity
 import com.my.kizzy.rpc.KizzyRPC
 import com.my.kizzy.rpc.RpcImage
 import kotlin.time.Clock

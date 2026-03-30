@@ -1,33 +1,33 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.Config
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.streams.YouTubeWatchEndpoint
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.manager.DataStoreManager.Values.BETTER_LYRICS
-import com.maxrave.domain.manager.DataStoreManager.Values.LRCLIB
-import com.maxrave.domain.manager.DataStoreManager.Values.SIMPMUSIC
-import com.maxrave.domain.manager.DataStoreManager.Values.YOUTUBE
-import com.maxrave.domain.mediaservice.handler.DownloadHandler
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.mediaservice.handler.SleepTimerState
-import com.maxrave.domain.repository.LocalPlaylistRepository
-import com.maxrave.domain.repository.PlaylistRepository
-import com.maxrave.domain.repository.SongRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.domain.utils.collectLatestResource
-import com.maxrave.domain.utils.collectResource
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.logger.LogLevel
-import com.maxrave.simpmusic.expect.shareUrl
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.Config
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.streams.YouTubeWatchEndpoint
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.manager.DataStoreManager.Values.BETTER_LYRICS
+import com.sakayori.domain.manager.DataStoreManager.Values.LRCLIB
+import com.sakayori.domain.manager.DataStoreManager.Values.SakayoriMusic
+import com.sakayori.domain.manager.DataStoreManager.Values.YOUTUBE
+import com.sakayori.domain.mediaservice.handler.DownloadHandler
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.mediaservice.handler.SleepTimerState
+import com.sakayori.domain.repository.LocalPlaylistRepository
+import com.sakayori.domain.repository.PlaylistRepository
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.domain.utils.collectLatestResource
+import com.sakayori.domain.utils.collectResource
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.logger.LogLevel
+import com.sakayori.music.expect.shareUrl
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,19 +38,19 @@ import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.component.inject
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.added_to_playlist
-import simpmusic.composeapp.generated.resources.added_to_queue
-import simpmusic.composeapp.generated.resources.added_to_youtube_playlist
-import simpmusic.composeapp.generated.resources.delete_song_from_playlist
-import simpmusic.composeapp.generated.resources.downloading
-import simpmusic.composeapp.generated.resources.error
-import simpmusic.composeapp.generated.resources.error_occurred
-import simpmusic.composeapp.generated.resources.play_next
-import simpmusic.composeapp.generated.resources.removed_download
-import simpmusic.composeapp.generated.resources.removed_from_YouTube_playlist
-import simpmusic.composeapp.generated.resources.share_url
-import simpmusic.composeapp.generated.resources.sleep_timer_off_done
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.added_to_playlist
+import com.sakayori.music.generated.resources.added_to_queue
+import com.sakayori.music.generated.resources.added_to_youtube_playlist
+import com.sakayori.music.generated.resources.delete_song_from_playlist
+import com.sakayori.music.generated.resources.downloading
+import com.sakayori.music.generated.resources.error
+import com.sakayori.music.generated.resources.error_occurred
+import com.sakayori.music.generated.resources.play_next
+import com.sakayori.music.generated.resources.removed_download
+import com.sakayori.music.generated.resources.removed_from_YouTube_playlist
+import com.sakayori.music.generated.resources.share_url
+import com.sakayori.music.generated.resources.sleep_timer_off_done
 
 class NowPlayingBottomSheetViewModel(
     private val dataStoreManager: DataStoreManager,
@@ -64,7 +64,7 @@ class NowPlayingBottomSheetViewModel(
             NowPlayingBottomSheetUIState(
                 listLocalPlaylist = emptyList(),
                 listYouTubePlaylist = emptyList(),
-                mainLyricsProvider = SIMPMUSIC,
+                mainLyricsProvider = SakayoriMusic,
                 sleepTimer =
                     SleepTimerState(
                         false,
@@ -107,8 +107,8 @@ class NowPlayingBottomSheetViewModel(
                 launch {
                     dataStoreManager.lyricsProvider.collectLatest { lyricsProvider ->
                         when (lyricsProvider) {
-                            SIMPMUSIC -> {
-                                _uiState.update { it.copy(mainLyricsProvider = SIMPMUSIC) }
+                            SakayoriMusic -> {
+                                _uiState.update { it.copy(mainLyricsProvider = SakayoriMusic) }
                             }
 
                             YOUTUBE -> {
@@ -332,7 +332,7 @@ class NowPlayingBottomSheetViewModel(
                 }
 
                 is NowPlayingBottomSheetUIEvent.ChangeLyricsProvider -> {
-                    if (listOf(SIMPMUSIC, YOUTUBE, LRCLIB, BETTER_LYRICS).contains(ev.lyricsProvider)) {
+                    if (listOf(SakayoriMusic, YOUTUBE, LRCLIB, BETTER_LYRICS).contains(ev.lyricsProvider)) {
                         dataStoreManager.setLyricsProvider(ev.lyricsProvider)
                     } else {
                         return@launch
@@ -354,7 +354,7 @@ class NowPlayingBottomSheetViewModel(
                 }
 
                 is NowPlayingBottomSheetUIEvent.Share -> {
-                    val url = "https://simpmusic.org/app/watch?v=${songUIState.videoId}"
+                    val url = "https://SakayoriMusic.org/app/watch?v=${songUIState.videoId}"
                     shareUrl(
                         title = getString(Res.string.share_url),
                         url,

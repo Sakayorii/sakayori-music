@@ -1,9 +1,9 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
-import com.maxrave.domain.data.entities.analytics.query.TopPlayedAlbum
-import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtist
-import com.maxrave.domain.data.entities.analytics.query.TopPlayedTracks
+import com.sakayori.domain.data.entities.analytics.PlaybackEventEntity
+import com.sakayori.domain.data.entities.analytics.query.TopPlayedAlbum
+import com.sakayori.domain.data.entities.analytics.query.TopPlayedArtist
+import com.sakayori.domain.data.entities.analytics.query.TopPlayedTracks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 

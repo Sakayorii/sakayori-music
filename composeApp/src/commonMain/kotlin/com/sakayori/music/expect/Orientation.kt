@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect
+package com.sakayori.music.expect
 
 enum class Orientation {
     PORTRAIT, LANDSCAPE, UNSPECIFIED

@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.player
+package com.sakayori.domain.data.player
 
-import com.maxrave.domain.mediaservice.handler.RepeatState
+import com.sakayori.domain.mediaservice.handler.RepeatState
 
 sealed class GenericCommandButton {
     data class Like(

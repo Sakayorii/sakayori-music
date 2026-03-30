@@ -1,8 +1,8 @@
-package com.maxrave.data.di.loader
+package com.sakayori.data.di.loader
 
-import com.maxrave.data.di.databaseModule
-import com.maxrave.data.di.mediaHandlerModule
-import com.maxrave.data.di.repositoryModule
+import com.sakayori.data.di.databaseModule
+import com.sakayori.data.di.mediaHandlerModule
+import com.sakayori.data.di.repositoryModule
 import org.koin.core.context.loadKoinModules
 
 fun loadAllModules() {

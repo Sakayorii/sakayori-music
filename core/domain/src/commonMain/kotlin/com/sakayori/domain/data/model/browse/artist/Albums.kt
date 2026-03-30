@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.browse.artist
+package com.sakayori.domain.data.model.browse.artist
 
 data class Albums(
     val browseId: Any,

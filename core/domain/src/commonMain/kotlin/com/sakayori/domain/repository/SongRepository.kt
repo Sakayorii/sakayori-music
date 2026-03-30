@@ -1,12 +1,12 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.QueueEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.entities.SongInfoEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.download.DownloadProgress
-import com.maxrave.domain.data.model.streams.YouTubeWatchEndpoint
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.QueueEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.SongInfoEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.download.DownloadProgress
+import com.sakayori.domain.data.model.streams.YouTubeWatchEndpoint
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDateTime
 

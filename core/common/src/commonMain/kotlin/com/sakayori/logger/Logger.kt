@@ -1,4 +1,4 @@
-package com.maxrave.logger
+package com.sakayori.logger
 
 import co.touchlab.kermit.Logger
 

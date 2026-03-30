@@ -1,4 +1,4 @@
-package com.maxrave.data.db
+package com.sakayori.data.db
 
 import androidx.room.DeleteColumn
 import androidx.room.DeleteTable

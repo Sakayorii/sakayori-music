@@ -1,28 +1,28 @@
-package org.simpmusic.lyrics
+package org.SakayoriMusic.lyrics
 
-import com.maxrave.ktorext.crypto.Hmac
-import com.maxrave.ktorext.crypto.HmacUri
-import com.maxrave.logger.Logger
+import com.sakayori.ktorext.crypto.Hmac
+import com.sakayori.ktorext.crypto.HmacUri
+import com.sakayori.logger.Logger
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
-import org.simpmusic.lyrics.models.request.LyricsBody
-import org.simpmusic.lyrics.models.request.TranslatedLyricsBody
-import org.simpmusic.lyrics.models.response.BaseResponse
-import org.simpmusic.lyrics.models.response.BetterLyricsResponse
-import org.simpmusic.lyrics.models.response.LrclibObject
-import org.simpmusic.lyrics.models.response.LyricsResponse
-import org.simpmusic.lyrics.models.response.TranslatedLyricsResponse
-import org.simpmusic.lyrics.parser.parseSyncedLyrics
-import org.simpmusic.lyrics.parser.parseUnsyncedLyrics
+import org.SakayoriMusic.lyrics.models.request.LyricsBody
+import org.SakayoriMusic.lyrics.models.request.TranslatedLyricsBody
+import org.SakayoriMusic.lyrics.models.response.BaseResponse
+import org.SakayoriMusic.lyrics.models.response.BetterLyricsResponse
+import org.SakayoriMusic.lyrics.models.response.LrclibObject
+import org.SakayoriMusic.lyrics.models.response.LyricsResponse
+import org.SakayoriMusic.lyrics.models.response.TranslatedLyricsResponse
+import org.SakayoriMusic.lyrics.parser.parseSyncedLyrics
+import org.SakayoriMusic.lyrics.parser.parseUnsyncedLyrics
 import kotlin.math.abs
 
-private const val TAG = "SimpMusicLyricsClient"
+private const val TAG = "SakayoriMusicLyricsClient"
 
-class SimpMusicLyricsClient {
+class SakayoriMusicLyricsClient {
     private val algorithm = ""
 
-    private val hmacService = Hmac("HmacSHA256", "simpmusic-lyrics")
-    private val lyricsService = SimpMusicLyrics()
+    private val hmacService = Hmac("HmacSHA256", "SakayoriMusic-lyrics")
+    private val lyricsService = SakayoriMusicLyrics()
     private var insertingLyrics: Pair<String?, Boolean> = (null to false)
     private val isInsertingLyrics: Boolean
         get() = insertingLyrics.second

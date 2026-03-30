@@ -1,7 +1,7 @@
 [versions]
 # App version
-version-name = "1.1.5"
-version-code = "45"
+version-name = "2.0.0"
+version-code = "46"
 
 android = "8.13.2"
 kotlin = "2.3.10"
@@ -12,6 +12,7 @@ material3-expressive = "1.5.0-alpha15"
 constraintlayout-compose = "1.1.1"
 activity-compose = "1.13.0"
 lifecycle = "2.9.6"
+lifecycle-native = "2.8.7"
 core-ktx = "1.18.0"
 appcompat = "1.7.1"
 work = "2.11.1"
@@ -44,7 +45,7 @@ haze = "1.7.2"
 onetimepassword = "2.4.1"
 common = "1.21.0"
 json = "1.10.0"
-gemini-kotlin = "4.0.2"
+sakayori-ai = "4.0.2"
 slf4j = "1.7.36"
 sentry-android = "8.34.1"
 sentry-gradle-android = "6.1.0"
@@ -103,6 +104,7 @@ jetbrains-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-p
 ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-native" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startup-runtime" }
@@ -163,7 +165,7 @@ haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-material = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 kotlin-onetimepassword = { module = "dev.turingcomplete:kotlin-onetimepassword", version.ref = "onetimepassword" }
 common = { module = "commons-codec:commons-codec", version.ref = "common" }
-gemini-kotlin = { module = "org.simpmusic.gemini-kotlin:openai-client", version.ref = "gemini-kotlin" }
+sakayori-ai = { module = "org.simpmusic.gemini-kotlin:openai-client", version.ref = "sakayori-ai" }
 logging = { module = "org.slf4j:slf4j-android", version.ref = "slf4j" }
 newpipe-extractor = { module = "com.github.teamnewpipe:NewPipeExtractor", version.ref = "newpipe" }
 #leak-canary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
@@ -176,7 +178,7 @@ commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 liquid-glass = { module = "io.github.kyant0:backdrop", version.ref = "liquid-glass" }
 liquid-glass-shape = { module = "io.github.kyant0:shapes", version.ref = "liquid-glass-shapes" }
 
-ffmpeg-kit-audio = { module = "io.github.maxrave-dev:ffmpeg-kit-audio", version.ref = "ffmpeg-kit-audio" }
+ffmpeg-kit-sakayori = { module = "io.github.maxrave-dev:ffmpeg-kit-audio", version.ref = "ffmpeg-kit-audio" }
 
 # KMP
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }

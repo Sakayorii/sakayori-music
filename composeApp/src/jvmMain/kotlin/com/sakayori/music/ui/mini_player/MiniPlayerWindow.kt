@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.mini_player
+package com.sakayori.music.ui.mini_player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,12 +17,12 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.viewModel.SharedViewModel
-import com.maxrave.simpmusic.viewModel.UIEvent
+import com.sakayori.logger.Logger
+import com.sakayori.music.viewModel.SharedViewModel
+import com.sakayori.music.viewModel.UIEvent
 import org.jetbrains.compose.resources.painterResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.circle_app_icon
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.circle_app_icon
 import java.awt.Dimension
 import java.util.prefs.Preferences
 

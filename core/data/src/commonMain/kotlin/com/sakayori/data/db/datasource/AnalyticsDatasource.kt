@@ -1,9 +1,9 @@
-package com.maxrave.data.db.datasource
+package com.sakayori.data.db.datasource
 
 import DatabaseDao
-import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
-import com.maxrave.domain.extension.beforeXDays
-import com.maxrave.domain.extension.now
+import com.sakayori.domain.data.entities.analytics.PlaybackEventEntity
+import com.sakayori.domain.extension.beforeXDays
+import com.sakayori.domain.extension.now
 import kotlinx.datetime.LocalDateTime
 
 internal class AnalyticsDatasource(

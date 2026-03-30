@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.home
+package com.sakayori.domain.data.model.home
 
-import com.maxrave.domain.data.model.home.chart.Chart
-import com.maxrave.domain.data.model.mood.Mood
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.model.home.chart.Chart
+import com.sakayori.domain.data.model.mood.Mood
+import com.sakayori.domain.utils.Resource
 
 data class HomeResponse(
     val homeItem: Resource<ArrayList<HomeItem>>,

@@ -1,12 +1,12 @@
-package com.maxrave.data.repository
+package com.sakayori.data.repository
 
-import com.maxrave.data.db.datasource.LocalDataSource
-import com.maxrave.data.mapping.toDomainAccountInfo
-import com.maxrave.domain.data.entities.GoogleAccountEntity
-import com.maxrave.domain.data.model.account.AccountInfo
-import com.maxrave.domain.repository.AccountRepository
-import com.maxrave.kotlinytmusicscraper.YouTube
-import com.maxrave.logger.Logger
+import com.sakayori.data.db.datasource.LocalDataSource
+import com.sakayori.data.mapping.toDomainAccountInfo
+import com.sakayori.domain.data.entities.GoogleAccountEntity
+import com.sakayori.domain.data.model.account.AccountInfo
+import com.sakayori.domain.repository.AccountRepository
+import com.sakayori.kotlinytmusicscraper.YouTube
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

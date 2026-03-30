@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.widget
+package com.sakayori.music.ui.widget
 
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver

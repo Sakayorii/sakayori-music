@@ -113,7 +113,7 @@
 -keep interface com.liskovsoft.** { *; }
 -keep class com.eclipsesource.v8.** { *; }
 -keep class com.liskovsoft.**
--keep class com.maxrave.kotlinytmusicscraper.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.** { *; }
 
 
 ## Rules for NewPipeExtractor
@@ -121,49 +121,49 @@
 -keep class org.mozilla.classfile.ClassFileWriter
 -dontwarn org.mozilla.javascript.tools.**
 
--keep class com.maxrave.data.di.loader.LoaderKt { *; }
--keep class com.maxrave.data.mapping.MappingKt { *; }
--keep class com.maxrave.data.extension.** { *; }
+-keep class com.sakayori.data.di.loader.LoaderKt { *; }
+-keep class com.sakayori.data.mapping.MappingKt { *; }
+-keep class com.sakayori.data.extension.** { *; }
 
--keep class com.maxrave.kotlinytmusicscraper.extension.** { *; }
--keep class com.maxrave.kotlinytmusicscraper.models.** { *; }
--keep class com.maxrave.kotlinytmusicscraper.parser.** { *; }
--keep class com.maxrave.kotlinytmusicscraper.pages.** { *; }
--keep class com.maxrave.kotlinytmusicscraper.utils.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.extension.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.models.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.parser.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.pages.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.utils.** { *; }
 
--keep class org.simpmusic.lyrics.parser.** { *; }
--keep class org.simpmusic.lyrics.models.** { *; }
--keep class com.simpmusic.lyrics.parser.** { *; }
+-keep class org.SakayoriMusic.lyrics.parser.** { *; }
+-keep class org.SakayoriMusic.lyrics.models.** { *; }
+-keep class com.SakayoriMusic.lyrics.parser.** { *; }
 
--dontwarn com.maxrave.kotlinytmusicscraper.YouTube$SearchFilter$Companion
--dontwarn com.maxrave.kotlinytmusicscraper.YouTube$SearchFilter
--dontwarn com.maxrave.kotlinytmusicscraper.YouTube
--dontwarn com.maxrave.media3.di.Media3ServiceModuleKt
--dontwarn com.maxrave.media3.exoplayer.ExoPlayerAdapter
--dontwarn com.maxrave.spotify.Spotify
--dontwarn com.maxrave.spotify.model.response.spotify.CanvasResponse$Canvas$ThumbOfCanva
--dontwarn com.maxrave.spotify.model.response.spotify.CanvasResponse$Canvas
--dontwarn com.maxrave.spotify.model.response.spotify.CanvasResponse
--dontwarn com.maxrave.spotify.model.response.spotify.ClientTokenResponse$GrantedToken
--dontwarn com.maxrave.spotify.model.response.spotify.ClientTokenResponse
--dontwarn com.maxrave.spotify.model.response.spotify.PersonalTokenResponse
--dontwarn com.maxrave.spotify.model.response.spotify.SpotifyLyricsResponse$Lyrics$Line
--dontwarn com.maxrave.spotify.model.response.spotify.SpotifyLyricsResponse$Lyrics
--dontwarn com.maxrave.spotify.model.response.spotify.SpotifyLyricsResponse
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items$Item$DataX$Duration
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items$Item$DataX
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items$Item
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse$Data
--dontwarn com.maxrave.spotify.model.response.spotify.search.SpotifySearchResponse
--dontwarn org.simpmusic.aiservice.AIHost
--dontwarn org.simpmusic.aiservice.AiClient
--dontwarn org.simpmusic.lyrics.SimpMusicLyricsClient
--dontwarn org.simpmusic.lyrics.domain.Lyrics$LyricsX$Line
--dontwarn org.simpmusic.lyrics.domain.Lyrics$LyricsX
--dontwarn org.simpmusic.lyrics.domain.Lyrics
+-dontwarn com.sakayori.kotlinytmusicscraper.YouTube$SearchFilter$Companion
+-dontwarn com.sakayori.kotlinytmusicscraper.YouTube$SearchFilter
+-dontwarn com.sakayori.kotlinytmusicscraper.YouTube
+-dontwarn com.sakayori.media3.di.Media3ServiceModuleKt
+-dontwarn com.sakayori.media3.exoplayer.ExoPlayerAdapter
+-dontwarn com.sakayori.spotify.Spotify
+-dontwarn com.sakayori.spotify.model.response.spotify.CanvasResponse$Canvas$ThumbOfCanva
+-dontwarn com.sakayori.spotify.model.response.spotify.CanvasResponse$Canvas
+-dontwarn com.sakayori.spotify.model.response.spotify.CanvasResponse
+-dontwarn com.sakayori.spotify.model.response.spotify.ClientTokenResponse$GrantedToken
+-dontwarn com.sakayori.spotify.model.response.spotify.ClientTokenResponse
+-dontwarn com.sakayori.spotify.model.response.spotify.PersonalTokenResponse
+-dontwarn com.sakayori.spotify.model.response.spotify.SpotifyLyricsResponse$Lyrics$Line
+-dontwarn com.sakayori.spotify.model.response.spotify.SpotifyLyricsResponse$Lyrics
+-dontwarn com.sakayori.spotify.model.response.spotify.SpotifyLyricsResponse
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items$Item$DataX$Duration
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items$Item$DataX
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items$Item
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2$Items
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search$TracksV2
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data$Search
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse$Data
+-dontwarn com.sakayori.spotify.model.response.spotify.search.SpotifySearchResponse
+-dontwarn org.SakayoriMusic.aiservice.AIHost
+-dontwarn org.SakayoriMusic.aiservice.AiClient
+-dontwarn org.SakayoriMusic.lyrics.SakayoriMusicLyricsClient
+-dontwarn org.SakayoriMusic.lyrics.domain.Lyrics$LyricsX$Line
+-dontwarn org.SakayoriMusic.lyrics.domain.Lyrics$LyricsX
+-dontwarn org.SakayoriMusic.lyrics.domain.Lyrics
 
 -keep class org.apache.commons.io.** { *; }
 

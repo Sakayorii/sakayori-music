@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.service.backup
+package com.sakayori.music.service.backup
 
 import android.content.ContentValues
 import android.content.Context
@@ -6,13 +6,13 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.maxrave.common.DB_NAME
-import com.maxrave.common.DOWNLOAD_EXOPLAYER_FOLDER
-import com.maxrave.common.EXOPLAYER_DB_NAME
-import com.maxrave.common.SETTINGS_FILENAME
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.repository.CommonRepository
-import com.maxrave.logger.Logger
+import com.sakayori.common.DB_NAME
+import com.sakayori.common.DOWNLOAD_EXOPLAYER_FOLDER
+import com.sakayori.common.EXOPLAYER_DB_NAME
+import com.sakayori.common.SETTINGS_FILENAME
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.repository.CommonRepository
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -246,3 +246,4 @@ class AutoBackupWorker(
         private const val TAG = "AutoBackupWorker"
     }
 }
+

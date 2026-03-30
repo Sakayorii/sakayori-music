@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.download
+package com.sakayori.domain.data.model.download
 
 data class DownloadProgress(
     val audioDownloadProgress: Float = 0f, // 0.0 - 1.0

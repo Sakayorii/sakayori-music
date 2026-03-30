@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 
 import androidx.compose.foundation.layout.RowScope
@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.baseline_arrow_back_ios_new_24
-import simpmusic.composeapp.generated.resources.baseline_more_vert_24
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.baseline_arrow_back_ios_new_24
+import com.sakayori.music.generated.resources.baseline_more_vert_24
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

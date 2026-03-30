@@ -32,3 +32,4 @@ sealed class RpcImage {
         }
     }
 }
+

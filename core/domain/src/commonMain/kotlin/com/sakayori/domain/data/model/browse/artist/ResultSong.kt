@@ -1,7 +1,7 @@
-package com.maxrave.domain.data.model.browse.artist
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+package com.sakayori.domain.data.model.browse.artist
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class ResultSong(
     val videoId: String,

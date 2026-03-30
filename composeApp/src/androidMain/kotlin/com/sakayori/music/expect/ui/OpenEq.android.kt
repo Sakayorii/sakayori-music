@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import android.content.Intent
 import android.media.audiofx.AudioEffect
@@ -6,13 +6,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.runBlocking
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
 import org.jetbrains.compose.resources.getString
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.no_equalizer
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.no_equalizer
 
 @Composable
 actual fun openEqResult(audioSessionId: Int): OpenEqLauncher {

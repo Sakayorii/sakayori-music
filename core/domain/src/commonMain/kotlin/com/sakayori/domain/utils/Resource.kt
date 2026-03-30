@@ -1,4 +1,4 @@
-package com.maxrave.domain.utils
+package com.sakayori.domain.utils
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

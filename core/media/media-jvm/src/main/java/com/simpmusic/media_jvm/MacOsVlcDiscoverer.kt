@@ -1,6 +1,6 @@
-package com.simpmusic.media_jvm
+package com.SakayoriMusic.media_jvm
 
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 import com.sun.jna.NativeLibrary
 import uk.co.caprica.vlcj.binding.lib.LibC
 import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil

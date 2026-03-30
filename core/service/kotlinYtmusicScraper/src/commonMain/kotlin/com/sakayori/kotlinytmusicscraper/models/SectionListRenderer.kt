@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
-import com.maxrave.kotlinytmusicscraper.models.response.BrowseResponse
+import com.sakayori.kotlinytmusicscraper.models.response.BrowseResponse
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames

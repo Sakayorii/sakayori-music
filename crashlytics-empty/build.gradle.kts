@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "org.simpmusic.crashlytics.empty"
+    namespace = "com.sakayori.music.crashlytics.empty"
     compileSdk = 36
 
     defaultConfig {
@@ -20,3 +20,4 @@ android {
 dependencies {
     implementation(libs.core.ktx)
 }
+

@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect
+package com.sakayori.music.expect
 
 import multiplatform.network.cmptoast.showToast
 import java.awt.Desktop

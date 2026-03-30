@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.home
+package com.sakayori.music.ui.screen.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,26 +22,26 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.maxrave.common.Config
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.simpmusic.ui.component.ArtistFullWidthItems
-import com.maxrave.simpmusic.ui.component.CenterLoadingBox
-import com.maxrave.simpmusic.ui.component.EndOfPage
-import com.maxrave.simpmusic.ui.component.PlaylistFullWidthItems
-import com.maxrave.simpmusic.ui.component.RippleIconButton
-import com.maxrave.simpmusic.ui.component.SongFullWidthItems
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.RecentlySongsViewModel
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.common.Config
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.music.ui.component.ArtistFullWidthItems
+import com.sakayori.music.ui.component.CenterLoadingBox
+import com.sakayori.music.ui.component.EndOfPage
+import com.sakayori.music.ui.component.PlaylistFullWidthItems
+import com.sakayori.music.ui.component.RippleIconButton
+import com.sakayori.music.ui.component.SongFullWidthItems
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.navigation.destination.list.PlaylistDestination
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.RecentlySongsViewModel
+import com.sakayori.music.viewModel.SharedViewModel
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -51,10 +51,10 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.baseline_arrow_back_ios_new_24
-import simpmusic.composeapp.generated.resources.error
-import simpmusic.composeapp.generated.resources.recently_added
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.baseline_arrow_back_ios_new_24
+import com.sakayori.music.generated.resources.error
+import com.sakayori.music.generated.resources.recently_added
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable

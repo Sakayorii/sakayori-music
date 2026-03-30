@@ -1,15 +1,15 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.model.mood.genre.GenreObject
-import com.maxrave.domain.data.model.mood.genre.ItemsPlaylist
-import com.maxrave.domain.data.model.mood.genre.ItemsSong
-import com.maxrave.domain.data.model.mood.genre.Title
-import com.maxrave.domain.data.model.mood.moodmoments.Content
-import com.maxrave.domain.data.model.mood.moodmoments.Item
-import com.maxrave.domain.data.model.mood.moodmoments.MoodsMomentObject
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.kotlinytmusicscraper.models.response.BrowseResponse
-import com.maxrave.domain.data.model.mood.genre.Content as GenreContent
+import com.sakayori.domain.data.model.mood.genre.GenreObject
+import com.sakayori.domain.data.model.mood.genre.ItemsPlaylist
+import com.sakayori.domain.data.model.mood.genre.ItemsSong
+import com.sakayori.domain.data.model.mood.genre.Title
+import com.sakayori.domain.data.model.mood.moodmoments.Content
+import com.sakayori.domain.data.model.mood.moodmoments.Item
+import com.sakayori.domain.data.model.mood.moodmoments.MoodsMomentObject
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.kotlinytmusicscraper.models.response.BrowseResponse
+import com.sakayori.domain.data.model.mood.genre.Content as GenreContent
 
 internal fun parseMoodsMomentObject(data: BrowseResponse?): MoodsMomentObject? {
     if (data != null) {

@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.home.chart
+package com.sakayori.domain.data.model.home.chart
 
 data class Videos(
     val items: ArrayList<ItemVideo>,

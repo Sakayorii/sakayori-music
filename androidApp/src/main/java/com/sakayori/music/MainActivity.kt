@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -46,7 +47,7 @@ import org.koin.android.ext.android.inject
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.unloadKoinModules
 import org.koin.dsl.module
-import org.simpmusic.crashlytics.pushPlayerError
+import com.sakayori.music.crashlytics.pushPlayerError
 import pub.devrel.easypermissions.EasyPermissions
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -203,7 +204,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!EasyPermissions.hasPermissions(this, Manifest.permission.POST_NOTIFICATIONS)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                androidx.lifecycle.lifecycleScope.launch {
+                lifecycleScope.launch {
                     val msg = ComposeResUtils.getResString(ComposeResUtils.StringType.NOTIFICATION_REQUEST)
                     EasyPermissions.requestPermissions(
                         this@MainActivity,
@@ -243,13 +244,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun startMusicService() {
 //        mediaPlayerHandler.startMediaService(this, serviceConnection)
-        com.maxrave.media3.di
+        com.sakayori.media3.di
             .startService(this@MainActivity, serviceConnection)
         mediaPlayerHandler.pushPlayerError = { it ->
             pushPlayerError(it)
         }
         mediaPlayerHandler.showToast = { type ->
-            androidx.lifecycle.lifecycleScope.launch {
+            lifecycleScope.launch {
                 val message = when (type) {
                     is ToastType.ExplicitContent -> {
                         ComposeResUtils.getResString(ComposeResUtils.StringType.EXPLICIT_CONTENT_BLOCKED)

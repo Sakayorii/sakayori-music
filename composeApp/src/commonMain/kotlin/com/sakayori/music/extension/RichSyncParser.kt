@@ -1,6 +1,6 @@
-package com.maxrave.simpmusic.extension
+package com.sakayori.music.extension
 
-import com.maxrave.domain.extension.decodeHtmlEntities
+import com.sakayori.domain.extension.decodeHtmlEntities
 
 /**
  * Represents a single word with its timing information for rich sync lyrics

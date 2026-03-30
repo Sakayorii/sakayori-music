@@ -118,7 +118,7 @@
 -keep class org.mozilla.classfile.ClassFileWriter
 -dontwarn org.mozilla.javascript.tools.**
 
--keep class com.maxrave.kotlinytmusicscraper.** { *; }
+-keep class com.sakayori.kotlinytmusicscraper.** { *; }
 
 -keep class com.liskovsoft.**
 
@@ -133,3 +133,4 @@
 -dontoptimize
 -dontpreverify
 -dontobfuscate
+

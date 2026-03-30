@@ -1,10 +1,10 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.kotlinytmusicscraper.models.PlaylistPanelRenderer
-import com.maxrave.kotlinytmusicscraper.utils.parseTime
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.kotlinytmusicscraper.models.PlaylistPanelRenderer
+import com.sakayori.kotlinytmusicscraper.utils.parseTime
 
 internal fun parseRelated(data: List<PlaylistPanelRenderer.Content>?): ArrayList<Track>? {
     if (!data.isNullOrEmpty()) {

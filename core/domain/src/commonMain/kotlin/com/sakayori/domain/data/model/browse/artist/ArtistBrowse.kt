@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.browse.artist
+package com.sakayori.domain.data.model.browse.artist
 
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.model.streams.YouTubeWatchEndpoint
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.streams.YouTubeWatchEndpoint
 
 data class ArtistBrowse(
     val albums: Albums?,

@@ -1,13 +1,13 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.SELECTED_LANGUAGE
-import com.maxrave.domain.data.model.mood.moodmoments.MoodsMomentObject
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.repository.HomeRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.SELECTED_LANGUAGE
+import com.sakayori.domain.data.model.mood.moodmoments.MoodsMomentObject
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.repository.HomeRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.logger.Logger
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

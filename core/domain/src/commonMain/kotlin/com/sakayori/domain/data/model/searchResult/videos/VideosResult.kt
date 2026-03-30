@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.model.searchResult.videos
+package com.sakayori.domain.data.model.searchResult.videos
 
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.domain.data.type.SearchResultType
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.type.SearchResultType
 
 data class VideosResult(
     val artists: List<Artist>?,

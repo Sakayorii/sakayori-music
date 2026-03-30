@@ -1,4 +1,4 @@
-package com.maxrave.media3.ui
+package com.sakayori.media3.ui
 
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -61,12 +61,12 @@ import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.maxrave.common.Config
-import com.maxrave.domain.data.model.metadata.Lyrics
-import com.maxrave.domain.data.model.streams.TimeLine
-import com.maxrave.domain.data.model.ui.ScreenSizeInfo
-import com.maxrave.logger.Logger
-import com.maxrave.media3.ui.extension.KeepScreenOn
+import com.sakayori.common.Config
+import com.sakayori.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.streams.TimeLine
+import com.sakayori.domain.data.model.ui.ScreenSizeInfo
+import com.sakayori.logger.Logger
+import com.sakayori.media3.ui.extension.KeepScreenOn
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 import kotlin.math.roundToInt

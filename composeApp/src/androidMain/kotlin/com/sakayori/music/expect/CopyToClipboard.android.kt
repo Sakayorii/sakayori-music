@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.expect
+package com.sakayori.music.expect
 
 import android.content.ClipData
 import android.content.ClipboardManager

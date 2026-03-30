@@ -1,8 +1,8 @@
-package com.maxrave.simpmusic.pagination
+package com.sakayori.music.pagination
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.maxrave.domain.repository.SongRepository
+import com.sakayori.domain.repository.SongRepository
 import kotlinx.coroutines.delay
 
 class RecentPagingSource(

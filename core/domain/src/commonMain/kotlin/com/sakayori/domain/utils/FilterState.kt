@@ -1,4 +1,4 @@
-package com.maxrave.domain.utils
+package com.sakayori.domain.utils
 
 sealed class FilterState {
     data object CustomOrder : FilterState()

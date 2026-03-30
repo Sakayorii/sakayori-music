@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -52,62 +52,62 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.maxrave.common.Config
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.PodcastsEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.browse.artist.ResultAlbum
-import com.maxrave.domain.data.model.browse.artist.ResultPlaylist
-import com.maxrave.domain.data.model.browse.artist.ResultSingle
-import com.maxrave.domain.data.model.home.Content
-import com.maxrave.domain.data.model.home.HomeItem
-import com.maxrave.domain.data.model.home.chart.ItemArtist
-import com.maxrave.domain.data.model.home.chart.ItemVideo
-import com.maxrave.domain.data.model.mood.genre.ItemsPlaylist
-import com.maxrave.domain.data.model.mood.moodmoments.Item
-import com.maxrave.domain.data.model.searchResult.albums.AlbumsResult
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.type.ChartItem
-import com.maxrave.domain.data.type.HomeContentType
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.utils.connectArtists
-import com.maxrave.domain.utils.toListName
-import com.maxrave.domain.utils.toSongEntity
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.Platform
-import com.maxrave.simpmusic.expect.ui.HorizontalScrollBar
-import com.maxrave.simpmusic.extension.generateRandomColor
-import com.maxrave.simpmusic.extension.ifNullOrEmpty
-import com.maxrave.simpmusic.getPlatform
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.HomeViewModel
+import com.sakayori.common.Config
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.PodcastsEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.browse.artist.ResultAlbum
+import com.sakayori.domain.data.model.browse.artist.ResultPlaylist
+import com.sakayori.domain.data.model.browse.artist.ResultSingle
+import com.sakayori.domain.data.model.home.Content
+import com.sakayori.domain.data.model.home.HomeItem
+import com.sakayori.domain.data.model.home.chart.ItemArtist
+import com.sakayori.domain.data.model.home.chart.ItemVideo
+import com.sakayori.domain.data.model.mood.genre.ItemsPlaylist
+import com.sakayori.domain.data.model.mood.moodmoments.Item
+import com.sakayori.domain.data.model.searchResult.albums.AlbumsResult
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.type.ChartItem
+import com.sakayori.domain.data.type.HomeContentType
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.utils.connectArtists
+import com.sakayori.domain.utils.toListName
+import com.sakayori.domain.utils.toSongEntity
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.logger.Logger
+import com.sakayori.music.Platform
+import com.sakayori.music.expect.ui.HorizontalScrollBar
+import com.sakayori.music.extension.generateRandomColor
+import com.sakayori.music.extension.ifNullOrEmpty
+import com.sakayori.music.getPlatform
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.navigation.destination.list.PlaylistDestination
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.HomeViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.album
-import simpmusic.composeapp.generated.resources.app_name
-import simpmusic.composeapp.generated.resources.artists
-import simpmusic.composeapp.generated.resources.available_online
-import simpmusic.composeapp.generated.resources.description
-import simpmusic.composeapp.generated.resources.downloaded
-import simpmusic.composeapp.generated.resources.holder
-import simpmusic.composeapp.generated.resources.holder_video
-import simpmusic.composeapp.generated.resources.playlist
-import simpmusic.composeapp.generated.resources.podcasts
-import simpmusic.composeapp.generated.resources.songs
-import simpmusic.composeapp.generated.resources.subscribers
-import simpmusic.composeapp.generated.resources.videos
-import simpmusic.composeapp.generated.resources.you
-import simpmusic.composeapp.generated.resources.your_youtube_playlists
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.album
+import com.sakayori.music.generated.resources.app_name
+import com.sakayori.music.generated.resources.artists
+import com.sakayori.music.generated.resources.available_online
+import com.sakayori.music.generated.resources.description
+import com.sakayori.music.generated.resources.downloaded
+import com.sakayori.music.generated.resources.holder
+import com.sakayori.music.generated.resources.holder_video
+import com.sakayori.music.generated.resources.playlist
+import com.sakayori.music.generated.resources.podcasts
+import com.sakayori.music.generated.resources.songs
+import com.sakayori.music.generated.resources.subscribers
+import com.sakayori.music.generated.resources.videos
+import com.sakayori.music.generated.resources.you
+import com.sakayori.music.generated.resources.your_youtube_playlists
 
 @Composable
 fun HomeItem(
@@ -324,8 +324,8 @@ fun HomeItemContentPlaylist(
             val thumb =
                 when (data) {
                     is Content -> data.thumbnails.lastOrNull()?.url
-                    is com.maxrave.domain.data.model.mood.genre.Content -> data.thumbnail?.lastOrNull()?.url
-                    is com.maxrave.domain.data.model.mood.moodmoments.Content -> data.thumbnails?.lastOrNull()?.url
+                    is com.sakayori.domain.data.model.mood.genre.Content -> data.thumbnail?.lastOrNull()?.url
+                    is com.sakayori.domain.data.model.mood.moodmoments.Content -> data.thumbnails?.lastOrNull()?.url
                     is LocalPlaylistEntity -> data.thumbnail
                     is ChartItem -> null
                     is PlaylistsResult -> data.thumbnails.lastOrNull()?.url
@@ -405,8 +405,8 @@ fun HomeItemContentPlaylist(
                 text =
                     when (data) {
                         is Content -> data.title
-                        is com.maxrave.domain.data.model.mood.genre.Content -> data.title.title
-                        is com.maxrave.domain.data.model.mood.moodmoments.Content -> data.title
+                        is com.sakayori.domain.data.model.mood.genre.Content -> data.title.title
+                        is com.sakayori.domain.data.model.mood.moodmoments.Content -> data.title
                         is LocalPlaylistEntity -> data.title
                         is ChartItem -> "Top 50 Weekly - ${data.country.name}"
                         is PlaylistsResult -> data.title
@@ -452,11 +452,11 @@ fun HomeItemContentPlaylist(
                                 }
                         }
 
-                        is com.maxrave.domain.data.model.mood.genre.Content -> {
+                        is com.sakayori.domain.data.model.mood.genre.Content -> {
                             data.title.subtitle
                         }
 
-                        is com.maxrave.domain.data.model.mood.moodmoments.Content -> {
+                        is com.sakayori.domain.data.model.mood.moodmoments.Content -> {
                             data.subtitle
                         }
 
@@ -515,7 +515,7 @@ fun HomeItemContentPlaylist(
                             animationMode = MarqueeAnimationMode.Immediately,
                         ).focusable(),
             )
-            if (data is com.maxrave.domain.data.type.PlaylistType && data !is AlbumsResult) {
+            if (data is com.sakayori.domain.data.type.PlaylistType && data !is AlbumsResult) {
                 val subtitle =
                     if (data is LocalPlaylistEntity) {
                         if (data.downloadState != DownloadState.STATE_DOWNLOADED) {
@@ -1340,10 +1340,10 @@ fun MoodAndGenresContentItem(
                     navController.navigate(
                         PlaylistDestination(
                             playlistId =
-                                if (item is com.maxrave.domain.data.model.mood.genre.Content) {
+                                if (item is com.sakayori.domain.data.model.mood.genre.Content) {
                                     item.playlistBrowseId
                                 } else {
-                                    (item as com.maxrave.domain.data.model.mood.moodmoments.Content).playlistBrowseId
+                                    (item as com.sakayori.domain.data.model.mood.moodmoments.Content).playlistBrowseId
                                 },
                         ),
                     )

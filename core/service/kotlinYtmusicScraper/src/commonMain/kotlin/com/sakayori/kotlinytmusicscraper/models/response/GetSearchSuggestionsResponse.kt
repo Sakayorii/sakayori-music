@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.models.response
+package com.sakayori.kotlinytmusicscraper.models.response
 
-import com.maxrave.kotlinytmusicscraper.models.SearchSuggestionsSectionRenderer
+import com.sakayori.kotlinytmusicscraper.models.SearchSuggestionsSectionRenderer
 import kotlinx.serialization.Serializable
 
 @Serializable

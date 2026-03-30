@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.player
+package com.sakayori.music.ui.screen.player
 
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.maxrave.simpmusic.extension.findActivity
+import com.sakayori.music.extension.findActivity
 
 @Composable
 actual fun FullScreenRotationImmersive(

@@ -1,22 +1,22 @@
-package com.maxrave.data.parser
+package com.sakayori.data.parser
 
-import com.maxrave.domain.data.model.home.Content
-import com.maxrave.domain.data.model.home.HomeItem
-import com.maxrave.domain.data.model.searchResult.songs.Album
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.kotlinytmusicscraper.models.ArtistItem
-import com.maxrave.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.models.Run
-import com.maxrave.kotlinytmusicscraper.models.SectionListRenderer
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.Thumbnail
-import com.maxrave.kotlinytmusicscraper.models.VideoItem
-import com.maxrave.kotlinytmusicscraper.pages.ArtistPage
-import com.maxrave.kotlinytmusicscraper.pages.ExplorePage
-import com.maxrave.kotlinytmusicscraper.pages.RelatedPage
-import com.maxrave.logger.Logger
+import com.sakayori.domain.data.model.home.Content
+import com.sakayori.domain.data.model.home.HomeItem
+import com.sakayori.domain.data.model.searchResult.songs.Album
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.kotlinytmusicscraper.models.ArtistItem
+import com.sakayori.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.models.Run
+import com.sakayori.kotlinytmusicscraper.models.SectionListRenderer
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.Thumbnail
+import com.sakayori.kotlinytmusicscraper.models.VideoItem
+import com.sakayori.kotlinytmusicscraper.pages.ArtistPage
+import com.sakayori.kotlinytmusicscraper.pages.ExplorePage
+import com.sakayori.kotlinytmusicscraper.pages.RelatedPage
+import com.sakayori.logger.Logger
 
 internal fun parseMixedContent(
     data: List<SectionListRenderer.Content>?,
@@ -719,15 +719,15 @@ internal fun parseSongArtistsRuns(
     return artists
 }
 
-fun Thumbnail.toThumbnail(): com.maxrave.domain.data.model.searchResult.songs.Thumbnail =
-    com.maxrave.domain.data.model.searchResult.songs.Thumbnail(
+fun Thumbnail.toThumbnail(): com.sakayori.domain.data.model.searchResult.songs.Thumbnail =
+    com.sakayori.domain.data.model.searchResult.songs.Thumbnail(
         height = this.height ?: 0,
         url = this.url,
         width = this.width ?: 0,
     )
 
-fun List<Thumbnail>.toListThumbnail(): List<com.maxrave.domain.data.model.searchResult.songs.Thumbnail> {
-    val list = mutableListOf<com.maxrave.domain.data.model.searchResult.songs.Thumbnail>()
+fun List<Thumbnail>.toListThumbnail(): List<com.sakayori.domain.data.model.searchResult.songs.Thumbnail> {
+    val list = mutableListOf<com.sakayori.domain.data.model.searchResult.songs.Thumbnail>()
     this.forEach {
         list.add(it.toThumbnail())
     }
@@ -760,7 +760,7 @@ internal fun parseNewRelease(
                         browseId = it.id,
                         thumbnails =
                             listOf(
-                                com.maxrave.domain.data.model.searchResult.songs.Thumbnail(
+                                com.sakayori.domain.data.model.searchResult.songs.Thumbnail(
                                     522,
                                     it.thumbnail,
                                     522,
@@ -815,7 +815,7 @@ internal fun parseNewRelease(
                         browseId = null,
                         thumbnails =
                             listOf(
-                                com.maxrave.domain.data.model.searchResult.songs.Thumbnail(
+                                com.sakayori.domain.data.model.searchResult.songs.Thumbnail(
                                     522,
                                     videoItem.thumbnail,
                                     1080,

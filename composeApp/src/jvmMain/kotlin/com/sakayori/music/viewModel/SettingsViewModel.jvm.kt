@@ -1,13 +1,13 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import com.eygraber.uri.Uri
-import com.maxrave.common.DB_NAME
-import com.maxrave.common.SETTINGS_FILENAME
-import com.maxrave.data.io.getHomeFolderPath
-import com.maxrave.domain.repository.CacheRepository
-import com.maxrave.domain.repository.CommonRepository
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.extension.zipOutputStream
+import com.sakayori.common.DB_NAME
+import com.sakayori.common.SETTINGS_FILENAME
+import com.sakayori.data.io.getHomeFolderPath
+import com.sakayori.domain.repository.CacheRepository
+import com.sakayori.domain.repository.CommonRepository
+import com.sakayori.logger.Logger
+import com.sakayori.music.extension.zipOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -15,8 +15,8 @@ import kotlinx.coroutines.withContext
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
 import org.jetbrains.compose.resources.getString
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.restore_success
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.restore_success
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -46,7 +46,7 @@ actual suspend fun restoreNative(
             Logger.d("BackupRestore", "Processing entry: ${entry.name}")
             when {
                 entry.name == "$SETTINGS_FILENAME.preferences_pb" -> {
-                    File(getHomeFolderPath(listOf(".simpmusic")), "$SETTINGS_FILENAME.preferences_pb")
+                    File(getHomeFolderPath(listOf(".SakayoriMusic")), "$SETTINGS_FILENAME.preferences_pb")
                         .outputStream()
                         .use { outputStream ->
                             inputStream.copyTo(outputStream)
@@ -83,7 +83,7 @@ actual suspend fun backupNative(
         FileOutputStream(File(uri.toString()))
     ).use {
         it.buffered().zipOutputStream().use { outputStream ->
-            File(getHomeFolderPath(listOf(".simpmusic")), "$SETTINGS_FILENAME.preferences_pb")
+            File(getHomeFolderPath(listOf(".SakayoriMusic")), "$SETTINGS_FILENAME.preferences_pb")
                 .inputStream()
                 .buffered()
                 .use { inputStream ->

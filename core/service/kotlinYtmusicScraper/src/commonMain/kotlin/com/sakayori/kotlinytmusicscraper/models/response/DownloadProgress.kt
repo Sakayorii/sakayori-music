@@ -1,4 +1,4 @@
-package com.maxrave.kotlinytmusicscraper.models.response
+package com.sakayori.kotlinytmusicscraper.models.response
 
 data class DownloadProgress(
     val audioDownloadProgress: Float = 0f, // 0.0 - 1.0

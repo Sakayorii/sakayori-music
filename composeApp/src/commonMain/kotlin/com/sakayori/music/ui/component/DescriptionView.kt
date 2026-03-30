@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateIntAsState
@@ -25,12 +25,12 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.ui.theme.typo
+import com.sakayori.logger.Logger
+import com.sakayori.music.ui.theme.typo
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.less
-import simpmusic.composeapp.generated.resources.more
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.less
+import com.sakayori.music.generated.resources.more
 
 @Composable
 fun DescriptionView(

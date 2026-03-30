@@ -1,4 +1,4 @@
-package com.maxrave.media3.service.download
+package com.sakayori.media3.service.download
 
 import android.content.Context
 import androidx.core.net.toUri
@@ -18,14 +18,14 @@ import androidx.media3.exoplayer.offline.DownloadService
 import coil3.ImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import com.maxrave.common.MERGING_DATA_TYPE
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.extension.now
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.mediaservice.handler.DownloadHandler
-import com.maxrave.domain.repository.SongRepository
-import com.maxrave.domain.repository.StreamRepository
-import com.maxrave.logger.Logger
+import com.sakayori.common.MERGING_DATA_TYPE
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.extension.now
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.mediaservice.handler.DownloadHandler
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.repository.StreamRepository
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable

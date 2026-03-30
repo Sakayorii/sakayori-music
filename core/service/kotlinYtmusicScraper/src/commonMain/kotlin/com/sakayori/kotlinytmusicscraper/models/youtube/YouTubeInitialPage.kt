@@ -1,7 +1,7 @@
-package com.maxrave.kotlinytmusicscraper.models.youtube
+package com.sakayori.kotlinytmusicscraper.models.youtube
 
-import com.maxrave.kotlinytmusicscraper.models.ResponseContext
-import com.maxrave.kotlinytmusicscraper.models.response.PlayerResponse
+import com.sakayori.kotlinytmusicscraper.models.ResponseContext
+import com.sakayori.kotlinytmusicscraper.models.response.PlayerResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

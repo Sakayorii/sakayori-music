@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.mood.genre
+package com.sakayori.domain.data.model.mood.genre
 
-import com.maxrave.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Artist
 
 data class ItemsSong(
     val title: String,

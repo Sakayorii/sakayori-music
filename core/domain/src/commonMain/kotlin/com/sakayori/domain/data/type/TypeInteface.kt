@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.type
+package com.sakayori.domain.data.type
 
 /**
  * This is file which define the type of multiple data in interface type.

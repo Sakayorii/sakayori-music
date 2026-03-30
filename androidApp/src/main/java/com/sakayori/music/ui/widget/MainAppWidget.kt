@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.widget
+package com.sakayori.music.ui.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -59,18 +59,18 @@ import coil3.request.error
 import coil3.request.placeholder
 import coil3.toBitmap
 import com.kmpalette.rememberPaletteState
-import com.maxrave.common.Config
-import com.maxrave.domain.mediaservice.handler.RepeatState
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.MainActivity
-import com.maxrave.simpmusic.R
-import com.maxrave.simpmusic.extension.getColorFromPalette
-import com.maxrave.simpmusic.ui.theme.md_theme_dark_background
-import com.maxrave.simpmusic.ui.theme.seed
-import com.maxrave.simpmusic.ui.theme.transparent
-import com.maxrave.simpmusic.ui.theme.white
-import com.maxrave.simpmusic.viewModel.SharedViewModel
-import com.maxrave.simpmusic.viewModel.UIEvent
+import com.sakayori.common.Config
+import com.sakayori.domain.mediaservice.handler.RepeatState
+import com.sakayori.logger.Logger
+import com.sakayori.music.MainActivity
+import com.sakayori.music.R
+import com.sakayori.music.extension.getColorFromPalette
+import com.sakayori.music.ui.theme.md_theme_dark_background
+import com.sakayori.music.ui.theme.seed
+import com.sakayori.music.ui.theme.transparent
+import com.sakayori.music.ui.theme.white
+import com.sakayori.music.viewModel.SharedViewModel
+import com.sakayori.music.viewModel.UIEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged

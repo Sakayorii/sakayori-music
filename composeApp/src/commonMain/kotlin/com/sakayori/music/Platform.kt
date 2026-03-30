@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic
+package com.sakayori.music
 
 sealed class Platform {
     object Android : Platform()

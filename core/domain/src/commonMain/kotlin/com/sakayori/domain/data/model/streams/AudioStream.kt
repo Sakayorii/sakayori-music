@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.streams
+package com.sakayori.domain.data.model.streams
 
 data class AudioStream(
     val audioTrackId: Any,

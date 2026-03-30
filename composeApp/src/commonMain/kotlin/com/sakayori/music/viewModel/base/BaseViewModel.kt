@@ -1,11 +1,11 @@
-package com.maxrave.simpmusic.viewModel.base
+package com.sakayori.music.viewModel.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.maxrave.domain.mediaservice.handler.MediaPlayerHandler
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.logger.LogLevel
-import com.maxrave.logger.Logger
+import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.logger.LogLevel
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,8 +18,8 @@ import multiplatform.network.cmptoast.showToast
 import org.jetbrains.compose.resources.StringResource
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.loading
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.loading
 
 abstract class BaseViewModel :
     ViewModel(),

@@ -1,5 +1,5 @@
 - Cập nhật logic Spotify
-- Cập nhật nguồn cung cấp lời bài hát mới - SimpMusic Lyrics
+- Cập nhật nguồn cung cấp lời bài hát mới - SakayoriMusic Lyrics
 - Cải thiện quy trình đăng nhập
 - Chuyển đổi bài hát mới (BETA)
 - Cuộn xuống để đóng Now Playing

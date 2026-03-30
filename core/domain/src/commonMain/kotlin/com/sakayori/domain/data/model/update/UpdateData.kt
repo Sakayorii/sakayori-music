@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.update
+package com.sakayori.domain.data.model.update
 
 data class UpdateData(
     val tagName: String,

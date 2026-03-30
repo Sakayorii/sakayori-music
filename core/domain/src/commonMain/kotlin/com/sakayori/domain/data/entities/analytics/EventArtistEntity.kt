@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.entities.analytics
+package com.sakayori.domain.data.entities.analytics
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

@@ -6,6 +6,6 @@
 - Hỗ trợ PIP khi ở chế độ toàn màn hình
 - Phụ đề trong mọi video
 - Tùy chọn sao lưu các bài hát đã tải xuống
-- Đã xóa Musixmatch - thay thế bằng SimpMusic Lyrics
+- Đã xóa Musixmatch - thay thế bằng SakayoriMusic Lyrics
 - Đã xóa Crossfade
 - Giao diện mới cho Bảng xếp hạng

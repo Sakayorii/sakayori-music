@@ -1,6 +1,6 @@
-package com.simpmusic.media_jvm
+package com.SakayoriMusic.media_jvm
 
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 import uk.co.caprica.vlcj.factory.discovery.strategy.NativeDiscoveryStrategy
 import java.io.File
 
@@ -91,3 +91,4 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
             } == true
     }
 }
+

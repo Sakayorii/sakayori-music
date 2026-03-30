@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.ui
+package com.sakayori.domain.data.model.ui
 
 data class ScreenSizeInfo(
     val hDP: Int,

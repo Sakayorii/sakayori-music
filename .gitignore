@@ -18,7 +18,7 @@ crowdin.yml
 # Kotlin 2.0
 .kotlin/
 .idea
-/simpmusic.jks
+/SakayoriMusic.jks
 /ffmpeg-kit/build/
 
 #dev files
@@ -38,3 +38,4 @@ sentry.properties
 
 # VLC native libraries (downloaded by vlc-setup plugin)
 /vlc-natives/
+

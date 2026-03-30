@@ -1,7 +1,7 @@
-package com.maxrave.kotlinytmusicscraper.parser
+package com.sakayori.kotlinytmusicscraper.parser
 
-import com.maxrave.kotlinytmusicscraper.models.Badges
-import com.maxrave.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.Badges
+import com.sakayori.kotlinytmusicscraper.models.SongItem
 
 fun List<Badges>.toSongBadges(): List<SongItem.SongBadges> =
     this.mapNotNull {

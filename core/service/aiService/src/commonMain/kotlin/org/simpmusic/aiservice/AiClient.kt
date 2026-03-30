@@ -1,6 +1,6 @@
-package org.simpmusic.aiservice
+package org.SakayoriMusic.aiservice
 
-import com.maxrave.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.metadata.Lyrics
 
 class AiClient {
     private var aiService: AiService? = null

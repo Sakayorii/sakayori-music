@@ -1,6 +1,6 @@
-package com.maxrave.domain.data.model.network
+package com.sakayori.domain.data.model.network
 
-import com.maxrave.domain.manager.DataStoreManager
+import com.sakayori.domain.manager.DataStoreManager
 
 data class ProxyConfiguration(
     val host: String,

@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.navigation.destination.library
+package com.sakayori.music.ui.navigation.destination.library
 
 import kotlinx.serialization.Serializable
 

@@ -1,14 +1,14 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.domain.data.model.searchResult.albums.AlbumsResult
-import com.maxrave.domain.repository.AlbumRepository
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.domain.data.model.searchResult.albums.AlbumsResult
+import com.sakayori.domain.repository.AlbumRepository
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.error
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.error
 
 class MoreAlbumsViewModel(
     private val albumRepository: AlbumRepository,

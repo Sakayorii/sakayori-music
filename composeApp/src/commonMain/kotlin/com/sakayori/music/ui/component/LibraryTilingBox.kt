@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,17 +23,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.maxrave.simpmusic.extension.NonLazyGrid
-import com.maxrave.simpmusic.ui.navigation.destination.library.LibraryDynamicPlaylistDestination
-import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
-import com.maxrave.simpmusic.ui.theme.typo
+import com.sakayori.music.extension.NonLazyGrid
+import com.sakayori.music.ui.navigation.destination.library.LibraryDynamicPlaylistDestination
+import com.sakayori.music.ui.screen.library.LibraryDynamicPlaylistType
+import com.sakayori.music.ui.theme.typo
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.downloaded
-import simpmusic.composeapp.generated.resources.favorite
-import simpmusic.composeapp.generated.resources.followed
-import simpmusic.composeapp.generated.resources.most_played
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.downloaded
+import com.sakayori.music.generated.resources.favorite
+import com.sakayori.music.generated.resources.followed
+import com.sakayori.music.generated.resources.most_played
 
 @Composable
 fun LibraryTilingBox(navController: NavController) {

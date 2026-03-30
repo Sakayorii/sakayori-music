@@ -1,4 +1,4 @@
-package com.maxrave.media3.extension
+package com.sakayori.media3.extension
 
 import android.content.Context
 import android.os.Bundle
@@ -8,15 +8,15 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
 import androidx.media3.session.SessionCommand
-import com.maxrave.common.MEDIA_CUSTOM_COMMAND
-import com.maxrave.common.MERGING_DATA_TYPE
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.player.GenericCommandButton
-import com.maxrave.domain.mediaservice.handler.RepeatState
-import com.maxrave.domain.utils.connectArtists
-import com.maxrave.domain.utils.toListName
-import com.maxrave.media3.R
+import com.sakayori.common.MEDIA_CUSTOM_COMMAND
+import com.sakayori.common.MERGING_DATA_TYPE
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.player.GenericCommandButton
+import com.sakayori.domain.mediaservice.handler.RepeatState
+import com.sakayori.domain.utils.connectArtists
+import com.sakayori.domain.utils.toListName
+import com.sakayori.media3.R
 
 fun MediaItem?.toSongEntity(): SongEntity? =
     if (this != null) {

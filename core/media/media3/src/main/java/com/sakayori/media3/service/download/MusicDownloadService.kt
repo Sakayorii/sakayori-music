@@ -1,4 +1,4 @@
-package com.maxrave.media3.service.download
+package com.sakayori.media3.service.download
 
 import android.app.Notification
 import android.content.Context
@@ -11,8 +11,8 @@ import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.PlatformScheduler
 import androidx.media3.exoplayer.scheduler.Scheduler
-import com.maxrave.media3.R
-import com.maxrave.domain.mediaservice.handler.DownloadHandler
+import com.sakayori.media3.R
+import com.sakayori.domain.mediaservice.handler.DownloadHandler
 import org.koin.android.ext.android.inject
 
 @UnstableApi

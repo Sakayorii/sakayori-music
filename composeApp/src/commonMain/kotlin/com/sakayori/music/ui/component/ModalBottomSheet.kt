@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.component
+package com.sakayori.music.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -120,35 +120,35 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.model.download.DownloadProgress
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.mediaservice.handler.MediaPlayerHandler
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.repository.LocalPlaylistRepository
-import com.maxrave.domain.utils.FilterState
-import com.maxrave.domain.utils.connectArtists
-import com.maxrave.domain.utils.toListName
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.Platform
-import com.maxrave.simpmusic.expect.copyToClipboard
-import com.maxrave.simpmusic.expect.shareUrl
-import com.maxrave.simpmusic.expect.ui.photoPickerResult
-import com.maxrave.simpmusic.extension.displayNameRes
-import com.maxrave.simpmusic.extension.greyScale
-import com.maxrave.simpmusic.getPlatform
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.theme.seed
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.ui.theme.white
-import com.maxrave.simpmusic.viewModel.NowPlayingBottomSheetUIEvent
-import com.maxrave.simpmusic.viewModel.NowPlayingBottomSheetViewModel
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.model.download.DownloadProgress
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.repository.LocalPlaylistRepository
+import com.sakayori.domain.utils.FilterState
+import com.sakayori.domain.utils.connectArtists
+import com.sakayori.domain.utils.toListName
+import com.sakayori.logger.Logger
+import com.sakayori.music.Platform
+import com.sakayori.music.expect.copyToClipboard
+import com.sakayori.music.expect.shareUrl
+import com.sakayori.music.expect.ui.photoPickerResult
+import com.sakayori.music.extension.displayNameRes
+import com.sakayori.music.extension.greyScale
+import com.sakayori.music.getPlatform
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.theme.seed
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.ui.theme.white
+import com.sakayori.music.viewModel.NowPlayingBottomSheetUIEvent
+import com.sakayori.music.viewModel.NowPlayingBottomSheetViewModel
+import com.sakayori.music.viewModel.SharedViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -164,119 +164,119 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.add_to_a_playlist
-import simpmusic.composeapp.generated.resources.add_to_queue
-import simpmusic.composeapp.generated.resources.album
-import simpmusic.composeapp.generated.resources.artists
-import simpmusic.composeapp.generated.resources.baseline_access_alarm_24
-import simpmusic.composeapp.generated.resources.baseline_add_photo_alternate_24
-import simpmusic.composeapp.generated.resources.baseline_album_24
-import simpmusic.composeapp.generated.resources.baseline_delete_24
-import simpmusic.composeapp.generated.resources.baseline_downloaded
-import simpmusic.composeapp.generated.resources.baseline_downloading_white
-import simpmusic.composeapp.generated.resources.baseline_edit_24
-import simpmusic.composeapp.generated.resources.baseline_favorite_24
-import simpmusic.composeapp.generated.resources.baseline_favorite_border_24
-import simpmusic.composeapp.generated.resources.baseline_keyboard_arrow_down_24
-import simpmusic.composeapp.generated.resources.baseline_keyboard_double_arrow_down_24
-import simpmusic.composeapp.generated.resources.baseline_keyboard_double_arrow_up_24
-import simpmusic.composeapp.generated.resources.baseline_lyrics_24
-import simpmusic.composeapp.generated.resources.baseline_people_alt_24
-import simpmusic.composeapp.generated.resources.baseline_playlist_add_24
-import simpmusic.composeapp.generated.resources.baseline_queue_music_24
-import simpmusic.composeapp.generated.resources.baseline_sensors_24
-import simpmusic.composeapp.generated.resources.baseline_share_24
-import simpmusic.composeapp.generated.resources.baseline_sync_24
-import simpmusic.composeapp.generated.resources.baseline_sync_disabled_24
-import simpmusic.composeapp.generated.resources.baseline_update_24
-import simpmusic.composeapp.generated.resources.better_lyrics
-import simpmusic.composeapp.generated.resources.bitrate
-import simpmusic.composeapp.generated.resources.bpm
-import simpmusic.composeapp.generated.resources.can_not_be_empty
-import simpmusic.composeapp.generated.resources.cancel
-import simpmusic.composeapp.generated.resources.codec
-import simpmusic.composeapp.generated.resources.copied_to_clipboard
-import simpmusic.composeapp.generated.resources.delete
-import simpmusic.composeapp.generated.resources.delete_playlist
-import simpmusic.composeapp.generated.resources.delete_song_from_playlist
-import simpmusic.composeapp.generated.resources.description
-import simpmusic.composeapp.generated.resources.done
-import simpmusic.composeapp.generated.resources.download
-import simpmusic.composeapp.generated.resources.download_speed
-import simpmusic.composeapp.generated.resources.download_this_song_video_file_to_your_device
-import simpmusic.composeapp.generated.resources.downloaded
-import simpmusic.composeapp.generated.resources.downloading
-import simpmusic.composeapp.generated.resources.downloading_audio
-import simpmusic.composeapp.generated.resources.downloading_video
-import simpmusic.composeapp.generated.resources.edit_thumbnail
-import simpmusic.composeapp.generated.resources.edit_title
-import simpmusic.composeapp.generated.resources.endless_queue
-import simpmusic.composeapp.generated.resources.error_occurred
-import simpmusic.composeapp.generated.resources.holder
-import simpmusic.composeapp.generated.resources.itag
-import simpmusic.composeapp.generated.resources.key
-import simpmusic.composeapp.generated.resources.like
-import simpmusic.composeapp.generated.resources.like_and_dislike
-import simpmusic.composeapp.generated.resources.liked
-import simpmusic.composeapp.generated.resources.list_all_cookies_of_this_page
-import simpmusic.composeapp.generated.resources.lrclib
-import simpmusic.composeapp.generated.resources.main_lyrics_provider
-import simpmusic.composeapp.generated.resources.merging_audio_and_video
-import simpmusic.composeapp.generated.resources.mime_type
-import simpmusic.composeapp.generated.resources.move_down
-import simpmusic.composeapp.generated.resources.move_up
-import simpmusic.composeapp.generated.resources.no_album
-import simpmusic.composeapp.generated.resources.no_description
-import simpmusic.composeapp.generated.resources.no_playlist_found
-import simpmusic.composeapp.generated.resources.now_playing
-import simpmusic.composeapp.generated.resources.now_playing_upper
-import simpmusic.composeapp.generated.resources.ok
-import simpmusic.composeapp.generated.resources.outline_download_for_offline_24
-import simpmusic.composeapp.generated.resources.pitch
-import simpmusic.composeapp.generated.resources.play_circle
-import simpmusic.composeapp.generated.resources.play_next
-import simpmusic.composeapp.generated.resources.playback_speed
-import simpmusic.composeapp.generated.resources.playback_speed_pitch
-import simpmusic.composeapp.generated.resources.playback_speed_pitch_disabled
-import simpmusic.composeapp.generated.resources.playlist_name_cannot_be_empty
-import simpmusic.composeapp.generated.resources.plays
-import simpmusic.composeapp.generated.resources.processing
-import simpmusic.composeapp.generated.resources.queue
-import simpmusic.composeapp.generated.resources.radio
-import simpmusic.composeapp.generated.resources.round_speed_24
-import simpmusic.composeapp.generated.resources.save
-import simpmusic.composeapp.generated.resources.save_to_local_playlist
-import simpmusic.composeapp.generated.resources.saved_to_local_playlist
-import simpmusic.composeapp.generated.resources.scale
-import simpmusic.composeapp.generated.resources.set
-import simpmusic.composeapp.generated.resources.share
-import simpmusic.composeapp.generated.resources.share_url
-import simpmusic.composeapp.generated.resources.simpmusic_lyrics
-import simpmusic.composeapp.generated.resources.sleep_minutes
-import simpmusic.composeapp.generated.resources.sleep_timer
-import simpmusic.composeapp.generated.resources.sleep_timer_end_of_song
-import simpmusic.composeapp.generated.resources.sleep_timer_off
-import simpmusic.composeapp.generated.resources.sleep_timer_set_error
-import simpmusic.composeapp.generated.resources.sleep_timer_warning
-import simpmusic.composeapp.generated.resources.sort_by
-import simpmusic.composeapp.generated.resources.start_radio
-import simpmusic.composeapp.generated.resources.sync
-import simpmusic.composeapp.generated.resources.sync_first
-import simpmusic.composeapp.generated.resources.synced
-import simpmusic.composeapp.generated.resources.title
-import simpmusic.composeapp.generated.resources.to_download_folder
-import simpmusic.composeapp.generated.resources.unknown
-import simpmusic.composeapp.generated.resources.update_playlist
-import simpmusic.composeapp.generated.resources.warning
-import simpmusic.composeapp.generated.resources.yes
-import simpmusic.composeapp.generated.resources.your_discord_token
-import simpmusic.composeapp.generated.resources.your_playlists
-import simpmusic.composeapp.generated.resources.your_sp_dc_param_of_spotify_cookie
-import simpmusic.composeapp.generated.resources.your_youtube_cookie
-import simpmusic.composeapp.generated.resources.your_youtube_playlists
-import simpmusic.composeapp.generated.resources.youtube_transcript
-import simpmusic.composeapp.generated.resources.youtube_url
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.add_to_a_playlist
+import com.sakayori.music.generated.resources.add_to_queue
+import com.sakayori.music.generated.resources.album
+import com.sakayori.music.generated.resources.artists
+import com.sakayori.music.generated.resources.baseline_access_alarm_24
+import com.sakayori.music.generated.resources.baseline_add_photo_alternate_24
+import com.sakayori.music.generated.resources.baseline_album_24
+import com.sakayori.music.generated.resources.baseline_delete_24
+import com.sakayori.music.generated.resources.baseline_downloaded
+import com.sakayori.music.generated.resources.baseline_downloading_white
+import com.sakayori.music.generated.resources.baseline_edit_24
+import com.sakayori.music.generated.resources.baseline_favorite_24
+import com.sakayori.music.generated.resources.baseline_favorite_border_24
+import com.sakayori.music.generated.resources.baseline_keyboard_arrow_down_24
+import com.sakayori.music.generated.resources.baseline_keyboard_double_arrow_down_24
+import com.sakayori.music.generated.resources.baseline_keyboard_double_arrow_up_24
+import com.sakayori.music.generated.resources.baseline_lyrics_24
+import com.sakayori.music.generated.resources.baseline_people_alt_24
+import com.sakayori.music.generated.resources.baseline_playlist_add_24
+import com.sakayori.music.generated.resources.baseline_queue_music_24
+import com.sakayori.music.generated.resources.baseline_sensors_24
+import com.sakayori.music.generated.resources.baseline_share_24
+import com.sakayori.music.generated.resources.baseline_sync_24
+import com.sakayori.music.generated.resources.baseline_sync_disabled_24
+import com.sakayori.music.generated.resources.baseline_update_24
+import com.sakayori.music.generated.resources.better_lyrics
+import com.sakayori.music.generated.resources.bitrate
+import com.sakayori.music.generated.resources.bpm
+import com.sakayori.music.generated.resources.can_not_be_empty
+import com.sakayori.music.generated.resources.cancel
+import com.sakayori.music.generated.resources.codec
+import com.sakayori.music.generated.resources.copied_to_clipboard
+import com.sakayori.music.generated.resources.delete
+import com.sakayori.music.generated.resources.delete_playlist
+import com.sakayori.music.generated.resources.delete_song_from_playlist
+import com.sakayori.music.generated.resources.description
+import com.sakayori.music.generated.resources.done
+import com.sakayori.music.generated.resources.download
+import com.sakayori.music.generated.resources.download_speed
+import com.sakayori.music.generated.resources.download_this_song_video_file_to_your_device
+import com.sakayori.music.generated.resources.downloaded
+import com.sakayori.music.generated.resources.downloading
+import com.sakayori.music.generated.resources.downloading_audio
+import com.sakayori.music.generated.resources.downloading_video
+import com.sakayori.music.generated.resources.edit_thumbnail
+import com.sakayori.music.generated.resources.edit_title
+import com.sakayori.music.generated.resources.endless_queue
+import com.sakayori.music.generated.resources.error_occurred
+import com.sakayori.music.generated.resources.holder
+import com.sakayori.music.generated.resources.itag
+import com.sakayori.music.generated.resources.key
+import com.sakayori.music.generated.resources.like
+import com.sakayori.music.generated.resources.like_and_dislike
+import com.sakayori.music.generated.resources.liked
+import com.sakayori.music.generated.resources.list_all_cookies_of_this_page
+import com.sakayori.music.generated.resources.lrclib
+import com.sakayori.music.generated.resources.main_lyrics_provider
+import com.sakayori.music.generated.resources.merging_audio_and_video
+import com.sakayori.music.generated.resources.mime_type
+import com.sakayori.music.generated.resources.move_down
+import com.sakayori.music.generated.resources.move_up
+import com.sakayori.music.generated.resources.no_album
+import com.sakayori.music.generated.resources.no_description
+import com.sakayori.music.generated.resources.no_playlist_found
+import com.sakayori.music.generated.resources.now_playing
+import com.sakayori.music.generated.resources.now_playing_upper
+import com.sakayori.music.generated.resources.ok
+import com.sakayori.music.generated.resources.outline_download_for_offline_24
+import com.sakayori.music.generated.resources.pitch
+import com.sakayori.music.generated.resources.play_circle
+import com.sakayori.music.generated.resources.play_next
+import com.sakayori.music.generated.resources.playback_speed
+import com.sakayori.music.generated.resources.playback_speed_pitch
+import com.sakayori.music.generated.resources.playback_speed_pitch_disabled
+import com.sakayori.music.generated.resources.playlist_name_cannot_be_empty
+import com.sakayori.music.generated.resources.plays
+import com.sakayori.music.generated.resources.processing
+import com.sakayori.music.generated.resources.queue
+import com.sakayori.music.generated.resources.radio
+import com.sakayori.music.generated.resources.round_speed_24
+import com.sakayori.music.generated.resources.save
+import com.sakayori.music.generated.resources.save_to_local_playlist
+import com.sakayori.music.generated.resources.saved_to_local_playlist
+import com.sakayori.music.generated.resources.scale
+import com.sakayori.music.generated.resources.set
+import com.sakayori.music.generated.resources.share
+import com.sakayori.music.generated.resources.share_url
+import com.sakayori.music.generated.resources.SakayoriMusic_lyrics
+import com.sakayori.music.generated.resources.sleep_minutes
+import com.sakayori.music.generated.resources.sleep_timer
+import com.sakayori.music.generated.resources.sleep_timer_end_of_song
+import com.sakayori.music.generated.resources.sleep_timer_off
+import com.sakayori.music.generated.resources.sleep_timer_set_error
+import com.sakayori.music.generated.resources.sleep_timer_warning
+import com.sakayori.music.generated.resources.sort_by
+import com.sakayori.music.generated.resources.start_radio
+import com.sakayori.music.generated.resources.sync
+import com.sakayori.music.generated.resources.sync_first
+import com.sakayori.music.generated.resources.synced
+import com.sakayori.music.generated.resources.title
+import com.sakayori.music.generated.resources.to_download_folder
+import com.sakayori.music.generated.resources.unknown
+import com.sakayori.music.generated.resources.update_playlist
+import com.sakayori.music.generated.resources.warning
+import com.sakayori.music.generated.resources.yes
+import com.sakayori.music.generated.resources.your_discord_token
+import com.sakayori.music.generated.resources.your_playlists
+import com.sakayori.music.generated.resources.your_sp_dc_param_of_spotify_cookie
+import com.sakayori.music.generated.resources.your_youtube_cookie
+import com.sakayori.music.generated.resources.your_youtube_playlists
+import com.sakayori.music.generated.resources.youtube_transcript
+import com.sakayori.music.generated.resources.youtube_url
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sentinel value used by SleepTimerBottomSheet to signal "end of current song"
@@ -867,11 +867,11 @@ fun InfoPlayerBottomSheet(
                         buildAnnotatedString {
                             withLink(
                                 LinkAnnotation.Url(
-                                    "https://simpmusic.org/app/watch?v=${songEntity?.videoId}",
+                                    "https://SakayoriMusic.org/app/watch?v=${songEntity?.videoId}",
                                     TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline)),
                                 ),
                             ) {
-                                append("https://simpmusic.org/app/watch?v=${songEntity?.videoId}")
+                                append("https://SakayoriMusic.org/app/watch?v=${songEntity?.videoId}")
                             }
                         },
                     modifier =
@@ -1533,7 +1533,7 @@ fun NowPlayingBottomSheet(
         var selected by remember {
             mutableIntStateOf(
                 when (uiState.mainLyricsProvider) {
-                    DataStoreManager.SIMPMUSIC -> 0
+                    DataStoreManager.SakayoriMusic -> 0
                     DataStoreManager.LRCLIB -> 1
                     DataStoreManager.YOUTUBE -> 2
                     DataStoreManager.BETTER_LYRICS -> 3
@@ -1563,7 +1563,7 @@ fun NowPlayingBottomSheet(
                     ) {
                         RadioButton(selected = selected == 0, onClick = { selected = 0 })
                         Spacer(modifier = Modifier.size(10.dp))
-                        Text(text = stringResource(Res.string.simpmusic_lyrics), style = typo().labelSmall)
+                        Text(text = stringResource(Res.string.SakayoriMusic_lyrics), style = typo().labelSmall)
                     }
                     Row(
                         modifier =
@@ -1609,11 +1609,11 @@ fun NowPlayingBottomSheet(
                         viewModel.onUIEvent(
                             NowPlayingBottomSheetUIEvent.ChangeLyricsProvider(
                                 when (selected) {
-                                    0 -> DataStoreManager.SIMPMUSIC
+                                    0 -> DataStoreManager.SakayoriMusic
                                     1 -> DataStoreManager.LRCLIB
                                     2 -> DataStoreManager.YOUTUBE
                                     3 -> DataStoreManager.BETTER_LYRICS
-                                    else -> DataStoreManager.SIMPMUSIC
+                                    else -> DataStoreManager.SakayoriMusic
                                 },
                             ),
                         )
@@ -2862,7 +2862,7 @@ fun PlaylistBottomSheet(
                 }
                 val shareTitle = stringResource(Res.string.share)
                 ActionButton(icon = painterResource(Res.drawable.baseline_share_24), text = Res.string.share) {
-                    val url = "https://simpmusic.org/app/playlist?list=${playlistId.replaceFirst("VL", "")}"
+                    val url = "https://SakayoriMusic.org/app/playlist?list=${playlistId.replaceFirst("VL", "")}"
                     shareUrl(shareTitle, url)
                 }
                 EndOfModalBottomSheet()
@@ -3025,7 +3025,7 @@ fun LocalPlaylistBottomSheet(
                         text = if (ytPlaylistId != null) Res.string.share else Res.string.sync_first,
                         enable = (ytPlaylistId != null),
                     ) {
-                        val url = "https://simpmusic.org/app/playlist?list=${ytPlaylistId?.replaceFirst("VL", "")}"
+                        val url = "https://SakayoriMusic.org/app/playlist?list=${ytPlaylistId?.replaceFirst("VL", "")}"
                         shareUrl(shareTitle, url)
                     }
                     EndOfModalBottomSheet()

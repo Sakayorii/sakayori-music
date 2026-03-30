@@ -1,10 +1,10 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.NewFormatEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.mediaService.SponsorSkipSegments
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.utils.Resource
+import com.sakayori.domain.data.entities.NewFormatEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.mediaService.SponsorSkipSegments
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface StreamRepository {

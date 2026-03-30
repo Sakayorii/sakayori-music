@@ -1,4 +1,4 @@
-package com.maxrave.domain.mediaservice.handler
+package com.sakayori.domain.mediaservice.handler
 
 import kotlinx.coroutines.flow.StateFlow
 

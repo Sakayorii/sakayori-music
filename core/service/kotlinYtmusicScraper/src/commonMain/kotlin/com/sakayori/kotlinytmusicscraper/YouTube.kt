@@ -1,85 +1,85 @@
-package com.maxrave.kotlinytmusicscraper
+package com.sakayori.kotlinytmusicscraper
 
 import com.eygraber.uri.toKmpUri
-import com.maxrave.kotlinytmusicscraper.YouTube.Companion.DEFAULT_VISITOR_DATA
-import com.maxrave.kotlinytmusicscraper.extension.toListFormat
-import com.maxrave.kotlinytmusicscraper.models.AccountInfo
-import com.maxrave.kotlinytmusicscraper.models.AlbumItem
-import com.maxrave.kotlinytmusicscraper.models.Artist
-import com.maxrave.kotlinytmusicscraper.models.ArtistItem
-import com.maxrave.kotlinytmusicscraper.models.BrowseEndpoint
-import com.maxrave.kotlinytmusicscraper.models.GridRenderer
-import com.maxrave.kotlinytmusicscraper.models.MediaType
-import com.maxrave.kotlinytmusicscraper.models.TidalMetadataResult
-import com.maxrave.kotlinytmusicscraper.models.TidalStreamResult
-import com.maxrave.kotlinytmusicscraper.models.MusicCarouselShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.models.ReturnYouTubeDislikeResponse
-import com.maxrave.kotlinytmusicscraper.models.Run
-import com.maxrave.kotlinytmusicscraper.models.SearchSuggestions
-import com.maxrave.kotlinytmusicscraper.models.SongInfo
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.VideoItem
-import com.maxrave.kotlinytmusicscraper.models.WatchEndpoint
-import com.maxrave.kotlinytmusicscraper.models.YTItemType
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient.Companion.TVHTML5
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB
-import com.maxrave.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB_REMIX
-import com.maxrave.kotlinytmusicscraper.models.YouTubeLocale
-import com.maxrave.kotlinytmusicscraper.models.getContinuation
-import com.maxrave.kotlinytmusicscraper.models.oddElements
-import com.maxrave.kotlinytmusicscraper.models.response.AccountMenuResponse
-import com.maxrave.kotlinytmusicscraper.models.response.AccountSwitcherEndpointResponse
-import com.maxrave.kotlinytmusicscraper.models.response.AddItemYouTubePlaylistResponse
-import com.maxrave.kotlinytmusicscraper.models.response.BrowseResponse
-import com.maxrave.kotlinytmusicscraper.models.response.CreatePlaylistResponse
-import com.maxrave.kotlinytmusicscraper.models.response.DownloadProgress
-import com.maxrave.kotlinytmusicscraper.models.response.GetQueueResponse
-import com.maxrave.kotlinytmusicscraper.models.response.GetSearchSuggestionsResponse
-import com.maxrave.kotlinytmusicscraper.models.response.LikeStatus
-import com.maxrave.kotlinytmusicscraper.models.response.NextAndroidMusicResponse
-import com.maxrave.kotlinytmusicscraper.models.response.NextResponse
-import com.maxrave.kotlinytmusicscraper.models.response.PipedResponse
-import com.maxrave.kotlinytmusicscraper.models.response.PlayerResponse
-import com.maxrave.kotlinytmusicscraper.models.response.SearchResponse
-import com.maxrave.kotlinytmusicscraper.models.response.SimpMusicChartResponse
-import com.maxrave.kotlinytmusicscraper.models.response.TidalSearchResponse
-import com.maxrave.kotlinytmusicscraper.models.response.TidalStreamResponse
-import com.maxrave.kotlinytmusicscraper.models.response.toLikeStatus
-import com.maxrave.kotlinytmusicscraper.models.response.toListAccountInfo
-import com.maxrave.kotlinytmusicscraper.models.simpmusic.GithubResponse
-import com.maxrave.kotlinytmusicscraper.models.sponsorblock.SkipSegments
-import com.maxrave.kotlinytmusicscraper.models.youtube.GhostResponse
-import com.maxrave.kotlinytmusicscraper.models.youtube.Transcript
-import com.maxrave.kotlinytmusicscraper.models.youtube.YouTubeInitialPage
-import com.maxrave.kotlinytmusicscraper.models.youtube.tryDecodeText
-import com.maxrave.kotlinytmusicscraper.pages.AlbumPage
-import com.maxrave.kotlinytmusicscraper.pages.ArtistPage
-import com.maxrave.kotlinytmusicscraper.pages.ArtistSection
-import com.maxrave.kotlinytmusicscraper.pages.BrowseResult
-import com.maxrave.kotlinytmusicscraper.pages.ExplorePage
-import com.maxrave.kotlinytmusicscraper.pages.MoodAndGenres
-import com.maxrave.kotlinytmusicscraper.pages.NextPage
-import com.maxrave.kotlinytmusicscraper.pages.NextResult
-import com.maxrave.kotlinytmusicscraper.pages.PlaylistContinuationPage
-import com.maxrave.kotlinytmusicscraper.pages.PlaylistPage
-import com.maxrave.kotlinytmusicscraper.pages.RelatedPage
-import com.maxrave.kotlinytmusicscraper.pages.SearchPage
-import com.maxrave.kotlinytmusicscraper.pages.SearchResult
-import com.maxrave.kotlinytmusicscraper.pages.SearchSuggestionPage
-import com.maxrave.kotlinytmusicscraper.parser.fromPlaylistContinuationToTracks
-import com.maxrave.kotlinytmusicscraper.parser.fromPlaylistToTrack
-import com.maxrave.kotlinytmusicscraper.parser.fromPlaylistToTrackWithSetVideoId
-import com.maxrave.kotlinytmusicscraper.parser.getContinuePlaylistContinuation
-import com.maxrave.kotlinytmusicscraper.parser.getPlaylistContinuation
-import com.maxrave.kotlinytmusicscraper.parser.getReloadParams
-import com.maxrave.kotlinytmusicscraper.parser.getSuggestionSongItems
-import com.maxrave.kotlinytmusicscraper.parser.hasReloadParams
-import com.maxrave.kotlinytmusicscraper.utils.decodeTidalManifest
-import com.maxrave.logger.Logger
+import com.sakayori.kotlinytmusicscraper.YouTube.Companion.DEFAULT_VISITOR_DATA
+import com.sakayori.kotlinytmusicscraper.extension.toListFormat
+import com.sakayori.kotlinytmusicscraper.models.AccountInfo
+import com.sakayori.kotlinytmusicscraper.models.AlbumItem
+import com.sakayori.kotlinytmusicscraper.models.Artist
+import com.sakayori.kotlinytmusicscraper.models.ArtistItem
+import com.sakayori.kotlinytmusicscraper.models.BrowseEndpoint
+import com.sakayori.kotlinytmusicscraper.models.GridRenderer
+import com.sakayori.kotlinytmusicscraper.models.MediaType
+import com.sakayori.kotlinytmusicscraper.models.TidalMetadataResult
+import com.sakayori.kotlinytmusicscraper.models.TidalStreamResult
+import com.sakayori.kotlinytmusicscraper.models.MusicCarouselShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicTwoRowItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.models.ReturnYouTubeDislikeResponse
+import com.sakayori.kotlinytmusicscraper.models.Run
+import com.sakayori.kotlinytmusicscraper.models.SearchSuggestions
+import com.sakayori.kotlinytmusicscraper.models.SongInfo
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.VideoItem
+import com.sakayori.kotlinytmusicscraper.models.WatchEndpoint
+import com.sakayori.kotlinytmusicscraper.models.YTItemType
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.TVHTML5
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB_REMIX
+import com.sakayori.kotlinytmusicscraper.models.YouTubeLocale
+import com.sakayori.kotlinytmusicscraper.models.getContinuation
+import com.sakayori.kotlinytmusicscraper.models.oddElements
+import com.sakayori.kotlinytmusicscraper.models.response.AccountMenuResponse
+import com.sakayori.kotlinytmusicscraper.models.response.AccountSwitcherEndpointResponse
+import com.sakayori.kotlinytmusicscraper.models.response.AddItemYouTubePlaylistResponse
+import com.sakayori.kotlinytmusicscraper.models.response.BrowseResponse
+import com.sakayori.kotlinytmusicscraper.models.response.CreatePlaylistResponse
+import com.sakayori.kotlinytmusicscraper.models.response.DownloadProgress
+import com.sakayori.kotlinytmusicscraper.models.response.GetQueueResponse
+import com.sakayori.kotlinytmusicscraper.models.response.GetSearchSuggestionsResponse
+import com.sakayori.kotlinytmusicscraper.models.response.LikeStatus
+import com.sakayori.kotlinytmusicscraper.models.response.NextAndroidMusicResponse
+import com.sakayori.kotlinytmusicscraper.models.response.NextResponse
+import com.sakayori.kotlinytmusicscraper.models.response.PipedResponse
+import com.sakayori.kotlinytmusicscraper.models.response.PlayerResponse
+import com.sakayori.kotlinytmusicscraper.models.response.SearchResponse
+import com.sakayori.kotlinytmusicscraper.models.response.SakayoriMusicChartResponse
+import com.sakayori.kotlinytmusicscraper.models.response.TidalSearchResponse
+import com.sakayori.kotlinytmusicscraper.models.response.TidalStreamResponse
+import com.sakayori.kotlinytmusicscraper.models.response.toLikeStatus
+import com.sakayori.kotlinytmusicscraper.models.response.toListAccountInfo
+import com.sakayori.kotlinytmusicscraper.models.SakayoriMusic.GithubResponse
+import com.sakayori.kotlinytmusicscraper.models.sponsorblock.SkipSegments
+import com.sakayori.kotlinytmusicscraper.models.youtube.GhostResponse
+import com.sakayori.kotlinytmusicscraper.models.youtube.Transcript
+import com.sakayori.kotlinytmusicscraper.models.youtube.YouTubeInitialPage
+import com.sakayori.kotlinytmusicscraper.models.youtube.tryDecodeText
+import com.sakayori.kotlinytmusicscraper.pages.AlbumPage
+import com.sakayori.kotlinytmusicscraper.pages.ArtistPage
+import com.sakayori.kotlinytmusicscraper.pages.ArtistSection
+import com.sakayori.kotlinytmusicscraper.pages.BrowseResult
+import com.sakayori.kotlinytmusicscraper.pages.ExplorePage
+import com.sakayori.kotlinytmusicscraper.pages.MoodAndGenres
+import com.sakayori.kotlinytmusicscraper.pages.NextPage
+import com.sakayori.kotlinytmusicscraper.pages.NextResult
+import com.sakayori.kotlinytmusicscraper.pages.PlaylistContinuationPage
+import com.sakayori.kotlinytmusicscraper.pages.PlaylistPage
+import com.sakayori.kotlinytmusicscraper.pages.RelatedPage
+import com.sakayori.kotlinytmusicscraper.pages.SearchPage
+import com.sakayori.kotlinytmusicscraper.pages.SearchResult
+import com.sakayori.kotlinytmusicscraper.pages.SearchSuggestionPage
+import com.sakayori.kotlinytmusicscraper.parser.fromPlaylistContinuationToTracks
+import com.sakayori.kotlinytmusicscraper.parser.fromPlaylistToTrack
+import com.sakayori.kotlinytmusicscraper.parser.fromPlaylistToTrackWithSetVideoId
+import com.sakayori.kotlinytmusicscraper.parser.getContinuePlaylistContinuation
+import com.sakayori.kotlinytmusicscraper.parser.getPlaylistContinuation
+import com.sakayori.kotlinytmusicscraper.parser.getReloadParams
+import com.sakayori.kotlinytmusicscraper.parser.getSuggestionSongItems
+import com.sakayori.kotlinytmusicscraper.parser.hasReloadParams
+import com.sakayori.kotlinytmusicscraper.utils.decodeTidalManifest
+import com.sakayori.logger.Logger
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlHandler
 import com.mohamedrejeb.ksoup.html.parser.KsoupHtmlParser
 import io.ktor.client.call.body
@@ -116,12 +116,11 @@ import kotlin.time.Instant
 private const val TAG = "YouTubeScraper"
 
 /**
- * Special thanks to [z-huang/InnerTune](https://github.com/z-huang/InnerTune)
- * This library is from [z-huang/InnerTune] and I just modified it to comply with SimpMusic
+ * This library is from [z-huang/InnerTune] and I just modified it to comply with SakayoriMusic
  *
- * Here is the object that can create all request to YouTube Music and Spotify in SimpMusic
+ * Here is the object that can create all request to YouTube Music and Spotify in SakayoriMusic
  * Using YouTube Internal API
- * @author maxrave-dev
+ * @author Sakayori
  */
 class YouTube {
     private val ytMusic = Ytmusic()
@@ -806,7 +805,7 @@ class YouTube {
 
     /**
      * Execute a custom POST request to YouTube Music
-     * In SimpMusic, I use this function to parsing Home, Playlist, Album data instead using [album], [playlist], [artist] function
+     * In SakayoriMusic, I use this function to parsing Home, Playlist, Album data instead using [album], [playlist], [artist] function
      * @param browseId the browseId (such as "FEmusic_home", "VL$playlistId", etc.)
      * @param params the params
      * @param continuation the continuation token
@@ -1846,9 +1845,9 @@ class YouTube {
             ytMusic.removeFromLiked(mediaId).status.value
         }
 
-    suspend fun getSimpMusicChart() =
+    suspend fun getSakayoriMusicChart() =
         runCatching {
-            ytMusic.getSimpMusicChart().body<SimpMusicChartResponse>()
+            ytMusic.getSakayoriMusicChart().body<SakayoriMusicChartResponse>()
         }
 
     suspend fun getTidalStream(

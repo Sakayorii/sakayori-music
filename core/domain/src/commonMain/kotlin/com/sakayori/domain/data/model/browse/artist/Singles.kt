@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.browse.artist
+package com.sakayori.domain.data.model.browse.artist
 
 data class Singles(
     val browseId: String,

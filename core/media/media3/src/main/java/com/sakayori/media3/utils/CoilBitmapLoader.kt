@@ -1,4 +1,4 @@
-package com.maxrave.media3.utils
+package com.sakayori.media3.utils
 
 import android.content.Context
 import android.graphics.Bitmap

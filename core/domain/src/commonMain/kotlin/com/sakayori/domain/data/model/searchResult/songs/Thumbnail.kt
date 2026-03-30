@@ -1,4 +1,4 @@
-package com.maxrave.domain.data.model.searchResult.songs
+package com.sakayori.domain.data.model.searchResult.songs
 
 import kotlinx.serialization.Serializable
 

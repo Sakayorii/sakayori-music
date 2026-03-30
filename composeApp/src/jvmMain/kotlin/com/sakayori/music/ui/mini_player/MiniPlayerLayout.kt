@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.mini_player
+package com.sakayori.music.ui.mini_player
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -61,20 +61,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.maxrave.domain.data.model.streams.TimeLine
-import com.maxrave.domain.mediaservice.handler.ControlState
-import com.maxrave.simpmusic.extension.parseRichSyncWords
-import com.maxrave.simpmusic.ui.component.PlayPauseButton
-import com.maxrave.simpmusic.ui.component.RichSyncLyricsLineItem
-import com.maxrave.simpmusic.ui.component.RippleIconButton
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.NowPlayingScreenData
-import com.maxrave.simpmusic.viewModel.UIEvent
+import com.sakayori.domain.data.model.streams.TimeLine
+import com.sakayori.domain.mediaservice.handler.ControlState
+import com.sakayori.music.extension.parseRichSyncWords
+import com.sakayori.music.ui.component.PlayPauseButton
+import com.sakayori.music.ui.component.RichSyncLyricsLineItem
+import com.sakayori.music.ui.component.RippleIconButton
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.NowPlayingScreenData
+import com.sakayori.music.viewModel.UIEvent
 import org.jetbrains.compose.resources.painterResource
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.baseline_skip_next_24
-import simpmusic.composeapp.generated.resources.baseline_skip_previous_24
-import simpmusic.composeapp.generated.resources.holder
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.baseline_skip_next_24
+import com.sakayori.music.generated.resources.baseline_skip_previous_24
+import com.sakayori.music.generated.resources.holder
 
 @Composable
 private fun MiniPlayerSeekBar(

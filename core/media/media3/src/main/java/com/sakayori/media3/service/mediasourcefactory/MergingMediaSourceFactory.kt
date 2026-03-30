@@ -1,4 +1,4 @@
-package com.maxrave.media3.service.mediasourcefactory
+package com.sakayori.media3.service.mediasourcefactory
 
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
@@ -7,9 +7,9 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
-import com.maxrave.common.MERGING_DATA_TYPE
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.logger.Logger
+import com.sakayori.common.MERGING_DATA_TYPE
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

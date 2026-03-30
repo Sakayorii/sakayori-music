@@ -1,6 +1,6 @@
-package com.maxrave.simpmusic.utils
+package com.sakayori.music.utils
 
-import com.maxrave.simpmusic.BuildKonfig
+import com.sakayori.music.BuildKonfig
 
 object VersionManager {
     private var versionName: String? = null

@@ -14,7 +14,7 @@ kotlin {
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     androidLibrary {
-        namespace = "com.maxrave.ktorext"
+        namespace = "com.sakayori.ktorext"
         compileSdk = 36
         minSdk = 26
     }

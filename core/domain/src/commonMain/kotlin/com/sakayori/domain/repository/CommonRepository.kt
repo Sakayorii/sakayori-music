@@ -1,9 +1,9 @@
-package com.maxrave.domain.repository
+package com.sakayori.domain.repository
 
-import com.maxrave.domain.data.entities.NotificationEntity
-import com.maxrave.domain.data.model.cookie.CookieItem
-import com.maxrave.domain.data.type.RecentlyType
-import com.maxrave.domain.manager.DataStoreManager
+import com.sakayori.domain.data.entities.NotificationEntity
+import com.sakayori.domain.data.model.cookie.CookieItem
+import com.sakayori.domain.data.type.RecentlyType
+import com.sakayori.domain.manager.DataStoreManager
 import kotlinx.coroutines.flow.Flow
 
 interface CommonRepository {

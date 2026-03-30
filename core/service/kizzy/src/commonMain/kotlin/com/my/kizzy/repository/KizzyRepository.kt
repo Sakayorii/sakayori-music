@@ -29,3 +29,4 @@ class KizzyRepository {
         return api.uploadImage(fileName, bytes).toImageAsset()
     }
 }
+

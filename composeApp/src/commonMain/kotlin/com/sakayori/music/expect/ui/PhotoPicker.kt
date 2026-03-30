@@ -1,6 +1,6 @@
 @file:Suppress("ktlint:standard:filename")
 
-package com.maxrave.simpmusic.expect.ui
+package com.sakayori.music.expect.ui
 
 import androidx.compose.runtime.Composable
 

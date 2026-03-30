@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
-import com.maxrave.kotlinytmusicscraper.models.response.LikeStatus
+import com.sakayori.kotlinytmusicscraper.models.response.LikeStatus
 import kotlinx.serialization.Serializable
 
 @Serializable

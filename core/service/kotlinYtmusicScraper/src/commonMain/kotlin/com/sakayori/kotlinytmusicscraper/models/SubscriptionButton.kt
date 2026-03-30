@@ -1,6 +1,6 @@
-package com.maxrave.kotlinytmusicscraper.models
+package com.sakayori.kotlinytmusicscraper.models
 
-import com.maxrave.kotlinytmusicscraper.models.subscriptionButton.SubscribeButtonRenderer
+import com.sakayori.kotlinytmusicscraper.models.subscriptionButton.SubscribeButtonRenderer
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -1,8 +1,8 @@
-package com.maxrave.simpmusic
+package com.sakayori.music
 
 import com.eygraber.uri.Uri
-import com.maxrave.domain.data.model.intent.GenericIntent
-import com.maxrave.logger.Logger
+import com.sakayori.domain.data.model.intent.GenericIntent
+import com.sakayori.logger.Logger
 import java.io.File
 
 /**
@@ -14,18 +14,18 @@ import java.io.File
  * and the first instance reads it on restore.
  *
  * Supported URI patterns:
- * - simpmusic://open-app?url=<encoded_url>  (redirected from website)
- * - simpmusic://watch?v=VIDEO_ID            (direct scheme)
- * - simpmusic://playlist?list=PLAYLIST_ID   (direct scheme)
- * - simpmusic://channel/CHANNEL_ID          (direct scheme)
- * - simpmusic://album?id=ALBUM_ID           (direct scheme)
- * - https://simpmusic.org/app/...            (web URL passed via args)
+ * - SakayoriMusic://open-app?url=<encoded_url>  (redirected from website)
+ * - SakayoriMusic://watch?v=VIDEO_ID            (direct scheme)
+ * - SakayoriMusic://playlist?list=PLAYLIST_ID   (direct scheme)
+ * - SakayoriMusic://channel/CHANNEL_ID          (direct scheme)
+ * - SakayoriMusic://album?id=ALBUM_ID           (direct scheme)
+ * - https://SakayoriMusic.org/app/...            (web URL passed via args)
  */
 object DesktopDeepLinkHandler {
     private const val TAG = "DesktopDeepLinkHandler"
 
     private val pendingUriFile: File by lazy {
-        File(System.getProperty("java.io.tmpdir"), "simpmusic_pending_deeplink.txt")
+        File(System.getProperty("java.io.tmpdir"), "SakayoriMusic_pending_deeplink.txt")
     }
 
     private var cached: String? = null
@@ -91,49 +91,49 @@ object DesktopDeepLinkHandler {
      * Converts a raw URI string into a [GenericIntent] that App.kt can process.
      *
      * Conversion rules:
-     * 1. simpmusic://open-app?url=<encoded_url>
+     * 1. SakayoriMusic://open-app?url=<encoded_url>
      *    → Extract the `url` param and use it as intent data
      *
-     * 2. simpmusic://watch?v=xxx, simpmusic://playlist?list=xxx, etc.
-     *    → Convert to https://simpmusic.org/app/watch?v=xxx format
-     *      so App.kt handles it uniformly via the simpmusic.org branch
+     * 2. SakayoriMusic://watch?v=xxx, SakayoriMusic://playlist?list=xxx, etc.
+     *    → Convert to https://SakayoriMusic.org/app/watch?v=xxx format
+     *      so App.kt handles it uniformly via the SakayoriMusic.org branch
      *
-     * 3. https://simpmusic.org/app/... or YouTube URLs
+     * 3. https://SakayoriMusic.org/app/... or YouTube URLs
      *    → Pass through as-is
      */
     private fun parseToIntent(uri: String): GenericIntent {
         val parsed = Uri.parse(uri)
 
         val actualUri = when {
-            // simpmusic://open-app?url=<encoded_url>
-            parsed.scheme == "simpmusic" && parsed.host == "open-app" -> {
+            // SakayoriMusic://open-app?url=<encoded_url>
+            parsed.scheme == "SakayoriMusic" && parsed.host == "open-app" -> {
                 val urlParam = parsed.getQueryParameter("url")
                 if (urlParam != null) {
                     Logger.d(TAG, "Extracted URL from open-app: $urlParam")
                     Uri.parse(urlParam)
                 } else {
-                    // simpmusic://open-app without params → just open the app, no navigation
+                    // SakayoriMusic://open-app without params → just open the app, no navigation
                     Logger.d(TAG, "open-app without URL param, just opening app")
                     null
                 }
             }
 
-            // simpmusic://watch?v=xxx → https://simpmusic.org/app/watch?v=xxx
-            // simpmusic://playlist?list=xxx → https://simpmusic.org/app/playlist?list=xxx
-            // simpmusic://channel/UCxxx → https://simpmusic.org/app/channel/UCxxx
-            // simpmusic://album?id=xxx → https://simpmusic.org/app/album?id=xxx
-            parsed.scheme == "simpmusic" && parsed.host != null -> {
+            // SakayoriMusic://watch?v=xxx → https://SakayoriMusic.org/app/watch?v=xxx
+            // SakayoriMusic://playlist?list=xxx → https://SakayoriMusic.org/app/playlist?list=xxx
+            // SakayoriMusic://channel/UCxxx → https://SakayoriMusic.org/app/channel/UCxxx
+            // SakayoriMusic://album?id=xxx → https://SakayoriMusic.org/app/album?id=xxx
+            parsed.scheme == "SakayoriMusic" && parsed.host != null -> {
                 val host = parsed.host!!
                 val query = parsed.query?.let { "?$it" } ?: ""
                 val pathSuffix = parsed.pathSegments.joinToString("/").let {
                     if (it.isNotEmpty()) "/$it" else ""
                 }
-                val convertedUrl = "https://simpmusic.org/app/$host$pathSuffix$query"
-                Logger.d(TAG, "Converted simpmusic:// to: $convertedUrl")
+                val convertedUrl = "https://SakayoriMusic.org/app/$host$pathSuffix$query"
+                Logger.d(TAG, "Converted SakayoriMusic:// to: $convertedUrl")
                 Uri.parse(convertedUrl)
             }
 
-            // https://simpmusic.org/app/... or YouTube URLs → pass through
+            // https://SakayoriMusic.org/app/... or YouTube URLs → pass through
             else -> parsed
         }
 
@@ -148,3 +148,4 @@ object DesktopDeepLinkHandler {
         }
     }
 }
+

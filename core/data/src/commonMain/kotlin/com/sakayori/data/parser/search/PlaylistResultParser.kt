@@ -1,9 +1,9 @@
-package com.maxrave.data.parser.search
+package com.sakayori.data.parser.search
 
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
-import com.maxrave.kotlinytmusicscraper.models.PlaylistItem
-import com.maxrave.kotlinytmusicscraper.pages.SearchResult
+import com.sakayori.domain.data.model.searchResult.playlists.PlaylistsResult
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.kotlinytmusicscraper.models.PlaylistItem
+import com.sakayori.kotlinytmusicscraper.pages.SearchResult
 
 internal fun parseSearchPlaylist(result: SearchResult): ArrayList<PlaylistsResult> {
     val playlistsResult: ArrayList<PlaylistsResult> = arrayListOf()

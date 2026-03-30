@@ -17,7 +17,24 @@ plugins {
 android {
     val abis = arrayOf("armeabi-v7a", "arm64-v8a", "x86_64")
 
-    namespace = "com.maxrave.simpmusic"
+    val properties = Properties()
+    if (rootProject.file("local.properties").exists()) {
+        properties.load(rootProject.file("local.properties").inputStream())
+    }
+
+    signingConfigs {
+        create("release") {
+            val keyStoreFile = properties.getProperty("KEY_STORE_FILE")
+            if (keyStoreFile != null) {
+                storeFile = file(keyStoreFile)
+            }
+            storePassword = properties.getProperty("KEY_STORE_PASSWORD")
+            keyAlias = properties.getProperty("KEY_ALIAS")
+            keyPassword = properties.getProperty("KEY_PASSWORD")
+        }
+    }
+
+    namespace = "com.sakayori.music"
     compileSdk = 36
 
     defaultConfig {
@@ -83,6 +100,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -163,6 +181,7 @@ dependencies {
 
     implementation(projects.composeApp)
     implementation(projects.data)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
     if (isFullBuild) {
         implementation(projects.crashlytics)
@@ -239,9 +258,8 @@ if (!isFullBuild) {
             if (injectSentryFile.exists()) {
                 injectSentryFile.delete()
                 println("Deleted: ${injectSentryFile.absolutePath}")
-                val sentryFile = File(injectBuildAssetsDir, "sentry-debug-meta.properties")
-                sentryFile.writeText("")
-                println("✓ Overwritten: ${sentryFile.absolutePath}")
+                injectSentryFile.writeText("")
+                println("✓ Overwritten: ${injectSentryFile.absolutePath}")
             }
         }
     }

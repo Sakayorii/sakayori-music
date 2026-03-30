@@ -1,4 +1,4 @@
-package org.simpmusic.lyrics.models.response
+package org.SakayoriMusic.lyrics.models.response
 
 import kotlinx.serialization.Serializable
 

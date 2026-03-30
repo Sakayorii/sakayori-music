@@ -1,31 +1,31 @@
-package com.maxrave.data.db
+package com.sakayori.data.db
 
 import DatabaseDao
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.EpisodeEntity
-import com.maxrave.domain.data.entities.FollowedArtistSingleAndAlbum
-import com.maxrave.domain.data.entities.GoogleAccountEntity
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.LyricsEntity
-import com.maxrave.domain.data.entities.NewFormatEntity
-import com.maxrave.domain.data.entities.NotificationEntity
-import com.maxrave.domain.data.entities.PairSongLocalPlaylist
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.PodcastsEntity
-import com.maxrave.domain.data.entities.QueueEntity
-import com.maxrave.domain.data.entities.SearchHistory
-import com.maxrave.domain.data.entities.SetVideoIdEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.entities.SongInfoEntity
-import com.maxrave.domain.data.entities.TranslatedLyricsEntity
-import com.maxrave.domain.data.entities.YourYouTubePlaylistList
-import com.maxrave.domain.data.entities.analytics.EventArtistEntity
-import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.entities.EpisodeEntity
+import com.sakayori.domain.data.entities.FollowedArtistSingleAndAlbum
+import com.sakayori.domain.data.entities.GoogleAccountEntity
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.LyricsEntity
+import com.sakayori.domain.data.entities.NewFormatEntity
+import com.sakayori.domain.data.entities.NotificationEntity
+import com.sakayori.domain.data.entities.PairSongLocalPlaylist
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.PodcastsEntity
+import com.sakayori.domain.data.entities.QueueEntity
+import com.sakayori.domain.data.entities.SearchHistory
+import com.sakayori.domain.data.entities.SetVideoIdEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.SongInfoEntity
+import com.sakayori.domain.data.entities.TranslatedLyricsEntity
+import com.sakayori.domain.data.entities.YourYouTubePlaylistList
+import com.sakayori.domain.data.entities.analytics.EventArtistEntity
+import com.sakayori.domain.data.entities.analytics.PlaybackEventEntity
 
 @Database(
     entities = [

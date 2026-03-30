@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic
+package com.sakayori.music
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
@@ -54,33 +54,33 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import coil3.toUri
-import com.maxrave.domain.data.player.GenericMediaItem
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.manager.DataStoreManager.Values.TRUE
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.expect.Orientation
-import com.maxrave.simpmusic.expect.currentOrientation
-import com.maxrave.simpmusic.expect.openUrl
-import com.maxrave.simpmusic.expect.ui.layerBackdrop
-import com.maxrave.simpmusic.expect.ui.rememberBackdrop
-import com.maxrave.simpmusic.extension.copy
-import com.maxrave.simpmusic.ui.component.AppBottomNavigationBar
-import com.maxrave.simpmusic.ui.component.AppNavigationRail
-import com.maxrave.simpmusic.ui.component.LiquidGlassAppBottomNavigationBar
-import com.maxrave.simpmusic.ui.navigation.destination.home.NotificationDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.player.FullscreenDestination
-import com.maxrave.simpmusic.ui.navigation.graph.AppNavigationGraph
-import com.maxrave.simpmusic.ui.screen.MiniPlayer
-import com.maxrave.simpmusic.ui.screen.player.NowPlayingScreen
-import com.maxrave.simpmusic.ui.screen.player.NowPlayingScreenContent
-import com.maxrave.simpmusic.ui.theme.AppTheme
-import com.maxrave.simpmusic.ui.theme.fontFamily
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.utils.VersionManager
-import com.maxrave.simpmusic.viewModel.SharedViewModel
+import com.sakayori.domain.data.player.GenericMediaItem
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.manager.DataStoreManager.Values.TRUE
+import com.sakayori.logger.Logger
+import com.sakayori.music.expect.Orientation
+import com.sakayori.music.expect.currentOrientation
+import com.sakayori.music.expect.openUrl
+import com.sakayori.music.expect.ui.layerBackdrop
+import com.sakayori.music.expect.ui.rememberBackdrop
+import com.sakayori.music.extension.copy
+import com.sakayori.music.ui.component.AppBottomNavigationBar
+import com.sakayori.music.ui.component.AppNavigationRail
+import com.sakayori.music.ui.component.LiquidGlassAppBottomNavigationBar
+import com.sakayori.music.ui.navigation.destination.home.NotificationDestination
+import com.sakayori.music.ui.navigation.destination.list.AlbumDestination
+import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
+import com.sakayori.music.ui.navigation.destination.list.PlaylistDestination
+import com.sakayori.music.ui.navigation.destination.player.FullscreenDestination
+import com.sakayori.music.ui.navigation.graph.AppNavigationGraph
+import com.sakayori.music.ui.screen.MiniPlayer
+import com.sakayori.music.ui.screen.player.NowPlayingScreen
+import com.sakayori.music.ui.screen.player.NowPlayingScreenContent
+import com.sakayori.music.ui.theme.AppTheme
+import com.sakayori.music.ui.theme.fontFamily
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.utils.VersionManager
+import com.sakayori.music.viewModel.SharedViewModel
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 import dev.chrisbanes.haze.hazeEffect
@@ -97,17 +97,17 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.cancel
-import simpmusic.composeapp.generated.resources.download
-import simpmusic.composeapp.generated.resources.good_night
-import simpmusic.composeapp.generated.resources.sleep_timer_off
-import simpmusic.composeapp.generated.resources.this_link_is_not_supported
-import simpmusic.composeapp.generated.resources.unknown
-import simpmusic.composeapp.generated.resources.update_available
-import simpmusic.composeapp.generated.resources.update_message
-import simpmusic.composeapp.generated.resources.version_format
-import simpmusic.composeapp.generated.resources.yes
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.cancel
+import com.sakayori.music.generated.resources.download
+import com.sakayori.music.generated.resources.good_night
+import com.sakayori.music.generated.resources.sleep_timer_off
+import com.sakayori.music.generated.resources.this_link_is_not_supported
+import com.sakayori.music.generated.resources.unknown
+import com.sakayori.music.generated.resources.update_available
+import com.sakayori.music.generated.resources.update_message
+import com.sakayori.music.generated.resources.version_format
+import com.sakayori.music.generated.resources.yes
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalFoundationApi::class)
@@ -160,27 +160,27 @@ fun App(viewModel: SharedViewModel = koinInject()) {
         val data = intent.data
         Logger.d("MainActivity", "onCreate: $data")
         if (data != null) {
-            if (data == "simpmusic://notification".toUri()) {
+            if (data == "SakayoriMusic://notification".toUri()) {
                 viewModel.setIntent(null)
                 navController.navigate(
                     NotificationDestination,
                 )
-            } else if (data.host == "simpmusic.org" || data.scheme == "simpmusic") {
-                // https://simpmusic.org/app/watch?v=VIDEO_ID
-                // https://simpmusic.org/app/playlist?list=PLAYLIST_ID
-                // https://simpmusic.org/app/channel/CHANNEL_ID
-                // simpmusic://watch?v=VIDEO_ID  (host="watch", no path)
-                // simpmusic://playlist?list=PLAYLIST_ID
-                // simpmusic://channel/CHANNEL_ID
+            } else if (data.host == "SakayoriMusic.org" || data.scheme == "SakayoriMusic") {
+                // https://SakayoriMusic.org/app/watch?v=VIDEO_ID
+                // https://SakayoriMusic.org/app/playlist?list=PLAYLIST_ID
+                // https://SakayoriMusic.org/app/channel/CHANNEL_ID
+                // SakayoriMusic://watch?v=VIDEO_ID  (host="watch", no path)
+                // SakayoriMusic://playlist?list=PLAYLIST_ID
+                // SakayoriMusic://channel/CHANNEL_ID
                 val segments = data.pathSegments
-                // For simpmusic.org: segments = ["app", "watch"] → appPath = segments[1]
-                // For simpmusic://: host IS the appPath (e.g. host="watch"), segments = []
-                val appPath = if (data.scheme == "simpmusic") {
+                // For SakayoriMusic.org: segments = ["app", "watch"] → appPath = segments[1]
+                // For SakayoriMusic://: host IS the appPath (e.g. host="watch"), segments = []
+                val appPath = if (data.scheme == "SakayoriMusic") {
                     data.host
                 } else {
                     segments.getOrNull(1)
                 }
-                Logger.d("MainActivity", "simpmusic.org deep link, appPath: $appPath")
+                Logger.d("MainActivity", "SakayoriMusic.org deep link, appPath: $appPath")
                 viewModel.setIntent(null)
                 when (appPath) {
                     "watch" -> {
@@ -202,9 +202,9 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                     }
 
                     "channel", "c" -> {
-                        // simpmusic://channel/UCxxx → segments = ["UCxxx"]
-                        // simpmusic.org/app/channel/UCxxx → segments = ["app", "channel", "UCxxx"]
-                        val artistId = if (data.scheme == "simpmusic") {
+                        // SakayoriMusic://channel/UCxxx → segments = ["UCxxx"]
+                        // SakayoriMusic.org/app/channel/UCxxx → segments = ["app", "channel", "UCxxx"]
+                        val artistId = if (data.scheme == "SakayoriMusic") {
                             segments.firstOrNull()
                         } else {
                             segments.getOrNull(2)

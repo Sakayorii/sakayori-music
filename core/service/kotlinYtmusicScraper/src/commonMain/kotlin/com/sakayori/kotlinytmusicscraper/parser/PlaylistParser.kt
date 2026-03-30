@@ -1,13 +1,13 @@
-package com.maxrave.kotlinytmusicscraper.parser
+package com.sakayori.kotlinytmusicscraper.parser
 
-import com.maxrave.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
-import com.maxrave.kotlinytmusicscraper.models.MusicShelfRenderer
-import com.maxrave.kotlinytmusicscraper.models.SongItem
-import com.maxrave.kotlinytmusicscraper.models.WatchEndpoint
-import com.maxrave.kotlinytmusicscraper.models.getContinuation
-import com.maxrave.kotlinytmusicscraper.models.response.BrowseResponse
-import com.maxrave.kotlinytmusicscraper.models.response.LikeStatus
-import com.maxrave.logger.Logger
+import com.sakayori.kotlinytmusicscraper.models.MusicResponsiveListItemRenderer
+import com.sakayori.kotlinytmusicscraper.models.MusicShelfRenderer
+import com.sakayori.kotlinytmusicscraper.models.SongItem
+import com.sakayori.kotlinytmusicscraper.models.WatchEndpoint
+import com.sakayori.kotlinytmusicscraper.models.getContinuation
+import com.sakayori.kotlinytmusicscraper.models.response.BrowseResponse
+import com.sakayori.kotlinytmusicscraper.models.response.LikeStatus
+import com.sakayori.logger.Logger
 
 fun BrowseResponse.fromPlaylistToTrack(): List<SongItem> =
     (

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.maxrave.media3.utils
+package com.sakayori.media3.utils
 
 import androidx.annotation.OptIn
 import androidx.media3.common.C

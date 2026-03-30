@@ -1,10 +1,10 @@
-package com.maxrave.kotlinytmusicscraper.models.response
+package com.sakayori.kotlinytmusicscraper.models.response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SimpMusicChartResponse(
+data class SakayoriMusicChartResponse(
     @SerialName("data")
     val data: List<Data?>?,
     @SerialName("meta")

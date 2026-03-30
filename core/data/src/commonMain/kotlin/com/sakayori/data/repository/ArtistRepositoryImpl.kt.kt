@@ -1,14 +1,14 @@
-package com.maxrave.data.repository
+package com.sakayori.data.repository
 
-import com.maxrave.data.db.datasource.LocalDataSource
-import com.maxrave.data.extension.getFullDataFromDB
-import com.maxrave.data.parser.parseArtistData
-import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.model.browse.artist.ArtistBrowse
-import com.maxrave.domain.repository.ArtistRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.kotlinytmusicscraper.YouTube
-import com.maxrave.logger.Logger
+import com.sakayori.data.db.datasource.LocalDataSource
+import com.sakayori.data.extension.getFullDataFromDB
+import com.sakayori.data.parser.parseArtistData
+import com.sakayori.domain.data.entities.ArtistEntity
+import com.sakayori.domain.data.model.browse.artist.ArtistBrowse
+import com.sakayori.domain.repository.ArtistRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.kotlinytmusicscraper.YouTube
+import com.sakayori.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

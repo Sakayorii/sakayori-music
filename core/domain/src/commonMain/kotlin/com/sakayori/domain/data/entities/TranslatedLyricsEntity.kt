@@ -1,8 +1,8 @@
-package com.maxrave.domain.data.entities
+package com.sakayori.domain.data.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.maxrave.domain.data.model.metadata.Line
+import com.sakayori.domain.data.model.metadata.Line
 
 @Entity(tableName = "translated_lyrics")
 data class TranslatedLyricsEntity(

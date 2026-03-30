@@ -1,8 +1,8 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.lifecycle.viewModelScope
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

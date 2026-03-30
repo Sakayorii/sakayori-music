@@ -1,7 +1,7 @@
-package com.maxrave.kotlinytmusicscraper.extension
+package com.sakayori.kotlinytmusicscraper.extension
 
-import com.maxrave.kotlinytmusicscraper.models.response.PipedResponse
-import com.maxrave.kotlinytmusicscraper.models.response.PlayerResponse
+import com.sakayori.kotlinytmusicscraper.models.response.PipedResponse
+import com.sakayori.kotlinytmusicscraper.models.response.PlayerResponse
 
 fun List<PipedResponse.AudioStream>.toListFormat(): List<PlayerResponse.StreamingData.Format> {
     val list = mutableListOf<PlayerResponse.StreamingData.Format>()

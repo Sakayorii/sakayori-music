@@ -1,8 +1,8 @@
-package com.maxrave.domain.mediaservice.player
+package com.sakayori.domain.mediaservice.player
 
-import com.maxrave.domain.data.player.GenericMediaItem
-import com.maxrave.domain.data.player.GenericTracks
-import com.maxrave.domain.data.player.PlayerError
+import com.sakayori.domain.data.player.GenericMediaItem
+import com.sakayori.domain.data.player.GenericTracks
+import com.sakayori.domain.data.player.PlayerError
 
 /**
  * Listener interface for media player events

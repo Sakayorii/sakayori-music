@@ -1,4 +1,4 @@
-package com.maxrave.simpmusic.ui.screen.library
+package com.sakayori.music.ui.screen.library
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -61,22 +61,22 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.maxrave.common.LibraryChipType
-import com.maxrave.domain.utils.LocalResource
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.extension.copy
-import com.maxrave.simpmusic.extension.isScrollingUp
-import com.maxrave.simpmusic.ui.component.Chip
-import com.maxrave.simpmusic.ui.component.EndOfPage
-import com.maxrave.simpmusic.ui.component.GridLibraryPlaylist
-import com.maxrave.simpmusic.ui.component.LibraryItem
-import com.maxrave.simpmusic.ui.component.LibraryItemState
-import com.maxrave.simpmusic.ui.component.LibraryItemType
-import com.maxrave.simpmusic.ui.component.LibraryTilingBox
-import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
-import com.maxrave.simpmusic.ui.theme.transparent
-import com.maxrave.simpmusic.ui.theme.typo
-import com.maxrave.simpmusic.viewModel.LibraryViewModel
+import com.sakayori.common.LibraryChipType
+import com.sakayori.domain.utils.LocalResource
+import com.sakayori.logger.Logger
+import com.sakayori.music.extension.copy
+import com.sakayori.music.extension.isScrollingUp
+import com.sakayori.music.ui.component.Chip
+import com.sakayori.music.ui.component.EndOfPage
+import com.sakayori.music.ui.component.GridLibraryPlaylist
+import com.sakayori.music.ui.component.LibraryItem
+import com.sakayori.music.ui.component.LibraryItemState
+import com.sakayori.music.ui.component.LibraryItemType
+import com.sakayori.music.ui.component.LibraryTilingBox
+import com.sakayori.music.ui.navigation.destination.home.AnalyticsDestination
+import com.sakayori.music.ui.theme.transparent
+import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.LibraryViewModel
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -88,28 +88,28 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.baseline_people_alt_24
-import simpmusic.composeapp.generated.resources.chart
-import simpmusic.composeapp.generated.resources.create
-import simpmusic.composeapp.generated.resources.downloaded_playlists
-import simpmusic.composeapp.generated.resources.favorite_playlists
-import simpmusic.composeapp.generated.resources.favorite_podcasts
-import simpmusic.composeapp.generated.resources.library
-import simpmusic.composeapp.generated.resources.mix_for_you
-import simpmusic.composeapp.generated.resources.no_YouTube_playlists
-import simpmusic.composeapp.generated.resources.no_charts_found
-import simpmusic.composeapp.generated.resources.no_favorite_playlists
-import simpmusic.composeapp.generated.resources.no_favorite_podcasts
-import simpmusic.composeapp.generated.resources.no_mixes_found
-import simpmusic.composeapp.generated.resources.no_playlists_added
-import simpmusic.composeapp.generated.resources.no_playlists_downloaded
-import simpmusic.composeapp.generated.resources.playlist_name
-import simpmusic.composeapp.generated.resources.playlist_name_cannot_be_empty
-import simpmusic.composeapp.generated.resources.simpmusic_charts
-import simpmusic.composeapp.generated.resources.your_library
-import simpmusic.composeapp.generated.resources.your_playlists
-import simpmusic.composeapp.generated.resources.your_youtube_playlists
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.baseline_people_alt_24
+import com.sakayori.music.generated.resources.chart
+import com.sakayori.music.generated.resources.create
+import com.sakayori.music.generated.resources.downloaded_playlists
+import com.sakayori.music.generated.resources.favorite_playlists
+import com.sakayori.music.generated.resources.favorite_podcasts
+import com.sakayori.music.generated.resources.library
+import com.sakayori.music.generated.resources.mix_for_you
+import com.sakayori.music.generated.resources.no_YouTube_playlists
+import com.sakayori.music.generated.resources.no_charts_found
+import com.sakayori.music.generated.resources.no_favorite_playlists
+import com.sakayori.music.generated.resources.no_favorite_podcasts
+import com.sakayori.music.generated.resources.no_mixes_found
+import com.sakayori.music.generated.resources.no_playlists_added
+import com.sakayori.music.generated.resources.no_playlists_downloaded
+import com.sakayori.music.generated.resources.playlist_name
+import com.sakayori.music.generated.resources.playlist_name_cannot_be_empty
+import com.sakayori.music.generated.resources.SakayoriMusic_charts
+import com.sakayori.music.generated.resources.your_library
+import com.sakayori.music.generated.resources.your_playlists
+import com.sakayori.music.generated.resources.your_youtube_playlists
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -513,7 +513,7 @@ fun LibraryScreen(
                             LibraryChipType.FAVORITE_PLAYLIST -> stringResource(Res.string.favorite_playlists)
                             LibraryChipType.DOWNLOADED_PLAYLIST -> stringResource(Res.string.downloaded_playlists)
                             LibraryChipType.FAVORITE_PODCAST -> stringResource(Res.string.favorite_podcasts)
-                            LibraryChipType.CHART -> stringResource(Res.string.simpmusic_charts)
+                            LibraryChipType.CHART -> stringResource(Res.string.SakayoriMusic_charts)
                         },
                 ) {
                     viewModel.setCurrentScreen(type)

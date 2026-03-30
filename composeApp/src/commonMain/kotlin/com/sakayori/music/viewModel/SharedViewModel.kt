@@ -1,70 +1,70 @@
-package com.maxrave.simpmusic.viewModel
+package com.sakayori.music.viewModel
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.viewModelScope
-import com.maxrave.common.Config.ALBUM_CLICK
-import com.maxrave.common.Config.DOWNLOAD_CACHE
-import com.maxrave.common.Config.PLAYLIST_CLICK
-import com.maxrave.common.Config.RECOVER_TRACK_QUEUE
-import com.maxrave.common.Config.SHARE
-import com.maxrave.common.Config.SONG_CLICK
-import com.maxrave.common.Config.VIDEO_CLICK
-import com.maxrave.common.SELECTED_LANGUAGE
-import com.maxrave.common.STATUS_DONE
-import com.maxrave.domain.data.entities.AlbumEntity
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
-import com.maxrave.domain.data.entities.LyricsEntity
-import com.maxrave.domain.data.entities.NewFormatEntity
-import com.maxrave.domain.data.entities.PlaylistEntity
-import com.maxrave.domain.data.entities.SongEntity
-import com.maxrave.domain.data.entities.SongInfoEntity
-import com.maxrave.domain.data.entities.TranslatedLyricsEntity
-import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.canvas.CanvasResult
-import com.maxrave.domain.data.model.download.DownloadProgress
-import com.maxrave.domain.data.model.intent.GenericIntent
-import com.maxrave.domain.data.model.metadata.Lyrics
-import com.maxrave.domain.data.model.streams.TimeLine
-import com.maxrave.domain.data.model.update.UpdateData
-import com.maxrave.domain.extension.decodeHtmlEntities
-import com.maxrave.domain.extension.isSong
-import com.maxrave.domain.extension.isVideo
-import com.maxrave.domain.extension.toGenericMediaItem
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.manager.DataStoreManager.Values.FALSE
-import com.maxrave.domain.manager.DataStoreManager.Values.TRUE
-import com.maxrave.domain.mediaservice.handler.ControlState
-import com.maxrave.domain.mediaservice.handler.DownloadHandler
-import com.maxrave.domain.mediaservice.handler.NowPlayingTrackState
-import com.maxrave.domain.mediaservice.handler.PlayerEvent
-import com.maxrave.domain.mediaservice.handler.PlaylistType
-import com.maxrave.domain.mediaservice.handler.QueueData
-import com.maxrave.domain.mediaservice.handler.RepeatState
-import com.maxrave.domain.mediaservice.handler.SimpleMediaState
-import com.maxrave.domain.mediaservice.handler.SleepTimerState
-import com.maxrave.domain.repository.AlbumRepository
-import com.maxrave.domain.repository.CacheRepository
-import com.maxrave.domain.repository.LocalPlaylistRepository
-import com.maxrave.domain.repository.LyricsCanvasRepository
-import com.maxrave.domain.repository.PlaylistRepository
-import com.maxrave.domain.repository.SongRepository
-import com.maxrave.domain.repository.StreamRepository
-import com.maxrave.domain.repository.UpdateRepository
-import com.maxrave.domain.utils.Resource
-import com.maxrave.domain.utils.toListName
-import com.maxrave.domain.utils.toLyrics
-import com.maxrave.domain.utils.toLyricsEntity
-import com.maxrave.domain.utils.toSongEntity
-import com.maxrave.domain.utils.toTrack
-import com.maxrave.logger.LogLevel
-import com.maxrave.logger.Logger
-import com.maxrave.simpmusic.Platform
-import com.maxrave.simpmusic.expect.getDownloadFolderPath
-import com.maxrave.simpmusic.expect.ui.toByteArray
-import com.maxrave.simpmusic.getPlatform
-import com.maxrave.simpmusic.utils.VersionManager
-import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import com.sakayori.common.Config.ALBUM_CLICK
+import com.sakayori.common.Config.DOWNLOAD_CACHE
+import com.sakayori.common.Config.PLAYLIST_CLICK
+import com.sakayori.common.Config.RECOVER_TRACK_QUEUE
+import com.sakayori.common.Config.SHARE
+import com.sakayori.common.Config.SONG_CLICK
+import com.sakayori.common.Config.VIDEO_CLICK
+import com.sakayori.common.SELECTED_LANGUAGE
+import com.sakayori.common.STATUS_DONE
+import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.data.entities.LocalPlaylistEntity
+import com.sakayori.domain.data.entities.LyricsEntity
+import com.sakayori.domain.data.entities.NewFormatEntity
+import com.sakayori.domain.data.entities.PlaylistEntity
+import com.sakayori.domain.data.entities.SongEntity
+import com.sakayori.domain.data.entities.SongInfoEntity
+import com.sakayori.domain.data.entities.TranslatedLyricsEntity
+import com.sakayori.domain.data.model.browse.album.Track
+import com.sakayori.domain.data.model.canvas.CanvasResult
+import com.sakayori.domain.data.model.download.DownloadProgress
+import com.sakayori.domain.data.model.intent.GenericIntent
+import com.sakayori.domain.data.model.metadata.Lyrics
+import com.sakayori.domain.data.model.streams.TimeLine
+import com.sakayori.domain.data.model.update.UpdateData
+import com.sakayori.domain.extension.decodeHtmlEntities
+import com.sakayori.domain.extension.isSong
+import com.sakayori.domain.extension.isVideo
+import com.sakayori.domain.extension.toGenericMediaItem
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.manager.DataStoreManager.Values.FALSE
+import com.sakayori.domain.manager.DataStoreManager.Values.TRUE
+import com.sakayori.domain.mediaservice.handler.ControlState
+import com.sakayori.domain.mediaservice.handler.DownloadHandler
+import com.sakayori.domain.mediaservice.handler.NowPlayingTrackState
+import com.sakayori.domain.mediaservice.handler.PlayerEvent
+import com.sakayori.domain.mediaservice.handler.PlaylistType
+import com.sakayori.domain.mediaservice.handler.QueueData
+import com.sakayori.domain.mediaservice.handler.RepeatState
+import com.sakayori.domain.mediaservice.handler.SimpleMediaState
+import com.sakayori.domain.mediaservice.handler.SleepTimerState
+import com.sakayori.domain.repository.AlbumRepository
+import com.sakayori.domain.repository.CacheRepository
+import com.sakayori.domain.repository.LocalPlaylistRepository
+import com.sakayori.domain.repository.LyricsCanvasRepository
+import com.sakayori.domain.repository.PlaylistRepository
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.repository.StreamRepository
+import com.sakayori.domain.repository.UpdateRepository
+import com.sakayori.domain.utils.Resource
+import com.sakayori.domain.utils.toListName
+import com.sakayori.domain.utils.toLyrics
+import com.sakayori.domain.utils.toLyricsEntity
+import com.sakayori.domain.utils.toSongEntity
+import com.sakayori.domain.utils.toTrack
+import com.sakayori.logger.LogLevel
+import com.sakayori.logger.Logger
+import com.sakayori.music.Platform
+import com.sakayori.music.expect.getDownloadFolderPath
+import com.sakayori.music.expect.ui.toByteArray
+import com.sakayori.music.getPlatform
+import com.sakayori.music.utils.VersionManager
+import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -89,15 +89,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.added_to_queue
-import simpmusic.composeapp.generated.resources.added_to_youtube_liked
-import simpmusic.composeapp.generated.resources.error
-import simpmusic.composeapp.generated.resources.play_next
-import simpmusic.composeapp.generated.resources.removed_from_youtube_liked
-import simpmusic.composeapp.generated.resources.shared
-import simpmusic.composeapp.generated.resources.updated
-import simpmusic.composeapp.generated.resources.vote_submitted
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.added_to_queue
+import com.sakayori.music.generated.resources.added_to_youtube_liked
+import com.sakayori.music.generated.resources.error
+import com.sakayori.music.generated.resources.play_next
+import com.sakayori.music.generated.resources.removed_from_youtube_liked
+import com.sakayori.music.generated.resources.shared
+import com.sakayori.music.generated.resources.updated
+import com.sakayori.music.generated.resources.vote_submitted
 import java.io.FileOutputStream
 import kotlin.math.abs
 import kotlin.reflect.KClass
@@ -959,7 +959,7 @@ class SharedViewModel(
         duration: Int, // 0 if translated lyrics
         inputLyrics: Lyrics?,
         isTranslatedLyrics: Boolean,
-        lyricsProvider: LyricsProvider = LyricsProvider.SIMPMUSIC,
+        lyricsProvider: LyricsProvider = LyricsProvider.SakayoriMusic,
     ) {
         if (inputLyrics == null) {
             _nowPlayingScreenData.update {
@@ -1025,21 +1025,21 @@ class SharedViewModel(
                             dataStoreManager.translationLanguage.first(),
                         )
                         log("Removed out-of-sync translated lyrics for $videoId")
-                        val simpMusicLyricsId = lyrics.simpMusicLyrics?.id
-                        if (lyricsProvider == LyricsProvider.SIMPMUSIC && !simpMusicLyricsId.isNullOrEmpty()) {
+                        val SakayoriMusicLyricsId = lyrics.SakayoriMusicLyrics?.id
+                        if (lyricsProvider == LyricsProvider.SakayoriMusic && !SakayoriMusicLyricsId.isNullOrEmpty()) {
                             viewModelScope.launch {
                                 lyricsCanvasRepository
-                                    .voteSimpMusicTranslatedLyrics(
-                                        translatedLyricsId = simpMusicLyricsId,
+                                    .voteSakayoriMusicTranslatedLyrics(
+                                        translatedLyricsId = SakayoriMusicLyricsId,
                                         false,
                                     ).collectLatest {
                                         when (it) {
                                             is Resource.Error -> {
-                                                Logger.w(tag, "Vote SimpMusic Translated Lyrics Error ${it.message}")
+                                                Logger.w(tag, "Vote SakayoriMusic Translated Lyrics Error ${it.message}")
                                             }
 
                                             is Resource.Success -> {
-                                                Logger.d(tag, "Vote SimpMusic Translated Lyrics Success")
+                                                Logger.d(tag, "Vote SakayoriMusic Translated Lyrics Success")
                                             }
                                         }
                                     }
@@ -1061,20 +1061,20 @@ class SharedViewModel(
             }
         }
 
-        val shouldSendLyricsToSimpMusic =
+        val shouldSendLyricsToSakayoriMusic =
             runBlocking {
                 dataStoreManager.helpBuildLyricsDatabase.first() == TRUE
             } &&
-                lyricsProvider != LyricsProvider.SIMPMUSIC
+                lyricsProvider != LyricsProvider.SakayoriMusic
         if (_nowPlayingState.value?.songEntity?.videoId == videoId) {
             val track = _nowPlayingState.value?.track
             when (isTranslatedLyrics) {
                 true -> {
-                    if (lyricsProvider == LyricsProvider.SIMPMUSIC) {
+                    if (lyricsProvider == LyricsProvider.SakayoriMusic) {
                         _translatedVoteState.value =
                             VoteData(
-                                id = lyrics.simpMusicLyrics?.id ?: "",
-                                vote = lyrics.simpMusicLyrics?.vote ?: 0,
+                                id = lyrics.SakayoriMusicLyrics?.id ?: "",
+                                vote = lyrics.SakayoriMusicLyrics?.vote ?: 0,
                                 state = VoteState.Idle,
                             )
                     }
@@ -1086,10 +1086,10 @@ class SharedViewModel(
                                 ),
                         )
                     }
-                    if (shouldSendLyricsToSimpMusic && track != null) {
+                    if (shouldSendLyricsToSakayoriMusic && track != null) {
                         viewModelScope.launch {
                             lyricsCanvasRepository
-                                .insertSimpMusicTranslatedLyrics(
+                                .insertSakayoriMusicTranslatedLyrics(
                                     dataStoreManager,
                                     track,
                                     lyrics,
@@ -1097,11 +1097,11 @@ class SharedViewModel(
                                 ).collect {
                                     when (it) {
                                         is Resource.Error -> {
-                                            log("Insert SimpMusic Translated Lyrics Error ${it.message}")
+                                            log("Insert SakayoriMusic Translated Lyrics Error ${it.message}")
                                         }
 
                                         is Resource.Success -> {
-                                            log("Insert SimpMusic Translated Lyrics Success")
+                                            log("Insert SakayoriMusic Translated Lyrics Success")
                                         }
                                     }
                                 }
@@ -1110,11 +1110,11 @@ class SharedViewModel(
                 }
 
                 false -> {
-                    if (lyricsProvider == LyricsProvider.SIMPMUSIC) {
+                    if (lyricsProvider == LyricsProvider.SakayoriMusic) {
                         _lyricsVoteState.value =
                             VoteData(
-                                id = lyrics.simpMusicLyrics?.id ?: "",
-                                vote = lyrics.simpMusicLyrics?.vote ?: 0,
+                                id = lyrics.SakayoriMusicLyrics?.id ?: "",
+                                vote = lyrics.SakayoriMusicLyrics?.vote ?: 0,
                                 state = VoteState.Idle,
                             )
                     }
@@ -1138,10 +1138,10 @@ class SharedViewModel(
                             ),
                         )
                     }
-                    if (shouldSendLyricsToSimpMusic && track != null) {
+                    if (shouldSendLyricsToSakayoriMusic && track != null) {
                         viewModelScope.launch {
                             lyricsCanvasRepository
-                                .insertSimpMusicLyrics(
+                                .insertSakayoriMusicLyrics(
                                     dataStoreManager,
                                     track,
                                     duration,
@@ -1149,11 +1149,11 @@ class SharedViewModel(
                                 ).collect {
                                     when (it) {
                                         is Resource.Error -> {
-                                            Logger.w(tag, "Insert SimpMusic Lyrics Error ${it.message}")
+                                            Logger.w(tag, "Insert SakayoriMusic Lyrics Error ${it.message}")
                                         }
 
                                         is Resource.Success -> {
-                                            Logger.d(tag, "Insert SimpMusic Lyrics Success")
+                                            Logger.d(tag, "Insert SakayoriMusic Lyrics Success")
                                         }
                                     }
                                 }
@@ -1190,8 +1190,8 @@ class SharedViewModel(
             resetLyricsVoteState()
             val lyricsProvider = dataStoreManager.lyricsProvider.first()
             when (lyricsProvider) {
-                DataStoreManager.SIMPMUSIC -> {
-                    getSimpMusicLyrics(
+                DataStoreManager.SakayoriMusic -> {
+                    getSakayoriMusicLyrics(
                         videoId,
                         song,
                         (artist ?: ""),
@@ -1227,28 +1227,28 @@ class SharedViewModel(
         }
     }
 
-    private suspend fun getSimpMusicLyrics(
+    private suspend fun getSakayoriMusicLyrics(
         videoId: String,
         song: SongEntity,
         artist: String?,
         duration: Int,
     ) {
-        lyricsCanvasRepository.getSimpMusicLyrics(videoId).collectLatest {
-            Logger.w(tag, "Get SimpMusic Lyrics for $videoId: $it")
+        lyricsCanvasRepository.getSakayoriMusicLyrics(videoId).collectLatest {
+            Logger.w(tag, "Get SakayoriMusic Lyrics for $videoId: $it")
             val data = it.data
             if (it is Resource.Success && data != null) {
-                Logger.d(tag, "Get SimpMusic Lyrics Success")
+                Logger.d(tag, "Get SakayoriMusic Lyrics Success")
                 updateLyrics(
                     videoId,
                     duration,
                     data,
                     false,
-                    LyricsProvider.SIMPMUSIC,
+                    LyricsProvider.SakayoriMusic,
                 )
                 insertLyrics(
                     data.toLyricsEntity(videoId),
                 )
-                getSimpMusicTranslatedLyrics(
+                getSakayoriMusicTranslatedLyrics(
                     videoId,
                     data,
                 )
@@ -1308,7 +1308,7 @@ class SharedViewModel(
                     }
 
                     else -> {
-                        getSimpMusicLyrics(
+                        getSakayoriMusicLyrics(
                             videoId,
                             song,
                             (artist ?: ""),
@@ -1401,7 +1401,7 @@ class SharedViewModel(
 
                         else -> {
                             log("Get BetterLyrics Error: ${res.message}")
-                            getSimpMusicLyrics(
+                            getSakayoriMusicLyrics(
                                 song.videoId,
                                 song,
                                 artist,
@@ -1413,28 +1413,28 @@ class SharedViewModel(
         }
     }
 
-    private suspend fun getSimpMusicTranslatedLyrics(
+    private suspend fun getSakayoriMusicTranslatedLyrics(
         videoId: String,
         lyrics: Lyrics,
     ) {
         val translationLanguage =
             dataStoreManager.translationLanguage.first()
-        lyricsCanvasRepository.getSimpMusicTranslatedLyrics(videoId, translationLanguage).collectLatest { response ->
+        lyricsCanvasRepository.getSakayoriMusicTranslatedLyrics(videoId, translationLanguage).collectLatest { response ->
             val data = response.data
             when (response) {
                 is Resource.Success if (data != null) -> {
-                    Logger.d(tag, "Get SimpMusic Translated Lyrics Success")
+                    Logger.d(tag, "Get SakayoriMusic Translated Lyrics Success")
                     updateLyrics(
                         videoId,
                         0,
                         data,
                         true,
-                        LyricsProvider.SIMPMUSIC,
+                        LyricsProvider.SakayoriMusic,
                     )
                 }
 
                 else -> {
-                    Logger.w(tag, "Get SimpMusic Translated Lyrics Error: ${response.message}")
+                    Logger.w(tag, "Get SakayoriMusic Translated Lyrics Error: ${response.message}")
                     getAITranslationLyrics(
                         videoId,
                         lyrics,
@@ -1703,16 +1703,16 @@ class SharedViewModel(
     val lyricsVoteState: StateFlow<VoteData?> = _lyricsVoteState.asStateFlow()
 
     /**
-     * Vote for SimpMusic original lyrics (upvote or downvote)
+     * Vote for SakayoriMusic original lyrics (upvote or downvote)
      * @param upvote true for upvote, false for downvote
      */
     fun voteLyrics(upvote: Boolean) {
         val lyricsData = _nowPlayingScreenData.value.lyricsData
         val lyricsProvider = lyricsData?.lyricsProvider
-        val simpMusicLyricsId = lyricsData?.lyrics?.simpMusicLyrics?.id ?: return
+        val SakayoriMusicLyricsId = lyricsData?.lyrics?.SakayoriMusicLyrics?.id ?: return
 
-        if (lyricsProvider != LyricsProvider.SIMPMUSIC || simpMusicLyricsId.isEmpty()) {
-            Logger.w(tag, "Cannot vote: not a SimpMusic lyrics or missing ID")
+        if (lyricsProvider != LyricsProvider.SakayoriMusic || SakayoriMusicLyricsId.isEmpty()) {
+            Logger.w(tag, "Cannot vote: not a SakayoriMusic lyrics or missing ID")
             return
         }
 
@@ -1723,13 +1723,13 @@ class SharedViewModel(
                 )
             }
             lyricsCanvasRepository
-                .voteSimpMusicLyrics(
-                    lyricsId = simpMusicLyricsId,
+                .voteSakayoriMusicLyrics(
+                    lyricsId = SakayoriMusicLyricsId,
                     upvote = upvote,
                 ).collectLatest { result ->
                     when (result) {
                         is Resource.Error -> {
-                            Logger.w(tag, "Vote SimpMusic Lyrics Error ${result.message}")
+                            Logger.w(tag, "Vote SakayoriMusic Lyrics Error ${result.message}")
                             _lyricsVoteState.update {
                                 it?.copy(
                                     state = VoteState.Error(result.message ?: "Unknown error"),
@@ -1738,7 +1738,7 @@ class SharedViewModel(
                         }
 
                         is Resource.Success -> {
-                            Logger.d(tag, "Vote SimpMusic Lyrics Success")
+                            Logger.d(tag, "Vote SakayoriMusic Lyrics Success")
                             _lyricsVoteState.update {
                                 it?.copy(
                                     state = VoteState.Success(upvote),
@@ -1758,16 +1758,16 @@ class SharedViewModel(
     }
 
     /**
-     * Vote for SimpMusic translated lyrics (upvote or downvote)
+     * Vote for SakayoriMusic translated lyrics (upvote or downvote)
      * @param upvote true for upvote, false for downvote
      */
     fun voteTranslatedLyrics(upvote: Boolean) {
         val translatedLyrics = _nowPlayingScreenData.value.lyricsData?.translatedLyrics
         val lyricsProvider = translatedLyrics?.second
-        val simpMusicLyricsId = translatedLyrics?.first?.simpMusicLyrics?.id ?: return
+        val SakayoriMusicLyricsId = translatedLyrics?.first?.SakayoriMusicLyrics?.id ?: return
 
-        if (lyricsProvider != LyricsProvider.SIMPMUSIC || simpMusicLyricsId.isEmpty()) {
-            Logger.w(tag, "Cannot vote: not a SimpMusic translated lyrics or missing ID")
+        if (lyricsProvider != LyricsProvider.SakayoriMusic || SakayoriMusicLyricsId.isEmpty()) {
+            Logger.w(tag, "Cannot vote: not a SakayoriMusic translated lyrics or missing ID")
             return
         }
 
@@ -1778,13 +1778,13 @@ class SharedViewModel(
                 )
             }
             lyricsCanvasRepository
-                .voteSimpMusicTranslatedLyrics(
-                    translatedLyricsId = simpMusicLyricsId,
+                .voteSakayoriMusicTranslatedLyrics(
+                    translatedLyricsId = SakayoriMusicLyricsId,
                     upvote = upvote,
                 ).collectLatest { result ->
                     when (result) {
                         is Resource.Error -> {
-                            Logger.w(tag, "Vote SimpMusic Translated Lyrics Error ${result.message}")
+                            Logger.w(tag, "Vote SakayoriMusic Translated Lyrics Error ${result.message}")
                             _translatedVoteState.update {
                                 it?.copy(
                                     state = VoteState.Error(result.message ?: "Unknown error"),
@@ -1793,7 +1793,7 @@ class SharedViewModel(
                         }
 
                         is Resource.Success -> {
-                            Logger.d(tag, "Vote SimpMusic Translated Lyrics Success")
+                            Logger.d(tag, "Vote SakayoriMusic Translated Lyrics Success")
                             _translatedVoteState.update {
                                 it?.copy(
                                     state = VoteState.Success(upvote),
@@ -1843,7 +1843,7 @@ sealed class UIEvent {
 }
 
 enum class LyricsProvider {
-    SIMPMUSIC,
+    SakayoriMusic,
     YOUTUBE,
     SPOTIFY,
     LRCLIB,

@@ -1,4 +1,4 @@
-package com.maxrave.media3.exoplayer
+package com.sakayori.media3.exoplayer
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -17,19 +17,19 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.SilenceSkippingAudioProcessor
-import com.maxrave.domain.data.player.GenericMediaItem
-import com.maxrave.domain.data.player.GenericPlaybackParameters
-import com.maxrave.domain.data.player.PlayerConstants
-import com.maxrave.domain.data.player.PlayerError
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.mediaservice.player.MediaPlayerInterface
-import com.maxrave.domain.mediaservice.player.MediaPlayerListener
-import com.maxrave.domain.repository.StreamRepository
-import com.maxrave.logger.Logger
-import com.maxrave.media3.audio.BiquadFilter
-import com.maxrave.media3.audio.CrossfadeFilterAudioProcessor
-import com.maxrave.media3.exoplayer.CrossfadeExoPlayerAdapter.Companion.AUTO_FALLBACK_DURATION_MS
-import com.maxrave.media3.service.mediasourcefactory.MergingMediaSourceFactory
+import com.sakayori.domain.data.player.GenericMediaItem
+import com.sakayori.domain.data.player.GenericPlaybackParameters
+import com.sakayori.domain.data.player.PlayerConstants
+import com.sakayori.domain.data.player.PlayerError
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
+import com.sakayori.domain.mediaservice.player.MediaPlayerListener
+import com.sakayori.domain.repository.StreamRepository
+import com.sakayori.logger.Logger
+import com.sakayori.media3.audio.BiquadFilter
+import com.sakayori.media3.audio.CrossfadeFilterAudioProcessor
+import com.sakayori.media3.exoplayer.CrossfadeExoPlayerAdapter.Companion.AUTO_FALLBACK_DURATION_MS
+import com.sakayori.media3.service.mediasourcefactory.MergingMediaSourceFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -48,7 +48,7 @@ private const val TAG = "CrossfadeExoPlayerAdapter"
 /**
  * ExoPlayer implementation of [MediaPlayerInterface] with crossfade support.
  *
- * Architecture mirrors [com.simpmusic.media_jvm.GstreamerPlayerAdapter]:
+ * Architecture mirrors [com.SakayoriMusic.media_jvm.GstreamerPlayerAdapter]:
  * - Internal playlist management (not ExoPlayer's playlist)
  * - Multi-player instance model: each track gets its own ExoPlayer
  * - Precaching system for smooth transitions
@@ -1337,7 +1337,7 @@ internal class CrossfadeExoPlayerAdapter(
                                 try {
                                     // Invalidate cached format so ResolvingDataSource fetches a fresh URL
                                     streamRepository.invalidateFormat(currentVideoId)
-                                    streamRepository.invalidateFormat("${com.maxrave.common.MERGING_DATA_TYPE.VIDEO}$currentVideoId")
+                                    streamRepository.invalidateFormat("${com.sakayori.common.MERGING_DATA_TYPE.VIDEO}$currentVideoId")
                                     // Evict from precache (it may hold a stale player)
                                     precachedPlayers.remove(currentVideoId)?.player?.release()
                                     // Reload the track

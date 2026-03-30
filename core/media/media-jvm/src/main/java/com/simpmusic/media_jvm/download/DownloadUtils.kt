@@ -1,12 +1,12 @@
-package com.simpmusic.media_jvm.download
+package com.SakayoriMusic.media_jvm.download
 
-import com.maxrave.common.MERGING_DATA_TYPE
-import com.maxrave.domain.data.entities.DownloadState
-import com.maxrave.domain.manager.DataStoreManager
-import com.maxrave.domain.mediaservice.handler.DownloadHandler
-import com.maxrave.domain.repository.SongRepository
-import com.maxrave.domain.repository.StreamRepository
-import com.maxrave.domain.utils.toTrack
+import com.sakayori.common.MERGING_DATA_TYPE
+import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.mediaservice.handler.DownloadHandler
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.repository.StreamRepository
+import com.sakayori.domain.utils.toTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -103,4 +103,4 @@ internal class DownloadUtils(
     }
 }
 
-fun getDownloadPath(): String = System.getProperty("user.home") + File.separator + ".simpmusic" + File.separator + "downloads"
+fun getDownloadPath(): String = System.getProperty("user.home") + File.separator + ".SakayoriMusic" + File.separator + "downloads"

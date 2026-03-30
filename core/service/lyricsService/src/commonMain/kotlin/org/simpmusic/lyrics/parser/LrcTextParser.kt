@@ -1,7 +1,7 @@
-package org.simpmusic.lyrics.parser
+package org.SakayoriMusic.lyrics.parser
 
-import com.maxrave.domain.extension.decodeHtmlEntities
-import org.simpmusic.lyrics.domain.Lyrics
+import com.sakayori.domain.extension.decodeHtmlEntities
+import org.SakayoriMusic.lyrics.domain.Lyrics
 
 fun parseSyncedLyrics(data: String): Lyrics {
     val regex = Regex("\\[(\\d{2}):(\\d{2})\\.(\\d{2})\\](.+)")

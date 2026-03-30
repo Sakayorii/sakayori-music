@@ -1,4 +1,4 @@
-Không chỉ là ứng dụng nghe nhạc, nó là SimpMusic
+Không chỉ là ứng dụng nghe nhạc, nó là SakayoriMusic
 
 <br><b>Tính năng:</b>
 
@@ -11,7 +11,7 @@ Không chỉ là ứng dụng nghe nhạc, nó là SimpMusic
 - Gợi ý bài hát AI
 - Thông báo từ các nghệ sĩ đã theo dõi
 - Hỗ trợ bộ nhớ đệm và phát lại ngoại tuyến
-- Lời bài hát đồng bộ từ SimpMusic Lyrics, LRCLIB, Spotify (yêu cầu đăng nhập) và YouTube Transcript - Dịch lời bài hát AI (BETA) (\*)
+- Lời bài hát đồng bộ từ SakayoriMusic Lyrics, LRCLIB, Spotify (yêu cầu đăng nhập) và YouTube Transcript - Dịch lời bài hát AI (BETA) (\*)
 - Dữ liệu cá nhân hóa (\**) và hỗ trợ nhiều tài khoản YouTube
 - Hỗ trợ SponsorBlock và Return YouTube Dislike
 - Hẹn giờ ngủ

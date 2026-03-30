@@ -1,14 +1,14 @@
-package com.maxrave.simpmusic
+package com.sakayori.music
 
-import com.maxrave.logger.Logger
+import com.sakayori.logger.Logger
 
 /**
- * Registers the "simpmusic://" custom URI protocol handler in Windows Registry
+ * Registers the "SakayoriMusic://" custom URI protocol handler in Windows Registry
  * under HKEY_CURRENT_USER (no admin rights required).
  *
  * Registry structure:
  * ```
- * HKCU\Software\Classes\simpmusic
+ * HKCU\Software\Classes\SakayoriMusic
  *     (Default) = "URL:SakayoriMusic Protocol"
  *     URL Protocol = ""
  *     \DefaultIcon
@@ -19,7 +19,7 @@ import com.maxrave.logger.Logger
  */
 object WindowsProtocolRegistrar {
     private const val TAG = "WindowsProtocolRegistrar"
-    private const val SCHEME = "simpmusic"
+    private const val SCHEME = "SakayoriMusic"
     private const val REG_KEY = "HKCU\\Software\\Classes\\$SCHEME"
 
     fun register() {
@@ -36,7 +36,7 @@ object WindowsProtocolRegistrar {
                 return
             }
 
-            Logger.d(TAG, "Registering simpmusic:// protocol handler -> $exePath")
+            Logger.d(TAG, "Registering SakayoriMusic:// protocol handler -> $exePath")
 
             // Main key with protocol description
             regAdd(REG_KEY, null, "URL:SakayoriMusic Protocol")
@@ -128,3 +128,4 @@ object WindowsProtocolRegistrar {
         return if (exitCode == 0) output else null
     }
 }
+

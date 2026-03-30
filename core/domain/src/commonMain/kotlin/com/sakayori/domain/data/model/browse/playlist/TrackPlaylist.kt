@@ -1,7 +1,7 @@
-package com.maxrave.domain.data.model.browse.playlist
+package com.sakayori.domain.data.model.browse.playlist
 
-import com.maxrave.domain.data.model.searchResult.songs.Artist
-import com.maxrave.domain.data.model.searchResult.songs.Thumbnail
+import com.sakayori.domain.data.model.searchResult.songs.Artist
+import com.sakayori.domain.data.model.searchResult.songs.Thumbnail
 
 data class TrackPlaylist(
     val albumPlaylist: AlbumPlaylist,

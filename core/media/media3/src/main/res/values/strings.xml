@@ -7,7 +7,7 @@
     <string name="repeat_all">Repeat All</string>
     <string name="repeat_off">Repeat Off</string>
     <string name="shuffle">Shuffle</string>
-    <string name="notification_channel_name" translatable="false">SimpMusic Playback Notification</string>
+    <string name="notification_channel_name" translatable="false">SakayoriMusic Playback Notification</string>
     <string name="home">Home</string>
     <string name="search">Search</string>
     <string name="library">Library</string>

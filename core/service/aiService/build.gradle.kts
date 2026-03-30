@@ -13,7 +13,7 @@ kotlin {
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     androidLibrary {
-        namespace = "org.simpmusic.aiservice"
+        namespace = "com.sakayori.aiservice"
         compileSdk = 36
         minSdk = 26
     }
@@ -54,7 +54,7 @@ kotlin {
                 // Add KMP dependencies here
                 implementation(projects.domain)
                 implementation(libs.ktor.client.core)
-                implementation(libs.gemini.kotlin)
+                implementation(libs.sakayori.ai)
             }
         }
 
