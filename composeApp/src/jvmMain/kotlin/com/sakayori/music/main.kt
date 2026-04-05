@@ -36,6 +36,7 @@ import com.sakayori.music.viewModel.SharedViewModel
 import com.sakayori.music.viewModel.changeLanguageNative
 import io.sentry.Sentry
 import io.sentry.SentryLevel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import multiplatform.network.cmptoast.ToastHost
@@ -74,7 +75,6 @@ fun main(args: Array<String>) {
         System.setProperty("compose.interop.blending", "true")
         System.setProperty("compose.layers.type", "COMPONENT")
 
-        // Set JNA library path for VLC
         val osName = System.getProperty("os.name", "").lowercase()
         val subDir = when {
             osName.contains("win") -> "windows"
@@ -85,12 +85,11 @@ fun main(args: Array<String>) {
         val packagedPath = System.getProperty("compose.application.resources.dir")
         val appDir = System.getProperty("user.dir")
         
-        // Cố gắng tìm libvlc.dll ở nhiều vị trí khác nhau
         val potentialPaths = listOf(
-            File(packagedPath ?: "", subDir), // Thư mục resources/windows
-            File(appDir, "app/$subDir"),      // Thư mục app/windows
-            File(appDir, subDir),             // Thư mục windows ngay tại gốc
-            File("vlc-natives/$subDir")       // Thư mục Dev
+            File(packagedPath ?: "", subDir),
+            File(appDir, "app/$subDir"),
+            File(appDir, subDir),
+            File("vlc-natives/$subDir")
         )
 
         val vlcPath = potentialPaths.firstOrNull { it.exists() && it.isDirectory }?.absolutePath
@@ -107,12 +106,12 @@ fun main(args: Array<String>) {
             loadAllModules()
         }
 
-        val language = runBlocking {
+        val language = runBlocking(Dispatchers.IO) {
             getKoin()
                 .get<DataStoreManager>()
                 .language
                 .first()
-                .substring(0..1)
+                .take(2)
         }
         changeLanguageNative(language)
 
@@ -130,10 +129,10 @@ fun main(args: Array<String>) {
             showToast(
                 when (type) {
                     ToastType.ExplicitContent -> {
-                        runBlocking { getString(Res.string.explicit_content_blocked) }
+                        runBlocking(Dispatchers.Default) { getString(Res.string.explicit_content_blocked) }
                     }
                     is ToastType.PlayerError -> {
-                        runBlocking { getString(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error) }
+                        runBlocking(Dispatchers.Default) { getString(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error) }
                     }
                 }
             )

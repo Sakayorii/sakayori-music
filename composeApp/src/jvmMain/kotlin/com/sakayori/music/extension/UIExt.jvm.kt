@@ -24,7 +24,6 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
 
 @Composable
 actual fun KeepScreenOn() {
-    // TODO: Implement if needed
 }
 
 @Composable

@@ -18,10 +18,6 @@ class AutoBackupScheduler(
 ) {
     private val workManager = WorkManager.getInstance(context)
 
-    /**
-     * Observe DataStore preferences and schedule/cancel WorkManager accordingly.
-     * This should be called in a coroutine scope that lives as long as the application.
-     */
     suspend fun observeAndSchedule() {
         combine(
             dataStoreManager.autoBackupEnabled,

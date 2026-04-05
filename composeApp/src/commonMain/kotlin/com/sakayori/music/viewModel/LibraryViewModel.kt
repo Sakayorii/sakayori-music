@@ -22,7 +22,9 @@ import com.sakayori.domain.utils.LocalResource
 import com.sakayori.domain.utils.Resource
 import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -168,7 +170,7 @@ class LibraryViewModel(
         }
     }
 
-    fun getYouTubeLoggedIn(): Boolean = runBlocking { dataStoreManager.loggedIn.first() } == DataStoreManager.TRUE
+    fun getYouTubeLoggedIn(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.loggedIn.first() } == DataStoreManager.TRUE
 
     fun getPlaylistFavorite() {
         viewModelScope.launch {
@@ -201,7 +203,7 @@ class LibraryViewModel(
                                         1
                                     }
                                 }
-                                timeP0.compareTo(timeP1) // Sort in descending order by inLibrary time
+                                timeP0.compareTo(timeP1)
                             },
                         )
                     _favoritePlaylist.value = LocalResource.Success(sortedList)
@@ -232,7 +234,6 @@ class LibraryViewModel(
         _yourLocalPlaylist.value = LocalResource.Loading()
         viewModelScope.launch {
             localPlaylistRepository.getAllLocalPlaylists().collect { values ->
-//                    _listLocalPlaylist.postValue(values)
                 _yourLocalPlaylist.value = LocalResource.Success(values.reversed())
             }
         }
@@ -278,7 +279,7 @@ class LibraryViewModel(
         viewModelScope.launch {
             songRepository.setInLibrary(videoId, Config.REMOVED_SONG_DATE_TIME)
             songRepository.resetTotalPlayTime(videoId)
-            delay(500) // Wait for the database to update
+            delay(500)
             getRecentlyAdded()
         }
     }

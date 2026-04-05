@@ -93,6 +93,7 @@ import io.github.alexzhirkevich.compottie.rememberLottieComposition
 import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
@@ -294,7 +295,6 @@ fun AlbumScreen(
                                             Column(
                                                 modifier = Modifier.padding(vertical = 8.dp),
                                             ) {
-                                                // Author clickable
                                                 Text(
                                                     text = uiState.artist.name,
                                                     style = typo().titleSmall,
@@ -363,7 +363,7 @@ fun AlbumScreen(
                                                                             CircleShape,
                                                                         ).clickable {
                                                                             viewModel.makeToast(
-                                                                                runBlocking {
+                                                                                runBlocking(Dispatchers.Default) {
                                                                                     getString(Res.string.downloaded)
                                                                                 },
                                                                             )
@@ -390,7 +390,7 @@ fun AlbumScreen(
                                                                             CircleShape,
                                                                         ).clickable {
                                                                             viewModel.makeToast(
-                                                                                runBlocking {
+                                                                                runBlocking(Dispatchers.Default) {
                                                                                     getString(Res.string.downloading)
                                                                                 },
                                                                             )
@@ -444,7 +444,6 @@ fun AlbumScreen(
                                                         it.ifEmpty { null }
                                                     } ?: stringResource(Res.string.no_description),
                                                 onTimeClicked = { raw ->
-                                                    // Don't handle time click
                                                 },
                                                 onURLClicked = { url ->
                                                     uriHandler.openUri(

@@ -40,31 +40,24 @@ class AutoBackupWorker(
         try {
             Logger.i(TAG, "Starting auto backup...")
 
-            // Check if auto backup is still enabled
             val enabled = dataStoreManager.autoBackupEnabled.first()
             if (enabled != DataStoreManager.TRUE) {
                 Logger.i(TAG, "Auto backup is disabled, skipping...")
                 return@withContext Result.success()
             }
 
-            // Get backup settings
             val backupDownloaded = dataStoreManager.backupDownloaded.first() == DataStoreManager.TRUE
             val maxFiles = dataStoreManager.autoBackupMaxFiles.first()
 
-            // Create temp backup file
             val tempBackupFile = createBackupFile(backupDownloaded)
 
-            // Save to Downloads/SakayoriMusic folder
             val success = saveToDownloads(tempBackupFile)
 
-            // Delete temp file
             tempBackupFile.delete()
 
             if (success) {
-                // Cleanup old backups
                 cleanupOldBackups(maxFiles)
 
-                // Update last backup time
                 dataStoreManager.setAutoBackupLastTime(System.currentTimeMillis())
 
                 Logger.i(TAG, "Auto backup completed successfully")
@@ -85,7 +78,6 @@ class AutoBackupWorker(
 
         FileOutputStream(tempFile).buffered().use { bufferedOutput ->
             ZipOutputStream(bufferedOutput).use { zipOutputStream ->
-                // Backup DataStore preferences
                 val dataStoreFile = File(context.filesDir, "datastore/$SETTINGS_FILENAME.preferences_pb")
                 if (dataStoreFile.exists()) {
                     zipOutputStream.putNextEntry(ZipEntry("$SETTINGS_FILENAME.preferences_pb"))
@@ -95,7 +87,6 @@ class AutoBackupWorker(
                     zipOutputStream.closeEntry()
                 }
 
-                // Checkpoint and backup database
                 commonRepository.databaseDaoCheckpoint()
                 val dbPath = commonRepository.getDatabasePath()
                 FileInputStream(dbPath).use { inputStream ->
@@ -104,9 +95,7 @@ class AutoBackupWorker(
                     zipOutputStream.closeEntry()
                 }
 
-                // Backup downloaded data if enabled
                 if (backupDownloaded) {
-                    // Backup ExoPlayer database
                     val exoPlayerDb = context.getDatabasePath(EXOPLAYER_DB_NAME)
                     if (exoPlayerDb.exists()) {
                         zipOutputStream.putNextEntry(ZipEntry(EXOPLAYER_DB_NAME))
@@ -116,7 +105,6 @@ class AutoBackupWorker(
                         zipOutputStream.closeEntry()
                     }
 
-                    // Backup download folder
                     val downloadFolder = File(context.filesDir, DOWNLOAD_EXOPLAYER_FOLDER)
                     if (downloadFolder.exists() && downloadFolder.isDirectory) {
                         backupFolder(downloadFolder, DOWNLOAD_EXOPLAYER_FOLDER, zipOutputStream)
@@ -224,7 +212,6 @@ class AutoBackupWorker(
                     }
                 }
 
-                // Delete old files if exceeding maxFiles
                 if (backupFiles.size > maxFiles) {
                     val filesToDelete = backupFiles.drop(maxFiles)
                     filesToDelete.forEach { (id, name) ->

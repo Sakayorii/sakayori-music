@@ -359,7 +359,7 @@ internal class SongRepositoryImpl(
                 track.toSongItemForDownload(),
                 path,
                 videoId,
-                runBlocking {
+                runBlocking(Dispatchers.IO) {
                     (
                         dataStoreManager.prefer320kbpsStream.first() == TRUE &&
                             dataStoreManager.your320kbpsUrl.first().isNotEmpty()

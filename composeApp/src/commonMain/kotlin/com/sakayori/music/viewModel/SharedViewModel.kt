@@ -122,22 +122,22 @@ class SharedViewModel(
     private val _isCheckingUpdate = MutableStateFlow(false)
     val isCheckingUpdate: StateFlow<Boolean> = _isCheckingUpdate
 
-    private var _liked: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _liked: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val liked: SharedFlow<Boolean> = _liked.asSharedFlow()
 
     var isServiceRunning: Boolean = false
 
-    private var _sleepTimerState = MutableStateFlow(SleepTimerState(false, 0))
+    private val _sleepTimerState = MutableStateFlow(SleepTimerState(false, 0))
     val sleepTimerState: StateFlow<SleepTimerState> = _sleepTimerState
 
     private var regionCode: String? = null
     private var language: String? = null
     private var quality: String? = null
 
-    private var _format: MutableStateFlow<NewFormatEntity?> = MutableStateFlow(null)
+    private val _format: MutableStateFlow<NewFormatEntity?> = MutableStateFlow(null)
     val format: SharedFlow<NewFormatEntity?> = _format.asSharedFlow()
 
-    private var _canvas: MutableStateFlow<CanvasResult?> = MutableStateFlow(null)
+    private val _canvas: MutableStateFlow<CanvasResult?> = MutableStateFlow(null)
     val canvas: StateFlow<CanvasResult?> = _canvas
 
     private var canvasJob: Job? = null
@@ -147,11 +147,11 @@ class SharedViewModel(
 
     private var getFormatFlowJob: Job? = null
 
-    var playlistId: MutableStateFlow<String?> = MutableStateFlow(null)
+    val playlistId: MutableStateFlow<String?> = MutableStateFlow(null)
 
     var isFullScreen: Boolean = false
 
-    private var _nowPlayingState = MutableStateFlow<NowPlayingTrackState?>(null)
+    private val _nowPlayingState = MutableStateFlow<NowPlayingTrackState?>(null)
     val nowPlayingState: StateFlow<NowPlayingTrackState?> = _nowPlayingState
 
     fun getQueueDataState() = mediaPlayerHandler.queueData
@@ -199,7 +199,7 @@ class SharedViewModel(
         )
     val nowPlayingScreenData: StateFlow<NowPlayingScreenData> = _nowPlayingScreenData
 
-    private var _likeStatus = MutableStateFlow<Boolean>(false)
+    private val _likeStatus = MutableStateFlow<Boolean>(false)
     val likeStatus: StateFlow<Boolean> = _likeStatus
 
     val openAppTime: StateFlow<Int> = dataStoreManager.openAppTime.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 0)
@@ -265,24 +265,13 @@ class SharedViewModel(
                         _shareSavedLyrics.value = it == TRUE
                     }
                 }
-//            val controllerStateJob =
-//                launch {
-//                    controllerState.map { it.isLiked }.distinctUntilChanged().collectLatest {
-//                        if (dataStoreManager.combineLocalAndYouTubeLiked.first() == TRUE) {
-//                            nowPlayingState.value?.mediaItem?.mediaId?.let {
-//                                getLikeStatus(it)
-//                            }
-//                        }
-//                    }
-//                }
             timeLineJob.join()
             checkGetVideoJob.join()
             lyricsProviderJob.join()
             shareSavedLyricsJob.join()
-//            controllerStateJob.join()
         }
 
-        runBlocking {
+        viewModelScope.launch {
             dataStoreManager.getString("miniplayer_guide").first().let {
                 isFirstMiniplayer = it != STATUS_DONE
             }
@@ -390,12 +379,6 @@ class SharedViewModel(
                                         }
                                     }
                                 }
-                                // When progress hasn't changed (same value polled again) or is negative,
-                                // don't modify loading state. The loading flag is already managed by
-                                // Buffering/Ready/Loading state events. Setting loading=true here would
-                                // cause rapid flickering because the progress poll interval (100ms) is
-                                // shorter than the adapter's position cache update interval (200ms),
-                                // resulting in duplicate position values that incorrectly triggered loading.
                             }
 
                             is SimpleMediaState.Loading -> {
@@ -426,7 +409,6 @@ class SharedViewModel(
                     mediaPlayerHandler.controlState.collectLatest {
                         Logger.w(tag, "ControlState is $it")
                         _controllerState.value = it
-                        // Propagate crossfade state to timeline so UI can react
                         _timeline.update { timeline ->
                             timeline.copy(isCrossfading = it.isCrossfading)
                         }
@@ -451,7 +433,6 @@ class SharedViewModel(
             sleepTimerJob.join()
             playlistNameJob.join()
         }
-        // Reset downloading songs & playlists to not downloaded
         checkAllDownloadingSongs()
         checkAllDownloadingPlaylists()
         checkAllDownloadingLocalPlaylists()
@@ -461,7 +442,7 @@ class SharedViewModel(
         _intent.value = intent
     }
 
-    fun blurFullscreenLyrics(): Boolean = runBlocking { dataStoreManager.blurFullscreenLyrics.first() == TRUE }
+    fun blurFullscreenLyrics(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.blurFullscreenLyrics.first() == TRUE }
 
     private fun getLikeStatus(videoId: String?) {
         viewModelScope.launch {
@@ -479,7 +460,6 @@ class SharedViewModel(
         duration: Int,
     ) {
         Logger.w(tag, "Start getCanvas: $videoId $duration")
-//        canvasJob?.cancel()
         viewModelScope.launch {
             if (dataStoreManager.spotifyCanvas.first() == TRUE) {
                 lyricsCanvasRepository.getCanvas(dataStoreManager, videoId, duration).cancellable().collect { response ->
@@ -496,9 +476,7 @@ class SharedViewModel(
                                         ),
                                 )
                             }
-                            // Save canvas video url
                             if (data.isVideo) lyricsCanvasRepository.updateCanvasUrl(videoId, data.canvasUrl)
-                            // Save canvas thumb url
                             data.canvasThumbUrl?.let { lyricsCanvasRepository.updateCanvasThumbUrl(videoId, it) }
                         }
 
@@ -522,13 +500,13 @@ class SharedViewModel(
         }
     }
 
-    fun getString(key: String): String? = runBlocking { dataStoreManager.getString(key).first() }
+    fun getString(key: String): String? = runBlocking(Dispatchers.IO) { dataStoreManager.getString(key).first() }
 
     fun putString(
         key: String,
         value: String,
     ) {
-        runBlocking { dataStoreManager.putString(key, value) }
+        runBlocking(Dispatchers.IO) { dataStoreManager.putString(key, value) }
     }
 
     fun setSleepTimer(minutes: Int) {
@@ -539,7 +517,7 @@ class SharedViewModel(
         mediaPlayerHandler.sleepStop()
     }
 
-    private var _downloadState: MutableStateFlow<DownloadHandler.Download?> = MutableStateFlow(null)
+    private val _downloadState: MutableStateFlow<DownloadHandler.Download?> = MutableStateFlow(null)
     var downloadState: StateFlow<DownloadHandler.Download?> = _downloadState.asStateFlow()
 
     fun checkIsRestoring() {
@@ -688,7 +666,7 @@ class SharedViewModel(
         type: String,
         index: Int? = null,
     ) {
-        quality = runBlocking { dataStoreManager.quality.first() }
+        quality = runBlocking(Dispatchers.IO) { dataStoreManager.quality.first() }
         viewModelScope.launch {
             mediaPlayerHandler.clearMediaItems()
             songRepository.insertSong(track.toSongEntity()).lastOrNull()?.let {
@@ -727,20 +705,16 @@ class SharedViewModel(
 
                 PLAYLIST_CLICK -> {
                     if (index == null) {
-//                                        fetchSourceFromQueue(downloaded = downloaded ?: 0)
                         loadPlaylistOrAlbum(index = 0)
                     } else {
-//                                        fetchSourceFromQueue(index!!, downloaded = downloaded ?: 0)
                         loadPlaylistOrAlbum(index = index)
                     }
                 }
 
                 ALBUM_CLICK -> {
                     if (index == null) {
-//                                        fetchSourceFromQueue(downloaded = downloaded ?: 0)
                         loadPlaylistOrAlbum(index = 0)
                     } else {
-//                                        fetchSourceFromQueue(index!!, downloaded = downloaded ?: 0)
                         loadPlaylistOrAlbum(index = index)
                     }
                 }
@@ -814,10 +788,10 @@ class SharedViewModel(
         Logger.w("Check onCleared", "onCleared")
     }
 
-    fun getLocation() {
-        regionCode = runBlocking { dataStoreManager.location.first() }
-        quality = runBlocking { dataStoreManager.quality.first() }
-        language = runBlocking { dataStoreManager.getString(SELECTED_LANGUAGE).first() }
+    suspend fun getLocation() {
+        regionCode = dataStoreManager.location.first()
+        quality = dataStoreManager.quality.first()
+        language = dataStoreManager.getString(SELECTED_LANGUAGE).first()
     }
 
     private fun checkAllDownloadingLocalPlaylists() {
@@ -844,7 +818,6 @@ class SharedViewModel(
                         }
 
                         else -> {
-                            // Skip
                         }
                     }
                 }
@@ -909,7 +882,7 @@ class SharedViewModel(
             }
     }
 
-    private var _updateResponse = MutableStateFlow<UpdateData?>(null)
+    private val _updateResponse = MutableStateFlow<UpdateData?>(null)
     val updateResponse: StateFlow<UpdateData?> = _updateResponse
 
     fun checkForUpdate() {
@@ -954,9 +927,9 @@ class SharedViewModel(
         mediaPlayerHandler.loadPlaylistOrAlbum(index)
     }
 
-    private fun updateLyrics(
+    private suspend fun updateLyrics(
         videoId: String,
-        duration: Int, // 0 if translated lyrics
+        duration: Int,
         inputLyrics: Lyrics?,
         isTranslatedLyrics: Boolean,
         lyricsProvider: LyricsProvider = LyricsProvider.SakayoriMusic,
@@ -998,7 +971,7 @@ class SharedViewModel(
                         val translatedTime = closestTranslatedLine.startTimeMs.toLongOrNull() ?: 0L
                         val timeDiff = abs(originalTime - translatedTime)
 
-                        if (timeDiff > 1000L) { // Lệch quá 1 giây
+                        if (timeDiff > 1000L) {
                             outOfSyncCount++
                         }
                         if (closestTranslatedLine.words == originalLine.words) {
@@ -1062,9 +1035,7 @@ class SharedViewModel(
         }
 
         val shouldSendLyricsToSakayoriMusic =
-            runBlocking {
-                dataStoreManager.helpBuildLyricsDatabase.first() == TRUE
-            } &&
+            (dataStoreManager.helpBuildLyricsDatabase.first() == TRUE) &&
                 lyricsProvider != LyricsProvider.SakayoriMusic
         if (_nowPlayingState.value?.songEntity?.videoId == videoId) {
             val track = _nowPlayingState.value?.track
@@ -1127,7 +1098,6 @@ class SharedViewModel(
                                 ),
                         )
                     }
-                    // Save lyrics to database
                     viewModelScope.launch {
                         lyricsCanvasRepository.insertLyrics(
                             LyricsEntity(
@@ -1557,7 +1527,7 @@ class SharedViewModel(
         }
     }
 
-    private var _recreateActivity: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _recreateActivity: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val recreateActivity: StateFlow<Boolean> = _recreateActivity
 
     fun activityRecreate() {
@@ -1629,9 +1599,9 @@ class SharedViewModel(
         _reloadDestination.value = null
     }
 
-    fun shouldCheckForUpdate(): Boolean = runBlocking { dataStoreManager.autoCheckForUpdates.first() == TRUE }
+    fun shouldCheckForUpdate(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.autoCheckForUpdates.first() == TRUE }
 
-    private var _downloadFileProgress = MutableStateFlow<DownloadProgress>(DownloadProgress.INIT)
+    private val _downloadFileProgress = MutableStateFlow<DownloadProgress>(DownloadProgress.INIT)
     val downloadFileProgress: StateFlow<DownloadProgress> get() = _downloadFileProgress
 
     fun downloadFile(bitmap: ImageBitmap) {
@@ -1694,18 +1664,12 @@ class SharedViewModel(
         }
     }
 
-    // Vote state for translated lyrics
     private val _translatedVoteState = MutableStateFlow<VoteData?>(null)
     val translatedVoteState: StateFlow<VoteData?> = _translatedVoteState.asStateFlow()
 
-    // Vote state for original lyrics
     private val _lyricsVoteState = MutableStateFlow<VoteData?>(null)
     val lyricsVoteState: StateFlow<VoteData?> = _lyricsVoteState.asStateFlow()
 
-    /**
-     * Vote for SakayoriMusic original lyrics (upvote or downvote)
-     * @param upvote true for upvote, false for downvote
-     */
     fun voteLyrics(upvote: Boolean) {
         val lyricsData = _nowPlayingScreenData.value.lyricsData
         val lyricsProvider = lyricsData?.lyricsProvider
@@ -1757,10 +1721,6 @@ class SharedViewModel(
         _translatedVoteState.value = null
     }
 
-    /**
-     * Vote for SakayoriMusic translated lyrics (upvote or downvote)
-     * @param upvote true for upvote, false for downvote
-     */
     fun voteTranslatedLyrics(upvote: Boolean) {
         val translatedLyrics = _nowPlayingScreenData.value.lyricsData?.translatedLyrics
         val lyricsProvider = translatedLyrics?.second
@@ -1807,11 +1767,11 @@ class SharedViewModel(
         }
     }
 
-    fun shouldStopMusicService(): Boolean = runBlocking { dataStoreManager.killServiceOnExit.first() == TRUE }
+    fun shouldStopMusicService(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.killServiceOnExit.first() == TRUE }
 
-    fun isUserLoggedIn(): Boolean = runBlocking { dataStoreManager.cookie.first().isNotEmpty() }
+    fun isUserLoggedIn(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.cookie.first().isNotEmpty() }
 
-    fun isCombineFavoriteAndYTLiked(): Boolean = runBlocking { dataStoreManager.combineLocalAndYouTubeLiked.first() == TRUE }
+    fun isCombineFavoriteAndYTLiked(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.combineLocalAndYouTubeLiked.first() == TRUE }
 }
 
 sealed class UIEvent {

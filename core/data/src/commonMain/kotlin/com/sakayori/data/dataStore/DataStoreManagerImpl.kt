@@ -725,7 +725,7 @@ internal class DataStoreManagerImpl(
     }
 
     override fun getJVMProxy(): ProxyConfiguration? =
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             try {
                 if (usingProxy.first() == TRUE) {
                     val proxyType = proxyType.first()
@@ -897,7 +897,7 @@ internal class DataStoreManagerImpl(
         }
 
     override fun setPlaybackSpeed(speed: Float) {
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             settingsDataStore.edit { settings ->
                 settings[PLAYBACK_SPEED] = speed
             }
@@ -910,7 +910,7 @@ internal class DataStoreManagerImpl(
         }
 
     override fun setPitch(pitch: Int) {
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             settingsDataStore.edit { settings ->
                 settings[PITCH] = pitch
             }

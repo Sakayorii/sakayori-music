@@ -1,12 +1,20 @@
 package com.sakayori.data.mediaservice
 
+import com.sakayori.domain.manager.DataStoreManager
+import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
+import com.sakayori.domain.repository.AnalyticsRepository
+import com.sakayori.domain.repository.LocalPlaylistRepository
+import com.sakayori.domain.repository.SongRepository
+import com.sakayori.domain.repository.StreamRepository
+import kotlinx.coroutines.CoroutineScope
+
 actual fun createMediaServiceHandler(
-    dataStoreManager: com.sakayori.domain.manager.DataStoreManager,
-    songRepository: com.sakayori.domain.repository.SongRepository,
-    streamRepository: com.sakayori.domain.repository.StreamRepository,
-    localPlaylistRepository: com.sakayori.domain.repository.LocalPlaylistRepository,
-    analyticsRepository: com.sakayori.domain.repository.AnalyticsRepository,
-    coroutineScope: kotlinx.coroutines.CoroutineScope,
-): com.sakayori.domain.mediaservice.handler.MediaPlayerHandler {
-    TODO("Not yet implemented")
+    dataStoreManager: DataStoreManager,
+    songRepository: SongRepository,
+    streamRepository: StreamRepository,
+    localPlaylistRepository: LocalPlaylistRepository,
+    analyticsRepository: AnalyticsRepository,
+    coroutineScope: CoroutineScope,
+): MediaPlayerHandler {
+    throw UnsupportedOperationException("iOS media handler is not yet available")
 }

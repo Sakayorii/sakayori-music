@@ -276,7 +276,7 @@ internal class LyricsCanvasRepositoryImpl(
                     Logger.d("Lyrics", "spotifyPersonalToken: $spotifyPersonalToken")
                     Logger.d("Lyrics", "spotifyClientToken: $spotifyClientToken")
                 } else if (dataStoreManager.spdc.first().isNotEmpty()) {
-                    runBlocking {
+                    runBlocking(Dispatchers.IO) {
                         spotify
                             .getClientToken()
                             .onSuccess {
@@ -291,7 +291,7 @@ internal class LyricsCanvasRepositoryImpl(
                                 emit(Resource.Error<Lyrics>("Not found"))
                             }
                     }
-                    runBlocking {
+                    runBlocking(Dispatchers.IO) {
                         spotify
                             .getPersonalTokenWithTotp(dataStoreManager.spdc.first())
                             .onSuccess {

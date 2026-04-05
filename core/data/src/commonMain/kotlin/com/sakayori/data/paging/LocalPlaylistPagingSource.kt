@@ -55,8 +55,8 @@ internal class LocalPlaylistTimeBasedPagingSource(
     private val playlistId: Long,
     private val filter: FilterState,
     private val localDataSource: LocalDataSource,
+    private val converter: Converters,
 ) : PagingSource<Long, Pair<SongEntity, PairSongLocalPlaylist>>() {
-    val converter = Converters()
 
     override fun getRefreshKey(state: PagingState<Long, Pair<SongEntity, PairSongLocalPlaylist>>): Long? =
         state.anchorPosition?.let { anchor ->

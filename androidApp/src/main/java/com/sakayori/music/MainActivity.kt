@@ -65,7 +65,6 @@ class MainActivity : AppCompatActivity() {
                 name: ComponentName?,
                 service: IBinder?,
             ) {
-//                mediaPlayerHandler.setActivitySession(this@MainActivity, MainActivity::class.java, service)
                 setServiceActivitySession(this@MainActivity, MainActivity::class.java, service)
                 Logger.w("MainActivity", "onServiceConnected: ")
                 mBound = true
@@ -127,7 +126,6 @@ class MainActivity : AppCompatActivity() {
         }
         Logger.d("Italy", "Key: ${Locale.ITALY.toLanguageTag()}")
 
-        // Check if the migration has already been done or not
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             if (getString(FIRST_TIME_MIGRATION) != STATUS_DONE) {
                 Logger.d("Locale Key", "onCreate: ${Locale.getDefault().toLanguageTag()}")
@@ -149,15 +147,12 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     putString(SELECTED_LANGUAGE, "en-US")
                 }
-                // Fetch the selected language from wherever it was stored. In this case its SharedPref
                 getString(SELECTED_LANGUAGE)?.let {
                     Logger.d("Locale Key", "getString: $it")
-                    // Set this locale using the AndroidX library that will handle the storage itself
                     val localeList = LocaleListCompat.forLanguageTags(it)
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         AppCompatDelegate.setApplicationLocales(localeList)
                     }
-                    // Set the migration flag to ensure that this is executed only once
                     putString(FIRST_TIME_MIGRATION, STATUS_DONE)
                 }
             }
@@ -228,7 +223,6 @@ class MainActivity : AppCompatActivity() {
         val shouldStopMusicService = viewModel.shouldStopMusicService()
         Logger.w("MainActivity", "onDestroy: Should stop service $shouldStopMusicService")
 
-        // Always unbind service if it was bound to prevent MusicBinder leak
         if (shouldStopMusicService && shouldUnbind && isFinishing) {
             viewModel.isServiceRunning = false
         }
@@ -243,7 +237,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMusicService() {
-//        mediaPlayerHandler.startMediaService(this, serviceConnection)
         com.sakayori.media3.di
             .startService(this@MainActivity, serviceConnection)
         mediaPlayerHandler.pushPlayerError = { it ->

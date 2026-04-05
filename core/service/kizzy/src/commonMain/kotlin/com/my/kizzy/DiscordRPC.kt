@@ -21,7 +21,7 @@ class DiscordRPC(
             smallText = song.artistName?.firstOrNull(),
             buttons = listOf(
                 "Listen on SakayoriMusic" to "https://music.sakayori.dev/app/watch?v=${song.videoId}",
-                "Visit SakayoriMusic" to "https://github.com/yukkisensei/sakayori-music"
+                "Visit SakayoriMusic" to "https://github.com/Sakayorii/sakayori-music"
             ),
             type = Type.LISTENING,
             since = Clock.System.now().toEpochMilliseconds(),

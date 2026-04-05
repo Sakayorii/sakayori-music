@@ -56,11 +56,19 @@
 # If there is no `java.lang.ClassValue` (for example, in Android), then R8/ProGuard will print a warning.
 # However, since in this case they will not be used, we can disable these warnings
 
+-keep class org.koin.** { *; }
+-keep class org.koin.core.** { *; }
+-keep class org.koin.dsl.** { *; }
+-dontwarn org.koin.**
+-keep class com.sakayori.data.** { *; }
+-keep class com.sakayori.domain.** { *; }
+-keep class com.sakayori.music.viewModel.** { *; }
+
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn kotlinx.serialization.internal.ClassValueReferences
--keep class com.sakayori.SakayoriMusic.data.model.** { *; }
--keep class com.sakayori.SakayoriMusic.extension.AllExtKt { *; }
--keep class com.sakayori.SakayoriMusic.extension.AllExtKt$* { *; }
+-keep class com.sakayori.music.data.model.** { *; }
+-keep class com.sakayori.music.extension.AllExtKt { *; }
+-keep class com.sakayori.music.extension.AllExtKt$* { *; }
 -keep class com.sakayori.kotlinytmusicscraper.extension.MapExtKt$* { *; }
 
 ## Removes all Logs as they cause perfomance issues in prod

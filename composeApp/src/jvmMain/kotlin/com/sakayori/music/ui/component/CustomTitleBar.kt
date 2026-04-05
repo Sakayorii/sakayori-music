@@ -44,10 +44,6 @@ import com.sakayori.music.ui.theme.typo
 import java.awt.MouseInfo
 import java.awt.Window
 
-/**
- * Custom title bar for JVM desktop application
- * Provides minimize, maximize/restore, and close buttons with drag-to-move functionality
- */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CustomTitleBar(
@@ -59,11 +55,9 @@ fun CustomTitleBar(
 ) {
     var isMaximized by remember { mutableStateOf(windowState.placement == WindowPlacement.Maximized) }
 
-    // Track drag start position
     var dragStartX by remember { mutableStateOf(0) }
     var dragStartY by remember { mutableStateOf(0) }
 
-    // Update isMaximized when window state changes
     LaunchedEffect(windowState.placement) {
         isMaximized = windowState.placement == WindowPlacement.Maximized
     }
@@ -77,7 +71,6 @@ fun CustomTitleBar(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onDoubleTap = {
-                            // Double-click to maximize/restore
                             if (windowState.placement == WindowPlacement.Maximized) {
                                 windowState.placement = WindowPlacement.Floating
                             } else {
@@ -95,10 +88,8 @@ fun CustomTitleBar(
                         onDrag = { change, _ ->
                             change.consume()
                             val mouseLocation = MouseInfo.getPointerInfo().location
-                            // If maximized, restore before moving
                             if (windowState.placement == WindowPlacement.Maximized) {
                                 windowState.placement = WindowPlacement.Floating
-                                // Recalculate drag offset after restore
                                 dragStartX = (windowState.size.width.value / 2).toInt()
                                 dragStartY = 20
                             }
@@ -118,11 +109,9 @@ fun CustomTitleBar(
                     .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Window control buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Close button
                 WindowControlButton(
                     onClick = onCloseRequest,
                     backgroundColor = Color(0xFFFF605C),
@@ -132,7 +121,6 @@ fun CustomTitleBar(
                 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Minimize button
                 WindowControlButton(
                     onClick = {
                         windowState.isMinimized = true
@@ -144,7 +132,6 @@ fun CustomTitleBar(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Maximize/Restore button
                 WindowControlButton(
                     onClick = {
                         if (windowState.placement == WindowPlacement.Maximized) {
@@ -159,7 +146,6 @@ fun CustomTitleBar(
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            // Title text (optional)
             Text(
                 text = title,
                 style = typo().labelSmall,
@@ -202,7 +188,6 @@ private fun WindowControlButton(
                 },
         contentAlignment = Alignment.Center,
     ) {
-        // Show icons on hover for better UX
         if (isHovered) {
             Box(modifier = Modifier.padding(1.dp)) {
                 when (icon) {

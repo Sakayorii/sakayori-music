@@ -293,7 +293,6 @@ fun PlaylistScreen(
             }
     }
 
-    // Loading dialog
     val showLoadingDialog by viewModel.showLoadingDialog.collectAsStateWithLifecycle()
     if (showLoadingDialog.first) {
         LoadingDialog(
@@ -301,7 +300,6 @@ fun PlaylistScreen(
             showLoadingDialog.second,
         )
     }
-//    Box {
     Crossfade(
         targetState = uiState,
     ) { state ->
@@ -739,7 +737,6 @@ fun PlaylistScreen(
                     }
                     when (tracksListState) {
                         ListState.IDLE -> {
-                            // DO NOTHING
                             item {
                                 EndOfPage()
                             }

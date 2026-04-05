@@ -157,16 +157,12 @@ internal class DownloadUtils(
         }
     private var _downloads = MutableStateFlow<Map<String, Pair<DownloadHandler.Download?, DownloadHandler.Download?>>>(emptyMap())
 
-    // Audio / Video
     override val downloads: StateFlow<Map<String, Pair<DownloadHandler.Download?, DownloadHandler.Download?>>>
         get() = _downloads
     private val _downloadTask = MutableStateFlow<Map<String, Int>>(emptyMap())
     override val downloadTask: StateFlow<Map<String, Int>> get() = _downloadTask
     val downloadingVideoIds = MutableStateFlow<MutableSet<String>>(mutableSetOf())
 
-    /**
-     * Use thumbnail to check video or audio
-     */
     override suspend fun downloadTrack(
         videoId: String,
         title: String,
@@ -288,7 +284,6 @@ internal class DownloadUtils(
             }
         }
 
-        // Pair Audio and Video
         val result = mutableMapOf<String, Pair<DownloadHandler.Download?, DownloadHandler.Download?>>()
         val cursor = downloadManager.downloadIndex.getDownloads()
         while (cursor.moveToNext()) {

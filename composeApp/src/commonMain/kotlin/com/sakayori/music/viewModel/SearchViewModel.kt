@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.StringResource
 import com.sakayori.music.generated.resources.Res
@@ -36,7 +38,6 @@ import com.sakayori.music.generated.resources.podcasts
 import com.sakayori.music.generated.resources.songs
 import com.sakayori.music.generated.resources.videos
 
-// State cho tìm kiếm
 data class SearchScreenState(
     val searchType: SearchType = SearchType.ALL,
     val searchAllResult: List<SearchResultType> = emptyList(),
@@ -51,7 +52,6 @@ data class SearchScreenState(
     val suggestYTItems: List<SearchResultType> = emptyList(),
 )
 
-// Loại tìm kiếm
 enum class SearchType {
     ALL,
     SONGS,
@@ -75,7 +75,6 @@ fun SearchType.toStringRes(): StringResource =
         SearchType.PODCASTS -> Res.string.podcasts
     }
 
-// UI state cho tìm kiếm
 sealed class SearchScreenUIState {
     object Empty : SearchScreenUIState()
 
@@ -103,8 +102,8 @@ class SearchViewModel(
     var language: String? = null
 
     init {
-        regionCode = runBlocking { dataStoreManager.location.first() }
-        language = runBlocking { dataStoreManager.getString(SELECTED_LANGUAGE).first() }
+        regionCode = runBlocking(Dispatchers.IO) { dataStoreManager.location.first() }
+        language = runBlocking(Dispatchers.IO) { dataStoreManager.getString(SELECTED_LANGUAGE).first() }
         getSearchHistory()
     }
 
@@ -306,7 +305,6 @@ class SearchViewModel(
                     }
 
                     is Resource.Error -> {
-                        // Không cần xử lý lỗi đặc biệt cho gợi ý
                         log("Error fetching suggest queries: ${values.message}", LogLevel.ERROR)
                     }
                 }
