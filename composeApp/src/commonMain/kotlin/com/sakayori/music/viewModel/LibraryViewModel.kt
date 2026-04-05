@@ -201,7 +201,7 @@ class LibraryViewModel(
                                         1
                                     }
                                 }
-                                timeP0.compareTo(timeP1) // Sort in descending order by inLibrary time
+                                timeP0.compareTo(timeP1)
                             },
                         )
                     _favoritePlaylist.value = LocalResource.Success(sortedList)
@@ -232,7 +232,6 @@ class LibraryViewModel(
         _yourLocalPlaylist.value = LocalResource.Loading()
         viewModelScope.launch {
             localPlaylistRepository.getAllLocalPlaylists().collect { values ->
-//                    _listLocalPlaylist.postValue(values)
                 _yourLocalPlaylist.value = LocalResource.Success(values.reversed())
             }
         }
@@ -278,7 +277,7 @@ class LibraryViewModel(
         viewModelScope.launch {
             songRepository.setInLibrary(videoId, Config.REMOVED_SONG_DATE_TIME)
             songRepository.resetTotalPlayTime(videoId)
-            delay(500) // Wait for the database to update
+            delay(500)
             getRecentlyAdded()
         }
     }

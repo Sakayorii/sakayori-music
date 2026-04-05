@@ -7,24 +7,9 @@ import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/**
- * Media3 [AudioProcessor] that applies a real-time Biquad low-pass or high-pass filter
- * to the audio stream. Used for DJ-style crossfade transitions.
- *
- * Key design:
- * - [enabled], [cutoffFrequencyHz], and [filterType] can be changed at runtime (thread-safe).
- * - When [enabled] is false, [isActive] returns false and ExoPlayer skips this processor
- *   entirely — zero CPU overhead during normal playback.
- * - Coefficient recalculation is lazy: only when cutoff or filter type changes.
- * - Supports PCM 16-bit audio (mono and stereo).
- */
 @UnstableApi
 class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
 
-    /**
-     * Whether the filter is active. When false, audio passes through unmodified.
-     * Changing this triggers a flush in ExoPlayer's pipeline.
-     */
     @Volatile
     var enabled: Boolean = false
         set(value) {
@@ -36,9 +21,6 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
             }
         }
 
-    /**
-     * Current cutoff frequency in Hz. Updated during crossfade animation.
-     */
     @Volatile
     var cutoffFrequencyHz: Float = 20000f
         set(value) {
@@ -48,9 +30,6 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
             }
         }
 
-    /**
-     * Filter type: LOW_PASS for outgoing track, HIGH_PASS for incoming track.
-     */
     @Volatile
     var filterType: BiquadFilter.FilterType = BiquadFilter.FilterType.LOW_PASS
         set(value) {
@@ -85,14 +64,12 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         if (remaining == 0) return
 
         if (!enabled || sampleRate == 0) {
-            // Pass through: copy input to output (avoid put(sameBuffer) which throws)
             val output = replaceOutputBuffer(remaining)
             copyBuffer(inputBuffer, output, remaining)
             output.flip()
             return
         }
 
-        // Recalculate coefficients if cutoff or type changed
         if (coefficientsDirty) {
             filter.updateCoefficients(
                 cutoffHz = cutoffFrequencyHz,
@@ -109,7 +86,6 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
             1 -> processMonoBlock(inputBuffer, output)
             2 -> processStereoBlock(inputBuffer, output)
             else -> {
-                // Unsupported channel count: pass through
                 copyBuffer(inputBuffer, output, remaining)
             }
         }
@@ -117,11 +93,6 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         output.flip()
     }
 
-    /**
-     * Copy bytes from src to dst. Use this instead of dst.put(src) because
-     * replaceOutputBuffer() may return the same buffer as input, and
-     * ByteBuffer.put(ByteBuffer) throws if source and destination are the same.
-     */
     private fun copyBuffer(src: ByteBuffer, dst: ByteBuffer, size: Int) {
         if (src === dst) {
             dst.position(0)

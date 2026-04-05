@@ -168,7 +168,6 @@ fun ShimmerSearchItem() {
             .wrapContentHeight(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Thumbnail shimmer
         Box(
             modifier = Modifier
                 .size(56.dp)
@@ -179,7 +178,6 @@ fun ShimmerSearchItem() {
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Text content shimmer
         Column {
             Box(
                 modifier = Modifier
@@ -220,4 +218,3 @@ fun ShimmerSearchItem() {
 fun ShimmerSearchItemPreview() {
     ShimmerSearchItem()
 }
-

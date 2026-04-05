@@ -100,9 +100,6 @@ import com.sakayori.music.generated.resources.radio
 import com.sakayori.music.generated.resources.you
 import kotlin.math.roundToInt
 
-/**
- * This is the song item in the playlist or other places.
- */
 @Composable
 fun SongFullWidthItems(
     track: Track? = null,
@@ -497,7 +494,7 @@ fun PlaylistFullWidthItems(
                 title = data.title
                 thumb = data.thumbnails
                 secondSubtitle = data.author ?: ""
-                if (data.description == "PIN") { // LIKED MUSIC
+                if (data.description == "PIN") {
                     shouldPin = true
                 }
             }

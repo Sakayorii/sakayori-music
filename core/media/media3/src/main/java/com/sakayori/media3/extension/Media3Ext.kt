@@ -10,6 +10,7 @@ import androidx.media3.session.CommandButton
 import androidx.media3.session.SessionCommand
 import com.sakayori.common.MEDIA_CUSTOM_COMMAND
 import com.sakayori.common.MERGING_DATA_TYPE
+import com.sakayori.domain.data.entities.DownloadState
 import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.data.model.browse.album.Track
 import com.sakayori.domain.data.player.GenericCommandButton
@@ -38,7 +39,7 @@ fun MediaItem?.toSongEntity(): SongEntity? =
             resultType = "",
             liked = false,
             totalPlayTime = 0,
-            downloadState = 0,
+            downloadState = DownloadState.STATE_NOT_DOWNLOADED,
         )
     } else {
         null

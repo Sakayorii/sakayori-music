@@ -558,7 +558,6 @@ sealed class LibraryDynamicPlaylistType {
             TopTracks -> Res.string.your_top_tracks
         }
 
-    // For serialization and navigation
     fun toStringParams(): String =
         when (this) {
             Favorite -> "favorite"

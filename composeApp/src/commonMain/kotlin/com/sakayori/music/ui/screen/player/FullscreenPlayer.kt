@@ -151,7 +151,6 @@ fun FullscreenPlayer(
         }
     }
 
-    // For double tap effect
     val coroutineScope = rememberCoroutineScope()
 
     var doubleBackwardTapped by remember { mutableStateOf(false) }
@@ -197,7 +196,6 @@ fun FullscreenPlayer(
         )
         if (!isInPipMode) {
             Row(Modifier.fillMaxSize()) {
-                // Left side
                 Box(
                     Modifier
                         .fillMaxHeight()
@@ -647,7 +645,6 @@ fun FullscreenPlayer(
                                     )
                                 }
                             }
-                            // /
                             Box(
                                 modifier =
                                     Modifier

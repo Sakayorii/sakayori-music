@@ -85,27 +85,20 @@ import org.koin.dsl.module
 import java.net.Proxy
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * Required repository first initialization
- */
 @UnstableApi
 private val mediaServiceModule =
     module {
-        // Service
-        // CoroutineScope for service
         single<CoroutineScope>(
             createdAtStart = true,
             qualifier = named(SERVICE_SCOPE),
         ) {
             CoroutineScope(Dispatchers.Main + SupervisorJob())
         }
-        // Cache
         single<DatabaseProvider>(
             createdAtStart = true,
         ) {
             provideDatabaseProvider(androidContext())
         }
-        // Player Cache
         single<SimpleCache>(qualifier = named(PLAYER_CACHE), createdAtStart = true) {
             provideSimpleCache(
                 context = androidContext(),
@@ -114,7 +107,6 @@ private val mediaServiceModule =
                 databaseProvider = get<DatabaseProvider>(),
             )
         }
-        // Download Cache
         single<SimpleCache>(qualifier = named(DOWNLOAD_CACHE), createdAtStart = true) {
             provideSimpleCache(
                 context = androidContext(),
@@ -123,7 +115,6 @@ private val mediaServiceModule =
                 databaseProvider = get<DatabaseProvider>(),
             )
         }
-        // Spotify Canvas Cache
         single<SimpleCache>(qualifier = named(CANVAS_CACHE), createdAtStart = true) {
             provideSimpleCache(
                 context = androidContext(),
@@ -132,7 +123,6 @@ private val mediaServiceModule =
                 databaseProvider = get<DatabaseProvider>(),
             )
         }
-        // DownloadUtils
         single<DownloadHandler>(createdAtStart = true) {
             DownloadUtils(
                 context = androidContext(),
@@ -145,7 +135,6 @@ private val mediaServiceModule =
             )
         }
 
-        // AudioAttributes
         single<AudioAttributes>(createdAtStart = true) {
             provideAudioAttributes()
         }
@@ -165,15 +154,10 @@ private val mediaServiceModule =
             provideRendererFactory(androidContext())
         }
 
-        // Player exposed for UI (video rendering via PlayerView/PlayerSurface).
-        // Points to CrossfadeExoPlayerAdapter's ForwardingPlayer, which delegates to
-        // the currently active ExoPlayer instance. This ensures the video surface is
-        // always connected to the player that's actually playing media.
         single<Player>(qualifier = named(MAIN_PLAYER)) {
             (get<MediaPlayerInterface>() as CrossfadeExoPlayerAdapter).forwardingPlayer
         }
 
-        // CoilBitmapLoader
         single<CoilBitmapLoader>(createdAtStart = true) {
             provideCoilBitmapLoader(androidContext(), get(named(SERVICE_SCOPE)))
         }
@@ -189,7 +173,6 @@ private val mediaServiceModule =
             )
         }
 
-        // MediaSession Callback for main player
         single<MediaLibrarySession.Callback>(createdAtStart = true) {
             SimpleMediaSessionCallback(
                 androidApplication(),
@@ -258,9 +241,6 @@ private fun provideResolvingDataSourceFactory(
                 )
             }
             Logger.w("Stream", "Cached $mediaId")
-            // Don't return bare video ID as URI — CacheDataSource.openNextSource()
-            // may need a valid HTTP URL for uncached spans beyond this chunk.
-            // Fall through to resolve actual stream URL.
         }
         var dataSpecReturn: DataSpec = dataSpec
         var resolved = false
@@ -477,9 +457,7 @@ private fun provideLoadControl(): LoadControl =
         .setBufferDurationsMs(
             DEFAULT_MIN_BUFFER_MS * 4,
             DEFAULT_MAX_BUFFER_MS * 4,
-            // bufferForPlaybackMs=
             0,
-            // bufferForPlaybackAfterRebufferMs=
             0,
         ).build()
 
@@ -529,8 +507,6 @@ fun startService(
     try {
         ContextCompat.startForegroundService(context, intent)
     } catch (e: IllegalStateException) {
-        // BackgroundServiceStartNotAllowedException (Android 12+)
-        // Service will still be created by bindService with BIND_AUTO_CREATE
         Logger.w("Service", "Cannot start foreground service from background, falling back to bind only: ${e.message}")
     }
     context.bindService(intent, serviceConnection, BIND_AUTO_CREATE)

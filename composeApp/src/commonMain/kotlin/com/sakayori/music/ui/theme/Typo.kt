@@ -24,9 +24,6 @@ fun typo(): Typography {
 
     val typo =
         Typography(
-            /***
-             * This typo().is use for the title of the Playlist, Artist, Song, Album, etc. in Home, Mood, Genre, Playlist, etc.
-             */
             titleSmall =
                 TextStyle(
                     fontSize = 13.sp,
@@ -104,7 +101,6 @@ fun typo(): Typography {
                     fontFamily = fontFamily,
                     color = Color(0xFFA8A8A8),
                 ),
-            // ...
         )
     return typo
 }

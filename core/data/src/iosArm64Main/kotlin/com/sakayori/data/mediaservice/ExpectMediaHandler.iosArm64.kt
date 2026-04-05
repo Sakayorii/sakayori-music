@@ -8,5 +8,5 @@ actual fun createMediaServiceHandler(
     analyticsRepository: com.sakayori.domain.repository.AnalyticsRepository,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
 ): com.sakayori.domain.mediaservice.handler.MediaPlayerHandler {
-    TODO("Not yet implemented")
+    throw UnsupportedOperationException("iOS media handler is not yet available")
 }

@@ -107,7 +107,6 @@ class JvmMediaPlayerHandlerImpl(
     private val nypc =
         if (getPlatform() is Platform.Linux) NPYC(getPlatform()) else null
 
-    // macOS Media Integration (Now Playing Center + Remote Command Center)
     private val macOSMediaIntegration: MacOSMediaIntegration? by lazy {
         if (MacOSMediaIntegration.isSupported()) {
             MacOSMediaIntegration.getInstance()
@@ -189,7 +188,6 @@ class JvmMediaPlayerHandlerImpl(
     private val _sleepTimerState = MutableStateFlow<SleepTimerState>(SleepTimerState(false, 0))
     override val sleepTimerState: StateFlow<SleepTimerState> = _sleepTimerState.asStateFlow()
 
-    // SponsorBlock skip segments
     private val _skipSegments: MutableStateFlow<List<SponsorSkipSegments>?> = MutableStateFlow<List<SponsorSkipSegments>?>(null)
     override val skipSegments: StateFlow<List<SponsorSkipSegments>?> = _skipSegments.asStateFlow()
 
@@ -199,7 +197,6 @@ class JvmMediaPlayerHandlerImpl(
     private val _currentSongIndex: MutableStateFlow<Int> = MutableStateFlow(player.currentMediaItemIndex)
     override val currentSongIndex: StateFlow<Int> = _currentSongIndex.asStateFlow()
 
-    // List of Specific variables
 
     private var skipSilent = false
 
@@ -248,7 +245,6 @@ class JvmMediaPlayerHandlerImpl(
             null
         }
 
-    //
     init {
         player.addListener(this)
         progressJob = Job()
@@ -281,7 +277,6 @@ class JvmMediaPlayerHandlerImpl(
                 }
             player.shuffleModeEnabled = restoredShuffle
             player.repeatMode = restoredRepeatMode
-            // Ensure controlState is in sync after restore, regardless of listener callbacks
             _controlState.value = _controlState.value.copy(
                 isShuffle = restoredShuffle,
                 repeatState = when (restoredRepeatMode) {
@@ -320,7 +315,6 @@ class JvmMediaPlayerHandlerImpl(
                 }
             },
         )
-        // Initialize macOS media integration
         initializeMacOSMediaIntegration()
         coroutineScope.launch {
             val controlStateJob =
@@ -722,7 +716,6 @@ class JvmMediaPlayerHandlerImpl(
             }
     }
 
-    // Region: Override functions
     override fun startProgressUpdate() {
         progressJob =
             coroutineScope.launch {
@@ -926,11 +919,9 @@ class JvmMediaPlayerHandlerImpl(
         sleepTimerJob =
             coroutineScope.launch(Dispatchers.Main) {
                 if (minutes == Int.MAX_VALUE) {
-                    // "End of current song" mode: use sentinel -1 to indicate this special state
                     _sleepTimerState.update {
                         it.copy(isDone = false, timeRemaining = -1)
                     }
-                    // Poll until player duration is available (may be -1 initially)
                     var duration = player.duration
                     while (duration <= 0L) {
                         delay(500)
@@ -1071,7 +1062,6 @@ class JvmMediaPlayerHandlerImpl(
                     listPosition.shuffle()
                     _queueData.update {
                         it.copy(
-                            // After shuffle prefix is offset and list position
                             data =
                                 it.data.copy(
                                     continuation = "SHUFFLE0_${fromListIntToString(listPosition)}",
@@ -1086,9 +1076,6 @@ class JvmMediaPlayerHandlerImpl(
 
     override fun loadMore() {
         if (queueData.value.queueState == QueueData.StateSource.STATE_INITIALIZING) return
-        // Separate local and remote data
-        // Local Add Prefix to PlaylistID to differentiate between local and remote
-        // Local: LC-PlaylistID
         val playlistId = _queueData.value.data.playlistId ?: return
         Logger.w("Check loadMore", playlistId.toString())
         val continuation = _queueData.value.data.continuation
@@ -1591,7 +1578,6 @@ class JvmMediaPlayerHandlerImpl(
         val tempQueue: ArrayList<Track> = arrayListOf()
         tempQueue.addAll(queueData.value.data.listTracks)
         val chunkedList = tempQueue.chunked(100)
-        // Reset queue
         _queueData.update {
             it.copy(
                 data =
@@ -2004,77 +1990,7 @@ class JvmMediaPlayerHandlerImpl(
     }
 
     override fun mayBeNormalizeVolume() {
-//        runBlocking {
-//            normalizeVolume = dataStoreManager.normalizeVolume.first() == TRUE
-//        }
-//        if (!normalizeVolume) {
-//            // TODO: loudness enhancer
-//            volumeNormalizationJob?.cancel()
-//            player.volume = 1f
-//            return
-//        }
-//
-//        if (loudnessEnhancer == null && player.audioSessionId != PlayerConstants.AUDIO_SESSION_ID_UNSET) {
-//            try {
-//                loudnessEnhancer = LoudnessEnhancer(player.audioSessionId)
-//            } catch (e: Exception) {
-//                Logger.e(TAG, "mayBeNormalizeVolume: ${e.message}")
-//                e.printStackTrace()
-//            }
-//        }
 
-//        player.currentMediaItem?.mediaId?.let { songId ->
-//            val videoId =
-//                if (songId.contains("Video")) {
-//                    songId.removePrefix("Video")
-//                } else {
-//                    songId
-//                }
-//            volumeNormalizationJob?.cancel()
-//            volumeNormalizationJob =
-//                coroutineScope.launch(Dispatchers.Main) {
-//                    fun Float?.toMb() = ((this ?: 0f) * 100).toInt()
-//                    streamRepository
-//                        .getFormatFlow(videoId)
-//                        .cancellable()
-//                        .distinctUntilChanged()
-//                        .collectLatest { format ->
-//                            if (format != null) {
-//                                val loudnessMb =
-//                                    format.loudnessDb.toMb().let {
-//                                        if (it !in -2000..2000) {
-//                                            0
-//                                        } else {
-//                                            it
-//                                        }
-//                                    }
-//                                Logger.d(TAG, "Loudness: ${format.loudnessDb} db, $loudnessMb")
-//                                try {
-//                                    loudnessEnhancer?.setTargetGain(0f.toMb() - loudnessMb)
-//                                    loudnessEnhancer?.enabled = true
-//                                    Logger.w(
-//                                        TAG,
-//                                        "mayBeNormalizeVolume: ${loudnessEnhancer?.targetGain}",
-//                                    )
-//                                } catch (e: Exception) {
-//                                    Logger.e(TAG, "mayBeNormalizeVolume: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                                try {
-//                                    secondLoudnessEnhancer?.setTargetGain(0f.toMb() - loudnessMb)
-//                                    secondLoudnessEnhancer?.enabled = true
-//                                    Logger.w(
-//                                        TAG,
-//                                        "mayBeNormalizeVolume: ${secondLoudnessEnhancer?.targetGain}",
-//                                    )
-//                                } catch (e: Exception) {
-//                                    Logger.e(TAG, "mayBeNormalizeVolume: ${e.message}")
-//                                    e.printStackTrace()
-//                                }
-//                            }
-//                        }
-//                }
-//        }
     }
 
     override fun mayBeSavePlaybackState() {
@@ -2128,7 +2044,6 @@ class JvmMediaPlayerHandlerImpl(
     override fun release() {
         Logger.w("ServiceHandler", "Starting release process")
         nypc?.removeListener()
-        // Release macOS media integration
         clearMacOSNowPlayingInfo()
         macOSMediaIntegration?.release()
         try {
@@ -2136,30 +2051,14 @@ class JvmMediaPlayerHandlerImpl(
                 discordRPC?.closeRPC()
             }
             discordRPC = null
-            // Save state first
             mayBeSaveRecentSong(true)
             mayBeSavePlaybackState()
 
-            // Stop and release player
             player.removeListener(this)
 
-            // Release audio effects
-//            try {
-//                loudnessEnhancer?.enabled = false
-//                loudnessEnhancer?.release()
-//                loudnessEnhancer = null
-//
-//                secondLoudnessEnhancer?.enabled = false
-//                secondLoudnessEnhancer?.release()
-//                secondLoudnessEnhancer = null
-//            } catch (e: Exception) {
-//                Logger.e("ServiceHandler", "Error releasing audio effects ${e.message}")
-//            }
 
-            // Send close equalizer intent
             sendCloseEqualizerIntent()
 
-            // Cancel all jobs
             progressJob?.cancel()
             progressJob = null
             bufferedJob?.cancel()
@@ -2185,7 +2084,6 @@ class JvmMediaPlayerHandlerImpl(
             getDataOfNowPlayingTrackStateJob?.cancel()
             getDataOfNowPlayingTrackStateJob = null
 
-            // Cancel coroutine scope
             coroutineScope.cancel()
 
             Logger.w("ServiceHandler", "Handler released successfully. Scope active: ${coroutineScope.isActive}")
@@ -2356,22 +2254,14 @@ class JvmMediaPlayerHandlerImpl(
         when (error.errorCode) {
             PlayerConstants.ERROR_CODE_TIMEOUT -> {
                 Logger.e("Player Error", "onPlayerError (${error.errorCode}): ${error.message}")
-//                if (isAppInForeground()) {
                 showToast(ToastType.PlayerError(error.errorCodeName))
-//                } else {
-//                    Logger.w("Player Error", "App is not in foreground, skipping toast")
-//                }
                 player.pause()
             }
 
             else -> {
                 Logger.e("Player Error", "onPlayerError (${error.errorCode}): ${error.message}")
                 pushPlayerError(error)
-//                if (isAppInForeground()) {
                 showToast(ToastType.PlayerError(error.errorCodeName))
-//                } else {
-//                    Logger.w("Player Error", "App is not in foreground, skipping toast")
-//                }
                 player.pause()
             }
         }
@@ -2469,9 +2359,7 @@ class JvmMediaPlayerHandlerImpl(
             }
     }
 
-    /**
-     * Initialize macOS Now Playing Center and Remote Command Center
-     */
+    
     private fun initializeMacOSMediaIntegration() {
         macOSMediaIntegration?.let { integration ->
             if (integration.initialize()) {
@@ -2545,11 +2433,8 @@ class JvmMediaPlayerHandlerImpl(
             }
         }
     }
-    // ========== macOS Now Playing Integration ==========
 
-    /**
-     * Update macOS Now Playing info with current media item
-     */
+    
     private fun updateMacOSNowPlayingInfo(songEntity: SongEntity) {
         macOSMediaIntegration?.updateNowPlayingInfo(
             NowPlayingInfo(
@@ -2565,10 +2450,8 @@ class JvmMediaPlayerHandlerImpl(
             ),
         )
 
-        // Update remote command buttons enabled state
         updateMacOSCommandsEnabled()
 
-        // Load artwork asynchronously
         val artworkUrl = songEntity.thumbnails
         if (!artworkUrl.isNullOrEmpty()) {
             coroutineScope.launch {
@@ -2577,16 +2460,12 @@ class JvmMediaPlayerHandlerImpl(
         }
     }
 
-    /**
-     * Update macOS Now Playing playback state
-     */
+    
     private fun updateMacOSPlaybackState(isPlaying: Boolean) {
         macOSMediaIntegration?.updatePlaybackState(isPlaying)
     }
 
-    /**
-     * Update macOS remote command buttons enabled state
-     */
+    
     private fun updateMacOSCommandsEnabled() {
         val hasNext = _controlState.value.isNextAvailable
         val hasPrevious = _controlState.value.isPreviousAvailable
@@ -2598,16 +2477,12 @@ class JvmMediaPlayerHandlerImpl(
         )
     }
 
-    /**
-     * Update macOS Now Playing elapsed time (called periodically)
-     */
+    
     private fun updateMacOSElapsedTime() {
         macOSMediaIntegration?.updateElapsedTime(player.currentPosition / 1000.0, 1.0)
     }
 
-    /**
-     * Clear macOS Now Playing info
-     */
+    
     private fun clearMacOSNowPlayingInfo() {
         macOSMediaIntegration?.clearNowPlayingInfo()
     }

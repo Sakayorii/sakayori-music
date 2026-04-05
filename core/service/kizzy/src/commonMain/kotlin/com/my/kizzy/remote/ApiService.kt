@@ -1,14 +1,3 @@
-/*
- *
- *  ******************************************************************
- *  *  * Copyright (C) 2022
- *  *  * ApiService.kt is part of Kizzy
- *  *  *  and can not be copied and/or distributed without the express
- *  *  * permission of yzziK(Vaibhav)
- *  *  *****************************************************************
- *
- *
- */
 package com.my.kizzy.remote
 
 import io.ktor.client.HttpClient
@@ -26,9 +15,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-/**
- * Modified by Zion Huang
- */
 class ApiService {
     private val client = HttpClient {
         install(ContentNegotiation) {

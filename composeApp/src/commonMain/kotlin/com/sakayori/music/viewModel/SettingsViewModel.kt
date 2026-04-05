@@ -60,63 +60,63 @@ class SettingsViewModel(
     private val databasePath: String? = commonRepository.getDatabasePath()
     private val downloadUtils: DownloadHandler by inject()
 
-    private var _location: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _location: MutableStateFlow<String?> = MutableStateFlow(null)
     val location: StateFlow<String?> = _location
-    private var _language: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _language: MutableStateFlow<String?> = MutableStateFlow(null)
     val language: StateFlow<String?> = _language
-    private var _loggedIn: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _loggedIn: MutableStateFlow<String?> = MutableStateFlow(null)
     val loggedIn: StateFlow<String?> = _loggedIn
-    private var _normalizeVolume: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _normalizeVolume: MutableStateFlow<String?> = MutableStateFlow(null)
     val normalizeVolume: StateFlow<String?> = _normalizeVolume
-    private var _skipSilent: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _skipSilent: MutableStateFlow<String?> = MutableStateFlow(null)
     val skipSilent: StateFlow<String?> = _skipSilent
-    private var _savedPlaybackState: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _savedPlaybackState: MutableStateFlow<String?> = MutableStateFlow(null)
     val savedPlaybackState: StateFlow<String?> = _savedPlaybackState
-    private var _saveRecentSongAndQueue: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _saveRecentSongAndQueue: MutableStateFlow<String?> = MutableStateFlow(null)
     val saveRecentSongAndQueue: StateFlow<String?> = _saveRecentSongAndQueue
-    private var _lastCheckForUpdate: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _lastCheckForUpdate: MutableStateFlow<String?> = MutableStateFlow(null)
     val lastCheckForUpdate: StateFlow<String?> = _lastCheckForUpdate
-    private var _sponsorBlockEnabled: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _sponsorBlockEnabled: MutableStateFlow<String?> = MutableStateFlow(null)
     val sponsorBlockEnabled: StateFlow<String?> = _sponsorBlockEnabled
-    private var _sponsorBlockCategories: MutableStateFlow<ArrayList<String>?> =
+    private val _sponsorBlockCategories: MutableStateFlow<ArrayList<String>?> =
         MutableStateFlow(null)
     val sponsorBlockCategories: StateFlow<ArrayList<String>?> = _sponsorBlockCategories
-    private var _sendBackToGoogle: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _sendBackToGoogle: MutableStateFlow<String?> = MutableStateFlow(null)
     val sendBackToGoogle: StateFlow<String?> = _sendBackToGoogle
-    private var _mainLyricsProvider: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _mainLyricsProvider: MutableStateFlow<String?> = MutableStateFlow(null)
     val mainLyricsProvider: StateFlow<String?> = _mainLyricsProvider
 
-    private var _translationLanguage: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _translationLanguage: MutableStateFlow<String?> = MutableStateFlow(null)
     val translationLanguage: StateFlow<String?> = _translationLanguage
-    private var _useTranslation: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _useTranslation: MutableStateFlow<String?> = MutableStateFlow(null)
     val useTranslation: StateFlow<String?> = _useTranslation
-    private var _playerCacheLimit: MutableStateFlow<Int?> = MutableStateFlow(null)
+    private val _playerCacheLimit: MutableStateFlow<Int?> = MutableStateFlow(null)
     val playerCacheLimit: StateFlow<Int?> = _playerCacheLimit
-    private var _playVideoInsteadOfAudio: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _playVideoInsteadOfAudio: MutableStateFlow<String?> = MutableStateFlow(null)
     val playVideoInsteadOfAudio: StateFlow<String?> = _playVideoInsteadOfAudio
-    private var _videoQuality: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _videoQuality: MutableStateFlow<String?> = MutableStateFlow(null)
     val videoQuality: StateFlow<String?> = _videoQuality
-    private var _thumbCacheSize = MutableStateFlow<Long?>(null)
+    private val _thumbCacheSize = MutableStateFlow<Long?>(null)
     val thumbCacheSize: StateFlow<Long?> = _thumbCacheSize
-    private var _canvasCacheSize: MutableStateFlow<Long?> = MutableStateFlow(null)
+    private val _canvasCacheSize: MutableStateFlow<Long?> = MutableStateFlow(null)
     val canvasCacheSize: StateFlow<Long?> = _canvasCacheSize
-    private var _translucentBottomBar: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _translucentBottomBar: MutableStateFlow<String?> = MutableStateFlow(null)
     val translucentBottomBar: StateFlow<String?> = _translucentBottomBar
-    private var _usingProxy = MutableStateFlow(false)
+    private val _usingProxy = MutableStateFlow(false)
     val usingProxy: StateFlow<Boolean> = _usingProxy
-    private var _proxyType = MutableStateFlow(DataStoreManager.ProxyType.PROXY_TYPE_HTTP)
+    private val _proxyType = MutableStateFlow(DataStoreManager.ProxyType.PROXY_TYPE_HTTP)
     val proxyType: StateFlow<DataStoreManager.ProxyType> = _proxyType
-    private var _proxyHost = MutableStateFlow("")
+    private val _proxyHost = MutableStateFlow("")
     val proxyHost: StateFlow<String> = _proxyHost
-    private var _proxyPort = MutableStateFlow(8000)
+    private val _proxyPort = MutableStateFlow(8000)
     val proxyPort: StateFlow<Int> = _proxyPort
-    private var _autoCheckUpdate = MutableStateFlow(false)
+    private val _autoCheckUpdate = MutableStateFlow(false)
     val autoCheckUpdate: StateFlow<Boolean> = _autoCheckUpdate
-    private var _updateChannel: MutableStateFlow<String> = MutableStateFlow(DataStoreManager.GITHUB)
+    private val _updateChannel: MutableStateFlow<String> = MutableStateFlow(DataStoreManager.GITHUB)
     val updateChannel: StateFlow<String> = _updateChannel
-    private var _blurFullscreenLyrics = MutableStateFlow(false)
+    private val _blurFullscreenLyrics = MutableStateFlow(false)
     val blurFullscreenLyrics: StateFlow<Boolean> = _blurFullscreenLyrics
-    private var _blurPlayerBackground = MutableStateFlow(false)
+    private val _blurPlayerBackground = MutableStateFlow(false)
     val blurPlayerBackground: StateFlow<Boolean> = _blurPlayerBackground
     private val _aiProvider = MutableStateFlow<String>(DataStoreManager.AI_PROVIDER_OPENAI)
     val aiProvider: StateFlow<String> = _aiProvider
@@ -143,15 +143,15 @@ class SettingsViewModel(
     private val _youtubeSubtitleLanguage = MutableStateFlow<String>("")
     val youtubeSubtitleLanguage: StateFlow<String> = _youtubeSubtitleLanguage
 
-    private var _helpBuildLyricsDatabase: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _helpBuildLyricsDatabase: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val helpBuildLyricsDatabase: StateFlow<Boolean> = _helpBuildLyricsDatabase
-    private var _contributor: MutableStateFlow<Pair<String, String>> = MutableStateFlow(Pair("", ""))
+    private val _contributor: MutableStateFlow<Pair<String, String>> = MutableStateFlow(Pair("", ""))
     val contributor: StateFlow<Pair<String, String>> = _contributor
 
-    private var _backupDownloaded: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _backupDownloaded: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val backupDownloaded: StateFlow<Boolean> = _backupDownloaded
 
-    private var _enableLiquidGlass: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _enableLiquidGlass: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val enableLiquidGlass: StateFlow<Boolean> = _enableLiquidGlass
 
     private val _explicitContentEnabled = MutableStateFlow(false)
@@ -181,7 +181,6 @@ class SettingsViewModel(
     private val _localTrackingEnabled = MutableStateFlow<Boolean>(false)
     val localTrackingEnabled: StateFlow<Boolean> = _localTrackingEnabled
 
-    // Auto Backup
     private val _autoBackupEnabled = MutableStateFlow<Boolean>(false)
     val autoBackupEnabled: StateFlow<Boolean> = _autoBackupEnabled
 
@@ -194,21 +193,19 @@ class SettingsViewModel(
     private val _autoBackupLastTime = MutableStateFlow<Long>(0L)
     val autoBackupLastTime: StateFlow<Long> = _autoBackupLastTime
 
-    private var _alertData: MutableStateFlow<SettingAlertState?> = MutableStateFlow(null)
+    private val _alertData: MutableStateFlow<SettingAlertState?> = MutableStateFlow(null)
     val alertData: StateFlow<SettingAlertState?> = _alertData
 
-    private var _basicAlertData: MutableStateFlow<SettingBasicAlertState?> = MutableStateFlow(null)
+    private val _basicAlertData: MutableStateFlow<SettingBasicAlertState?> = MutableStateFlow(null)
     val basicAlertData: StateFlow<SettingBasicAlertState?> = _basicAlertData
 
-    // Fraction of storage
-    private var _fraction: MutableStateFlow<SettingsStorageSectionFraction> =
+    private val _fraction: MutableStateFlow<SettingsStorageSectionFraction> =
         MutableStateFlow(
             SettingsStorageSectionFraction(),
         )
     val fraction: StateFlow<SettingsStorageSectionFraction> = _fraction
 
-    // Biến để lưu trữ và hiển thị trạng thái killServiceOnExit
-    private var _killServiceOnExit: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _killServiceOnExit: MutableStateFlow<String?> = MutableStateFlow(null)
     val killServiceOnExit: StateFlow<String?> = _killServiceOnExit
 
     init {
@@ -565,7 +562,6 @@ class SettingsViewModel(
         }
     }
 
-    // Auto Backup functions
     private fun getAutoBackupEnabled() {
         viewModelScope.launch {
             dataStoreManager.autoBackupEnabled.collect { enabled ->
@@ -1023,7 +1019,7 @@ class SettingsViewModel(
         }
     }
 
-    private var _quality: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _quality: MutableStateFlow<String?> = MutableStateFlow(null)
     val quality: StateFlow<String?> = _quality
 
     fun getQuality() {
@@ -1240,7 +1236,7 @@ class SettingsViewModel(
         }
     }
 
-    private var _googleAccounts: MutableStateFlow<LocalResource<List<GoogleAccountEntity>>> =
+    private val _googleAccounts: MutableStateFlow<LocalResource<List<GoogleAccountEntity>>> =
         MutableStateFlow(LocalResource.Loading())
     val googleAccounts: StateFlow<LocalResource<List<GoogleAccountEntity>>> = _googleAccounts
 
@@ -1462,7 +1458,7 @@ class SettingsViewModel(
         }
     }
 
-    private var _spotifyLogIn: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _spotifyLogIn: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val spotifyLogIn: StateFlow<Boolean> = _spotifyLogIn
 
     fun getSpotifyLogIn() {
@@ -1488,10 +1484,10 @@ class SettingsViewModel(
         }
     }
 
-    private var _spotifyLyrics: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _spotifyLyrics: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val spotifyLyrics: StateFlow<Boolean> = _spotifyLyrics
 
-    private var _spotifyCanvas: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _spotifyCanvas: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val spotifyCanvas: StateFlow<Boolean> = _spotifyCanvas
 
     fun getSpotifyLyrics() {
@@ -1532,7 +1528,6 @@ class SettingsViewModel(
         }
     }
 
-    // Lấy giá trị của killServiceOnExit từ DataStore
     fun getKillServiceOnExit() {
         viewModelScope.launch {
             dataStoreManager.killServiceOnExit.collect { killServiceOnExit ->
@@ -1541,7 +1536,6 @@ class SettingsViewModel(
         }
     }
 
-    // Lưu giá trị killServiceOnExit vào DataStore
     fun setKillServiceOnExit(kill: Boolean) {
         viewModelScope.launch {
             dataStoreManager.setKillServiceOnExit(kill)
@@ -1604,12 +1598,10 @@ data class SettingAlertState(
     data class TextFieldData(
         val label: String,
         val value: String = "",
-        // User typing string -> (true or false, If false, show error message)
         val verifyCodeBlock: ((String) -> Pair<Boolean, String?>)? = null,
     )
 
     data class SelectData(
-        // Selected / Data
         val listSelect: List<Pair<Boolean, String>>,
     ) {
         fun getSelected(): String = listSelect.firstOrNull { it.first }?.second ?: ""

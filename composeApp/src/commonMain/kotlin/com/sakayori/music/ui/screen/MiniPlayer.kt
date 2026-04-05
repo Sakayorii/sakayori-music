@@ -96,7 +96,6 @@ import com.kmpalette.rememberPaletteState
 import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.manager.DataStoreManager
 import com.sakayori.domain.utils.connectArtists
-import com.sakayori.logger.Logger
 import com.sakayori.music.Platform
 import com.sakayori.music.expect.toggleMiniPlayer
 import com.sakayori.music.expect.ui.PlatformBackdrop
@@ -129,8 +128,6 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.seconds
 
-private const val TAG = "MiniPlayer"
-
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MiniPlayer(
@@ -162,8 +159,7 @@ fun MiniPlayer(
                     val thumbnail = imageBitmap.toResizedBitmap(5, 5)
                     thumbnail.readPixels(buffer)
                 }
-            } catch (e: Exception) {
-                Logger.e(TAG, "Error getting pixels from layer: ${e.message}")
+            } catch (_: Exception) {
             }
             val averageLuminance =
                 (0 until 25).sumOf { index ->
@@ -177,7 +173,7 @@ fun MiniPlayer(
                 averageLuminance.coerceAtMost(0.8).toFloat(),
                 tween(500),
             )
-            delay(1.seconds)
+            delay(2.seconds)
         }
     }
 
@@ -210,7 +206,6 @@ fun MiniPlayer(
         label = "",
     )
 
-    // Palette state
     val paletteState = rememberPaletteState()
     val background =
         remember {
@@ -309,7 +304,6 @@ fun MiniPlayer(
                                             coroutineScope.launch {
                                                 change.consume()
                                                 offsetY.animateTo(offsetY.value + 2 * dragAmount)
-                                                Logger.w("MiniPlayer", "Dragged ${offsetY.value}")
                                             }
                                         }
                                     },
@@ -319,7 +313,6 @@ fun MiniPlayer(
                                         }
                                     },
                                     onDragEnd = {
-                                        Logger.w("MiniPlayer", "Drag Ended")
                                         coroutineScope.launch {
                                             if (offsetY.value > 70) {
                                                 onClose()
@@ -355,11 +348,9 @@ fun MiniPlayer(
                                                 coroutineScope.launch {
                                                     change.consume()
                                                     offsetX.animateTo(offsetX.value + dragAmount * 2)
-                                                    Logger.w("MiniPlayer", "Dragged ${offsetX.value}")
                                                 }
                                             },
                                             onDragCancel = {
-                                                Logger.w("MiniPlayer", "Drag Cancelled")
                                                 coroutineScope.launch {
                                                     if (offsetX.value > 200) {
                                                         sharedViewModel.onUIEvent(UIEvent.Previous)
@@ -370,7 +361,6 @@ fun MiniPlayer(
                                                 }
                                             },
                                             onDragEnd = {
-                                                Logger.w("MiniPlayer", "Drag Ended")
                                                 coroutineScope.launch {
                                                     if (offsetX.value > 200) {
                                                         sharedViewModel.onUIEvent(UIEvent.Previous)
@@ -412,10 +402,7 @@ fun MiniPlayer(
                                 modifier = Modifier.weight(1F).fillMaxHeight(),
                                 contentAlignment = Alignment.CenterStart,
                                 transitionSpec = {
-                                    // Compare the incoming number with the previous number.
                                     if (targetState != initialState) {
-                                        // If the target number is larger, it slides up and fades in
-                                        // while the initial (smaller) number slides up and fades out.
                                         (
                                             slideInHorizontally { width ->
                                                 width
@@ -424,8 +411,6 @@ fun MiniPlayer(
                                             slideOutHorizontally { width -> +width } + fadeOut(),
                                         )
                                     } else {
-                                        // If the target number is smaller, it slides down and fades in
-                                        // while the initial number slides down and fades out.
                                         (
                                             slideInHorizontally { width ->
                                                 +width
@@ -434,8 +419,6 @@ fun MiniPlayer(
                                             slideOutHorizontally { width -> width } + fadeOut(),
                                         )
                                     }.using(
-                                        // Disable clipping since the faded slide-in/out should
-                                        // be displayed out of bounds.
                                         SizeTransform(clip = false),
                                     )
                                 },
@@ -572,7 +555,6 @@ fun MiniPlayer(
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Part 1
                 Box(modifier = Modifier.weight(1f).padding(vertical = 16.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -646,7 +628,6 @@ fun MiniPlayer(
                         }
                     }
                 }
-                // Part 2
                 Box(modifier = Modifier.weight(1f)) {
                     Column(Modifier.width(600.dp).padding(horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
@@ -673,7 +654,6 @@ fun MiniPlayer(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.width(50.dp),
                             )
-                            // Real Slider
                             Box(
                                 modifier =
                                     Modifier
@@ -813,7 +793,6 @@ fun MiniPlayer(
                             sharedViewModel.onUIEvent(UIEvent.ToggleLike)
                         }
                         Spacer(Modifier.width(4.dp))
-                        // Desktop mini player button (JVM only)
                         if (getPlatform() == Platform.Desktop) {
                             IconButton(onClick = { toggleMiniPlayer() }) {
                                 Icon(
@@ -824,7 +803,6 @@ fun MiniPlayer(
                         }
                         IconButton(
                             onClick = {
-                                // Toggle mute/unmute
                                 val newVolume = if (controllerState.volume > 0f) 0f else 1f
                                 sharedViewModel.onUIEvent(UIEvent.UpdateVolume(newVolume))
                             },

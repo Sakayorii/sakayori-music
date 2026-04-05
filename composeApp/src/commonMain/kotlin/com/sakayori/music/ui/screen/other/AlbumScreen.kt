@@ -294,7 +294,6 @@ fun AlbumScreen(
                                             Column(
                                                 modifier = Modifier.padding(vertical = 8.dp),
                                             ) {
-                                                // Author clickable
                                                 Text(
                                                     text = uiState.artist.name,
                                                     style = typo().titleSmall,
@@ -444,7 +443,6 @@ fun AlbumScreen(
                                                         it.ifEmpty { null }
                                                     } ?: stringResource(Res.string.no_description),
                                                 onTimeClicked = { raw ->
-                                                    // Don't handle time click
                                                 },
                                                 onURLClicked = { url ->
                                                     uriHandler.openUri(

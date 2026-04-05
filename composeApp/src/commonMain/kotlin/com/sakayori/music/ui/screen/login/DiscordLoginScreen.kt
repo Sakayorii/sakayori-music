@@ -54,12 +54,10 @@ fun DiscordLoginScreen(
     var devLoginSheet by rememberSaveable {
         mutableStateOf(false)
     }
-    // Hide bottom navigation when entering this screen
     LaunchedEffect(Unit) {
         hideBottomNavigation()
     }
 
-    // Show bottom navigation when leaving this screen
     DisposableEffect(Unit) {
         onDispose {
             showBottomNavigation()
@@ -75,7 +73,6 @@ fun DiscordLoginScreen(
                         innerPadding.calculateTopPadding() + 64.dp,
                     ),
             )
-            // WebView for Discord login
             DiscordWebView(
                 state,
                 aboveContent = {

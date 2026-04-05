@@ -36,7 +36,6 @@ import com.sakayori.music.generated.resources.podcasts
 import com.sakayori.music.generated.resources.songs
 import com.sakayori.music.generated.resources.videos
 
-// State cho tìm kiếm
 data class SearchScreenState(
     val searchType: SearchType = SearchType.ALL,
     val searchAllResult: List<SearchResultType> = emptyList(),
@@ -51,7 +50,6 @@ data class SearchScreenState(
     val suggestYTItems: List<SearchResultType> = emptyList(),
 )
 
-// Loại tìm kiếm
 enum class SearchType {
     ALL,
     SONGS,
@@ -75,7 +73,6 @@ fun SearchType.toStringRes(): StringResource =
         SearchType.PODCASTS -> Res.string.podcasts
     }
 
-// UI state cho tìm kiếm
 sealed class SearchScreenUIState {
     object Empty : SearchScreenUIState()
 
@@ -306,7 +303,6 @@ class SearchViewModel(
                     }
 
                     is Resource.Error -> {
-                        // Không cần xử lý lỗi đặc biệt cho gợi ý
                         log("Error fetching suggest queries: ${values.message}", LogLevel.ERROR)
                     }
                 }

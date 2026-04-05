@@ -121,7 +121,6 @@ private fun MiniPlayerSeekBar(
                 },
         contentAlignment = Alignment.CenterStart,
     ) {
-        // Track
         Box(
             Modifier
                 .fillMaxWidth()
@@ -133,7 +132,6 @@ private fun MiniPlayerSeekBar(
                 ),
         )
 
-        // Progress
         Box(
             Modifier
                 .width(maxWidth * progress)
@@ -145,7 +143,6 @@ private fun MiniPlayerSeekBar(
                 ),
         )
 
-        // Thumb
         Box(
             Modifier
                 .offset(x = (maxWidth * progress) - (thumbSize / 2))
@@ -156,10 +153,6 @@ private fun MiniPlayerSeekBar(
     }
 }
 
-/**
- * Compact layout (< 260dp): Controls only, no artwork or text
- * Perfect for very narrow windows
- */
 @Composable
 fun CompactMiniLayout(
     controllerState: ControlState,
@@ -182,7 +175,6 @@ fun CompactMiniLayout(
         color = Color(0xFF1C1C1E),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Controls only - centered
             Box(
                 modifier =
                     Modifier
@@ -225,7 +217,6 @@ fun CompactMiniLayout(
                 }
             }
 
-            // Seek bar
             Box(
                 modifier = Modifier.padding(horizontal = 12.dp),
             ) {
@@ -238,10 +229,6 @@ fun CompactMiniLayout(
     }
 }
 
-/**
- * Medium layout (260-360dp): Artwork + controls, no text
- * Good balance for medium-sized windows
- */
 @Composable
 fun MediumMiniLayout(
     nowPlayingData: NowPlayingScreenData,
@@ -277,7 +264,6 @@ fun MediumMiniLayout(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    // Smaller artwork with hover effect
                     AsyncImage(
                         model = nowPlayingData.thumbnailURL,
                         contentDescription = "Album Art",
@@ -294,12 +280,10 @@ fun MediumMiniLayout(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Controls - show extra buttons only if width >= 300dp
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Like button - only show if width >= 300dp
                         AnimatedVisibility(
                             visible = showExtraButtons,
                             enter = scaleIn() + fadeIn(),
@@ -356,7 +340,6 @@ fun MediumMiniLayout(
                             },
                         )
 
-                        // Volume button - only show if width >= 300dp
                         AnimatedVisibility(
                             visible = showExtraButtons,
                             enter = scaleIn() + fadeIn(),
@@ -364,7 +347,6 @@ fun MediumMiniLayout(
                         ) {
                             IconButton(
                                 onClick = {
-                                    // Toggle mute/unmute
                                     val newVolume = if (controllerState.volume > 0f) 0f else 1f
                                     onUIEvent(UIEvent.UpdateVolume(newVolume))
                                 },
@@ -386,7 +368,6 @@ fun MediumMiniLayout(
                     }
                 }
 
-                // Lyrics display (if available)
                 if (lyricsData != null && !lyricsData.lyrics.error && lyricsData.lyrics.lines != null) {
                     val currentLine =
                         remember(timeline.current) {
@@ -444,7 +425,6 @@ fun MediumMiniLayout(
                     }
                 }
 
-                // Seek bar
                 Box(
                     modifier = Modifier.padding(horizontal = 12.dp),
                 ) {
@@ -458,11 +438,6 @@ fun MediumMiniLayout(
     }
 }
 
-/**
- * Square/Tall layout (Spotify-style): Large artwork centered with controls below
- * Appears when window is square or taller (aspect ratio <= 1.3)
- * Includes like/favorite and volume/mute buttons
- */
 @Composable
 fun SquareMiniLayout(
     nowPlayingData: NowPlayingScreenData,
@@ -495,7 +470,6 @@ fun SquareMiniLayout(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Large centered album artwork
             AsyncImage(
                 model = nowPlayingData.thumbnailURL,
                 contentDescription = "Album Art",
@@ -513,7 +487,6 @@ fun SquareMiniLayout(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Track info
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -539,7 +512,6 @@ fun SquareMiniLayout(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Lyrics display (if available)
             if (lyricsData != null && !lyricsData.lyrics.error && lyricsData.lyrics.lines != null) {
                 val currentLine =
                     remember(timeline.current) {
@@ -591,7 +563,6 @@ fun SquareMiniLayout(
                 }
             }
 
-            // Seek bar
             Box(
                 modifier = Modifier.padding(horizontal = 12.dp),
             ) {
@@ -602,13 +573,11 @@ fun SquareMiniLayout(
             }
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Main playback controls
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Like/Favorite button
                 IconButton(
                     onClick = { onUIEvent(UIEvent.ToggleLike) },
                     modifier = Modifier.size(32.dp),
@@ -631,7 +600,6 @@ fun SquareMiniLayout(
                     )
                 }
 
-                // Previous
                 RippleIconButton(
                     resId = Res.drawable.baseline_skip_previous_24,
                     modifier = Modifier.size(36.dp),
@@ -643,14 +611,12 @@ fun SquareMiniLayout(
                     },
                 )
 
-                // Play/Pause
                 PlayPauseButton(
                     isPlaying = controllerState.isPlaying,
                     modifier = Modifier.size(52.dp),
                     onClick = { onUIEvent(UIEvent.PlayPause) },
                 )
 
-                // Next
                 RippleIconButton(
                     resId = Res.drawable.baseline_skip_next_24,
                     modifier = Modifier.size(36.dp),
@@ -662,10 +628,8 @@ fun SquareMiniLayout(
                     },
                 )
 
-                // Volume/Mute button
                 IconButton(
                     onClick = {
-                        // Toggle mute/unmute
                         val newVolume = if (controllerState.volume > 0f) 0f else 1f
                         onUIEvent(UIEvent.UpdateVolume(newVolume))
                     },
@@ -690,9 +654,6 @@ fun SquareMiniLayout(
     }
 }
 
-/**
- * Empty state when no track is playing
- */
 @Composable
 fun EmptyMiniPlayerState() {
     Box(
@@ -718,10 +679,6 @@ fun EmptyMiniPlayerState() {
     }
 }
 
-/**
- * Legacy full layout - now used only when Box shows > 360dp
- * Kept for backwards compatibility
- */
 @Composable
 fun ExpandedMiniLayout(
     nowPlayingData: NowPlayingScreenData,
@@ -747,7 +704,6 @@ fun ExpandedMiniLayout(
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
-            // Main content area
             Row(
                 modifier =
                     Modifier
@@ -757,7 +713,6 @@ fun ExpandedMiniLayout(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // Album artwork with hover animation
                 AsyncImage(
                     model = nowPlayingData.thumbnailURL,
                     contentDescription = "Album Art",
@@ -772,7 +727,6 @@ fun ExpandedMiniLayout(
                             .hoverable(artworkInteractionSource),
                 )
 
-                // Track info
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.Center,
@@ -796,7 +750,6 @@ fun ExpandedMiniLayout(
                     )
                 }
 
-                // Playback controls
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(tween(300, delayMillis = 150)),
@@ -806,7 +759,6 @@ fun ExpandedMiniLayout(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Like button
                         IconButton(
                             onClick = { onUIEvent(UIEvent.ToggleLike) },
                             modifier = Modifier.size(28.dp),
@@ -859,10 +811,8 @@ fun ExpandedMiniLayout(
                             },
                         )
 
-                        // Volume button
                         IconButton(
                             onClick = {
-                                // Toggle mute/unmute
                                 val newVolume = if (controllerState.volume > 0f) 0f else 1f
                                 onUIEvent(UIEvent.UpdateVolume(newVolume))
                             },
@@ -884,7 +834,6 @@ fun ExpandedMiniLayout(
                 }
             }
 
-            // Lyrics display below thumbnail row
             if (lyricsData != null && !lyricsData.lyrics.error && lyricsData.lyrics.lines != null) {
                 val currentLine =
                     remember(timeline.current) {
@@ -943,7 +892,6 @@ fun ExpandedMiniLayout(
                 }
             }
 
-            // Seek bar
             Box(
                 modifier = Modifier.padding(horizontal = 12.dp),
             ) {

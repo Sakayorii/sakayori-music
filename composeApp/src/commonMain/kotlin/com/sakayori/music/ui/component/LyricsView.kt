@@ -154,12 +154,10 @@ fun LyricsView(
                 val sentence = lines[i]
                 val startTimeMs = sentence.startTimeMs.toLong()
 
-                // estimate the end time of the current sentence based on the start time of the next sentence
                 val endTimeMs =
                     if (i < lines.size - 1) {
                         lines[i + 1].startTimeMs.toLong()
                     } else {
-                        // if this is the last sentence, set the end time to be some default value (e.g., 1 minute after the start time)
                         startTimeMs + 60000
                     }
                 if (current.current in startTimeMs..endTimeMs) {
@@ -219,7 +217,6 @@ fun LyricsView(
         ) {
             items(lyricsData.lyrics.lines?.size ?: 0) { index ->
                 val line = lyricsData.lyrics.lines?.getOrNull(index)
-                // Tìm translated lyrics phù hợp dựa vào thời gian
                 val translatedWords =
                     if (lyricsData.lyrics.syncType == "LINE_SYNCED" || lyricsData.lyrics.syncType == "RICH_SYNCED") {
                         line?.startTimeMs?.let { findClosestTranslatedLine(it) }
@@ -233,7 +230,6 @@ fun LyricsView(
 
                 line?.words?.let { words ->
                     when {
-                        // Rich sync: parse and use RichSyncLyricsLineItem
                         lyricsData.lyrics.syncType == "RICH_SYNCED" -> {
                             val parsedLine =
                                 remember(words, line.startTimeMs, line.endTimeMs) {
@@ -256,7 +252,6 @@ fun LyricsView(
                                             },
                                 )
                             } else {
-                                // Fallback to regular line item if parsing fails
                                 LyricsLineItem(
                                     originalWords = words,
                                     translatedWords = translatedWords,
@@ -273,7 +268,6 @@ fun LyricsView(
                             }
                         }
 
-                        // Line sync or unsynced: use existing LyricsLineItem
                         else -> {
                             LyricsLineItem(
                                 originalWords = words,
@@ -397,12 +391,10 @@ fun RichSyncLyricsLineItem(
     customPadding: Dp = 12.dp,
     modifier: Modifier = Modifier,
 ) {
-    // Performance optimization: derive current word index based on timeline
     val currentWordIndex by remember(currentTimeMs, parsedLine.words) {
         derivedStateOf {
             if (!isCurrent) return@derivedStateOf -1
 
-            // Find the last word whose start time is <= current time
             parsedLine.words.indexOfLast { it.startTimeMs <= currentTimeMs }
         }
     }
@@ -412,7 +404,6 @@ fun RichSyncLyricsLineItem(
     ) {
         Spacer(modifier = Modifier.height(customPadding))
 
-        // Original lyrics with rich sync highlighting - using FlowRow for word wrapping
         FlowRow(
             modifier =
                 Modifier.then(
@@ -426,18 +417,15 @@ fun RichSyncLyricsLineItem(
             verticalArrangement = Arrangement.Center,
         ) {
             parsedLine.words.forEachIndexed { index, wordTiming ->
-                // Calculate word end time (start time of next word or line end time)
-                // If last word and lineEndTimeMs is invalid (Long.MAX_VALUE), estimate based on previous word duration
                 val wordEndTimeMs =
                     if (index < parsedLine.words.size - 1) {
                         parsedLine.words[index + 1].startTimeMs
                     } else if (parsedLine.lineEndTimeMs == Long.MAX_VALUE || parsedLine.lineEndTimeMs <= wordTiming.startTimeMs) {
-                        // Estimate: use previous word duration or default 500ms
                         if (index > 0 && parsedLine.words[index - 1].startTimeMs < wordTiming.startTimeMs) {
                             val prevWordDuration = wordTiming.startTimeMs - parsedLine.words[index - 1].startTimeMs
                             wordTiming.startTimeMs + prevWordDuration
                         } else {
-                            wordTiming.startTimeMs + 500L // Default 500ms if no reference
+                            wordTiming.startTimeMs + 500L
                         }
                     } else {
                         parsedLine.lineEndTimeMs
@@ -456,7 +444,6 @@ fun RichSyncLyricsLineItem(
             }
         }
 
-        // Translated lyrics (line-level, no word sync)
         if (translatedWords != null) {
             Text(
                 modifier =
@@ -497,7 +484,6 @@ private fun AnimatedWord(
     isCurrent: Boolean,
     customFontSize: TextUnit? = null,
 ) {
-    // Non-current lines render simply with dimmed color
     if (!isCurrent) {
         Text(
             text = word,
@@ -510,17 +496,12 @@ private fun AnimatedWord(
         return
     }
 
-    // Calculate word duration
     val wordDuration = (wordEndTimeMs - wordStartTimeMs).coerceAtLeast(100L)
 
-    // Apple Music style: Character-level wipe effect
-    // Split word into individual characters and animate each one
     Row(
         horizontalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         word.forEachIndexed { charIndex, char ->
-            // Calculate timing for each character
-            // Characters are evenly spaced in time within the word
             val charStartTimeMs = wordStartTimeMs + (wordDuration * charIndex / word.length)
             val charEndTimeMs =
                 if (charIndex < word.length - 1) {
@@ -529,11 +510,9 @@ private fun AnimatedWord(
                     wordEndTimeMs
                 }
 
-            // Calculate character progress - optimized to avoid excessive recomposition
             val isPastChar = currentTimeMs >= charEndTimeMs
             val isFutureChar = currentTimeMs <= charStartTimeMs
 
-            // Use direct calculation for smoother performance
             val rawProgress =
                 remember(currentTimeMs, charStartTimeMs, charEndTimeMs) {
                     when {
@@ -554,7 +533,6 @@ private fun AnimatedWord(
                     }
                 }
 
-            // Animate character progress with smoother easing
             val animatedCharProgress by animateFloatAsState(
                 targetValue = rawProgress,
                 animationSpec =
@@ -565,7 +543,6 @@ private fun AnimatedWord(
                 label = "charProgress",
             )
 
-            // Determine color based on progress with smooth interpolation
             val charColor =
                 when {
                     animatedCharProgress >= 1f -> {
@@ -575,7 +552,6 @@ private fun AnimatedWord(
                         Color.LightGray.copy(alpha = 0.6f)
                     }
                     else -> {
-                        // Smooth interpolation
                         val t = animatedCharProgress
                         val gray = Color.LightGray.copy(alpha = 0.6f)
                         Color(
@@ -626,7 +602,6 @@ fun FullscreenLyricsSheet(
         mutableFloatStateOf(0f)
     }
 
-    // Auto-hide controls state - Only hide control buttons, not title/progress
     var showControlButtons by rememberSaveable {
         mutableStateOf(true)
     }
@@ -635,18 +610,15 @@ fun FullscreenLyricsSheet(
         mutableStateOf(false)
     }
 
-    // Animated gradient colors - SMOOTH ANIMATION
     val startColor = remember { Animatable(color) }
     val midColor1 = remember { Animatable(color.copy(alpha = 0.95f)) }
     val midColor2 = remember { Animatable(color.copy(alpha = 0.85f)) }
     val endColor = remember { Animatable(Color.Black) }
 
-    // Dynamic gradient animation - MULTIPLE DIRECTIONS
     var gradientAngle by remember { mutableFloatStateOf(0f) }
     var gradientOffsetX by remember { mutableFloatStateOf(0f) }
     var gradientOffsetY by remember { mutableFloatStateOf(0f) }
 
-    // Animate gradient in dynamic changing directions — only when haze is OFF
     LaunchedEffect(Unit) {
         if (!shouldHaze) {
             var direction = 1f
@@ -661,12 +633,11 @@ fun FullscreenLyricsSheet(
                 if (gradientOffsetX > 1500f || gradientOffsetX < -1500f) {
                     direction *= -1f
                 }
-                delay(16) // ~60fps smooth
+                delay(16)
             }
         }
     }
 
-    // Smooth color animation based on lyrics color — only when haze is OFF
     LaunchedEffect(color) {
         if (!shouldHaze) {
             launch {
@@ -696,10 +667,9 @@ fun FullscreenLyricsSheet(
         }
     }
 
-    // Reset auto-hide timer when controls are shown
     LaunchedEffect(key1 = showControlButtons) {
         if (showControlButtons) {
-            delay(4000) // Hide after 4 seconds
+            delay(4000)
             showControlButtons = false
         }
     }
@@ -741,13 +711,11 @@ fun FullscreenLyricsSheet(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
                 ) {
-                    // Show controls on tap
                     showControlButtons = true
                 },
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         shape = RectangleShape,
     ) {
-        // Crossfade: RGB rainbow color cycling when transitioning between tracks
         val infiniteTransition = rememberInfiniteTransition(label = "crossfadeRainbow")
         val rainbowHue by infiniteTransition.animateFloat(
             initialValue = 0f,
@@ -766,11 +734,9 @@ fun FullscreenLyricsSheet(
             label = "sliderCrossfadeColor",
         )
         Box(modifier = Modifier.fillMaxSize()) {
-            // ── Haze state (used only when shouldHaze = true) ─────────────────
             val hazeState = rememberHazeState(blurEnabled = true)
 
             if (shouldHaze) {
-                // Full-screen album art as haze SOURCE — blurred poster background
                 Box(
                     modifier =
                         Modifier
@@ -792,7 +758,6 @@ fun FullscreenLyricsSheet(
                     )
                 }
             } else {
-                // Animated gradient background — only shown when haze is OFF
                 Box(
                     modifier =
                         Modifier
@@ -822,12 +787,10 @@ fun FullscreenLyricsSheet(
                 )
             }
 
-            // ── Foreground content column ─────────────────────────────────────
             Column(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        // Apply frosted glass haze effect over the poster when enabled
                         .then(
                             if (shouldHaze) {
                                 Modifier.hazeEffect(
@@ -850,7 +813,6 @@ fun FullscreenLyricsSheet(
                                 },
                         ),
             ) {
-                // New Apple Music Style Header
                 Row(
                     modifier =
                         Modifier
@@ -858,7 +820,6 @@ fun FullscreenLyricsSheet(
                             .padding(horizontal = 36.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Song Poster (Small, Top Left)
                     AsyncImage(
                         model =
                             ImageRequest
@@ -878,11 +839,9 @@ fun FullscreenLyricsSheet(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Song Info Column
                     Column(
                         modifier = Modifier.weight(1f),
                     ) {
-                        // Song Name
                         Text(
                             text = screenDataState.nowPlayingTitle,
                             style = typo().labelSmall,
@@ -898,7 +857,6 @@ fun FullscreenLyricsSheet(
 
                         Spacer(modifier = Modifier.height(2.dp))
 
-                        // Artist Name with Explicit Badge
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier =
@@ -945,7 +903,6 @@ fun FullscreenLyricsSheet(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Like Button (Heart)
                     HeartCheckBox(
                         checked = controllerState.isLiked,
                         size = 28,
@@ -955,7 +912,6 @@ fun FullscreenLyricsSheet(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Three Dot Menu
                     IconButton(
                         onClick = { showNowPlayingSheet = true },
                     ) {
@@ -967,7 +923,6 @@ fun FullscreenLyricsSheet(
                     }
                 }
 
-                // Lyrics Content - Expands when controls are hidden
                 Box(
                     modifier =
                         Modifier
@@ -1009,9 +964,7 @@ fun FullscreenLyricsSheet(
                     }
                 }
 
-                // Progress Bar and Time - Always visible
                 Column {
-                    // Real Slider
                     Box(
                         Modifier
                             .padding(
@@ -1127,7 +1080,6 @@ fun FullscreenLyricsSheet(
                     }
                     LazyColumn {
                         item {
-                            // Time Layout
                             Row(
                                 Modifier
                                     .fillMaxWidth()
@@ -1168,7 +1120,6 @@ fun FullscreenLyricsSheet(
                         }
 
                         item {
-                            // Control Buttons - Animated visibility
                             AnimatedVisibility(
                                 visible = showControlButtons,
                                 enter =
@@ -1195,7 +1146,6 @@ fun FullscreenLyricsSheet(
                                         tween(300),
                                     ),
                             ) {
-                                // List Bottom Buttons
                                 Box(
                                     modifier =
                                         Modifier
@@ -1250,7 +1200,6 @@ fun FullscreenLyricsSheet(
                     }
                 }
 
-                // When control buttons are hidden, add spacer to maintain proper spacing
                 if (!showControlButtons) {
                     Spacer(modifier = Modifier.height(20.dp))
                 }
