@@ -91,6 +91,8 @@ class SakayoriMusicApplication :
         AppContext.apply {
             set(applicationContext)
         }
+
+        AnrWatchdog().start()
     }
 
     override fun onTerminate() {

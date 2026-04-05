@@ -1305,7 +1305,7 @@ class SettingsViewModel(
         val currentPageId = dataStoreManager.pageId.first()
         val currentLoggedIn = dataStoreManager.loggedIn.first() == DataStoreManager.TRUE
         try {
-            runBlocking(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 dataStoreManager.setCookie(cookie, "")
                 dataStoreManager.setLoggedIn(true)
             }
@@ -1370,16 +1370,15 @@ class SettingsViewModel(
                     true
                 } ?: run {
                 Logger.w("getAllGoogleAccount", "addAccount: Account info is null")
-                runBlocking(Dispatchers.IO) {
+                withContext(Dispatchers.IO) {
                     dataStoreManager.setCookie(currentCookie, currentPageId)
                     dataStoreManager.setLoggedIn(currentLoggedIn)
                 }
                 false
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             Logger.e("getAllGoogleAccount", "addAccount: ${e.message}")
-            runBlocking(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 dataStoreManager.setCookie(currentCookie, currentPageId)
                 dataStoreManager.setLoggedIn(currentLoggedIn)
             }

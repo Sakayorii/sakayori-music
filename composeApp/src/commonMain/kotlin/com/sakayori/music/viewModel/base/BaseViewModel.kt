@@ -62,10 +62,14 @@ abstract class BaseViewModel :
         )
     }
 
+    private val stringCache = mutableMapOf<StringResource, String>()
+
     protected fun getString(resId: StringResource): String =
-        runBlocking(Dispatchers.Default) {
-            org.jetbrains.compose.resources
-                .getString(resId)
+        stringCache.getOrPut(resId) {
+            runBlocking(Dispatchers.Default) {
+                org.jetbrains.compose.resources
+                    .getString(resId)
+            }
         }
 
     private val loadingString: String by lazy { getString(Res.string.loading) }
