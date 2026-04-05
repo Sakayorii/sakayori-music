@@ -48,6 +48,7 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.context.unloadKoinModules
 import org.koin.dsl.module
 import com.sakayori.music.crashlytics.pushPlayerError
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import pub.devrel.easypermissions.EasyPermissions
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -102,6 +103,7 @@ class MainActivity : AppCompatActivity() {
 
     @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         loadKoinModules(
             module {

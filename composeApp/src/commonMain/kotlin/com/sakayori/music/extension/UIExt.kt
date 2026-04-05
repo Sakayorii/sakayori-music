@@ -493,9 +493,13 @@ fun ImageBitmap.toResizedBitmap(
     return resized
 }
 
+private val globalStringCache = mutableMapOf<StringResource, String>()
+
 fun getStringBlocking(res: StringResource): String =
-    runBlocking(Dispatchers.Default) {
-        getString(res)
+    globalStringCache.getOrPut(res) {
+        runBlocking(Dispatchers.Default) {
+            getString(res)
+        }
     }
 
 fun hsvToColor(

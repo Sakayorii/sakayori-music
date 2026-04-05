@@ -1,6 +1,6 @@
 [versions]
-version-name = "2.0.1"
-version-code = "47"
+version-name = "2.0.2"
+version-code = "48"
 
 android = "8.13.2"
 kotlin = "2.3.10"
@@ -85,6 +85,7 @@ commonsIo = "2.5"
 packagedeps = "0.2.5"
 
 [libraries]
+splashscreen = { group = "androidx.core", name = "core-splashscreen", version = "1.0.1" }
 desugaring = { group = "com.android.tools", name = "desugar_jdk_libs_nio", version.ref = "desugaring"}
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
 compose-material3-lib = { group = "androidx.compose.material3", name = "material3", version.ref = "material3-expressive" }
