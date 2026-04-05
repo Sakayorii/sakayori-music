@@ -360,7 +360,6 @@ fun SettingScreen(
 
     var width by rememberSaveable { mutableIntStateOf(0) }
 
-    // Backup and restore
     val formatter =
         LocalDateTime.Format {
             byUnicodePattern("yyyyMMddHHmmss")
@@ -392,7 +391,6 @@ fun SettingScreen(
             }
         }
 
-    // Open equalizer
     val resultLauncher = openEqResult(viewModel.getAudioSessionId())
 
     val enableTranslucentNavBar by viewModel.translucentBottomBar.map { it == TRUE }.collectAsStateWithLifecycle(initialValue = false)
@@ -780,13 +778,6 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.local_tracking_description),
                     switch = (localTrackingEnabled to { viewModel.setLocalTrackingEnabled(it) }),
                 )
-                /*
-                SettingItem(
-                    title = stringResource(Res.string.combine_local_and_youtube_liked_songs),
-                    subtitle = stringResource(Res.string.combine_local_and_youtube_liked_songs_description),
-                    switch = (combineLocalAndYouTubeLiked to { viewModel.setCombineLocalAndYouTubeLiked(it) })
-                )
-                 */
                 SettingItem(
                     title = stringResource(Res.string.proxy),
                     subtitle = stringResource(Res.string.proxy_description),
@@ -965,7 +956,6 @@ fun SettingScreen(
                 }
             }
         }
-        // Crossfade Settings (all platforms)
         item(key = "crossfade_settings") {
             Column {
                 SettingItem(
@@ -1313,7 +1303,6 @@ fun SettingScreen(
                         )
                     },
                 )
-                // Custom OpenAI Base URL - only show when Custom OpenAI is selected
                 if (aiProvider == DataStoreManager.AI_PROVIDER_CUSTOM_OPENAI) {
                     SettingItem(
                         title = "Custom Base URL",
@@ -1356,7 +1345,6 @@ fun SettingScreen(
                                                     true to null
                                                 } else {
                                                     try {
-                                                        // Simple validation: check if it looks like JSON
                                                         val trimmed = input.trim()
                                                         (trimmed.startsWith("{") && trimmed.endsWith("}")) to "Invalid JSON format"
                                                     } catch (e: Exception) {
@@ -1876,7 +1864,6 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.backup_downloaded_description),
                     switch = (backupDownloaded to { viewModel.setBackupDownloaded(it) }),
                 )
-                // Auto Backup (Android only)
                 if (getPlatform() == Platform.Android) {
                     SettingItem(
                         title = stringResource(Res.string.auto_backup),
@@ -2059,7 +2046,7 @@ fun SettingScreen(
                     title = stringResource(Res.string.author),
                     subtitle = stringResource(Res.string.sakayori_dev),
                     onClick = {
-                        uriHandler.openUri("https://github.com/yukkisensei/sakayori-music")
+                        uriHandler.openUri("https://github.com/Sakayorii/sakayori-music")
                     },
                 )
                 SettingItem(
@@ -2287,7 +2274,6 @@ fun SettingScreen(
     val alertData by viewModel.alertData.collectAsStateWithLifecycle()
     if (alertData != null) {
         val alertState = alertData ?: return
-        // AlertDialog
         AlertDialog(
             onDismissRequest = { viewModel.setAlertData(null) },
             title = {

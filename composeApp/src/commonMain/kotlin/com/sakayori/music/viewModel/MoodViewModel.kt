@@ -22,7 +22,7 @@ class MoodViewModel(
 ) : BaseViewModel() {
     private val _moodsMomentObject: MutableStateFlow<MoodsMomentObject?> = MutableStateFlow(null)
     var moodsMomentObject: StateFlow<MoodsMomentObject?> = _moodsMomentObject
-    var loading = MutableStateFlow<Boolean>(false)
+    val loading = MutableStateFlow<Boolean>(false)
 
     private var regionCode: String? = null
     private var language: String? = null
@@ -35,9 +35,6 @@ class MoodViewModel(
     fun getMood(params: String) {
         loading.value = true
         viewModelScope.launch {
-//            mainRepository.getMood(params, regionCode!!, SUPPORTED_LANGUAGE.serverCodes[SUPPORTED_LANGUAGE.codes.indexOf(language!!)]).collect{ values ->
-//                _moodsMomentObject.value = values
-//            }
             homeRepository.getMoodData(params).collect { values ->
                 Logger.w("MoodViewModel", "getMood: $values")
                 when (values) {

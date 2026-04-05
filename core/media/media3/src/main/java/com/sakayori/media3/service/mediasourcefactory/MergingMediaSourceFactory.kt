@@ -49,7 +49,5 @@ internal class MergingMediaSourceFactory(
         } else {
             return defaultMediaSourceFactory.createMediaSource(mediaItem)
         }
-
-//        val default = defaultMediaSourceFactory.createMediaSource(mediaItem.buildUpon().setMediaId("AUDIO-${mediaItem.mediaId}").build())
     }
 }

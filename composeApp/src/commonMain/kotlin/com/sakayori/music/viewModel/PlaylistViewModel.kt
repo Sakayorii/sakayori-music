@@ -64,29 +64,29 @@ class PlaylistViewModel(
     private val playlistRepository: PlaylistRepository,
 ) : BaseViewModel() {
     val downloadUtils: DownloadHandler by inject<DownloadHandler>()
-    private var _uiState = MutableStateFlow<PlaylistUIState>(Loading)
+    private val _uiState = MutableStateFlow<PlaylistUIState>(Loading)
     val uiState: StateFlow<PlaylistUIState> = _uiState
 
-    private var _listColors = MutableStateFlow<List<Color>>(emptyList())
+    private val _listColors = MutableStateFlow<List<Color>>(emptyList())
     val listColors: StateFlow<List<Color>> = _listColors
 
-    private var _continuation = MutableStateFlow<String?>(null)
+    private val _continuation = MutableStateFlow<String?>(null)
     val continuation: StateFlow<String?> = _continuation
 
-    private var _playlistEntity: MutableStateFlow<PlaylistEntity?> = MutableStateFlow(null)
+    private val _playlistEntity: MutableStateFlow<PlaylistEntity?> = MutableStateFlow(null)
     var playlistEntity: StateFlow<PlaylistEntity?> = _playlistEntity
 
     val downloadState = _playlistEntity.map { it?.downloadState ?: 0 }.stateIn(viewModelScope, WhileSubscribed(1000), 0)
     val liked = _playlistEntity.map { it?.liked == true }.stateIn(viewModelScope, WhileSubscribed(1000), false)
 
-    private var _tracks = MutableStateFlow<List<Track>>(emptyList())
+    private val _tracks = MutableStateFlow<List<Track>>(emptyList())
     val tracks: StateFlow<List<Track>> = _tracks
 
-    private var _tracksListState = MutableStateFlow<ListState>(ListState.IDLE)
+    private val _tracksListState = MutableStateFlow<ListState>(ListState.IDLE)
     val tracksListState: StateFlow<ListState> = _tracksListState
 
     private var collectDownloadedJob: Job? = null
-    private var _downloadedList = MutableStateFlow<List<String>>(emptyList())
+    private val _downloadedList = MutableStateFlow<List<String>>(emptyList())
     val downloadedList: StateFlow<List<String>> = _downloadedList
 
     private var playlistEntityJob: Job? = null
@@ -182,7 +182,6 @@ class PlaylistViewModel(
     fun getData(id: String) {
         resetData()
         viewModelScope.launch {
-            // Check radio
             if (id.matches(Regex("(RDAMVM|RDEM|RDAT).*"))) {
                 playlistRepository
                     .getRadio(
@@ -224,7 +223,6 @@ class PlaylistViewModel(
                         }
                     }
             } else {
-                // This is an online playlist
                 playlistRepository
                     .getPlaylistData(id, getString(Res.string.view_count))
                     .collect { res ->

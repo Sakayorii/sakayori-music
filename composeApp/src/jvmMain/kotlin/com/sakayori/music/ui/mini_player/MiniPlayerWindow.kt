@@ -26,19 +26,6 @@ import com.sakayori.music.generated.resources.circle_app_icon
 import java.awt.Dimension
 import java.util.prefs.Preferences
 
-/**
- * Mini player window - a separate always-on-top window for music controls.
- * Spotify-style frameless design with custom close button.
- *
- * Features:
- * - Always on top of other windows
- * - Frameless (no title bar)
- * - Resizable (default 400x110 dp)
- * - Shares player state with main window
- * - Close-safe (doesn't close main app)
- * - Remembers window position
- * - Keyboard shortcuts (Space: play/pause, Arrow keys: prev/next)
- */
 @Composable
 fun MiniPlayerWindow(
     sharedViewModel: SharedViewModel,
@@ -46,11 +33,9 @@ fun MiniPlayerWindow(
 ) {
     val prefs = remember { Preferences.userRoot().node("SakayoriMusic/MiniPlayer") }
 
-    // Minimum size constraints
     val minWidth = 200f
     val minHeight = 56f
 
-    // Load saved position or use default (with minimum constraints)
     val savedX = prefs.getFloat("windowX", Float.NaN)
     val savedY = prefs.getFloat("windowY", Float.NaN)
     val savedWidth = prefs.getFloat("windowWidth", 400f).coerceAtLeast(minWidth)
@@ -71,7 +56,6 @@ fun MiniPlayerWindow(
         )
     }
 
-    // Save position on change
     LaunchedEffect(windowState.position, windowState.size) {
         val pos = windowState.position
         Logger.w("MiniPlayerWindow", "Saving position: $pos")
@@ -115,7 +99,6 @@ fun MiniPlayerWindow(
             }
         },
     ) {
-        // Set minimum size at AWT level to prevent flickering
         LaunchedEffect(Unit) {
             (window as? java.awt.Window)?.minimumSize =
                 Dimension(

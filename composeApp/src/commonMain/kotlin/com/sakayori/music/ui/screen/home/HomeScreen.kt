@@ -352,14 +352,6 @@ fun HomeScreen(
         }
     }
 
-//    if (shouldShowGetDataSyncIdBottomSheet) {
-//        GetDataSyncIdBottomSheet(
-//            cookie = youTubeCookie,
-//            onDismissRequest = {
-//                shouldShowGetDataSyncIdBottomSheet = false
-//            },
-//        )
-//    }
 
     if (showReviewDialog) {
         ReviewDialog(

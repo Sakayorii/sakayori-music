@@ -4,25 +4,12 @@ import com.eygraber.uri.Uri
 import com.sakayori.domain.data.model.intent.GenericIntent
 import com.sakayori.logger.Logger
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermissions
 
-/**
- * Singleton to handle deep link URIs on Desktop.
- * Caches URI if app UI is not ready yet, delivers immediately if listener is set.
- *
- * Also provides file-based IPC for single-instance deep link forwarding:
- * when a second instance launches with a URI, it writes the URI to a temp file,
- * and the first instance reads it on restore.
- *
- * Supported URI patterns:
- * - SakayoriMusic://open-app?url=<encoded_url>  (redirected from website)
- * - SakayoriMusic://watch?v=VIDEO_ID            (direct scheme)
- * - SakayoriMusic://playlist?list=PLAYLIST_ID   (direct scheme)
- * - SakayoriMusic://channel/CHANNEL_ID          (direct scheme)
- * - SakayoriMusic://album?id=ALBUM_ID           (direct scheme)
- * - https://SakayoriMusic.org/app/...            (web URL passed via args)
- */
 object DesktopDeepLinkHandler {
     private const val TAG = "DesktopDeepLinkHandler"
+    private val URI_PATTERN = Regex("^[a-zA-Z][a-zA-Z0-9+.\\-]*://.+")
 
     private val pendingUriFile: File by lazy {
         File(System.getProperty("java.io.tmpdir"), "SakayoriMusic_pending_deeplink.txt")
@@ -55,73 +42,67 @@ object DesktopDeepLinkHandler {
         }
     }
 
-    /**
-     * Write URI to a temp file so the running (first) instance can pick it up.
-     * Called by the second instance before it exits.
-     */
     fun writePendingUri(uri: String) {
         try {
-            pendingUriFile.writeText(uri)
+            val path = pendingUriFile.toPath()
+            Files.deleteIfExists(path)
+            try {
+                val permissions = PosixFilePermissions.fromString("rw-------")
+                val attrs = PosixFilePermissions.asFileAttribute(permissions)
+                Files.createFile(path, attrs)
+            } catch (_: UnsupportedOperationException) {
+                Files.createFile(path)
+                pendingUriFile.setReadable(false, false)
+                pendingUriFile.setWritable(false, false)
+                pendingUriFile.setReadable(true, true)
+                pendingUriFile.setWritable(true, true)
+            }
+            Files.writeString(path, uri)
             Logger.d(TAG, "Wrote pending URI to file: $uri")
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to write pending URI: ${e.message}")
         }
     }
 
-    /**
-     * Read and consume the pending URI file written by a second instance.
-     * Called by the first instance when it receives a restore request.
-     */
     fun consumePendingUri() {
         try {
             if (pendingUriFile.exists()) {
                 val uri = pendingUriFile.readText().trim()
                 pendingUriFile.delete()
-                if (uri.isNotEmpty()) {
+                if (uri.isNotEmpty() && isValidUri(uri)) {
                     Logger.d(TAG, "Consumed pending URI from file: $uri")
                     onNewUri(uri)
+                } else if (uri.isNotEmpty()) {
+                    Logger.e(TAG, "Invalid URI format in pending file, discarding")
                 }
             }
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to read pending URI: ${e.message}")
+            pendingUriFile.delete()
         }
     }
 
-    /**
-     * Converts a raw URI string into a [GenericIntent] that App.kt can process.
-     *
-     * Conversion rules:
-     * 1. SakayoriMusic://open-app?url=<encoded_url>
-     *    → Extract the `url` param and use it as intent data
-     *
-     * 2. SakayoriMusic://watch?v=xxx, SakayoriMusic://playlist?list=xxx, etc.
-     *    → Convert to https://SakayoriMusic.org/app/watch?v=xxx format
-     *      so App.kt handles it uniformly via the SakayoriMusic.org branch
-     *
-     * 3. https://SakayoriMusic.org/app/... or YouTube URLs
-     *    → Pass through as-is
-     */
+    private fun isValidUri(uri: String): Boolean {
+        if (uri.length > 2048) return false
+        if (uri.contains('\n') || uri.contains('\r')) return false
+        return URI_PATTERN.matches(uri)
+    }
+
     private fun parseToIntent(uri: String): GenericIntent {
         val parsed = Uri.parse(uri)
 
         val actualUri = when {
-            // SakayoriMusic://open-app?url=<encoded_url>
             parsed.scheme == "SakayoriMusic" && parsed.host == "open-app" -> {
                 val urlParam = parsed.getQueryParameter("url")
                 if (urlParam != null) {
                     Logger.d(TAG, "Extracted URL from open-app: $urlParam")
                     Uri.parse(urlParam)
                 } else {
-                    // SakayoriMusic://open-app without params → just open the app, no navigation
                     Logger.d(TAG, "open-app without URL param, just opening app")
                     null
                 }
             }
 
-            // SakayoriMusic://watch?v=xxx → https://SakayoriMusic.org/app/watch?v=xxx
-            // SakayoriMusic://playlist?list=xxx → https://SakayoriMusic.org/app/playlist?list=xxx
-            // SakayoriMusic://channel/UCxxx → https://SakayoriMusic.org/app/channel/UCxxx
-            // SakayoriMusic://album?id=xxx → https://SakayoriMusic.org/app/album?id=xxx
             parsed.scheme == "SakayoriMusic" && parsed.host != null -> {
                 val host = parsed.host!!
                 val query = parsed.query?.let { "?$it" } ?: ""
@@ -133,7 +114,6 @@ object DesktopDeepLinkHandler {
                 Uri.parse(convertedUrl)
             }
 
-            // https://SakayoriMusic.org/app/... or YouTube URLs → pass through
             else -> parsed
         }
 
@@ -143,9 +123,7 @@ object DesktopDeepLinkHandler {
                 data = actualUri,
             )
         } else {
-            // No data → just triggers app restore, no navigation
             GenericIntent(action = "android.intent.action.VIEW")
         }
     }
 }
-

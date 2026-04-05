@@ -2,21 +2,6 @@ package com.sakayori.music
 
 import com.sakayori.logger.Logger
 
-/**
- * Registers the "SakayoriMusic://" custom URI protocol handler in Windows Registry
- * under HKEY_CURRENT_USER (no admin rights required).
- *
- * Registry structure:
- * ```
- * HKCU\Software\Classes\SakayoriMusic
- *     (Default) = "URL:SakayoriMusic Protocol"
- *     URL Protocol = ""
- *     \DefaultIcon
- *         (Default) = "\"<exe_path>\",0"
- *     \shell\open\command
- *         (Default) = "\"<exe_path>\" \"%1\""
- * ```
- */
 object WindowsProtocolRegistrar {
     private const val TAG = "WindowsProtocolRegistrar"
     private const val SCHEME = "SakayoriMusic"
@@ -38,14 +23,11 @@ object WindowsProtocolRegistrar {
 
             Logger.d(TAG, "Registering SakayoriMusic:// protocol handler -> $exePath")
 
-            // Main key with protocol description
             regAdd(REG_KEY, null, "URL:SakayoriMusic Protocol")
             regAdd(REG_KEY, "URL Protocol", "")
 
-            // DefaultIcon
             regAdd("$REG_KEY\\DefaultIcon", null, "\"$exePath\",0")
 
-            // shell\open\command
             regAdd("$REG_KEY\\shell\\open\\command", null, "\"$exePath\" \"%1\"")
 
             Logger.d(TAG, "Protocol handler registered successfully")
@@ -57,8 +39,6 @@ object WindowsProtocolRegistrar {
     private fun isAlreadyRegistered(currentExePath: String): Boolean {
         return try {
             val result = regQuery("$REG_KEY\\shell\\open\\command", null)
-            // Registry stores path with quotes: "C:\path\to\SakayoriMusic.exe" "%1"
-            // Normalize both for comparison
             val normalizedExe = currentExePath.replace("\\", "/").lowercase()
             result?.replace("\\", "/")?.lowercase()?.contains(normalizedExe) == true
         } catch (_: Exception) {
@@ -67,18 +47,12 @@ object WindowsProtocolRegistrar {
     }
 
     private fun resolveExePath(): String? {
-        // JPackage directory structure:
-        //   <app>/runtime/...  (java.home points here)
-        //   <app>/SakayoriMusic.exe
-        // So we go: java.home → parent (runtime) → parent (app) → SakayoriMusic.exe
         val javaHome = System.getProperty("java.home") ?: return null
         val javaHomeDir = java.io.File(javaHome)
 
-        // Try JPackage layout: java.home is <app>/runtime/... or <app>/runtime
         val appDir = if (javaHomeDir.name == "runtime") {
             javaHomeDir.parentFile
         } else {
-            // java.home might be deeper, e.g., <app>/runtime/conf/...
             generateSequence(javaHomeDir) { it.parentFile }
                 .firstOrNull { it.name == "runtime" }
                 ?.parentFile
@@ -91,13 +65,10 @@ object WindowsProtocolRegistrar {
             }
         }
 
-        // Fallback: running from IDE/dev environment, use current process
         return ProcessHandle.current().info().command().orElse(null)
     }
 
     private fun regAdd(key: String, valueName: String?, data: String) {
-        // Build command as a single string for cmd.exe to avoid
-        // ProcessBuilder double-escaping embedded quotes in data
         val valueFlag = if (valueName != null) "/v \"$valueName\"" else "/ve"
         val escapedData = data.replace("\"", "\\\"")
         val cmdString = "reg add \"$key\" /f $valueFlag /t REG_SZ /d \"$escapedData\""
@@ -128,4 +99,3 @@ object WindowsProtocolRegistrar {
         return if (exitCode == 0) output else null
     }
 }
-

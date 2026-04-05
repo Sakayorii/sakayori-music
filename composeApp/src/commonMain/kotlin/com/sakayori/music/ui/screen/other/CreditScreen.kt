@@ -67,7 +67,6 @@ fun CreditScreen(
     ) {
         Spacer(modifier = Modifier.height(30.dp))
 
-        // App icon
         Image(
             painter = painterResource(Res.drawable.app_icon),
             contentDescription = "App Icon",
@@ -79,21 +78,18 @@ fun CreditScreen(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // App name
         Text(
             text = stringResource(Res.string.app_name),
             style = typo().titleLarge,
             fontSize = 22.sp,
         )
 
-        // Version
         Text(
             text = stringResource(Res.string.version_format, VersionManager.getVersionName()),
             style = typo().bodySmall,
             fontSize = 13.sp,
         )
 
-        // Developer
         Text(
             text = stringResource(Res.string.sakayori_dev),
             style = typo().bodyMedium,
@@ -101,7 +97,6 @@ fun CreditScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // App description
         Text(
             text = stringResource(Res.string.credit_app),
             style = typo().bodyMedium,
@@ -115,7 +110,6 @@ fun CreditScreen(
         Spacer(modifier = Modifier.height(10.dp))
 
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-            // GitHub button
             TextButton(
                 onClick = {
                     openUrl("https://music.sakayori.dev")
@@ -129,10 +123,9 @@ fun CreditScreen(
                 Text(text = stringResource(Res.string.website))
             }
 
-            // GitHub button
             TextButton(
                 onClick = {
-                    openUrl("https://github.com/yukkisensei/sakayori-music")
+                    openUrl("https://github.com/Sakayorii/sakayori-music")
                 },
                 modifier =
                     Modifier
@@ -143,10 +136,9 @@ fun CreditScreen(
                 Text(text = stringResource(Res.string.github))
             }
 
-            // Issue tracker button
             TextButton(
                 onClick = {
-                    openUrl("https://github.com/yukkisensei/sakayori-music/issues")
+                    openUrl("https://github.com/Sakayorii/sakayori-music/issues")
                 },
                 modifier =
                     Modifier
@@ -157,7 +149,6 @@ fun CreditScreen(
                 Text(text = stringResource(Res.string.issue_tracker))
             }
 
-            // Buy me a coffee button
             TextButton(
                 onClick = {
                     openUrl("https://ko-fi.com/sakayori")
@@ -174,7 +165,6 @@ fun CreditScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Copyright text
         Text(
             text = stringResource(Res.string.copyright),
             style = typo().bodySmall,
@@ -185,7 +175,6 @@ fun CreditScreen(
             textAlign = TextAlign.Start,
         )
 
-        // Bottom spacing
         Spacer(modifier = Modifier.height(200.dp))
     }
     TopAppBar(

@@ -180,7 +180,6 @@ fun AnalyticsScreen(
                 Modifier
                     .fillMaxSize(),
         ) {
-            // Header item
             item {
                 Box(
                     modifier =
@@ -221,7 +220,7 @@ fun AnalyticsScreen(
                                                         ),
                                                         Color.Black,
                                                     ),
-                                                startY = (screenSizeInfo.hPX / 2.5f) * 3 / 4, // Gradient applied to wrap the title only
+                                                startY = (screenSizeInfo.hPX / 2.5f) * 3 / 4,
                                             ),
                                     ),
                             )
@@ -468,7 +467,6 @@ fun AnalyticsScreen(
             }
 
             item {
-                // Top artists
                 when (uiState.topArtists) {
                     is LocalResource.Success if (!uiState.topArtists.data.isNullOrEmpty()) -> {
                         val artists =
@@ -532,7 +530,6 @@ fun AnalyticsScreen(
             }
 
             item {
-                // Top albums
                 when (uiState.topAlbums) {
                     is LocalResource.Success if (!uiState.topAlbums.data.isNullOrEmpty()) -> {
                         val albums =
@@ -597,7 +594,6 @@ fun AnalyticsScreen(
             }
 
             item {
-                // Top tracks
                 when (val topTracks = uiState.topTracks) {
                     is LocalResource.Success if (!topTracks.data.isNullOrEmpty()) -> {
                         val tracks =
@@ -829,7 +825,6 @@ fun AnalyticsScreen(
         }
 
         var dayRangeMenuExpanded by rememberSaveable { mutableStateOf(false) }
-        // Top App Bar with haze effect
         TopAppBar(
             modifier =
                 Modifier

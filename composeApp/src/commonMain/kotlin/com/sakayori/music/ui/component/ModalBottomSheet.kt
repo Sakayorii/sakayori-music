@@ -278,11 +278,6 @@ import com.sakayori.music.generated.resources.your_youtube_playlists
 import com.sakayori.music.generated.resources.youtube_transcript
 import com.sakayori.music.generated.resources.youtube_url
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sentinel value used by SleepTimerBottomSheet to signal "end of current song"
-// Handle this in NowPlayingBottomSheetViewModel / SharedViewModel:
-//   if (minutes == END_OF_SONG_SENTINEL) → stop after current track finishes
-// ─────────────────────────────────────────────────────────────────────────────
 const val END_OF_SONG_SENTINEL = Int.MAX_VALUE
 
 @ExperimentalMaterial3Api
@@ -960,11 +955,9 @@ fun QueueBottomSheet(
             }
         }
 
-    // Convert the state into a cold flow and collect
     LaunchedEffect(shouldLoadMore) {
         snapshotFlow { shouldLoadMore.value }
             .collect {
-                // if should load more, then invoke loadMore
                 if (it && loadMoreState == QueueData.StateSource.STATE_INITIALIZED) musicServiceHandler.loadMore()
             }
     }
@@ -1837,7 +1830,6 @@ fun NowPlayingBottomSheet(
                     Crossfade(targetState = setSleepTimerEnable) {
                         val sleepTimerState = uiState.sleepTimer
                         if (it) {
-                            // timeRemaining > 0 → countdown mode, -1 → end-of-song mode, 0 → off
                             val isEndOfSong = sleepTimerState.timeRemaining == -1
                             val isRunning = sleepTimerState.timeRemaining > 0 || isEndOfSong
                             Crossfade(targetState = isRunning) { running ->
@@ -2068,7 +2060,6 @@ fun PlaybackSpeedPitchBottomSheet(
                     shape = RoundedCornerShape(50),
                 ) {}
                 Spacer(modifier = Modifier.height(16.dp))
-                // Playback Speed row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -2118,7 +2109,6 @@ fun PlaybackSpeedPitchBottomSheet(
                         )
                     }
                 }
-                // Pitch row — hidden on Desktop (LibVLC doesn't support independent pitch control)
                 if (getPlatform() != Platform.Desktop) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
@@ -2171,11 +2161,6 @@ fun PlaybackSpeedPitchBottomSheet(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REDESIGNED SleepTimerBottomSheet
-// Quick presets (5, 10, 15, 30, 45 min, 1 hour) + End of Song + Custom input
-// Passes END_OF_SONG_SENTINEL (Int.MAX_VALUE) for "End of Song" option.
-// ─────────────────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SleepTimerBottomSheet(
@@ -2186,7 +2171,6 @@ fun SleepTimerBottomSheet(
     val modelBottomSheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // -1 = nothing selected, Int.MAX_VALUE = End of Song, else = minutes
     var selectedPreset by rememberSaveable { mutableIntStateOf(-1) }
     var showCustomInput by rememberSaveable { mutableStateOf(false) }
     var customMinutes by rememberSaveable { mutableStateOf("") }
@@ -2206,7 +2190,6 @@ fun SleepTimerBottomSheet(
             Preset("1 hour", 60),
         )
 
-    // Whether the Set button should be enabled
     val isSetEnabled =
         when {
             selectedPreset == END_OF_SONG_SENTINEL -> true
@@ -2235,7 +2218,6 @@ fun SleepTimerBottomSheet(
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Drag handle
                 Card(
                     modifier = Modifier.width(40.dp).height(4.dp),
                     colors = CardDefaults.cardColors().copy(containerColor = Color(0xFF555555)),
@@ -2244,7 +2226,6 @@ fun SleepTimerBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Title row with alarm icon
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -2265,7 +2246,6 @@ fun SleepTimerBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ── Preset grid: 3 columns × 2 rows ──────────────────────
                 val presetRows = presets.chunked(3)
                 presetRows.forEach { row ->
                     Row(
@@ -2305,12 +2285,10 @@ fun SleepTimerBottomSheet(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                // ── End of Song + Custom row ─────────────────────────────
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    // End of Song
                     val isEndSelected = selectedPreset == END_OF_SONG_SENTINEL && !showCustomInput
                     OutlinedButton(
                         onClick = {
@@ -2339,7 +2317,6 @@ fun SleepTimerBottomSheet(
                         )
                     }
 
-                    // Custom
                     val isCustomSelected = showCustomInput
                     OutlinedButton(
                         onClick = {
@@ -2368,7 +2345,6 @@ fun SleepTimerBottomSheet(
                     }
                 }
 
-                // ── Custom input (animated expand) ───────────────────────
                 AnimatedVisibility(visible = showCustomInput) {
                     Column {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -2402,7 +2378,6 @@ fun SleepTimerBottomSheet(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ── Set button ───────────────────────────────────────────
                 Button(
                     onClick = {
                         when {

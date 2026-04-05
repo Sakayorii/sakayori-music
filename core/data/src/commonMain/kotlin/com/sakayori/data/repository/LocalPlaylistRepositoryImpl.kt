@@ -55,6 +55,7 @@ private const val TAG = "LocalPlaylistRepositoryImpl"
 internal class LocalPlaylistRepositoryImpl(
     private val localDataSource: LocalDataSource,
     private val youTube: YouTube,
+    private val converter: Converters,
 ) : LocalPlaylistRepository {
     override fun getLocalPlaylist(id: Long) =
         wrapDataResource {
@@ -106,7 +107,7 @@ internal class LocalPlaylistRepositoryImpl(
     override fun listTrackFlow(id: Long): Flow<List<String>> =
         localDataSource
             .getListTracksFlowOfLocalPlaylist(id)
-            .map { Converters().fromString(it.firstOrNull()) ?: emptyList() }
+            .map { converter.fromString(it.firstOrNull()) ?: emptyList() }
 
     override fun getTracksPaging(
         id: Long,
@@ -131,6 +132,7 @@ internal class LocalPlaylistRepositoryImpl(
                         playlistId = id,
                         filter = filter,
                         localDataSource = localDataSource,
+                        converter = converter,
                     )
                 },
             ).flow

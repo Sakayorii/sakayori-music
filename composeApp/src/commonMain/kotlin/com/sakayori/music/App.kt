@@ -123,17 +123,14 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     val isTranslucentBottomBar by viewModel.getTranslucentBottomBar().collectAsStateWithLifecycle(DataStoreManager.FALSE)
     val isLiquidGlassEnabled by viewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
-    // MiniPlayer visibility logic
     var isShowMiniPlayer by rememberSaveable {
         mutableStateOf(true)
     }
 
-    // Now playing screen
     var isShowNowPlaylistScreen by rememberSaveable {
         mutableStateOf(false)
     }
 
-    // Fullscreen
     var isInFullscreen by rememberSaveable {
         mutableStateOf(false)
     }
@@ -166,15 +163,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                     NotificationDestination,
                 )
             } else if (data.host == "SakayoriMusic.org" || data.scheme == "SakayoriMusic") {
-                // https://SakayoriMusic.org/app/watch?v=VIDEO_ID
-                // https://SakayoriMusic.org/app/playlist?list=PLAYLIST_ID
-                // https://SakayoriMusic.org/app/channel/CHANNEL_ID
-                // SakayoriMusic://watch?v=VIDEO_ID  (host="watch", no path)
-                // SakayoriMusic://playlist?list=PLAYLIST_ID
-                // SakayoriMusic://channel/CHANNEL_ID
                 val segments = data.pathSegments
-                // For SakayoriMusic.org: segments = ["app", "watch"] → appPath = segments[1]
-                // For SakayoriMusic://: host IS the appPath (e.g. host="watch"), segments = []
                 val appPath = if (data.scheme == "SakayoriMusic") {
                     data.host
                 } else {
@@ -202,8 +191,6 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                     }
 
                     "channel", "c" -> {
-                        // SakayoriMusic://channel/UCxxx → segments = ["UCxxx"]
-                        // SakayoriMusic.org/app/channel/UCxxx → segments = ["app", "channel", "UCxxx"]
                         val artistId = if (data.scheme == "SakayoriMusic") {
                             segments.firstOrNull()
                         } else {

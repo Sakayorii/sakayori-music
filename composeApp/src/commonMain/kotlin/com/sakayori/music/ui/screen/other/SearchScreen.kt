@@ -160,7 +160,6 @@ fun SearchScreen(
     val videoString = stringResource(Res.string.videos).lowercase()
     val podcastString = stringResource(Res.string.podcasts).lowercase()
 
-    // Animated Placeholder
     val placeholderTexts =
         remember {
             listOf(
@@ -175,10 +174,9 @@ fun SearchScreen(
 
     var currentPlaceholderIndex by remember { mutableIntStateOf(0) }
 
-    // Animate placeholder - pause when focused
     LaunchedEffect(isFocused) {
         while (!isFocused) {
-            delay(3000) // Change every 3 seconds
+            delay(3000)
             currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholderTexts.size
         }
     }
@@ -247,7 +245,6 @@ fun SearchScreen(
                 .background(Color.Transparent)
                 .padding(vertical = 10.dp),
     ) {
-        // Search Bar with Animated Placeholder
         SearchBar(
             inputField = {
                 SearchBarDefaults.InputField(
@@ -276,7 +273,6 @@ fun SearchScreen(
                     onExpandedChange = {},
                     enabled = true,
                     placeholder = {
-                        // Animated placeholder text
                         AnimatedContent(
                             targetState = currentPlaceholderIndex,
                             transitionSpec = {
@@ -303,7 +299,6 @@ fun SearchScreen(
                         )
                     },
                     trailingIcon = {
-                        // X button only shows when there's text
                         if (searchText.isNotEmpty()) {
                             IconButton(
                                 modifier = Modifier.clip(CircleShape),
@@ -442,7 +437,6 @@ fun SearchScreen(
                 }
 
                 SearchUIType.SEARCH_HISTORY -> {
-                    // Search history state
                     Column(
                         modifier =
                             Modifier
@@ -539,7 +533,6 @@ fun SearchScreen(
                             .fillMaxSize()
                             .padding(horizontal = 16.dp),
                     ) {
-                        // Default empty state
                         Column(
                             modifier = Modifier.align(Alignment.Center),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -570,9 +563,7 @@ fun SearchScreen(
                 }
 
                 SearchUIType.SEARCH_RESULTS -> {
-                    // Content area
                     Column(modifier = Modifier.fillMaxSize()) {
-                        // Filter chips
                         Row(
                             modifier =
                                 Modifier
@@ -631,7 +622,6 @@ fun SearchScreen(
                             Crossfade(targetState = uiState) { uiState ->
                                 when (uiState) {
                                     is SearchScreenUIState.Loading -> {
-                                        // Loading state
                                         LazyColumn {
                                             items(10) {
                                                 ShimmerSearchItem()
@@ -640,9 +630,7 @@ fun SearchScreen(
                                     }
 
                                     is SearchScreenUIState.Success -> {
-                                        // Success state with results
                                         Column(modifier = Modifier.fillMaxSize()) {
-                                            // Search Results List
                                             val currentResults =
                                                 when (searchScreenState.searchType) {
                                                     SearchType.ALL -> searchScreenState.searchAllResult
@@ -781,7 +769,6 @@ fun SearchScreen(
                                                                 }
                                                             }
                                                         }
-                                                        // Space at bottom to account for bottom navigation and mini player
                                                         item { Spacer(modifier = Modifier.height(150.dp)) }
                                                     }
                                                 } else {
@@ -803,7 +790,6 @@ fun SearchScreen(
 
                                     is SearchScreenUIState.Error -> {
                                         Box {
-                                            // Error state
                                             Column(
                                                 modifier = Modifier.align(Alignment.Center),
                                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -828,7 +814,6 @@ fun SearchScreen(
                                     }
 
                                     SearchScreenUIState.Empty -> {
-                                        // Empty state
                                         Box(
                                             modifier = Modifier.fillMaxSize(),
                                             contentAlignment = Alignment.Center,

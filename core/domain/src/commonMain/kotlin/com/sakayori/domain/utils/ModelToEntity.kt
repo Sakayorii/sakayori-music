@@ -118,7 +118,7 @@ fun Track.toSongEntity(): SongEntity {
         resultType = this.resultType,
         liked = false,
         totalPlayTime = 0,
-        downloadState = 0,
+        downloadState = DownloadState.STATE_NOT_DOWNLOADED,
     )
 }
 

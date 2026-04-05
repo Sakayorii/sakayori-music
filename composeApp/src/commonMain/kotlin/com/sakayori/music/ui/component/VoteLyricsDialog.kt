@@ -64,7 +64,6 @@ fun VoteLyricsDialog(
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                // Vote for original lyrics
                 if (canVoteLyrics && lyricsVoteState != null) {
                     VoteRow(
                         label = stringResource(Res.string.rate_lyrics),
@@ -74,7 +73,6 @@ fun VoteLyricsDialog(
                     )
                 }
 
-                // Vote for translated lyrics
                 if (canVoteTranslatedLyrics && translatedLyricsVoteState != null) {
                     VoteRow(
                         label = stringResource(Res.string.rate_translated_lyrics),
