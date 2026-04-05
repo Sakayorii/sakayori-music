@@ -148,7 +148,7 @@ internal class CommonRepositoryImpl(
                                 DataStoreManager.AI_PROVIDER_GEMINI -> AIHost.GEMINI
                                 DataStoreManager.AI_PROVIDER_OPENAI -> AIHost.OPENAI
                                 DataStoreManager.AI_PROVIDER_CUSTOM_OPENAI -> AIHost.CUSTOM_OPENAI
-                                else -> AIHost.GEMINI // Default to Gemini if not set
+                                else -> AIHost.GEMINI
                             }
                     }
                 }
@@ -185,7 +185,6 @@ internal class CommonRepositoryImpl(
                         aiClient.customHeaders =
                             if (headers.isNotEmpty()) {
                                 try {
-                                    // Parse JSON format: {"key1":"value1","key2":"value2"}
                                     headers
                                         .trim()
                                         .removeSurrounding("{", "}")
@@ -224,7 +223,6 @@ internal class CommonRepositoryImpl(
         }
     }
 
-    // Database
     override fun closeDatabase() {
         database.close()
     }
@@ -235,13 +233,11 @@ internal class CommonRepositoryImpl(
 
     override suspend fun databaseDaoCheckpoint() = localDataSource.checkpoint()
 
-    // Recently data
     override fun getAllRecentData(): Flow<List<RecentlyType>> =
         flow {
             emit(localDataSource.getAllRecentData())
         }.flowOn(Dispatchers.IO)
 
-    // Notifications
     override suspend fun insertNotification(notificationEntity: NotificationEntity) =
         withContext(Dispatchers.IO) {
             localDataSource.insertNotification(notificationEntity)
@@ -273,9 +269,6 @@ internal class CommonRepositoryImpl(
         }
     }
 
-    /**
-     * Original from YTDLnis app
-     */
     override suspend fun getCookiesFromInternalDatabase(
         url: String,
         packageName: String,

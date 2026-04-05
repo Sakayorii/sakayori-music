@@ -76,8 +76,6 @@ fun MediaPlayerViewWithUrl(
             player.events().addMediaPlayerEventListener(
                 object : MediaPlayerEventAdapter() {
                     override fun finished(mediaPlayer: MediaPlayer) {
-                        // VLCJ deadlocks if you call player methods from the event callback thread.
-                        // Dispatch replay onto the Swing EDT to avoid the deadlock.
                         scope.launch(Dispatchers.Swing) {
                             mediaPlayer.media().play(url)
                         }
@@ -207,10 +205,6 @@ fun MediaPlayerViewWithSubtitleJvm(
                 },
         contentAlignment = Alignment.Center,
     ) {
-        // SwingPanel (native Swing component) does not support Compose animation layers
-        // (alpha, z-ordering). Using Crossfade here causes the old and new SwingPanel to
-        // coexist during the animation, leading to the video not visually switching.
-        // Use a simple conditional instead so the old panel is removed immediately.
         if (showArtwork) {
             AsyncImage(
                 model =

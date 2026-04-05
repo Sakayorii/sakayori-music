@@ -93,7 +93,7 @@ internal class PlaylistRepositoryImpl(
     override suspend fun updatePlaylistLiked(
         playlistId: String,
         likeStatus: Int,
-    ) = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.IO) {
         localDataSource.updatePlaylistLiked(
             likeStatus,
             playlistId,
@@ -103,7 +103,7 @@ internal class PlaylistRepositoryImpl(
     override suspend fun updatePlaylistInLibrary(
         inLibrary: LocalDateTime,
         playlistId: String,
-    ) = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.IO) {
         localDataSource.updatePlaylistInLibrary(
             inLibrary,
             playlistId,
@@ -113,7 +113,7 @@ internal class PlaylistRepositoryImpl(
     override suspend fun updatePlaylistDownloadState(
         playlistId: String,
         downloadState: Int,
-    ) = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.IO) {
         localDataSource.updatePlaylistDownloadState(
             downloadState,
             playlistId,
@@ -277,8 +277,6 @@ internal class PlaylistRepositoryImpl(
                             result.getPlaylistContinuation()
                         Logger.d("Repository", "playlist data: ${listContent.size}")
                         Logger.d("Repository", "continueParam: $finalContinueParam")
-//                        else {
-//                            var listTrack = playlistBrowse.tracks.toMutableList()
                         Logger.d("Repository", "playlist final data: ${listContent.size}")
                         if (finalContinueParam != null) {
                             parsePlaylistData(header, listContent, radioId, viewString)?.let { playlist ->
@@ -378,8 +376,6 @@ internal class PlaylistRepositoryImpl(
                         var count = 0
                         Logger.d("getPlaylistData", "playlist data: ${listContent.size}")
                         Logger.d("getPlaylistData", "continueParam: $continueParam")
-//                        else {
-//                            var listTrack = playlistBrowse.tracks.toMutableList()
                         while (continueParam != null) {
                             youTube
                                 .customQuery(

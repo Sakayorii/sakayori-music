@@ -5,19 +5,12 @@ import uk.co.caprica.vlcj.factory.discovery.strategy.NativeDiscoveryStrategy
 import java.io.File
 import java.net.URISyntaxException
 
-/**
- * Custom NativeDiscoveryStrategy for Windows and Linux.
- * Discovers bundled VLC native libraries from compose.application.resources.dir.
- *
- * Adapted from https://github.com/mahozad/cutcon DefaultVlcDiscoverer
- */
 class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
 
     private val tag = "DefaultVlcDiscoverer"
 
     override fun supported(): Boolean {
         val os = System.getProperty("os.name", "").lowercase()
-        // Supported on everything except macOS (handled by MacOsVlcDiscoverer)
         return !os.contains("mac")
     }
 
@@ -38,22 +31,13 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
     companion object {
         private const val TAG = "DefaultVlcDiscoverer"
 
-        /**
-         * Find bundled VLC native libraries path.
-         * Search order:
-         * 1. compose.application.resources.dir (packaged app)
-         * 2. vlc.bundled.path system property (dev mode, set by Gradle)
-         * 3. Relative vlc-natives/<os> fallback
-         */
         fun findBundledVlcPath(): String? {
-            // 1. Packaged app: compose.application.resources.dir
             val resourcesDir = System.getProperty("compose.application.resources.dir")
             if (resourcesDir != null) {
                 val found = findVlcInDirectory(File(resourcesDir))
                 if (found != null) return found
             }
 
-            // 2. Dev mode: vlc.bundled.path set by Gradle run task
             val bundledPath = System.getProperty("vlc.bundled.path")
             if (bundledPath != null) {
                 val dir = File(bundledPath)
@@ -63,12 +47,10 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
                 }
             }
 
-            // 3. Search relative to the JAR location (important for packaged apps)
             try {
                 val jarFile = File(DefaultVlcDiscoverer::class.java.protectionDomain.codeSource.location.toURI())
                 val jarDir = jarFile.parentFile
                 if (jarDir != null && jarDir.isDirectory) {
-                    // Check app/windows (standard jpackage layout) or just windows/
                     val appDir = jarDir.parentFile
                     if (appDir != null) {
                         val foundInAppWin = findVlcInDirectory(File(appDir, "windows"))
@@ -76,7 +58,7 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
                     }
                     val foundInJarDirWin = findVlcInDirectory(File(jarDir, "windows"))
                     if (foundInJarDirWin != null) return foundInJarDirWin
-                    
+
                     val foundInJarDir = findVlcInDirectory(jarDir)
                     if (foundInJarDir != null) return foundInJarDir
                 }
@@ -84,7 +66,6 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
                 Logger.e(TAG, "Failed to get JAR location: ${e.message}")
             }
 
-            // 4. Fallback: relative to working directory
             val osName = System.getProperty("os.name", "").lowercase()
             val subDir = when {
                 osName.contains("win") -> "windows"
@@ -100,7 +81,6 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
         private fun findVlcInDirectory(dir: File): String? {
             if (!dir.exists() || !dir.isDirectory) return null
             if (hasVlcLib(dir)) return dir.absolutePath
-            // Check subdirectories (vlc-setup may organize by OS)
             dir.listFiles()?.filter { it.isDirectory }?.forEach { subDir ->
                 if (hasVlcLib(subDir)) return subDir.absolutePath
             }
@@ -113,4 +93,3 @@ class DefaultVlcDiscoverer : NativeDiscoveryStrategy {
             } == true
     }
 }
-

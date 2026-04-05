@@ -6,7 +6,6 @@ import com.sakayori.domain.data.player.PlayerError
 import io.sentry.Sentry
 import io.sentry.android.core.SentryAndroid
 
-// Sent crash to Sentry
 fun reportCrash(throwable: Throwable) {
     Sentry.captureException(throwable)
 }

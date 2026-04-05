@@ -54,7 +54,7 @@ actual suspend fun restoreNative(
                 }
 
                 entry.name == DB_NAME -> {
-                    runBlocking(Dispatchers.IO) {
+                    withContext(Dispatchers.IO) {
                         commonRepository.databaseDaoCheckpoint()
                         commonRepository.closeDatabase()
                     }
@@ -90,7 +90,7 @@ actual suspend fun backupNative(
                     outputStream.putNextEntry(ZipEntry("$SETTINGS_FILENAME.preferences_pb"))
                     inputStream.copyTo(outputStream)
                 }
-            runBlocking(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 commonRepository.databaseDaoCheckpoint()
             }
             FileInputStream(commonRepository.getDatabasePath()).use { inputStream ->

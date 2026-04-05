@@ -129,7 +129,7 @@ internal class SimpleMediaService :
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
         controllerFuture.addListener({ controllerFuture.get() }, MoreExecutors.directExecutor())
 
-        if (runBlocking(Dispatchers.IO) { dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE }) {
+        if (runBlocking(Dispatchers.Default) { dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE }) {
             val notificationManager = getSystemService<NotificationManager>()
             notificationManager?.run {
                 createNotificationChannel(
@@ -206,20 +206,16 @@ internal class SimpleMediaService :
 
     @UnstableApi
     fun release() {
-        Logger.w("Service", "Starting release process")
-        runBlocking(Dispatchers.IO) {
-            try {
-                mediaSession?.run {
-                    this.player.pause()
-                    this.player.playWhenReady = false
-                    this.release()
-                }
-                simpleMediaServiceHandler.release()
-                mediaSession = null
-                Logger.w("Service", "Simple Media Service Released")
-            } catch (e: Exception) {
-                Logger.e("Service", "Error during release")
+        try {
+            mediaSession?.run {
+                this.player.pause()
+                this.player.playWhenReady = false
+                this.release()
             }
+            simpleMediaServiceHandler.release()
+            mediaSession = null
+        } catch (e: Exception) {
+            Logger.e("Service", "Error during release")
         }
     }
 

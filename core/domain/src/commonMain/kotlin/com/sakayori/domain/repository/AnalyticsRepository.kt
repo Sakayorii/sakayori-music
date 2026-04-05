@@ -29,7 +29,6 @@ interface AnalyticsRepository {
 
     suspend fun deleteOldPlaybackEvents(cutoffTimestamp: LocalDateTime)
 
-    // Query methods for analytics reports
     suspend fun queryTopPlayedSongsLastXDays(x: Int): Flow<List<TopPlayedTracks>>
 
     suspend fun queryTopPlayedSongsInRange(

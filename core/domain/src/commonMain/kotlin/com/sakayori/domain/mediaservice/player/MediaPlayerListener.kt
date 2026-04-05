@@ -4,9 +4,6 @@ import com.sakayori.domain.data.player.GenericMediaItem
 import com.sakayori.domain.data.player.GenericTracks
 import com.sakayori.domain.data.player.PlayerError
 
-/**
- * Listener interface for media player events
- */
 interface MediaPlayerListener {
     fun onPlaybackStateChanged(playbackState: Int) {}
 

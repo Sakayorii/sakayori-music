@@ -147,12 +147,7 @@ fun CookieItem.toNetScapeString(): String =
                 acc.append(cookie.toNetscapeFormat()).append("\n")
             }.toString()
 
-/**
- * Decodes HTML entities in a string to their corresponding characters.
- * Handles both named entities (e.g. &amp;) and numeric entities (e.g. &#39; &#x27;).
- */
 fun decodeHtmlEntities(text: String): String {
-    // Named HTML entities
     val namedEntities =
         mapOf(
             "&apos;" to "'",
@@ -169,12 +164,10 @@ fun decodeHtmlEntities(text: String): String {
 
     var result = text
 
-    // Replace named entities
     for ((entity, char) in namedEntities) {
         result = result.replace(entity, char, ignoreCase = true)
     }
 
-    // Replace hex numeric entities: &#xHH; or &#xHH (with or without semicolon)
     result =
         Regex("""&#x([0-9a-fA-F]+);?""").replace(result) { match ->
             val codePoint = match.groupValues[1].toIntOrNull(16)
@@ -185,7 +178,6 @@ fun decodeHtmlEntities(text: String): String {
             }
         }
 
-    // Replace decimal numeric entities: &#DD; or &#DD (with or without semicolon)
     result =
         Regex("""&#(\d+);?""").replace(result) { match ->
             val codePoint = match.groupValues[1].toIntOrNull()

@@ -1198,7 +1198,7 @@ internal class DataStoreManagerImpl(
         }
 
     override suspend fun setContributorLyricsDatabase(
-        contributor: Pair<String, String>?, // contributor name and email, null if anonymous
+        contributor: Pair<String, String>?,
     ) {
         withContext(Dispatchers.IO) {
             settingsDataStore.edit { settings ->
@@ -1310,7 +1310,6 @@ internal class DataStoreManagerImpl(
         }
     }
 
-    // Auto Backup
     override val autoBackupEnabled: Flow<String> =
         settingsDataStore.data.map { preferences ->
             preferences[AUTO_BACKUP_ENABLED] ?: FALSE
@@ -1454,7 +1453,6 @@ internal class DataStoreManagerImpl(
 
         val LOCAL_TRACKING_ENABLED = stringPreferencesKey("local_tracking_enabled")
 
-        // Auto Backup
         val AUTO_BACKUP_ENABLED = stringPreferencesKey("auto_backup_enabled")
         val AUTO_BACKUP_FREQUENCY = stringPreferencesKey("auto_backup_frequency")
         val AUTO_BACKUP_MAX_FILES = intPreferencesKey("auto_backup_max_files")

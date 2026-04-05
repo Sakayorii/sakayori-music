@@ -22,11 +22,6 @@ sealed class Resource<T>(
     ) : Resource<T>(data, message)
 }
 
-/**
- * New resource class that is used to wrap the data that is returned from the manager (only local data sources)
- * 3 state
- * Success, Error, Loading
- */
 sealed class LocalResource<T>(
     val data: T? = null,
     val message: String? = null,
@@ -132,7 +127,6 @@ fun <T> wrapDataResource(
             }
     }.flowOn(dispatcher)
 
-// For one time emit
 fun <T> wrapResultResource(
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
     block: suspend () -> Result<T>,

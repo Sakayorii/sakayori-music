@@ -11,6 +11,6 @@ data class PlaybackEventEntity(
     val timestamp: LocalDateTime = now(),
     val videoId: String = "",
     val albumBrowseId: String? = null,
-    val durationSecond: Long = 0, // 0 - 100
-    val listenedSecond: Long = 0, // in seconds
+    val durationSecond: Long = 0,
+    val listenedSecond: Long = 0,
 )

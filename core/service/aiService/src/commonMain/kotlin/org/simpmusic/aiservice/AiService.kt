@@ -171,9 +171,9 @@ class AiService(
             }
         private val aiResponseJsonSchema =
             JsonSchema(
-                name = "ai_translation_schema", // Give your schema a name
+                name = "ai_translation_schema",
                 schema = translationJsonSchema,
-                strict = true, // Recommended for better adherence
+                strict = true,
             )
     }
 }

@@ -9,9 +9,6 @@ import com.sakayori.domain.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface HomeRepository {
-    /**
-     * @return Pair of continueParams and HomeItem List
-     */
     fun getHomeData(
         params: String? = null,
         viewString: String,

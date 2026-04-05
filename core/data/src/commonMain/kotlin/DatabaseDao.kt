@@ -41,7 +41,6 @@ import kotlinx.datetime.LocalDateTime
 
 @Dao
 interface DatabaseDao {
-    // Transaction request with multiple queries
     @Transaction
     suspend fun getAllRecentData(): List<RecentlyType> {
         val a = mutableListOf<RecentlyType>()
@@ -80,7 +79,7 @@ interface DatabaseDao {
                             1
                         }
                     }
-                    timeP0.compareTo(timeP1) // Sort in descending order by inLibrary time
+                    timeP0.compareTo(timeP1)
                 },
             )
         return sortedList.takeLast(30)
@@ -147,7 +146,7 @@ interface DatabaseDao {
                             1
                         }
                     }
-                    timeP0.compareTo(timeP1) // Sort in descending order by inLibrary time
+                    timeP0.compareTo(timeP1)
                 },
             )
         return sortedList
@@ -193,7 +192,6 @@ interface DatabaseDao {
         return a
     }
 
-    // Get search history
     @Query("SELECT * FROM search_history")
     suspend fun getSearchHistory(): List<SearchHistory>
 
@@ -203,7 +201,6 @@ interface DatabaseDao {
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertSearchHistory(searchHistory: SearchHistory): Long
 
-    // Song
     @Query("SELECT * FROM song ORDER BY inLibrary DESC LIMIT :limit OFFSET :offset")
     suspend fun getRecentSongs(
         limit: Int,
@@ -308,7 +305,6 @@ interface DatabaseDao {
     @Query("SELECT videoId FROM song WHERE videoId IN (:primaryKeyList) AND downloadState = 3")
     fun getDownloadedVideoIdByListVideoId(primaryKeyList: List<String>): Flow<List<String>>
 
-    // Artist
     @Query("SELECT * FROM artist ORDER BY inLibrary DESC LIMIT :limit OFFSET 0")
     suspend fun getAllArtists(limit: Int): List<ArtistEntity>
 
@@ -343,7 +339,6 @@ interface DatabaseDao {
         channelId: String,
     )
 
-    // Album
     @Query("SELECT * FROM album ORDER BY inLibrary DESC LIMIT :limit OFFSET 0")
     suspend fun getAllAlbums(limit: Int): List<AlbumEntity>
 
@@ -394,7 +389,6 @@ interface DatabaseDao {
         offset: Int,
     ): List<AlbumEntity>
 
-    // Playlist
     @Query("SELECT * FROM playlist ORDER BY inLibrary DESC LIMIT :limit OFFSET 0")
     suspend fun getAllPlaylists(limit: Int): List<PlaylistEntity>
 
@@ -448,7 +442,6 @@ interface DatabaseDao {
         offset: Int,
     ): List<PlaylistEntity>
 
-    // Local Playlist
     @Query("SELECT * FROM local_playlist ORDER BY inLibrary DESC LIMIT :limit OFFSET :offset")
     suspend fun getAllLocalPlaylists(
         limit: Int,
@@ -583,7 +576,6 @@ interface DatabaseDao {
     @Query("SELECT * FROM set_video_id WHERE videoId = :videoId")
     suspend fun getSetVideoId(videoId: String): SetVideoIdEntity?
 
-    // PairSongLocalPlaylist
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertPairSongLocalPlaylist(pairSongLocalPlaylist: PairSongLocalPlaylist)
 
@@ -674,7 +666,6 @@ interface DatabaseDao {
         videoId: String,
     )
 
-    // GoogleAccountEntity
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertGoogleAccount(googleAccountEntity: GoogleAccountEntity): Long
 
@@ -738,14 +729,12 @@ interface DatabaseDao {
         language: String,
     )
 
-    // Insert methods
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertPodcast(podcast: PodcastsEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertEpisodes(episodes: List<EpisodeEntity>): List<Long>
 
-    // Get methods
     @Transaction
     @Query("SELECT * FROM podcast_table WHERE podcastId = :podcastId")
     suspend fun getPodcastWithEpisodes(podcastId: String): PodcastWithEpisodes?
@@ -785,11 +774,9 @@ interface DatabaseDao {
         inLibrary: LocalDateTime,
     ): Int
 
-    // Delete methods
     @Query("DELETE FROM podcast_table WHERE podcastId = :podcastId")
     suspend fun deletePodcast(podcastId: String): Int
 
-    // Your YouTube Playlist list
     @Insert(onConflict = REPLACE)
     suspend fun insertYourYouTubePlaylist(yourYouTubePlaylist: YourYouTubePlaylistList)
 
@@ -799,7 +786,6 @@ interface DatabaseDao {
     @Query("DELETE FROM your_youtube_playlist_list")
     suspend fun deleteAllYourYouTubePlaylist()
 
-    // Playback Event
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertPlaybackEvent(playbackEventEntity: PlaybackEventEntity): Long
 
@@ -855,7 +841,6 @@ interface DatabaseDao {
     @Query("DELETE FROM playback_event WHERE timestamp < :cutoffTimestamp")
     suspend fun deleteOldPlaybackEvents(cutoffTimestamp: LocalDateTime)
 
-    // Query event
     @Query(
         "SELECT \n" +
             "  videoId,\n" +

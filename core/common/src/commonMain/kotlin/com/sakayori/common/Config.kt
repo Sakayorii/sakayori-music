@@ -34,9 +34,6 @@ object Config {
     val REMOVED_SONG_DATE_TIME: LocalDateTime = LocalDateTime(LocalDate(2003, Month.AUGUST, 26), LocalTime(3, 0))
 }
 
-/*** Update supported location from sigma67/ytmusicapi
- *
- */
 object SUPPORTED_LOCATION {
     val items: Array<CharSequence> =
         arrayOf(
@@ -234,8 +231,8 @@ object SUPPORTED_LANGUAGE {
 }
 
 object QUALITY {
-    val items: Array<CharSequence> = arrayOf("Low - 66kps", "Medium - 129kps") // , "High - 256kps (YT Premium) (Slow loading)"
-    val itags: Array<Int> = arrayOf(250, 251) // ,774
+    val items: Array<CharSequence> = arrayOf("Low - 66kps", "Medium - 129kps")
+    val itags: Array<Int> = arrayOf(250, 251)
 }
 
 object VIDEO_QUALITY {
@@ -308,50 +305,6 @@ sealed class SponsorBlockType(
             )
     }
 }
-// object SPONSOR_BLOCK {
-//    val list: Array<CharSequence> =
-//        arrayOf("sponsor", "selfpromo", "interaction", "intro", "outro", "preview", "music_offtopic", "poi_highlight", "filler")
-//    val listName: Array<Int> =
-//        arrayOf(
-//            R.string.sponsor,
-//            R.string.self_promotion,
-//            R.string.interaction,
-//            R.string.intro,
-//            R.string.outro,
-//            R.string.preview,
-//            R.string.music_off_topic,
-//            R.string.poi_highlight,
-//            R.string.filler,
-//        )
-//
-//    fun fromDbToName(
-//        context: Context,
-//        list: List<CharSequence>,
-//    ): List<String> {
-//        val result = mutableListOf<String>()
-//        for (item in list) {
-//            val index = list.indexOf(item)
-//            result.add(context.getString(listName[index]))
-//        }
-//        return result
-//    }
-//
-//    fun fromNameToDb(
-//        context: Context,
-//        input: List<String>,
-//    ): List<CharSequence> {
-//        val allString = fromDbToName(context, list.toList())
-//        val listIndex =
-//            allString.map {
-//                allString.indexOf(it)
-//            }
-//        val result =
-//            listIndex.mapNotNull {
-//                list.getOrNull(it)
-//            }
-//        return result
-//    }
-// }
 
 object CHART_SUPPORTED_COUNTRY {
     val items =

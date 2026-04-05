@@ -27,7 +27,6 @@ val databaseModule =
         single(createdAtStart = true) {
             Converters()
         }
-        // Database
         single(createdAtStart = true) {
             getDatabaseBuilder(
                 get<Converters>()
@@ -36,28 +35,22 @@ val databaseModule =
                 .setQueryCoroutineContext(Dispatchers.IO)
                 .build()
         }
-        // DatabaseDao
         single(createdAtStart = true) {
             get<MusicDatabase>().getDatabaseDao()
         }
-        // LocalDataSource
         single(createdAtStart = true) {
             LocalDataSource(get<DatabaseDao>())
         }
-        // AnalyticsDatasource
         single(createdAtStart = true) {
             AnalyticsDatasource(get<DatabaseDao>())
         }
-        // Datastore
         single(createdAtStart = true) {
             createDataStoreInstance()
         }
-        // DatastoreManager
         single<DataStoreManager>(createdAtStart = true) {
             DataStoreManagerImpl(get<DataStore<Preferences>>())
         }
 
-        // Move YouTube from Singleton to Koin DI
         single(createdAtStart = true) {
             YouTube()
         }

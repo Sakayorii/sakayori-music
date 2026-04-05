@@ -115,13 +115,6 @@ import kotlin.time.Instant
 
 private const val TAG = "YouTubeScraper"
 
-/**
- * This library is from [z-huang/InnerTune] and I just modified it to comply with SakayoriMusic
- *
- * Here is the object that can create all request to YouTube Music and Spotify in SakayoriMusic
- * Using YouTube Internal API
- * @author Sakayori
- */
 class YouTube {
     private val ytMusic = Ytmusic()
 
@@ -131,18 +124,12 @@ class YouTube {
             ytMusic.cookiePath = value
         }
 
-    /**
-     * Set the locale and language for YouTube Music
-     */
     var locale: YouTubeLocale
         get() = ytMusic.locale
         set(value) {
             ytMusic.locale = value
         }
 
-    /**
-     * Set custom visitorData for client (default is @see [DEFAULT_VISITOR_DATA])
-     */
     var visitorData: String?
         get() = ytMusic.visitorData
         set(value) {
@@ -155,9 +142,6 @@ class YouTube {
             ytMusic.dataSyncId = value
         }
 
-    /**
-     * Set cookie and authentication header for client (for log in option)
-     */
     var cookie: String?
         get() = ytMusic.cookie
         set(value) {
@@ -170,9 +154,6 @@ class YouTube {
             ytMusic.pageId = value
         }
 
-    /**
-     * Json deserializer for PO token request
-     */
     private val poTokenJsonDeserializer =
         Json {
             ignoreUnknownKeys = true
@@ -189,16 +170,10 @@ class YouTube {
             .findLast { it.contains("\"") }
             ?.replace("\"", "")
 
-    /**
-     * Remove proxy for client
-     */
     fun removeProxy() {
         ytMusic.proxy = null
     }
 
-    /**
-     * Set the proxy for client
-     */
     fun setProxy(
         isHttp: Boolean,
         host: String,
@@ -225,12 +200,6 @@ class YouTube {
             "https://pipedapi-libre.kavin.rocks",
         )
 
-    /**
-     * Search for a song, album, artist, playlist, etc.
-     * @param query the search query
-     * @param filter the search filter (see in [SearchFilter])
-     * @return a [Result]<[SearchResult]> object
-     */
     suspend fun search(
         query: String,
         filter: SearchFilter,
@@ -284,11 +253,6 @@ class YouTube {
             )
         }
 
-    /**
-     * Every search request response a limited data. Use this function to get the next data
-     * @param continuation continuation token from [SearchResult.continuation]
-     * @return a [Result]<[SearchResult]> object
-     */
     suspend fun searchContinuation(continuation: String): Result<SearchResult> =
         runCatching {
             val response = ytMusic.search(WEB_REMIX, continuation = continuation).body<SearchResponse>()
@@ -311,12 +275,6 @@ class YouTube {
             )
         }
 
-    /**
-     * Get the album page data from YouTube Music
-     * @param browseId the album browseId
-     * @param withSongs if true, the function will get the songs data too
-     * @return a [Result]<[AlbumPage]> object
-     */
     suspend fun album(
         browseId: String,
         withSongs: Boolean = true,
@@ -518,11 +476,6 @@ class YouTube {
             return@runCatching artistSections
         }
 
-    /**
-     * Get the artist page data from YouTube Music
-     * @param browseId the artist browseId
-     * @return a [Result]<[ArtistPage]> object
-     */
     suspend fun artist(browseId: String): Result<ArtistPage> =
         runCatching {
             val response = ytMusic.browse(WEB_REMIX, browseId).body<BrowseResponse>()
@@ -613,7 +566,6 @@ class YouTube {
     suspend fun getYouTubePlaylistFullTracksWithSetVideoId(playlistId: String): Result<List<Pair<SongItem, String>>> =
         runCatching {
             val plId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId"
-            // SongItem / SetVideoId
             val listPair = mutableListOf<Pair<SongItem, String>>()
             val response = ytMusic.playlist(plId).body<BrowseResponse>()
             listPair.addAll(
@@ -691,11 +643,6 @@ class YouTube {
             return@runCatching songs
         }
 
-    /**
-     * Get the playlist page data from YouTube Music
-     * @param playlistId the playlistId
-     * @return a [Result]<[PlaylistPage]> object
-     */
     suspend fun playlist(playlistId: String): Result<PlaylistPage> =
         runCatching {
             val response =
@@ -803,16 +750,6 @@ class YouTube {
             )
         }
 
-    /**
-     * Execute a custom POST request to YouTube Music
-     * In SakayoriMusic, I use this function to parsing Home, Playlist, Album data instead using [album], [playlist], [artist] function
-     * @param browseId the browseId (such as "FEmusic_home", "VL$playlistId", etc.)
-     * @param params the params
-     * @param continuation the continuation token
-     * @param country the country code
-     * @param setLogin if true, the function will set the cookie and authentication header
-     * @return a [Result]<[BrowseResponse]> object
-     */
     suspend fun customQuery(
         browseId: String?,
         params: String? = null,
@@ -823,21 +760,11 @@ class YouTube {
         ytMusic.browse(WEB_REMIX, browseId, params, continuation, country, setLogin).body<BrowseResponse>()
     }
 
-    /**
-     * Get the related data of a song from YouTube Music
-     * @param videoId the videoId of song
-     * @return a [Result]<[NextResponse]> object
-     */
     suspend fun nextCustom(videoId: String) =
         runCatching {
             ytMusic.nextCustom(WEB_REMIX, videoId).body<NextResponse>()
         }
 
-    /**
-     * Get Skip Segments from SponsorBlock
-     * @param videoId the videoId of song
-     * @return a [Result]<[List]<[SkipSegments]>> object
-     */
     suspend fun getSkipSegments(videoId: String): Result<List<SkipSegments>> =
         runCatching {
             ytMusic.getSkipSegments(videoId).body<List<SkipSegments>>()
@@ -1078,7 +1005,6 @@ class YouTube {
                 like = returnYouTubeDislikeResponse.likes,
                 dislike = returnYouTubeDislikeResponse.dislikes,
             )
-            // Get author thumbnails, subscribers, description, like count
         }
 
     private suspend fun getVisitorData(
@@ -1408,12 +1334,6 @@ class YouTube {
             }
         }
 
-    /**
-     * @return [Pair<Int, Float>]
-     * Int: status code
-     * Float: second watchtime
-     * First watchtime is 5.54
-     */
     suspend fun initPlayback(
         playbackUrl: String,
         atrUrl: String,
@@ -1519,7 +1439,6 @@ class YouTube {
                         ?.content
                         ?.playlistPanelRenderer
             if (playlistPanelRenderer != null) {
-                // load automix items
                 if (playlistPanelRenderer.contents
                         .lastOrNull()
                         ?.automixPreviewVideoRenderer
@@ -1579,9 +1498,6 @@ class YouTube {
                             )
                         }
                 }
-//        else if (playlistPanelRenderer.contents.firstOrNull()?.playlistPanelVideoRenderer?.navigationEndpoint?.watchPlaylistEndpoint != null) {
-//
-//        }
                 return@runCatching NextResult(
                     title = playlistPanelRenderer.title,
                     items =
@@ -1872,9 +1788,6 @@ class YouTube {
         )
     }
 
-    /**
-     * Search Tidal for metadata only (bpm, key, keyScale) without fetching the stream.
-     */
     suspend fun searchTidalMetadata(
         url: String,
         query: String,
@@ -1918,7 +1831,6 @@ class YouTube {
         isVideo: Boolean = false,
     ): Flow<DownloadProgress> =
         channelFlow {
-            // Video if videoId is not null
             trySend(DownloadProgress(0.01f))
             player(videoId = videoId)
                 .onSuccess { playerResponse ->
@@ -2029,7 +1941,6 @@ class YouTube {
                             trySend(DownloadProgress.failed(it.message ?: "Download failed"))
                         }
                     } else {
-                        // Song if url is not null
                         runCatching {
                             ytMusic
                                 .download(audioUrl, ("$filePath.webm"))
@@ -2042,7 +1953,6 @@ class YouTube {
                                 }
                         }.onSuccess {
                             Logger.d(TAG, "Download only Audio Success")
-                            // Convert to mp3
                             trySend(
                                 ytMusic.saveAudioWithThumbnail(
                                     filePath,
