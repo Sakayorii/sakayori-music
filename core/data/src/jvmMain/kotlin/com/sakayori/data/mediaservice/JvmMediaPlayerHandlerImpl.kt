@@ -2359,7 +2359,7 @@ class JvmMediaPlayerHandlerImpl(
             }
     }
 
-    
+
     private fun initializeMacOSMediaIntegration() {
         macOSMediaIntegration?.let { integration ->
             if (integration.initialize()) {
@@ -2434,7 +2434,7 @@ class JvmMediaPlayerHandlerImpl(
         }
     }
 
-    
+
     private fun updateMacOSNowPlayingInfo(songEntity: SongEntity) {
         macOSMediaIntegration?.updateNowPlayingInfo(
             NowPlayingInfo(
@@ -2460,12 +2460,12 @@ class JvmMediaPlayerHandlerImpl(
         }
     }
 
-    
+
     private fun updateMacOSPlaybackState(isPlaying: Boolean) {
         macOSMediaIntegration?.updatePlaybackState(isPlaying)
     }
 
-    
+
     private fun updateMacOSCommandsEnabled() {
         val hasNext = _controlState.value.isNextAvailable
         val hasPrevious = _controlState.value.isPreviousAvailable
@@ -2477,12 +2477,12 @@ class JvmMediaPlayerHandlerImpl(
         )
     }
 
-    
+
     private fun updateMacOSElapsedTime() {
         macOSMediaIntegration?.updateElapsedTime(player.currentPosition / 1000.0, 1.0)
     }
 
-    
+
     private fun clearMacOSNowPlayingInfo() {
         macOSMediaIntegration?.clearNowPlayingInfo()
     }

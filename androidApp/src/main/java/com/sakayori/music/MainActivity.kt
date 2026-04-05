@@ -181,6 +181,10 @@ class MainActivity : AppCompatActivity() {
                     scrim = Color.Transparent.toArgb(),
                 ),
         )
+        setContent {
+            App(viewModel)
+        }
+
         viewModel.checkIsRestoring()
         val request =
             PeriodicWorkRequestBuilder<NotifyWork>(
@@ -215,22 +219,18 @@ class MainActivity : AppCompatActivity() {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             viewModel.getLocation()
         }
-
-        setContent {
-            App(viewModel)
-        }
     }
 
     override fun onDestroy() {
         val shouldStopMusicService = viewModel.shouldStopMusicService()
-        Logger.w("MainActivity", "onDestroy: Should stop service $shouldStopMusicService")
 
         if (shouldStopMusicService && shouldUnbind && isFinishing) {
             viewModel.isServiceRunning = false
         }
-        unloadKoinModules(viewModelModule)
+        if (isFinishing) {
+            unloadKoinModules(viewModelModule)
+        }
         super.onDestroy()
-        Logger.d("MainActivity", "onDestroy: ")
     }
 
     override fun onRestart() {

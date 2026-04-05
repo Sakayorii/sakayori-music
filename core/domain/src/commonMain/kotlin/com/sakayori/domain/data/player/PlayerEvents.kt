@@ -1,8 +1,5 @@
 package com.sakayori.domain.data.player
 
-/**
- * Generic player events wrapper
- */
 data class PlayerEvents(
     val eventFlags: Int,
 ) {

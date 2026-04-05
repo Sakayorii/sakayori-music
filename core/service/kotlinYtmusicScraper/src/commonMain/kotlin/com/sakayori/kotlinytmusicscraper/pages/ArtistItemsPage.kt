@@ -97,7 +97,6 @@ data class ArtistItemsPage(
                                 it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"
                             } != null,
                     )
-                // Video
                 renderer.isSong ->
                     SongItem(
                         id = renderer.navigationEndpoint.watchEndpoint?.videoId ?: return null,

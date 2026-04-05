@@ -327,7 +327,6 @@ interface DataStoreManager {
 
     suspend fun setLocalTrackingEnabled(enabled: Boolean)
 
-    // Auto Backup
     val autoBackupEnabled: Flow<String>
 
     suspend fun setAutoBackupEnabled(enabled: Boolean)
@@ -370,7 +369,6 @@ interface DataStoreManager {
         const val PROXY_TYPE_HTTP = "http"
         const val PROXY_TYPE_SOCKS = "socks"
 
-        // AI
         const val AI_PROVIDER_GEMINI = "gemini"
         const val AI_PROVIDER_OPENAI = "openai"
         const val AI_PROVIDER_CUSTOM_OPENAI = "custom_openai"
@@ -380,7 +378,6 @@ interface DataStoreManager {
         const val LOCAL_PLAYLIST_FILTER_TITLE = "title"
         const val LOCAL_PLAYLIST_FILTER_CUSTOM_ORDER = "custom_order"
 
-        // Auto Backup Frequency
         const val AUTO_BACKUP_FREQUENCY_DAILY = "daily"
         const val AUTO_BACKUP_FREQUENCY_WEEKLY = "weekly"
         const val AUTO_BACKUP_FREQUENCY_MONTHLY = "monthly"

@@ -35,7 +35,7 @@ class BetterShuffleOrder(
 
     override fun getFirstIndex(): Int = if (shuffled.isNotEmpty()) shuffled[0] else C.INDEX_UNSET
 
-    @Suppress("KotlinConstantConditions") // Bugged for this function
+    @Suppress("KotlinConstantConditions")
     override fun cloneAndInsert(insertionIndex: Int, insertionCount: Int): ShuffleOrder {
         if (shuffled.isEmpty()) {
             return BetterShuffleOrder(insertionCount, -1)

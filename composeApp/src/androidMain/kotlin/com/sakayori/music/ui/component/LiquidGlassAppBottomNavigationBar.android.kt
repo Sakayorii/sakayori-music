@@ -2,6 +2,8 @@ package com.sakayori.music.ui.component
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -119,34 +121,39 @@ actual fun LiquidGlassAppBottomNavigationBar(
         label = "CustomGrayColorAnimation",
     )
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     LaunchedEffect(layer) {
         val buffer = IntBuffer.allocate(25)
         while (isActive) {
-            try {
-                withContext(Dispatchers.IO) {
-                    val imageBitmap = layer.toImageBitmap()
-                    val androidBitmap = imageBitmap.asAndroidBitmap()
-                    val thumbnail = androidBitmap.scale(5, 5, false)
-                    val copyBitmap = thumbnail.copy(Bitmap.Config.ARGB_8888, false)
-                    buffer.rewind()
-                    copyBitmap.copyPixelsToBuffer(buffer)
-                    if (!thumbnail.isRecycled) thumbnail.recycle()
-                    if (!copyBitmap.isRecycled) copyBitmap.recycle()
+            val isResumed = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+            if (isResumed) {
+                try {
+                    withContext(Dispatchers.IO) {
+                        val imageBitmap = layer.toImageBitmap()
+                        val androidBitmap = imageBitmap.asAndroidBitmap()
+                        val thumbnail = androidBitmap.scale(5, 5, false)
+                        val copyBitmap = thumbnail.copy(Bitmap.Config.ARGB_8888, false)
+                        buffer.rewind()
+                        copyBitmap.copyPixelsToBuffer(buffer)
+                        if (!thumbnail.isRecycled) thumbnail.recycle()
+                        if (!copyBitmap.isRecycled) copyBitmap.recycle()
+                    }
+                    val averageLuminance =
+                        (0 until 25).sumOf { index ->
+                            val color = buffer.get(index)
+                            val r = (color shr 16 and 0xFF) / 255f
+                            val g = (color shr 8 and 0xFF) / 255f
+                            val b = (color and 0xFF) / 255f
+                            0.2126 * r + 0.7152 * g + 0.0722 * b
+                        } / 25
+                    luminanceAnimation.animateTo(
+                        averageLuminance.coerceAtMost(0.8).toFloat(),
+                        tween(500),
+                    )
+                } catch (_: Exception) {
                 }
-            } catch (_: Exception) {
             }
-            val averageLuminance =
-                (0 until 25).sumOf { index ->
-                    val color = buffer.get(index)
-                    val r = (color shr 16 and 0xFF) / 255f
-                    val g = (color shr 8 and 0xFF) / 255f
-                    val b = (color and 0xFF) / 255f
-                    0.2126 * r + 0.7152 * g + 0.0722 * b
-                } / 25
-            luminanceAnimation.animateTo(
-                averageLuminance.coerceAtMost(0.8).toFloat(),
-                tween(500),
-            )
             delay(2.seconds)
         }
     }

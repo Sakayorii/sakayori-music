@@ -17,9 +17,6 @@ import org.koin.dsl.module
 private val vlcModule =
     module {
         single<CoroutineScope>(qualifier = named(SERVICE_SCOPE)) {
-            // Single-thread dispatcher: VLC native calls are NOT thread-safe,
-            // so all player operations must be serialized on one thread.
-            // UI listener notifications are dispatched to Dispatchers.Main separately.
             val vlcDispatcher = Executors.newSingleThreadExecutor { r ->
                 Thread(r, "VLC-Player-Thread").apply { isDaemon = true }
             }.asCoroutineDispatcher()

@@ -25,7 +25,6 @@ data class NewFormatEntity(
     val cpn: String?,
     val audioUrl: String? = null,
     val videoUrl: String? = null,
-    // AutoMix metadata from Tidal (populated when 320kbps stream is fetched)
     @ColumnInfo(defaultValue = "NULL")
     val bpm: Int? = null,
     @ColumnInfo(name = "music_key", defaultValue = "NULL")

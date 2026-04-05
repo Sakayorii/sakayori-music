@@ -58,19 +58,19 @@ internal class AlbumRepositoryImpl(
     override suspend fun updateAlbumLiked(
         albumId: String,
         likeStatus: Int,
-    ) = withContext(Dispatchers.Main) { localDataSource.updateAlbumLiked(likeStatus, albumId) }
+    ) = withContext(Dispatchers.IO) { localDataSource.updateAlbumLiked(likeStatus, albumId) }
 
     override suspend fun updateAlbumInLibrary(
         inLibrary: LocalDateTime,
         albumId: String,
     ) = withContext(
-        Dispatchers.Main,
+        Dispatchers.IO,
     ) { localDataSource.updateAlbumInLibrary(inLibrary, albumId) }
 
     override suspend fun updateAlbumDownloadState(
         albumId: String,
         downloadState: Int,
-    ) = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.IO) {
         localDataSource.updateAlbumDownloadState(
             downloadState,
             albumId,

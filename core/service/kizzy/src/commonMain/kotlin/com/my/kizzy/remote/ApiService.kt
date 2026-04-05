@@ -51,4 +51,3 @@ class ApiService {
         const val BASE_URL = "https://kizzy-api.cjjdxhdjd.workers.dev"
     }
 }
-

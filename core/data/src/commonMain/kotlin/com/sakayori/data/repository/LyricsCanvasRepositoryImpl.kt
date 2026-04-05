@@ -464,7 +464,6 @@ internal class LyricsCanvasRepositoryImpl(
             }
         }.flowOn(Dispatchers.IO)
 
-    // SakayoriMusic Lyrics
     private val SakayoriMusicLyricsTag = "SakayoriMusicLyricsRepository"
 
     override fun getSakayoriMusicLyrics(videoId: String): Flow<Resource<Lyrics>> =

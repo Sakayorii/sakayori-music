@@ -38,7 +38,7 @@ internal class StreamRepositoryImpl(
             localDataSource.insertNewFormat(newFormat)
         }
 
-    override fun getNewFormat(videoId: String): Flow<NewFormatEntity?> = flow { emit(localDataSource.getNewFormat(videoId)) }.flowOn(Dispatchers.Main)
+    override fun getNewFormat(videoId: String): Flow<NewFormatEntity?> = flow { emit(localDataSource.getNewFormat(videoId)) }.flowOn(Dispatchers.IO)
 
     override suspend fun getFormatFlow(videoId: String) = localDataSource.getNewFormatAsFlow(videoId)
 
@@ -110,7 +110,6 @@ internal class StreamRepositoryImpl(
                 } else {
                     18
                 }
-            // 134, 136, 137
             youTube
                 .player(videoId, noLogIn = muxed)
                 .onSuccess { data ->
@@ -188,7 +187,6 @@ internal class StreamRepositoryImpl(
                     Logger.w("Stream", "expired at ${now().plusSeconds(response.streamingData?.expiresInSeconds?.toLong() ?: 0L)}")
                     val prefer320kbps = dataStoreManager.prefer320kbpsStream.first() == DataStoreManager.TRUE
                     val durationSecond = response.videoDetails?.lengthSeconds?.toIntOrNull()
-                    // AutoMix metadata from Tidal (hoisted for NewFormatEntity insertion below)
                     var tidalBpm: Int? = null
                     var tidalMusicKey: String? = null
                     var tidalKeyScale: String? = null
@@ -220,7 +218,6 @@ internal class StreamRepositoryImpl(
                                         Logger.e("Stream", "Tidal error: ${it.message}", it)
                                     }
                                 }.getOrNull()
-                        // Extract AutoMix metadata from Tidal match (bpm, key, keyScale)
                         tidalBpm = tidalResult?.bpm
                         tidalMusicKey = tidalResult?.musicKey
                         tidalKeyScale = tidalResult?.keyScale

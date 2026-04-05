@@ -7,13 +7,6 @@ import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil
 import uk.co.caprica.vlcj.factory.discovery.strategy.BaseNativeDiscoveryStrategy
 import java.io.File
 
-/**
- * Custom NativeDiscoveryStrategy for macOS.
- * On macOS, libvlccore must be force-loaded before libvlc to avoid loading failures.
- *
- * Adapted from https://github.com/mahozad/cutcon MacOsVlcDiscoverer
- * and uk.co.caprica.vlcj.factory.discovery.strategy.OsxNativeDiscoveryStrategy
- */
 class MacOsVlcDiscoverer :
     BaseNativeDiscoveryStrategy(
         FILENAME_PATTERNS,
@@ -39,10 +32,6 @@ class MacOsVlcDiscoverer :
 
     override fun setPluginPath(pluginPath: String?): Boolean = LibC.INSTANCE.setenv(PLUGIN_ENV_NAME, pluginPath, 1) == 0
 
-    /**
-     * On later versions of macOS, it is necessary to force-load libvlccore before libvlc.
-     * Otherwise, libvlc will fail to load.
-     */
     private fun forceLoadLibVlcCore(path: String) {
         NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcCoreLibraryName(), path)
         NativeLibrary.getInstance(RuntimeUtil.getLibVlcCoreLibraryName())

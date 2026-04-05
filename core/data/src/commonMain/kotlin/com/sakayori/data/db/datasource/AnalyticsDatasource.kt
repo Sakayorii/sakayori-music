@@ -36,7 +36,6 @@ internal class AnalyticsDatasource(
 
     suspend fun deleteOldPlaybackEvents(cutoffTimestamp: LocalDateTime) = databaseDao.deleteOldPlaybackEvents(cutoffTimestamp)
 
-    // Query methods for analytics reports
     suspend fun queryTopPlayedSongsLastXDays(x: Int) =
         databaseDao.queryTopPlayedSongsInRange(
             startTimestamp = now().beforeXDays(x),

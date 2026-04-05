@@ -82,7 +82,7 @@ private const val DOWNLOAD_USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 private const val DEFAULT_PARALLEL_DOWNLOADS = 4
-private const val CHUNK_SIZE = 1024L * 1024L // 1MB per chunk
+private const val CHUNK_SIZE = 1024L * 1024L
 
 class Ytmusic {
     val normalJson =
@@ -101,8 +101,6 @@ class Ytmusic {
                 checkHttpMethod = false
                 allowHttpsDowngrade = true
             }
-            // Disable logging for download - significantly improves performance
-            // Note: Don't install Logging plugin for download client
         }.also { downloadClient = it }
 
     var cookiePath: Path? = null
@@ -142,15 +140,6 @@ class Ytmusic {
     private fun createClient() =
         HttpClient(getEngine()) {
             expectSuccess = true
-//            install(KtorToCurl) {
-//                converter =
-//                    object : CurlLogger {
-//                        override fun log(curl: String) {
-//                            Logger.d(TAG, "Curl command:")
-//                            Logger.d(TAG, curl)
-//                        }
-//                    }
-//            }
             install(HttpRedirect) {
                 checkHttpMethod = false
                 allowHttpsDowngrade = true
@@ -333,23 +322,6 @@ class Ytmusic {
             setBody("[\"$poTokenChallengeRequestKey\", \"$challenge\"]")
         }
 
-//    curl 'https://jnn-pa.googleapis.com/$rpc/google.internal.waa.v1.Waa/Create' \
-//    -H 'accept: */*' \
-//    -H 'accept-language: vi,en;q=0.9,en-GB;q=0.8,en-US;q=0.7' \
-//    -H 'content-type: application/json+protobuf' \
-//    -H 'origin: https://www.youtube.com' \
-//    -H 'priority: u=1, i' \
-//    -H 'referer: https://www.youtube.com/' \
-//    -H 'sec-ch-ua: "Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"' \
-//    -H 'sec-ch-ua-mobile: ?0' \
-//    -H 'sec-ch-ua-platform: "macOS"' \
-//    -H 'sec-fetch-dest: empty' \
-//    -H 'sec-fetch-mode: cors' \
-//    -H 'sec-fetch-site: cross-site' \
-//    -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0' \
-//    -H 'x-goog-api-key: AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw' \
-//    -H 'x-user-agent: grpc-web-javascript/0.1' \
-//    --data-raw '["O43z0dpjhgX20SCx4KAo"]'
 
     suspend fun noLogInPlayer(
         videoId: String,
@@ -427,14 +399,6 @@ class Ytmusic {
                                 signatureTimestamp = signatureTimestamp ?: 20073,
                             ),
                     ),
-//                serviceIntegrityDimensions =
-//                    if (poToken != null) {
-//                        PlayerBody.ServiceIntegrityDimensions(
-//                            poToken = poToken,
-//                        )
-//                    } else {
-//                        null
-//                    },
             ),
         )
     }
@@ -540,10 +504,6 @@ class Ytmusic {
         )
     }
 
-    /***
-     * SponsorBlock testing
-     * @author Sakayori
-     */
 
     suspend fun getSkipSegments(videoId: String) =
         httpClient.get("https://sponsor.ajay.app/api/skipSegments/") {
@@ -827,7 +787,6 @@ class Ytmusic {
             with(getDownloadClient()) {
                 var lastException: Throwable? = null
 
-                // First, check if server supports Range requests
                 val supportsRange =
                     try {
                         val rangeResponse =
@@ -841,7 +800,6 @@ class Ytmusic {
                         false
                     }
 
-                // Get file size
                 val fileSize =
                     try {
                         head(url) {
@@ -851,7 +809,6 @@ class Ytmusic {
                         0L
                     }
 
-                // If server supports Range and file is large enough, use parallel download
                 if (supportsRange && fileSize > CHUNK_SIZE * 2) {
                     parallelDownload(
                         url = url,
@@ -869,7 +826,6 @@ class Ytmusic {
                         },
                     )
                 } else {
-                    // Fallback to single-threaded download
                     singleThreadedDownload(
                         url = url,
                         path = path,
@@ -902,14 +858,12 @@ class Ytmusic {
         val tempDir = path.parent?.let { it / "temp_chunks_${path.name}" } ?: throw IllegalArgumentException("Path has no parent")
 
         try {
-            // Create temp directory
             fileSystem.createDirectories(tempDir)
             val tempFiles =
                 (0 until parallelDownloads).map { index ->
                     tempDir / "chunk_$index.tmp"
                 }
 
-            // Download each chunk in parallel
             coroutineScope {
                 val jobs =
                     (0 until parallelDownloads).map { index ->
@@ -959,10 +913,8 @@ class Ytmusic {
                         }
                     }
 
-                // Wait for all chunks and track progress
                 var completedChunks = 0
 
-                // Simplified progress tracking - emit after each chunk completes
                 jobs.forEach { job ->
                     launch {
                         job.join()
@@ -973,11 +925,9 @@ class Ytmusic {
                     }
                 }
 
-                // Wait for all to complete
                 jobs.forEach { it.join() }
             }
 
-            // Merge all chunks into final file
             Logger.d(TAG, "Merging chunks into $path")
             fileSystem.sink(path).buffer().use { finalSink ->
                 tempFiles.forEach { tempFile ->
@@ -990,20 +940,17 @@ class Ytmusic {
                 }
             }
 
-            // Cleanup temp directory
             fileSystem.delete(tempDir)
 
             Logger.d(TAG, "Parallel download completed: $fileSize bytes")
             onComplete(true, null)
         } catch (e: Exception) {
             Logger.e(TAG, "Parallel download failed: ${e.message}")
-            // Cleanup temp directory
             try {
                 if (fileSystem.exists(tempDir)) {
                     fileSystem.deleteRecursively(tempDir)
                 }
             } catch (ignored: Exception) {
-                // Ignore cleanup errors
             }
             onComplete(false, e)
         }

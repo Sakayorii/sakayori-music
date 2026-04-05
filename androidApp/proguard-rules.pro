@@ -59,10 +59,15 @@
 -keep class org.koin.** { *; }
 -keep class org.koin.core.** { *; }
 -keep class org.koin.dsl.** { *; }
+-keep class org.koin.mp.** { *; }
+-keep class org.koin.compose.** { *; }
 -dontwarn org.koin.**
 -keep class com.sakayori.data.** { *; }
 -keep class com.sakayori.domain.** { *; }
--keep class com.sakayori.music.viewModel.** { *; }
+-keep class com.sakayori.music.** { *; }
+-keep class com.sakayori.media3.** { *; }
+-keep class com.sakayori.logger.** { *; }
+-keep class com.sakayori.common.** { *; }
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn kotlinx.serialization.internal.ClassValueReferences

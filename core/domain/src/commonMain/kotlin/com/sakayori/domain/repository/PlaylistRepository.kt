@@ -79,15 +79,9 @@ interface PlaylistRepository {
 
     suspend fun insertYourYouTubePlaylist(yourYouTubePlaylist: YourYouTubePlaylistList)
 
-    /**
-     * @param emailPageId = $email_$pageId
-     */
     fun getYourYouTubePlaylistList(emailPageId: String): Flow<YourYouTubePlaylistList?>
 
     suspend fun deleteAllYourYouTubePlaylist()
 
-    /**
-     * @return Country Code -> YouTube Music Playlist ID
-     */
     fun getChartPlaylist(): Flow<Resource<List<ChartItem>>>
 }
