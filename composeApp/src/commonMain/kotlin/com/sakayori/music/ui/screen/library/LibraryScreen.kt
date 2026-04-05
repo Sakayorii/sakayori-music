@@ -83,6 +83,7 @@ import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
@@ -406,7 +407,7 @@ fun LibraryScreen(
                     TextButton(
                         onClick = {
                             if (newTitle.isBlank()) {
-                                viewModel.makeToast(runBlocking { getString(Res.string.playlist_name_cannot_be_empty) })
+                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.playlist_name_cannot_be_empty) })
                             } else {
                                 viewModel.createPlaylist(newTitle)
                                 hideEditTitleBottomSheet()

@@ -15,27 +15,34 @@
 local.properties
 /app/release/
 crowdin.yml
-# Kotlin 2.0
 .kotlin/
 .idea
 /SakayoriMusic.jks
 /ffmpeg-kit/build/
 
-#dev files
 ign.md
 .docs
 
-# Sentry Config File
 sentry.properties
 /composeApp/build/
 /composeApp/cache/
 /composeApp/kcef-bundle/
 /.mcp.json
-/.claude/settings.local.json
 
 /androidApp/build/
 /androidApp/cache/
 
-# VLC native libraries (downloaded by vlc-setup plugin)
 /vlc-natives/
-
+/compose/
+/buildkonfig/
+/classes/
+/generated/
+/intermediates/
+/kotlin/
+/libs/
+/outputs/
+/tmp/
+/crashlytics-empty/build/
+/crashlytics/build/
+.claude/
+bin/

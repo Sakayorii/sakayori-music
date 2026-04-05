@@ -34,16 +34,6 @@ import com.sakayori.music.viewModel.SharedViewModel
 import java.awt.Cursor
 import java.awt.MouseInfo
 
-/**
- * Root composable for the mini player window content.
- * Automatically switches between layouts based on window width:
- * - < 260dp: Compact (controls only)
- * - 260-360dp: Medium (artwork + controls)
- * - > 360dp: Full (artwork + info + controls)
- *
- * Shows placeholder when no track is playing.
- * Includes close button and drag handle since window is frameless.
- */
 @Composable
 fun MiniPlayerRoot(
     sharedViewModel: SharedViewModel,
@@ -60,11 +50,9 @@ fun MiniPlayerRoot(
         }
     }
 
-    // Track mouse position for dragging
     var dragStartMousePos by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var dragStartWindowPos by remember { mutableStateOf<Pair<Float, Float>?>(null) }
 
-    // Check if there's any track playing
     val hasTrack = nowPlayingData.nowPlayingTitle.isNotBlank()
 
     Surface(
@@ -74,11 +62,9 @@ fun MiniPlayerRoot(
     ) {
         Box(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
             if (!hasTrack) {
-                // Show empty state
                 EmptyMiniPlayerState()
             } else {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    // Calculate aspect ratio to detect square/tall layout
                     val aspectRatio = maxWidth.value / maxHeight.value
                     val isSquareOrTall = aspectRatio <= 1.3f && maxHeight >= 200.dp
 
@@ -124,7 +110,6 @@ fun MiniPlayerRoot(
                 }
             }
 
-            // Close button (top-right corner)
             IconButton(
                 onClick = onClose,
                 modifier =
@@ -141,7 +126,6 @@ fun MiniPlayerRoot(
                 )
             }
 
-            // Drag handle (top center area for moving window - narrower to avoid resize corners)
             Box(
                 modifier =
                     Modifier
@@ -151,7 +135,6 @@ fun MiniPlayerRoot(
                         .pointerInput(Unit) {
                             detectDragGestures(
                                 onDragStart = {
-                                    // Store initial mouse and window positions
                                     val mousePos = MouseInfo.getPointerInfo().location
                                     dragStartMousePos = Pair(mousePos.x, mousePos.y)
                                     val currentPos = windowState.position

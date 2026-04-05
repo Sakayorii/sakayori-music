@@ -62,6 +62,7 @@ import com.sakayori.music.ui.navigation.destination.list.PodcastDestination
 import com.sakayori.music.ui.theme.typo
 import com.sakayori.music.viewModel.LibraryViewModel
 import com.sakayori.music.viewModel.SharedViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
@@ -247,7 +248,7 @@ fun LibraryItem(
                                                     listTracks = arrayListOf(firstQueue),
                                                     firstPlayedTrack = firstQueue,
                                                     playlistId = "RDAMVM${firstQueue.videoId}",
-                                                    playlistName = "\"${song.title}\" ${runBlocking { getString(Res.string.radio) }}",
+                                                    playlistName = "\"${song.title}\" ${runBlocking(Dispatchers.Default) { getString(Res.string.radio) }}",
                                                     playlistType = DomainPlaylistType.RADIO,
                                                     continuation = null,
                                                 ),
@@ -422,7 +423,6 @@ sealed class LibraryItemType {
     ) : LibraryItemType()
 
     data class LocalPlaylist(
-        // Create new local playlist
         val onAddClick: (String) -> Unit,
     ) : LibraryItemType()
 

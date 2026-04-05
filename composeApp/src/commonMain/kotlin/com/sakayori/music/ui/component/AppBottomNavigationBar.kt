@@ -50,7 +50,7 @@ fun AppBottomNavigationBar(
                 is HomeDestination -> BottomNavScreen.Home.ordinal
                 is SearchDestination -> BottomNavScreen.Search.ordinal
                 is LibraryDestination -> BottomNavScreen.Library.ordinal
-                else -> BottomNavScreen.Home.ordinal // Default to Home if not recognized
+                else -> BottomNavScreen.Home.ordinal
             },
         )
     }
@@ -151,7 +151,7 @@ fun AppNavigationRail(
                 is HomeDestination -> BottomNavScreen.Home.ordinal
                 is SearchDestination -> BottomNavScreen.Search.ordinal
                 is LibraryDestination -> BottomNavScreen.Library.ordinal
-                else -> BottomNavScreen.Home.ordinal // Default to Home if not recognized
+                else -> BottomNavScreen.Home.ordinal
             },
         )
     }

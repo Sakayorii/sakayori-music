@@ -242,14 +242,14 @@ internal class MediaServiceHandlerImpl(
         getSkipSegmentsJob = Job()
         getFormatJob = Job()
         jobWatchtime = Job()
-        skipSilent = runBlocking { dataStoreManager.skipSilent.first() == TRUE }
+        skipSilent = runBlocking(Dispatchers.IO) { dataStoreManager.skipSilent.first() == TRUE }
         normalizeVolume =
-            runBlocking { dataStoreManager.normalizeVolume.first() == TRUE }
+            runBlocking(Dispatchers.IO) { dataStoreManager.normalizeVolume.first() == TRUE }
         _nowPlaying.value = player.currentMediaItem
-        if (runBlocking { dataStoreManager.saveStateOfPlayback.first() } == TRUE) {
+        if (runBlocking(Dispatchers.IO) { dataStoreManager.saveStateOfPlayback.first() } == TRUE) {
             Logger.d(TAG, "SaveStateOfPlayback TRUE")
-            val shuffleKey = runBlocking { dataStoreManager.shuffleKey.first() }
-            val repeatKey = runBlocking { dataStoreManager.repeatKey.first() }
+            val shuffleKey = runBlocking(Dispatchers.IO) { dataStoreManager.shuffleKey.first() }
+            val repeatKey = runBlocking(Dispatchers.IO) { dataStoreManager.repeatKey.first() }
             Logger.d(TAG, "Shuffle: $shuffleKey")
             Logger.d(TAG, "Repeat: $repeatKey")
             val restoredShuffle = shuffleKey == TRUE
@@ -1266,7 +1266,7 @@ internal class MediaServiceHandlerImpl(
                                             ),
                                     )
                                 }
-                                if (runBlocking { dataStoreManager.endlessQueue.first() } == TRUE) {
+                                if (runBlocking(Dispatchers.IO) { dataStoreManager.endlessQueue.first() } == TRUE) {
                                     Logger.w(TAG, "loadMore: Endless Queue")
                                     val lastTrack =
                                         queueData.value.data.listTracks
@@ -1293,7 +1293,7 @@ internal class MediaServiceHandlerImpl(
                         }
                 }
             }
-        } else if (runBlocking { dataStoreManager.endlessQueue.first() } == TRUE) {
+        } else if (runBlocking(Dispatchers.IO) { dataStoreManager.endlessQueue.first() } == TRUE) {
             Logger.w(TAG, "loadMore: Endless Queue")
             val lastTrack =
                 queueData.value.data.listTracks
@@ -1967,14 +1967,14 @@ internal class MediaServiceHandlerImpl(
                 }
             }
         if (runBlocking) {
-            runBlocking { unit() }
+            runBlocking(Dispatchers.IO) { unit() }
         } else {
             coroutineScope.launch { unit() }
         }
     }
 
     override fun mayBeNormalizeVolume() {
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             normalizeVolume = dataStoreManager.normalizeVolume.first() == TRUE
         }
         if (!normalizeVolume) {
@@ -2057,8 +2057,8 @@ internal class MediaServiceHandlerImpl(
     }
 
     override fun mayBeSavePlaybackState() {
-        if (runBlocking { dataStoreManager.saveStateOfPlayback.first() } == TRUE) {
-            runBlocking {
+        if (runBlocking(Dispatchers.IO) { dataStoreManager.saveStateOfPlayback.first() } == TRUE) {
+            runBlocking(Dispatchers.IO) {
                 dataStoreManager.recoverShuffleAndRepeatKey(
                     player.shuffleModeEnabled,
                     player.repeatMode,
@@ -2100,7 +2100,7 @@ internal class MediaServiceHandlerImpl(
     }
 
     override fun shouldReleaseOnTaskRemoved() =
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             dataStoreManager.killServiceOnExit.first() == TRUE
         }
 
@@ -2256,7 +2256,7 @@ internal class MediaServiceHandlerImpl(
             }
         }
         queueData.value.data.listTracks.let { list ->
-            if ((list.size > 3 || runBlocking { dataStoreManager.endlessQueue.first() == TRUE }) &&
+            if ((list.size > 3 || runBlocking(Dispatchers.IO) { dataStoreManager.endlessQueue.first() == TRUE }) &&
                 list.size - player.currentMediaItemIndex < 3 &&
                 list.size - player.currentMediaItemIndex >= 0 &&
                 queueData.value.queueState == QueueData.StateSource.STATE_INITIALIZED

@@ -14,6 +14,8 @@ import com.sakayori.domain.repository.HomeRepository
 import com.sakayori.domain.utils.Resource
 import com.sakayori.logger.Logger
 import com.sakayori.music.viewModel.base.BaseViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -42,10 +44,10 @@ class HomeViewModel(
         MutableStateFlow(arrayListOf())
     val homeItemList: StateFlow<List<HomeItem>> = _homeItemList
 
-    private var _homeListState = MutableStateFlow<ListState>(ListState.IDLE)
+    private val _homeListState = MutableStateFlow<ListState>(ListState.IDLE)
     val homeListState: StateFlow<ListState> = _homeListState
 
-    private var _continuation = MutableStateFlow<String?>(null)
+    private val _continuation = MutableStateFlow<String?>(null)
     val continuation: StateFlow<String?> = _continuation
 
     private val _exploreMoodItem: MutableStateFlow<Mood?> = MutableStateFlow(null)
@@ -61,7 +63,7 @@ class HomeViewModel(
     val chart: StateFlow<Chart?> = _chart
     private val _newRelease: MutableStateFlow<List<HomeItem>> = MutableStateFlow(arrayListOf())
     val newRelease: StateFlow<List<HomeItem>> = _newRelease
-    var regionCodeChart: MutableStateFlow<String?> = MutableStateFlow(null)
+    val regionCodeChart: MutableStateFlow<String?> = MutableStateFlow(null)
 
     val loading = MutableStateFlow<Boolean>(true)
     val loadingChart = MutableStateFlow<Boolean>(true)
@@ -71,10 +73,9 @@ class HomeViewModel(
     private val _songEntity: MutableStateFlow<SongEntity?> = MutableStateFlow(null)
     val songEntity: StateFlow<SongEntity?> = _songEntity
 
-    private var _params: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _params: MutableStateFlow<String?> = MutableStateFlow(null)
     val params: StateFlow<String?> = _params
 
-    // For showing alert that should log in to YouTube
     private val _showLogInAlert: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showLogInAlert: StateFlow<Boolean> = _showLogInAlert
 
@@ -87,8 +88,8 @@ class HomeViewModel(
     val mainHomeThumbnail: StateFlow<String?> = _mainHomeThumbnail
 
     init {
-        if (runBlocking { dataStoreManager.cookie.first() }.isEmpty() &&
-            runBlocking {
+        if (runBlocking(Dispatchers.IO) { dataStoreManager.cookie.first() }.isEmpty() &&
+            runBlocking(Dispatchers.IO) {
                 dataStoreManager.shouldShowLogInRequiredAlert.first() == TRUE
             }
         ) {
@@ -100,7 +101,6 @@ class HomeViewModel(
             exploreChart(regionCodeChart.value ?: "ZZ")
             language = dataStoreManager.getString(SELECTED_LANGUAGE).first()
                 ?: SUPPORTED_LANGUAGE.codes.first()
-            //  refresh when region change
             val job1 =
                 launch {
                     dataStoreManager.location.distinctUntilChanged().collect {
@@ -108,7 +108,6 @@ class HomeViewModel(
                         getHomeItemList(params.value)
                     }
                 }
-            //  refresh when language change
             val job2 =
                 launch {
                     dataStoreManager.language.distinctUntilChanged().collect {
@@ -143,7 +142,7 @@ class HomeViewModel(
                             if (it.isNotEmpty()) {
                                 Logger.w(tag, "Cookie changed, refreshing home")
                                 loading.value = true
-                                delay(1000) // To wait for the cookie to be saved properly
+                                delay(1000)
                                 getHomeItemList(params.value)
                             }
                         }
@@ -183,11 +182,11 @@ class HomeViewModel(
         loading.value = true
         _homeListState.value = ListState.LOADING
         language =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 dataStoreManager.getString(SELECTED_LANGUAGE).first()
                     ?: SUPPORTED_LANGUAGE.codes.first()
             }
-        regionCode = runBlocking { dataStoreManager.location.first() }
+        regionCode = runBlocking(Dispatchers.IO) { dataStoreManager.location.first() }
         homeJob?.cancel()
         homeJob =
             viewModelScope.launch {
@@ -353,7 +352,6 @@ class HomeViewModel(
     }
 
     companion object {
-        // Home params
         const val HOME_PARAMS_RELAX = "ggM8SgQIBxADSgQIBRABSgQICRABSgQIChABSgQIDRABSgQICBABSgQIBBABSgQIDhABSgQIAxABSgQIBhAB"
         const val HOME_PARAMS_SLEEP = "ggM8SgQIBxABSgQIBRADSgQICRABSgQIChABSgQIDRABSgQICBABSgQIBBABSgQIDhABSgQIAxABSgQIBhAB"
         const val HOME_PARAMS_ENERGIZE = "ggM8SgQIBxABSgQIBRABSgQICRADSgQIChABSgQIDRABSgQICBABSgQIBBABSgQIDhABSgQIAxABSgQIBhAB"

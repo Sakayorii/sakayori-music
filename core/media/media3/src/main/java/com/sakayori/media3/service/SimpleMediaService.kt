@@ -39,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -128,7 +129,7 @@ internal class SimpleMediaService :
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
         controllerFuture.addListener({ controllerFuture.get() }, MoreExecutors.directExecutor())
 
-        if (runBlocking { dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE }) {
+        if (runBlocking(Dispatchers.IO) { dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE }) {
             val notificationManager = getSystemService<NotificationManager>()
             notificationManager?.run {
                 createNotificationChannel(
@@ -206,16 +207,13 @@ internal class SimpleMediaService :
     @UnstableApi
     fun release() {
         Logger.w("Service", "Starting release process")
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             try {
-                // Release MediaSession (don't release player - CrossfadeExoPlayerAdapter manages it)
                 mediaSession?.run {
                     this.player.pause()
                     this.player.playWhenReady = false
-                    // Don't call this.player.release() - CrossfadeExoPlayerAdapter manages player lifecycle
                     this.release()
                 }
-                // Release handler (contains coroutines and jobs, which also releases the adapter)
                 simpleMediaServiceHandler.release()
                 mediaSession = null
                 Logger.w("Service", "Simple Media Service Released")
@@ -249,7 +247,6 @@ internal class SimpleMediaService :
         }
     }
 
-    // Can't inject by Koin because it depend on service
     @UnstableApi
     private fun provideMediaLibrarySession(
         service: MediaLibraryService,

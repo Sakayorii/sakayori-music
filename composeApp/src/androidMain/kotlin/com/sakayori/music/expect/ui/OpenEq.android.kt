@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.sakayori.logger.Logger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
@@ -28,7 +29,7 @@ actual fun openEqResult(audioSessionId: Int): OpenEqLauncher {
             val resolveInfo: List<*> = packageManager.queryIntentActivities(eqIntent, 0)
             Logger.d("EQ", resolveInfo.toString())
             if (resolveInfo.isEmpty()) {
-                showToast(runBlocking { getString(Res.string.no_equalizer) }, ToastGravity.Bottom)
+                showToast(runBlocking(Dispatchers.Default) { getString(Res.string.no_equalizer) }, ToastGravity.Bottom)
             } else {
                 resultLauncher.launch(eqIntent)
             }

@@ -81,6 +81,7 @@ import com.sakayori.music.viewModel.ArtistScreenState
 import com.sakayori.music.viewModel.ArtistViewModel
 import com.sakayori.music.viewModel.SharedViewModel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -116,7 +117,6 @@ fun ArtistScreen(
 
     val playingTrack by sharedViewModel.nowPlayingState.map { it?.track?.videoId }.collectAsState(null)
 
-    // Choosing song to show Bottom sheet
     var choosingTrack by remember {
         mutableStateOf<Track?>(null)
     }
@@ -269,7 +269,7 @@ fun ArtistScreen(
                                         if (state.data.shuffleParam != null) {
                                             viewModel.onShuffleClick(state.data.shuffleParam)
                                         } else {
-                                            viewModel.makeToast(runBlocking { getString(Res.string.error) })
+                                            viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.error) })
                                         }
                                     },
                                 ) {
@@ -281,7 +281,7 @@ fun ArtistScreen(
                                         if (state.data.radioParam != null) {
                                             viewModel.onRadioClick(state.data.radioParam)
                                         } else {
-                                            viewModel.makeToast(runBlocking { getString(Res.string.error) })
+                                            viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.error) })
                                         }
                                     },
                                     colors =
@@ -304,7 +304,6 @@ fun ArtistScreen(
                             }
                         }
 
-                        // Popular Songs
                         AnimatedVisibility(state.data.popularSongs.isNotEmpty()) {
                             Column {
                                 Row(
@@ -323,7 +322,7 @@ fun ArtistScreen(
                                             if (id != null) {
                                                 navController.navigate(PlaylistDestination(id))
                                             } else {
-                                                viewModel.makeToast(runBlocking { getString(Res.string.error) })
+                                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.error) })
                                             }
                                         },
                                         colors =
@@ -372,7 +371,6 @@ fun ArtistScreen(
                             }
                         }
 
-                        // Singles
                         AnimatedVisibility(
                             state.data.singles != null &&
                                 state.data.singles.results
@@ -439,7 +437,6 @@ fun ArtistScreen(
                             }
                         }
 
-                        // Albums
                         AnimatedVisibility(
                             state.data.albums != null &&
                                 state.data.albums.results
@@ -506,7 +503,6 @@ fun ArtistScreen(
                             }
                         }
 
-                        // Videos
                         AnimatedVisibility(
                             state.data.video != null &&
                                 state.data.video.video
@@ -597,7 +593,6 @@ fun ArtistScreen(
                             }
                         }
 
-                        // Feature on
                         AnimatedVisibility(state.data.featuredOn.isNotEmpty()) {
                             Column {
                                 Row(
@@ -640,7 +635,6 @@ fun ArtistScreen(
                             }
                         }
 
-                        // Related
                         AnimatedVisibility(
                             state.data.related != null &&
                                 state.data.related.results
@@ -761,4 +755,3 @@ fun ArtistScreen(
         }
     }
 }
-

@@ -1,6 +1,7 @@
 package com.sakayori.domain.extension
 
 import com.sakayori.common.MERGING_DATA_TYPE
+import com.sakayori.domain.data.entities.DownloadState
 import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.data.model.browse.album.Track
 import com.sakayori.domain.data.model.cookie.CookieItem
@@ -60,7 +61,7 @@ fun GenericMediaItem.toSongEntity(): SongEntity =
         resultType = "",
         liked = false,
         totalPlayTime = 0,
-        downloadState = 0,
+        downloadState = DownloadState.STATE_NOT_DOWNLOADED,
     )
 
 fun SongEntity.toGenericMediaItem(): GenericMediaItem {

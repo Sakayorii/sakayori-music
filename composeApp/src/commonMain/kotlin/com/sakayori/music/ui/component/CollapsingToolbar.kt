@@ -105,7 +105,6 @@ fun CollapsingToolbarParallaxEffect(
 
     val scroll: ScrollState = rememberScrollState(0)
 
-    // Increased from 2/6 to 2/4 (50% of screen height) for a bigger, more prominent artist image
     val headerHeight = (getScreenSizeInfo().hDP.dp * 2 / 4).coerceAtLeast(250.dp)
 
     val headerHeightPx = with(density) { headerHeight.toPx() }
@@ -224,7 +223,7 @@ private fun Header(
         modifier =
             modifier
                 .graphicsLayer {
-                    translationY = -scroll.value.toFloat() / 2f // Parallax effect
+                    translationY = -scroll.value.toFloat() / 2f
                     alpha = (-1f / headerHeightPx) * scroll.value + 1
                 }.background(
                     backgroundColor.rgbFactor(0.5f),
@@ -254,7 +253,6 @@ private fun Header(
                 Modifier
                     .fillMaxSize(),
         )
-        // YouTube Music style gradient - smooth fade from image to content
         Box(
             Modifier
                 .fillMaxSize()
@@ -270,8 +268,8 @@ private fun Header(
                                     Color.Black.copy(alpha = 0.85f),
                                     md_theme_dark_background,
                                 ),
-                            startY = headerHeightPx / 2,  // Start fade at middle of header
-                            endY = headerHeightPx,         // Complete at bottom of header
+                            startY = headerHeightPx / 2,
+                            endY = headerHeightPx,
                         ),
                 ),
         )
@@ -389,7 +387,7 @@ private fun Title(
 
     Text(
         text = title,
-        fontSize = 30.sp, // Reduced from 48.sp — still bold and prominent, fits longer names
+        fontSize = 30.sp,
         fontWeight = FontWeight.Bold,
         color = Color.White,
         maxLines = 1,
@@ -461,4 +459,3 @@ private fun Title(
                 },
     )
 }
-

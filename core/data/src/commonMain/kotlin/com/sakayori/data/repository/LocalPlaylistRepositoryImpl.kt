@@ -55,6 +55,7 @@ private const val TAG = "LocalPlaylistRepositoryImpl"
 internal class LocalPlaylistRepositoryImpl(
     private val localDataSource: LocalDataSource,
     private val youTube: YouTube,
+    private val converter: Converters,
 ) : LocalPlaylistRepository {
     override fun getLocalPlaylist(id: Long) =
         wrapDataResource {
@@ -106,7 +107,7 @@ internal class LocalPlaylistRepositoryImpl(
     override fun listTrackFlow(id: Long): Flow<List<String>> =
         localDataSource
             .getListTracksFlowOfLocalPlaylist(id)
-            .map { Converters().fromString(it.firstOrNull()) ?: emptyList() }
+            .map { converter.fromString(it.firstOrNull()) ?: emptyList() }
 
     override fun getTracksPaging(
         id: Long,
@@ -131,6 +132,7 @@ internal class LocalPlaylistRepositoryImpl(
                         playlistId = id,
                         filter = filter,
                         localDataSource = localDataSource,
+                        converter = converter,
                     )
                 },
             ).flow
@@ -258,12 +260,12 @@ internal class LocalPlaylistRepositoryImpl(
                     downloadState = DownloadState.STATE_NOT_DOWNLOADED,
                     syncState = Syncing,
                 )
-            runBlocking { localDataSource.insertLocalPlaylist(localPlaylistEntity) }
+            runBlocking(Dispatchers.IO) { localDataSource.insertLocalPlaylist(localPlaylistEntity) }
             val localPlaylistId =
                 localDataSource.getLocalPlaylistByYoutubePlaylistId(playlist.id)?.id
                     ?: throw Exception(errorMessage)
             tracks.forEachIndexed { i, track ->
-                runBlocking {
+                runBlocking(Dispatchers.IO) {
                     localDataSource.insertSong(
                         track.toSongEntity(),
                     )
@@ -506,7 +508,7 @@ internal class LocalPlaylistRepositoryImpl(
                     position = nextPosition,
                     inPlaylist = now(),
                 )
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 localDataSource.insertPairSongLocalPlaylist(nextPair)
                 localDataSource.updateLocalPlaylistTracks(
                     localPlaylist.tracks?.plus(song.videoId) ?: mutableListOf(song.videoId),

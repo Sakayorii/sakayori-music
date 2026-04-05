@@ -138,6 +138,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
@@ -349,7 +350,6 @@ fun LocalPlaylistScreen(
             }
     }
 
-    // Loading dialog
     val showLoadingDialog by viewModel.showLoadingDialog.collectAsStateWithLifecycle()
     if (showLoadingDialog.first) {
         LoadingDialog(
@@ -367,7 +367,6 @@ fun LocalPlaylistScreen(
             }
         }
     var overscrollJob by remember { mutableStateOf<Job?>(null) }
-//    Box {
     LazyColumn(
         modifier =
             Modifier
@@ -428,10 +427,6 @@ fun LocalPlaylistScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth(),
-//                                .haze(
-//                                    hazeState,
-//                                    style = HazeMaterials.regular(),
-//                                ),
                 ) {
                     Box(
                         modifier =
@@ -463,7 +458,6 @@ fun LocalPlaylistScreen(
                 Column(
                     Modifier
                         .background(Color.Transparent),
-//                            .hazeChild(hazeState, style = HazeMaterials.regular()),
                 ) {
                     Row(
                         modifier =
@@ -593,7 +587,7 @@ fun LocalPlaylistScreen(
                                                             .clip(
                                                                 CircleShape,
                                                             ).clickable {
-                                                                viewModel.makeToast(runBlocking { getString(Res.string.downloaded) })
+                                                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.downloaded) })
                                                             },
                                                 ) {
                                                     Icon(
@@ -616,7 +610,7 @@ fun LocalPlaylistScreen(
                                                             .clip(
                                                                 CircleShape,
                                                             ).clickable {
-                                                                viewModel.makeToast(runBlocking { getString(Res.string.downloading) })
+                                                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.downloading) })
                                                             },
                                                 ) {
                                                     Image(
@@ -675,7 +669,6 @@ fun LocalPlaylistScreen(
                                                                         height,
                                                                     ),
                                                             )
-                                                        // Destination
                                                         with(aiPainter) {
                                                             translate(
                                                                 left = (size.width - width / 1.5f) / 2,
@@ -686,7 +679,6 @@ fun LocalPlaylistScreen(
                                                                 )
                                                             }
                                                         }
-                                                        // Source
                                                         drawRect(
                                                             brush = brush,
                                                             blendMode = BlendMode.SrcIn,

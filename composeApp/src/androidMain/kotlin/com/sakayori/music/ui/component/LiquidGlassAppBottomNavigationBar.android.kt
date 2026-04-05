@@ -125,16 +125,15 @@ actual fun LiquidGlassAppBottomNavigationBar(
             try {
                 withContext(Dispatchers.IO) {
                     val imageBitmap = layer.toImageBitmap()
-                    val thumbnail =
-                        imageBitmap
-                            .asAndroidBitmap()
-                            .scale(5, 5, false)
-                            .copy(Bitmap.Config.ARGB_8888, false)
+                    val androidBitmap = imageBitmap.asAndroidBitmap()
+                    val thumbnail = androidBitmap.scale(5, 5, false)
+                    val copyBitmap = thumbnail.copy(Bitmap.Config.ARGB_8888, false)
                     buffer.rewind()
-                    thumbnail.copyPixelsToBuffer(buffer)
+                    copyBitmap.copyPixelsToBuffer(buffer)
+                    if (!thumbnail.isRecycled) thumbnail.recycle()
+                    if (!copyBitmap.isRecycled) copyBitmap.recycle()
                 }
-            } catch (e: Exception) {
-                Logger.e(TAG, "Error getting pixels from layer: ${e.localizedMessage}")
+            } catch (_: Exception) {
             }
             val averageLuminance =
                 (0 until 25).sumOf { index ->
@@ -148,12 +147,11 @@ actual fun LiquidGlassAppBottomNavigationBar(
                 averageLuminance.coerceAtMost(0.8).toFloat(),
                 tween(500),
             )
-            delay(1.seconds)
+            delay(2.seconds)
         }
     }
 
     val nowPlayingData by viewModel.nowPlayingState.collectAsStateWithLifecycle()
-    // MiniPlayer visibility logic
     var isShowMiniPlayer by rememberSaveable {
         mutableStateOf(true)
     }
@@ -171,7 +169,7 @@ actual fun LiquidGlassAppBottomNavigationBar(
                 is HomeDestination -> BottomNavScreen.Home.ordinal
                 is SearchDestination -> BottomNavScreen.Search.ordinal
                 is LibraryDestination -> BottomNavScreen.Library.ordinal
-                else -> BottomNavScreen.Home.ordinal // Default to Home if not recognized
+                else -> BottomNavScreen.Home.ordinal
             },
         )
     }
@@ -192,7 +190,6 @@ actual fun LiquidGlassAppBottomNavigationBar(
 
     LaunchedEffect(currentBackStackEntry) {
         currentBackStackEntry?.destination?.let { current ->
-            Logger.d(TAG, "LiquidGlassAppBottomNavigationBar: current route: ${current.route}")
             isInSearchDestination = current.hasRoute(SearchDestination::class)
         }
     }
@@ -224,7 +221,6 @@ actual fun LiquidGlassAppBottomNavigationBar(
     }
 
     LaunchedEffect(isScrolledToTop) {
-        Logger.d(TAG, "isScrolledToTop: $isScrolledToTop")
         if (!isInSearchDestination) {
             isExpanded = isScrolledToTop
         }
@@ -244,9 +240,6 @@ actual fun LiquidGlassAppBottomNavigationBar(
                 .imePadding(),
         animateChangesSpec = tween(300),
     ) {
-        /**
-         * LTR: HOME -> MIX FOR YOU -> LIBRARY | SEARCH
-         */
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier =

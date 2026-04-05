@@ -8,6 +8,7 @@ import androidx.room.RoomRawQuery
 import androidx.room.Transaction
 import androidx.room.Update
 import com.sakayori.domain.data.entities.AlbumEntity
+import com.sakayori.domain.data.entities.DownloadState
 import com.sakayori.domain.data.entities.ArtistEntity
 import com.sakayori.domain.data.entities.EpisodeEntity
 import com.sakayori.domain.data.entities.FollowedArtistSingleAndAlbum
@@ -110,7 +111,7 @@ interface DatabaseDao {
             val fetched =
                 getDownloadedPlaylists(
                     limit = 100,
-                    offset = shouldContinue.second,
+                    offset = shouldContinuePlaylist.second,
                 )
             a.addAll(
                 fetched,
@@ -271,7 +272,7 @@ interface DatabaseDao {
     suspend fun updateDownloadState(
         downloadState: Int,
         videoId: String,
-        downloadedAt: LocalDateTime? = if (downloadState == 3) now() else null,
+        downloadedAt: LocalDateTime? = if (downloadState == DownloadState.STATE_DOWNLOADED) now() else null,
     )
 
     @Query("UPDATE song SET durationSeconds = :durationSeconds WHERE videoId = :videoId")
@@ -378,7 +379,7 @@ interface DatabaseDao {
     suspend fun updateAlbumDownloadState(
         downloadState: Int,
         browseId: String,
-        downloadedAt: LocalDateTime? = if (downloadState == 3) now() else null,
+        downloadedAt: LocalDateTime? = if (downloadState == DownloadState.STATE_DOWNLOADED) now() else null,
     )
 
     @Query("SELECT * FROM album WHERE downloadState = 3 ORDER BY downloadedAt DESC LIMIT :limit OFFSET :offset")
@@ -432,7 +433,7 @@ interface DatabaseDao {
     suspend fun updatePlaylistDownloadState(
         downloadState: Int,
         playlistId: String,
-        downloadedAt: LocalDateTime? = if (downloadState == 3) now() else null,
+        downloadedAt: LocalDateTime? = if (downloadState == DownloadState.STATE_DOWNLOADED) now() else null,
     )
 
     @Query("SELECT * FROM playlist WHERE downloadState = 3 ORDER BY downloadedAt DESC LIMIT :limit OFFSET :offset")
@@ -497,7 +498,7 @@ interface DatabaseDao {
     suspend fun updateLocalPlaylistDownloadState(
         downloadState: Int,
         id: Long,
-        downloadedAt: LocalDateTime? = if (downloadState == 3) now() else null,
+        downloadedAt: LocalDateTime? = if (downloadState == DownloadState.STATE_DOWNLOADED) now() else null,
     )
 
     @Query("SELECT * FROM local_playlist WHERE downloadState = 3 ORDER BY downloadedAt DESC LIMIT :limit OFFSET :offset")

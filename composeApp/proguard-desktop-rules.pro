@@ -94,9 +94,9 @@
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn kotlinx.serialization.internal.ClassValueReferences
--keep class com.sakayori.SakayoriMusic.data.model.** { *; }
--keep class com.sakayori.SakayoriMusic.extension.AllExtKt { *; }
--keep class com.sakayori.SakayoriMusic.extension.AllExtKt$* { *; }
+-keep class com.sakayori.music.data.model.** { *; }
+-keep class com.sakayori.music.extension.AllExtKt { *; }
+-keep class com.sakayori.music.extension.AllExtKt$* { *; }
 -keep class com.sakayori.kotlinytmusicscraper.extension.MapExtKt$* { *; }
 
 ## Removes all Logs as they cause perfomance issues in prod

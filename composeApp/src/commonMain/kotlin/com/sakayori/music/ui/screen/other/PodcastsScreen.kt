@@ -126,7 +126,6 @@ fun PodcastScreen(
         shouldHideTopBar = !firstItemVisible
     }
 
-    // Theo dõi gradient cho background
     var gradientColors by remember { mutableStateOf(listOf(md_theme_dark_background, md_theme_dark_background)) }
 
     val paletteState = rememberPaletteState()
@@ -326,7 +325,6 @@ fun PodcastScreen(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 verticalAlignment = Alignment.CenterVertically,
                                             ) {
-                                                // Play button
                                                 RippleIconButton(
                                                     resId = Res.drawable.baseline_play_circle_24,
                                                     fillMaxSize = true,
@@ -335,7 +333,6 @@ fun PodcastScreen(
                                                     viewModel.onUIEvent(PodcastUIEvent.PlayAll(id))
                                                 }
 
-                                                // Favorite
                                                 HeartCheckBox(
                                                     size = 32,
                                                     checked = isFavorite,
@@ -351,7 +348,6 @@ fun PodcastScreen(
 
                                                 Spacer(Modifier.weight(1f))
 
-                                                // Shuffle
                                                 RippleIconButton(
                                                     modifier = Modifier.size(36.dp),
                                                     resId = Res.drawable.baseline_shuffle_24,
@@ -362,7 +358,6 @@ fun PodcastScreen(
 
                                                 Spacer(Modifier.size(5.dp))
 
-                                                // More options
                                                 RippleIconButton(
                                                     modifier = Modifier.size(36.dp),
                                                     resId = Res.drawable.baseline_share_24,
@@ -372,7 +367,6 @@ fun PodcastScreen(
                                                 }
                                             }
 
-                                            // Description
                                             val uriHandler = LocalUriHandler.current
                                             DescriptionView(
                                                 modifier = Modifier.padding(top = 8.dp),
@@ -402,7 +396,6 @@ fun PodcastScreen(
                         }
                     }
 
-                    // Podcast episodes
                     items(count = data.listEpisode.size, key = { index ->
                         val item = data.listEpisode.getOrNull(index)
                         (item?.videoId ?: "") + "item_$index"
@@ -431,7 +424,6 @@ fun PodcastScreen(
                         EndOfPage()
                     }
                 }
-                // Animated TopAppBar when scrolling
                 AnimatedVisibility(
                     visible = shouldHideTopBar,
                     enter = fadeIn() + slideInVertically(),

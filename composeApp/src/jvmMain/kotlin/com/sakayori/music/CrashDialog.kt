@@ -27,18 +27,14 @@ object CrashDialog {
     fun install() {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
-                // Report to Sentry if available
                 if (BuildKonfig.sentryDsn.isNotEmpty()) {
                     Sentry.captureException(throwable)
                 }
             } catch (_: Exception) {
-                // Sentry might not be initialized
             }
 
-            // Show crash dialog on EDT
             try {
                 if (SwingUtilities.isEventDispatchThread()) {
-                    // Already on EDT — call directly
                     showCrashDialog(thread, throwable)
                 } else {
                     SwingUtilities.invokeAndWait {
@@ -46,7 +42,6 @@ object CrashDialog {
                     }
                 }
             } catch (_: Exception) {
-                // If EDT is broken too, print to stderr and exit
                 System.err.println("Fatal crash in thread ${thread.name}:")
                 throwable.printStackTrace()
             }
@@ -59,7 +54,6 @@ object CrashDialog {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
         } catch (_: Exception) {
-            // Use default L&F
         }
 
         val stackTrace = StringWriter().also { throwable.printStackTrace(PrintWriter(it)) }.toString()
@@ -81,7 +75,6 @@ object CrashDialog {
             border = BorderFactory.createEmptyBorder(16, 16, 16, 16)
         }
 
-        // Header
         val headerPanel = JPanel(BorderLayout(8, 4)).apply {
             val titleLabel = JLabel("SakayoriMusic has crashed").apply {
                 font = font.deriveFont(Font.BOLD, 16f)
@@ -96,7 +89,6 @@ object CrashDialog {
             add(subtitleLabel, BorderLayout.CENTER)
         }
 
-        // Stack trace
         val textArea = JTextArea(stackTrace).apply {
             isEditable = false
             font = Font(Font.MONOSPACED, Font.PLAIN, 12)
@@ -110,7 +102,6 @@ object CrashDialog {
             border = BorderFactory.createLineBorder(Color(80, 80, 80))
         }
 
-        // Buttons
         val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 8, 0))
 
         val copyButton = JButton("Copy Stack Trace").apply {
@@ -137,8 +128,7 @@ object CrashDialog {
 
         dialog.contentPane = contentPanel
         dialog.pack()
-        dialog.setLocationRelativeTo(null) // Center on screen
+        dialog.setLocationRelativeTo(null)
         dialog.isVisible = true
     }
 }
-

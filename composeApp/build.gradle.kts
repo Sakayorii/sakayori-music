@@ -187,8 +187,6 @@ compose.resources {
     packageOfResClass = "com.sakayori.music.generated.resources"
 }
 
-layout.buildDirectory.set(project.file("C:/SakayoriMusic"))
-
 compose.desktop {
     application {
         mainClass = "com.sakayori.music.MainKt"
@@ -202,6 +200,7 @@ compose.desktop {
                     .isWindows
             ) {
                 listTarget.add(TargetFormat.Exe)
+                listTarget.add(TargetFormat.Msi)
             }
             targetFormats(*listTarget.toTypedArray())
             modules("jdk.unsupported")
@@ -257,7 +256,7 @@ compose.desktop {
                 shortcut = true
                 menu = true
                 menuGroup = "SakayoriMusic"
-                console = true
+                console = false
                 dirChooser = true
             }
             linux {
