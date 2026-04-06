@@ -65,7 +65,8 @@ open class DiscordWebSocket(
                 val url = resumeGatewayUrl ?: gatewayUrl
                 websocket = client.webSocketSession(url)
 
-                websocket!!.incoming.receiveAsFlow()
+                val ws = websocket ?: return@launch
+                ws.incoming.receiveAsFlow()
                     .collect {
                         when (it) {
                             is Frame.Text -> {
@@ -117,7 +118,8 @@ open class DiscordWebSocket(
         try {
             when (this.t.toString()) {
                 "READY" -> {
-                    val ready = json.decodeFromJsonElement<Ready>(this.d!!)
+                    val d = this.d ?: return
+                    val ready = json.decodeFromJsonElement<Ready>(d)
                     sessionId = ready.sessionId
                     resumeGatewayUrl = ready.resumeGatewayUrl + "/?v=10&encoding=json"
                     Logger.i(TAG, "resume_gateway_url updated to $resumeGatewayUrl")
@@ -150,7 +152,8 @@ open class DiscordWebSocket(
         } else {
             sendIdentify()
         }
-        heartbeatInterval =  json.decodeFromJsonElement<Heartbeat>(this.d!!).heartbeatInterval
+        val d = this.d ?: return
+        heartbeatInterval = json.decodeFromJsonElement<Heartbeat>(d).heartbeatInterval
         Logger.i(TAG,"Setting heartbeatInterval= $heartbeatInterval")
         startHeartbeatJob(heartbeatInterval)
     }

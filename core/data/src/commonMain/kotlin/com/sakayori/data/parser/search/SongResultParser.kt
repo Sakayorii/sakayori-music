@@ -13,13 +13,11 @@ internal fun parseSearchSong(result: SearchResult): ArrayList<SongsResult> {
         songsResult.add(
             SongsResult(
                 album =
-                    if (song.album != null) {
+                    song.album?.let {
                         Album(
-                            id = song.album!!.id,
-                            name = song.album!!.name,
+                            id = it.id,
+                            name = it.name,
                         )
-                    } else {
-                        null
                     },
                 artists =
                     song.artists.map { artistItem ->
@@ -29,7 +27,7 @@ internal fun parseSearchSong(result: SearchResult): ArrayList<SongsResult> {
                         )
                     },
                 category = "Song",
-                duration = if (song.duration != null) "%02d:%02d".format(song.duration!! / 60, song.duration!! % 60) else "",
+                duration = song.duration?.let { "%02d:%02d".format(it / 60, it % 60) } ?: "",
                 durationSeconds = song.duration ?: 0,
                 feedbackTokens = null,
                 isExplicit = song.explicit,

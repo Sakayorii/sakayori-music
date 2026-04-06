@@ -39,7 +39,7 @@ internal fun parsePlaylistData(
                         ?.get(0)
                         ?.text
                 Logger.d("PlaylistParser", "title: $title")
-                if (!header.subtitle.runs.isNullOrEmpty() && header.subtitle.runs?.size!! > 2) {
+                if (!header.subtitle.runs.isNullOrEmpty() && (header.subtitle.runs?.size ?: 0) > 2) {
                     val author =
                         Author(
                             id =
@@ -63,11 +63,11 @@ internal fun parsePlaylistData(
                 }
                 Logger.d("PlaylistParser", "duration: $duration")
                 if (!header.description?.runs.isNullOrEmpty()) {
-                    for (run in header.description?.runs!!) {
+                    for (run in header.description?.runs ?: emptyList()) {
                         description += (run.text)
                     }
                 }
-                if (!header.subtitle.runs.isNullOrEmpty() && header.subtitle.runs?.size!! > 4) {
+                if (!header.subtitle.runs.isNullOrEmpty() && (header.subtitle.runs?.size ?: 0) > 4) {
                     year =
                         header.subtitle.runs
                             ?.get(4)
@@ -108,28 +108,14 @@ internal fun parsePlaylistData(
                     )
                 listAuthor.add(author)
                 Logger.d("PlaylistParser", "author: $author")
-                if (header.header.musicDetailHeaderRenderer
-                        ?.secondSubtitle
-                        ?.runs
-                        ?.size!! > 4
-                ) {
-                    duration +=
-                        header.header.musicDetailHeaderRenderer
-                            ?.secondSubtitle
-                            ?.runs
-                            ?.get(4)
-                            ?.text
-                } else if (header.header.musicDetailHeaderRenderer
-                        ?.secondSubtitle
-                        ?.runs
-                        ?.size!! == 3
-                ) {
-                    duration +=
-                        header.header.musicDetailHeaderRenderer
-                            ?.secondSubtitle
-                            ?.runs
-                            ?.get(2)
-                            ?.text
+                val editableSubtitleRuns = header.header.musicDetailHeaderRenderer
+                    ?.secondSubtitle
+                    ?.runs
+                val editableSubtitleSize = editableSubtitleRuns?.size ?: 0
+                if (editableSubtitleSize > 4) {
+                    duration += editableSubtitleRuns?.getOrNull(4)?.text
+                } else if (editableSubtitleSize == 3) {
+                    duration += editableSubtitleRuns?.getOrNull(2)?.text
                 }
                 Logger.d("PlaylistParser", "duration: $duration")
                 if (!header.header.musicDetailHeaderRenderer
@@ -139,7 +125,7 @@ internal fun parsePlaylistData(
                 ) {
                     for (run in header.header.musicDetailHeaderRenderer
                         ?.description
-                        ?.runs!!) {
+                        ?.runs ?: emptyList()) {
                         description += (run.text)
                     }
                 }
@@ -237,7 +223,7 @@ internal fun parsePlaylistData(
                     for (run in header.description
                         ?.musicDescriptionShelfRenderer
                         ?.description
-                        ?.runs!!) {
+                        ?.runs ?: emptyList()) {
                         description += (run.text)
                     }
                 }

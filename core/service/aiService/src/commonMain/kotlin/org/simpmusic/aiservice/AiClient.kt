@@ -35,7 +35,7 @@ class AiClient {
             if (apiKey != null) {
                 AiService(
                     aiHost = host,
-                    apiKey = apiKey!!,
+                    apiKey = apiKey ?: return,
                     customModelId = customModelId,
                     customBaseUrl = customBaseUrl,
                     customHeaders = customHeaders,

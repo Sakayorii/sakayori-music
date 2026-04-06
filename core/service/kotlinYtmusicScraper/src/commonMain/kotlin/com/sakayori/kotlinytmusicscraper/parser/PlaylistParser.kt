@@ -374,9 +374,9 @@ fun MusicShelfRenderer.Content.toSongItem(): SongItem? {
                 ?.getThumbnailUrl() ?: "",
         endpoint =
             flexColumns
-                .first()
-                .musicResponsiveListItemFlexColumnRenderer
-                .text
+                ?.firstOrNull()
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
                 ?.runs
                 ?.firstOrNull()
                 ?.navigationEndpoint

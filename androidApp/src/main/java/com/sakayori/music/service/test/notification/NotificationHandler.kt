@@ -22,7 +22,7 @@ import com.sakayori.music.MainActivity
 import com.sakayori.music.R
 import com.sakayori.music.utils.ComposeResUtils
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 object NotificationHandler {
     private const val CHANNEL_ID = "transactions_reminder_channel"
@@ -43,7 +43,7 @@ object NotificationHandler {
             )
 
         val bitmap =
-            runBlocking(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 val loader = ImageLoader(context)
                 val request =
                     ImageRequest
@@ -62,7 +62,7 @@ object NotificationHandler {
                         ).allowHardware(false)
                         .build()
 
-                return@runBlocking when (val result = loader.execute(request)) {
+                when (val result = loader.execute(request)) {
                     is SuccessResult -> {
                         result.image.toBitmap()
                     }

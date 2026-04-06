@@ -7,11 +7,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.sakayori.logger.Logger
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
-import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import com.sakayori.music.generated.resources.Res
 import com.sakayori.music.generated.resources.no_equalizer
 
@@ -19,6 +17,7 @@ import com.sakayori.music.generated.resources.no_equalizer
 actual fun openEqResult(audioSessionId: Int): OpenEqLauncher {
     val context = LocalContext.current
     val resultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+    val noEqMessage = stringResource(Res.string.no_equalizer)
     return object : OpenEqLauncher {
         override fun launch() {
             val eqIntent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
@@ -29,7 +28,7 @@ actual fun openEqResult(audioSessionId: Int): OpenEqLauncher {
             val resolveInfo: List<*> = packageManager.queryIntentActivities(eqIntent, 0)
             Logger.d("EQ", resolveInfo.toString())
             if (resolveInfo.isEmpty()) {
-                showToast(runBlocking(Dispatchers.Default) { getString(Res.string.no_equalizer) }, ToastGravity.Bottom)
+                showToast(noEqMessage, ToastGravity.Bottom)
             } else {
                 resultLauncher.launch(eqIntent)
             }
