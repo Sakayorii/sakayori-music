@@ -35,7 +35,6 @@ import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
 import com.sakayori.domain.mediaservice.handler.ToastType
 import com.sakayori.logger.Logger
 import com.sakayori.media3.di.setServiceActivitySession
-import com.sakayori.music.di.viewModelModule
 import com.sakayori.music.service.test.notification.NotifyWork
 import com.sakayori.music.utils.ComposeResUtils
 import com.sakayori.music.utils.VersionManager
@@ -45,7 +44,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 import org.koin.core.context.loadKoinModules
-import org.koin.core.context.unloadKoinModules
 import org.koin.dsl.module
 import com.sakayori.music.crashlytics.pushPlayerError
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -226,9 +224,6 @@ class MainActivity : AppCompatActivity() {
 
         if (shouldStopMusicService && shouldUnbind && isFinishing) {
             viewModel.isServiceRunning = false
-        }
-        if (isFinishing) {
-            unloadKoinModules(viewModelModule)
         }
         super.onDestroy()
     }
