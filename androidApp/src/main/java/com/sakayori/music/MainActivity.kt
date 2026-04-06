@@ -156,16 +156,14 @@ class MainActivity : AppCompatActivity() {
                     putString(FIRST_TIME_MIGRATION, STATUS_DONE)
                 }
             }
-            if (AppCompatDelegate.getApplicationLocales().toLanguageTags() !=
-                getString(
-                    SELECTED_LANGUAGE,
-                )
+            val savedLanguage = getString(SELECTED_LANGUAGE)
+            if (savedLanguage != null && savedLanguage.isNotEmpty() &&
+                AppCompatDelegate.getApplicationLocales().toLanguageTags() != savedLanguage
             ) {
-                Logger.d(
-                    "Locale Key",
-                    "onCreate: ${AppCompatDelegate.getApplicationLocales().toLanguageTags()}",
-                )
-                putString(SELECTED_LANGUAGE, AppCompatDelegate.getApplicationLocales().toLanguageTags())
+                val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    AppCompatDelegate.setApplicationLocales(localeList)
+                }
             }
         }
 
