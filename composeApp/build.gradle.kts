@@ -256,7 +256,7 @@ compose.desktop {
                 shortcut = true
                 menu = true
                 menuGroup = "SakayoriMusic"
-                console = false
+                console = true
                 dirChooser = true
             }
             linux {
