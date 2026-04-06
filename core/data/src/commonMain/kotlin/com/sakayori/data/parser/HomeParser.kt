@@ -284,8 +284,9 @@ internal fun parseMixedContent(
                                 val subtitle1 = musicTwoRowItemRenderer.subtitle
                                 var description = ""
                                 if (subtitle1 != null) {
-                                    if (subtitle1.runs != null) {
-                                        for (run in subtitle1.runs!!) {
+                                    val runs = subtitle1.runs
+                                    if (runs != null) {
+                                        for (run in runs) {
                                             description += run.text
                                         }
                                     }
@@ -364,19 +365,20 @@ internal fun parseMixedContent(
                                 continue
                             }
                         } else if (result1.musicResponsiveListItemRenderer != null) {
+                            val renderer = result1.musicResponsiveListItemRenderer ?: continue
                             Logger.w(
                                 "parse Song flat",
-                                result1.musicResponsiveListItemRenderer.toString(),
+                                renderer.toString(),
                             )
                             val ytItem =
-                                RelatedPage.fromMusicResponsiveListItemRenderer(result1.musicResponsiveListItemRenderer!!)
+                                RelatedPage.fromMusicResponsiveListItemRenderer(renderer)
                             if (ytItem != null) {
                                 val content =
                                     Content(
                                         album = ytItem.album?.let { Album(name = it.name, id = it.id) },
                                         artists =
                                             parseSongArtists(
-                                                result1.musicResponsiveListItemRenderer!!,
+                                                renderer,
                                                 1,
                                                 viewString,
                                             ) ?: listOf(),
@@ -385,7 +387,7 @@ internal fun parseMixedContent(
                                         playlistId = null,
                                         browseId = null,
                                         thumbnails =
-                                            result1.musicResponsiveListItemRenderer!!
+                                            renderer
                                                 .thumbnail
                                                 ?.musicThumbnailRenderer
                                                 ?.thumbnail
@@ -480,13 +482,13 @@ internal fun parseSongFlat(
                                 ?.get(0)
                                 ?.navigationEndpoint
                                 ?.browseEndpoint
-                                ?.browseId!!,
+                                ?.browseId ?: "",
                         name =
                             column[2]
                                 ?.text
                                 ?.runs
                                 ?.get(0)
-                                ?.text!!,
+                                ?.text ?: "",
                     )
                 } else {
                     null
@@ -586,27 +588,17 @@ internal fun parsePlaylist(
             ?.thumbnail
             ?.thumbnails
     if (subtitle != null) {
-        if (subtitle.runs != null) {
-            for (run in subtitle.runs!!) {
+        val runs = subtitle.runs
+        if (runs != null) {
+            for (run in runs) {
                 description += run.text
             }
-            if (subtitle.runs!!.size == 3) {
-                if (data.subtitle!!
-                        .runs
-                        ?.get(2)
-                        ?.text
-                        ?.split(" ")
-                        ?.get(0) != null
-                ) {
-                    count +=
-                        data.subtitle!!
-                            .runs
-                            ?.get(2)
-                            ?.text
-                            ?.split(" ")
-                            ?.get(0)
+            if (runs.size == 3) {
+                val thirdText = runs.getOrNull(2)?.text?.split(" ")?.getOrNull(0)
+                if (thirdText != null) {
+                    count += thirdText
                 }
-                author.addAll(parseSongArtistsRuns(subtitle.runs!!.take(1), viewString))
+                author.addAll(parseSongArtistsRuns(runs.take(1), viewString))
             }
         }
     }

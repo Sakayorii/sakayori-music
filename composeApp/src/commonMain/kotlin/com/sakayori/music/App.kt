@@ -87,8 +87,6 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -608,14 +606,11 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                                     }
                                 } ?: stringResource(Res.string.unknown)
 
-                            val updateMessage =
-                                runBlocking(Dispatchers.Default) {
-                                    getString(
-                                        Res.string.update_message,
-                                        response.tagName,
-                                        formatted,
-                                    )
-                                }
+                            val updateMessage = stringResource(
+                                Res.string.update_message,
+                                response.tagName,
+                                formatted,
+                            )
                             Column(
                                 Modifier
                                     .heightIn(

@@ -122,7 +122,7 @@ internal fun org.SakayoriMusic.lyrics.domain.Lyrics.toLyrics(): Lyrics {
         return Lyrics(
             error = false,
             lines = lines,
-            syncType = this.lyrics!!.syncType,
+            syncType = this.lyrics?.syncType,
         )
     } else {
         return Lyrics(

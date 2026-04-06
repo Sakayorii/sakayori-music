@@ -263,14 +263,14 @@ class YouTube {
                         ?.contents
                         ?.mapNotNull {
                             SearchPage.toYTItem(it.musicResponsiveListItemRenderer)
-                        }!!,
+                        }.orEmpty(),
                 listPodcast =
-                    response.continuationContents.musicShelfContinuation.contents
-                        .mapNotNull {
+                    response.continuationContents?.musicShelfContinuation?.contents
+                        ?.mapNotNull {
                             SearchPage.toPodcast(it.musicResponsiveListItemRenderer)
                         }.orEmpty(),
                 continuation =
-                    response.continuationContents.musicShelfContinuation.continuations
+                    response.continuationContents?.musicShelfContinuation?.continuations
                         ?.getContinuation(),
             )
         }
@@ -285,7 +285,7 @@ class YouTube {
                 response.microformat
                     ?.microformatDataRenderer
                     ?.urlCanonical
-                    ?.substringAfterLast('=')!!
+                    ?.substringAfterLast('=') ?: ""
             val albumItem =
                 AlbumItem(
                     browseId = browseId,
@@ -324,10 +324,10 @@ class YouTube {
                                     name = it.text,
                                     id = it.navigationEndpoint?.browseEndpoint?.browseId,
                                 )
-                            }!!,
+                            }.orEmpty(),
                     year =
-                        response.contents.twoColumnBrowseResultsRenderer.tabs
-                            .firstOrNull()
+                        response.contents?.twoColumnBrowseResultsRenderer?.tabs
+                            ?.firstOrNull()
                             ?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
@@ -340,8 +340,8 @@ class YouTube {
                             ?.text
                             ?.toIntOrNull(),
                     thumbnail =
-                        response.contents.twoColumnBrowseResultsRenderer.tabs
-                            .firstOrNull()
+                        response.contents?.twoColumnBrowseResultsRenderer?.tabs
+                            ?.firstOrNull()
                             ?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
@@ -350,7 +350,7 @@ class YouTube {
                             ?.musicResponsiveHeaderRenderer
                             ?.thumbnail
                             ?.musicThumbnailRenderer
-                            ?.getThumbnailUrl()!!,
+                            ?.getThumbnailUrl() ?: "",
                 )
             AlbumPage(
                 album = albumItem,
@@ -358,8 +358,8 @@ class YouTube {
                     if (withSongs) {
                         albumSongs(
                             response.contents
-                                .twoColumnBrowseResultsRenderer
-                                .secondaryContents
+                                ?.twoColumnBrowseResultsRenderer
+                                ?.secondaryContents
                                 ?.sectionListRenderer
                                 ?.contents
                                 ?.firstOrNull()
@@ -372,8 +372,8 @@ class YouTube {
                     },
                 description =
                     getDescriptionAlbum(
-                        response.contents.twoColumnBrowseResultsRenderer.tabs
-                            .firstOrNull()
+                        response.contents?.twoColumnBrowseResultsRenderer?.tabs
+                            ?.firstOrNull()
                             ?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
@@ -386,8 +386,8 @@ class YouTube {
                             ?.runs,
                     ),
                 duration =
-                    response.contents.twoColumnBrowseResultsRenderer.tabs
-                        .firstOrNull()
+                    response.contents?.twoColumnBrowseResultsRenderer?.tabs
+                        ?.firstOrNull()
                         ?.tabRenderer
                         ?.content
                         ?.sectionListRenderer
@@ -399,8 +399,8 @@ class YouTube {
                         ?.get(2)
                         ?.text ?: "",
                 thumbnails =
-                    response.contents.twoColumnBrowseResultsRenderer.tabs
-                        .firstOrNull()
+                    response.contents?.twoColumnBrowseResultsRenderer?.tabs
+                        ?.firstOrNull()
                         ?.tabRenderer
                         ?.content
                         ?.sectionListRenderer
@@ -412,8 +412,8 @@ class YouTube {
                         ?.thumbnail,
                 otherVersion =
                     response.contents
-                        .twoColumnBrowseResultsRenderer
-                        .secondaryContents
+                        ?.twoColumnBrowseResultsRenderer
+                        ?.secondaryContents
                         ?.sectionListRenderer
                         ?.contents
                         ?.lastOrNull()
@@ -495,7 +495,7 @@ class YouTube {
                                     ?.title
                                     ?.runs
                                     ?.firstOrNull()
-                                    ?.text!!,
+                                    ?.text ?: "",
                         thumbnail =
                             response.header
                                 ?.musicImmersiveHeaderRenderer
@@ -506,7 +506,7 @@ class YouTube {
                                     ?.musicVisualHeaderRenderer
                                     ?.foregroundThumbnail
                                     ?.musicThumbnailRenderer
-                                    ?.getThumbnailUrl()!!,
+                                    ?.getThumbnailUrl() ?: "",
                         shuffleEndpoint =
                             response.header
                                 ?.musicImmersiveHeaderRenderer
@@ -531,7 +531,7 @@ class YouTube {
                         ?.content
                         ?.sectionListRenderer
                         ?.contents
-                        ?.mapNotNull(ArtistPage::fromSectionListRendererContent)!!,
+                        ?.mapNotNull(ArtistPage::fromSectionListRendererContent).orEmpty(),
                 description =
                     response.header
                         ?.musicImmersiveHeaderRenderer
@@ -550,8 +550,8 @@ class YouTube {
                             0,
                         )?.text,
                 view =
-                    response.contents.singleColumnBrowseResultsRenderer.tabs[0]
-                        .tabRenderer.content
+                    response.contents?.singleColumnBrowseResultsRenderer?.tabs?.getOrNull(0)
+                        ?.tabRenderer?.content
                         ?.sectionListRenderer
                         ?.contents
                         ?.lastOrNull()
@@ -657,7 +657,19 @@ class YouTube {
                     ?: response.header
                         ?.musicEditablePlaylistDetailHeaderRenderer
                         ?.header
-                        ?.musicDetailHeaderRenderer!!
+                        ?.musicDetailHeaderRenderer ?: return@runCatching PlaylistPage(
+                            playlist = PlaylistItem(
+                                id = playlistId,
+                                title = "",
+                                author = null,
+                                songCountText = null,
+                                thumbnail = "",
+                                playEndpoint = null,
+                            ),
+                            songs = emptyList(),
+                            songsContinuation = null,
+                            continuation = null,
+                        )
             PlaylistPage(
                 playlist =
                     PlaylistItem(
@@ -665,7 +677,7 @@ class YouTube {
                         title =
                             header.title.runs
                                 ?.firstOrNull()
-                                ?.text!!,
+                                ?.text ?: "",
                         author =
                             header.subtitle.runs?.getOrNull(2)?.let {
                                 Artist(
@@ -677,21 +689,21 @@ class YouTube {
                             header.secondSubtitle.runs
                                 ?.firstOrNull()
                                 ?.text,
-                        thumbnail = header.thumbnail.croppedSquareThumbnailRenderer?.getThumbnailUrl()!!,
+                        thumbnail = header.thumbnail.croppedSquareThumbnailRenderer?.getThumbnailUrl() ?: "",
                         playEndpoint = null,
                         shuffleEndpoint =
                             header.menu.menuRenderer.topLevelButtons
                                 ?.firstOrNull()
                                 ?.buttonRenderer
                                 ?.navigationEndpoint
-                                ?.watchPlaylistEndpoint!!,
+                                ?.watchPlaylistEndpoint,
                         radioEndpoint =
                             header.menu.menuRenderer.items
                                 .find {
                                     it.menuNavigationItemRenderer?.icon?.iconType == "MIX"
                                 }?.menuNavigationItemRenderer
                                 ?.navigationEndpoint
-                                ?.watchPlaylistEndpoint!!,
+                                ?.watchPlaylistEndpoint,
                     ),
                 songs =
                     response.contents
@@ -707,10 +719,10 @@ class YouTube {
                         ?.contents
                         ?.mapNotNull {
                             PlaylistPage.fromMusicResponsiveListItemRenderer(it.musicResponsiveListItemRenderer)
-                        }!!,
+                        }.orEmpty(),
                 songsContinuation =
-                    response.contents.singleColumnBrowseResultsRenderer.tabs
-                        .firstOrNull()
+                    response.contents?.singleColumnBrowseResultsRenderer?.tabs
+                        ?.firstOrNull()
                         ?.tabRenderer
                         ?.content
                         ?.sectionListRenderer
@@ -720,8 +732,8 @@ class YouTube {
                         ?.continuations
                         ?.getContinuation(),
                 continuation =
-                    response.contents.singleColumnBrowseResultsRenderer.tabs
-                        .firstOrNull()
+                    response.contents?.singleColumnBrowseResultsRenderer?.tabs
+                        ?.firstOrNull()
                         ?.tabRenderer
                         ?.content
                         ?.sectionListRenderer
@@ -743,9 +755,9 @@ class YouTube {
                 songs =
                     response.continuationContents?.musicPlaylistShelfContinuation?.contents?.mapNotNull {
                         PlaylistPage.fromMusicResponsiveListItemRenderer(it.musicResponsiveListItemRenderer)
-                    }!!,
+                    }.orEmpty(),
                 continuation =
-                    response.continuationContents.musicPlaylistShelfContinuation.continuations
+                    response.continuationContents?.musicPlaylistShelfContinuation?.continuations
                         ?.getContinuation(),
             )
         }
@@ -831,8 +843,8 @@ class YouTube {
                 ?.tabRenderer
                 ?.content
                 ?.sectionListRenderer
-                ?.contents!!
-                .mapNotNull(MoodAndGenres.Companion::fromSectionListRendererContent)
+                ?.contents
+                ?.mapNotNull(MoodAndGenres.Companion::fromSectionListRendererContent).orEmpty()
         }
 
     suspend fun browse(
@@ -1439,23 +1451,16 @@ class YouTube {
                         ?.content
                         ?.playlistPanelRenderer
             if (playlistPanelRenderer != null) {
-                if (playlistPanelRenderer.contents
-                        .lastOrNull()
-                        ?.automixPreviewVideoRenderer
-                        ?.content
-                        ?.automixPlaylistVideoRenderer
-                        ?.navigationEndpoint
-                        ?.watchPlaylistEndpoint !=
-                    null
-                ) {
+                val automixEndpoint = playlistPanelRenderer.contents
+                    .lastOrNull()
+                    ?.automixPreviewVideoRenderer
+                    ?.content
+                    ?.automixPlaylistVideoRenderer
+                    ?.navigationEndpoint
+                    ?.watchPlaylistEndpoint
+                if (automixEndpoint != null) {
                     return@runCatching next(
-                        playlistPanelRenderer.contents
-                            .lastOrNull()
-                            ?.automixPreviewVideoRenderer
-                            ?.content
-                            ?.automixPlaylistVideoRenderer
-                            ?.navigationEndpoint
-                            ?.watchPlaylistEndpoint!!,
+                        automixEndpoint,
                     ).getOrThrow()
                         .let { result ->
                             result.copy(
@@ -1487,14 +1492,7 @@ class YouTube {
                                         ?.endpoint
                                         ?.browseEndpoint,
                                 currentIndex = playlistPanelRenderer.currentIndex,
-                                endpoint =
-                                    playlistPanelRenderer.contents
-                                        .lastOrNull()
-                                        ?.automixPreviewVideoRenderer
-                                        ?.content
-                                        ?.automixPlaylistVideoRenderer
-                                        ?.navigationEndpoint
-                                        ?.watchPlaylistEndpoint!!,
+                                endpoint = automixEndpoint,
                             )
                         }
                 }
@@ -1529,7 +1527,12 @@ class YouTube {
                     endpoint = endpoint,
                 )
             } else {
-                val musicPlaylistShelfContinuation = response.continuationContents?.musicPlaylistShelfContinuation!!
+                val musicPlaylistShelfContinuation = response.continuationContents?.musicPlaylistShelfContinuation
+                    ?: return@runCatching NextResult(
+                        items = emptyList(),
+                        continuation = null,
+                        endpoint = endpoint,
+                    )
                 return@runCatching NextResult(
                     items =
                         musicPlaylistShelfContinuation.contents.mapNotNull {

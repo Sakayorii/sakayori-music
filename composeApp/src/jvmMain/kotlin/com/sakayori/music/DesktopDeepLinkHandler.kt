@@ -22,8 +22,9 @@ object DesktopDeepLinkHandler {
             field = value
             if (value != null) {
                 cached?.let { uri ->
-                    Logger.d(TAG, "Delivering cached URI: $uri")
-                    value.invoke(parseToIntent(uri))
+                    parseToIntent(uri)?.let { intent ->
+                        value.invoke(intent)
+                    }
                     cached = null
                 }
             }
@@ -33,7 +34,7 @@ object DesktopDeepLinkHandler {
         Logger.d(TAG, "Received URI: $uri")
         val intent = parseToIntent(uri)
         val currentListener = listener
-        if (currentListener != null) {
+        if (currentListener != null && intent != null) {
             currentListener.invoke(intent)
             cached = null
         } else {
@@ -88,7 +89,7 @@ object DesktopDeepLinkHandler {
         return URI_PATTERN.matches(uri)
     }
 
-    private fun parseToIntent(uri: String): GenericIntent {
+    private fun parseToIntent(uri: String): GenericIntent? {
         val parsed = Uri.parse(uri)
 
         val actualUri = when {
@@ -104,7 +105,7 @@ object DesktopDeepLinkHandler {
             }
 
             parsed.scheme == "SakayoriMusic" && parsed.host != null -> {
-                val host = parsed.host!!
+                val host = parsed.host ?: return null
                 val query = parsed.query?.let { "?$it" } ?: ""
                 val pathSuffix = parsed.pathSegments.joinToString("/").let {
                     if (it.isNotEmpty()) "/$it" else ""

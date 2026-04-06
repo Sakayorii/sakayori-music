@@ -326,7 +326,7 @@ internal class CrossfadeExoPlayerAdapter(
                 cleanupPlayerListenerInternal()
                 stopPositionUpdates()
                 currentPlayer?.let { forwardingPlayer.swapDelegate(it) }
-                setupPlayerListenerInternal(currentPlayer!!)
+                currentPlayer?.let { setupPlayerListenerInternal(it) }
                 if (crossfadeFromIndex >= 0) {
                     localCurrentMediaItemIndex = crossfadeFromIndex
                     playlist.getOrNull(crossfadeFromIndex)?.let { mediaItem ->
