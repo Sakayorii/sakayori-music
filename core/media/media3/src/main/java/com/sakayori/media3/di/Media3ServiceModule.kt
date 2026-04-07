@@ -480,8 +480,9 @@ private fun provideSimpleCache(
     databaseProvider: DatabaseProvider,
 ) = SimpleCache(
     context.filesDir.resolve(cacheName),
-    when (cacheSize) {
-        -1 -> NoOpCacheEvictor()
+    when {
+        cacheSize == -1 -> NoOpCacheEvictor()
+        cacheSize == 0 -> LeastRecentlyUsedCacheEvictor(512L * 1024 * 1024)
         else -> LeastRecentlyUsedCacheEvictor(cacheSize * 1024 * 1024L)
     },
     databaseProvider,

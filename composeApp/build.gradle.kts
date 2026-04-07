@@ -205,6 +205,7 @@ compose.desktop {
         jvmArgs += "-XX:+AlwaysPreTouch"
         jvmArgs += "-XX:+DisableExplicitGC"
         jvmArgs += "-XX:+UseCompressedOops"
+        jvmArgs += "-Xshare:auto"
         jvmArgs += "-Dfile.encoding=UTF-8"
         jvmArgs += "-Dsun.java2d.opengl=true"
         jvmArgs += "-Dsun.java2d.d3d=false"

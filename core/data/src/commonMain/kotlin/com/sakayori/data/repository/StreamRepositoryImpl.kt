@@ -110,8 +110,14 @@ internal class StreamRepositoryImpl(
                 } else {
                     18
                 }
-            youTube
-                .player(videoId, noLogIn = muxed)
+            var playerResult = youTube.player(videoId, noLogIn = muxed)
+            var attempts = 1
+            while (playerResult.isFailure && attempts < 3) {
+                kotlinx.coroutines.delay(500L * attempts)
+                attempts++
+                playerResult = youTube.player(videoId, noLogIn = muxed)
+            }
+            playerResult
                 .onSuccess { data ->
                     val response = data.second
                     if (data.third == MediaType.Song) {

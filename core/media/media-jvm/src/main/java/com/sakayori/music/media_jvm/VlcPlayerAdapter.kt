@@ -1593,6 +1593,41 @@ class VlcPlayerAdapter(
         notifyListeners { shouldOpenOrCloseEqualizerIntent(shouldOpen) }
     }
 
+    fun setEqualizerEnabled(enabled: Boolean) {
+        try {
+            if (enabled) {
+                val eq = uk.co.caprica.vlcj.player.base.Equalizer(10)
+                mediaPlayer.audio().setEqualizer(eq)
+            } else {
+                mediaPlayer.audio().setEqualizer(null)
+            }
+        } catch (e: Exception) {
+            Logger.w(TAG, "setEqualizerEnabled failed: ${e.message}")
+        }
+    }
+
+    fun setEqualizerPreset(presetIndex: Int) {
+        try {
+            val presets = uk.co.caprica.vlcj.player.base.Equalizer.presets()
+            if (presetIndex in presets.indices) {
+                val eq = uk.co.caprica.vlcj.player.base.Equalizer(presets[presetIndex])
+                mediaPlayer.audio().setEqualizer(eq)
+            }
+        } catch (e: Exception) {
+            Logger.w(TAG, "setEqualizerPreset failed: ${e.message}")
+        }
+    }
+
+    fun setEqualizerBand(bandIndex: Int, gain: Float) {
+        try {
+            val current = mediaPlayer.audio().equalizer() ?: uk.co.caprica.vlcj.player.base.Equalizer(10)
+            current.setAmp(bandIndex, gain)
+            mediaPlayer.audio().setEqualizer(current)
+        } catch (e: Exception) {
+            Logger.w(TAG, "setEqualizerBand failed: ${e.message}")
+        }
+    }
+
 
     private fun createShuffleOrder() {
         if (playlist.isEmpty()) {
@@ -1859,14 +1894,19 @@ class VlcPlayer(
         isReleased = true
         try {
             setEventListener(null)
-            Thread {
+            val releaseThread = Thread {
                 try {
                     mediaPlayer.controls().stop()
                     mediaPlayer.release()
                 } catch (e: Exception) {
                     Logger.w(TAG, "Error in async release: ${e.message}")
                 }
-            }.start()
+            }.apply {
+                isDaemon = true
+                name = "VlcPlayerRelease"
+            }
+            releaseThread.start()
+            releaseThread.join(3000)
         } catch (e: Exception) {
             Logger.w(TAG, "Error releasing player: ${e.message}")
         }

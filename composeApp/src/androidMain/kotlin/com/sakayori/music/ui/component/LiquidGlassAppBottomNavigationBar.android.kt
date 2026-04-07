@@ -122,8 +122,10 @@ actual fun LiquidGlassAppBottomNavigationBar(
     )
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    val isLowEnd = remember { com.sakayori.music.utils.DeviceCapability.isLowEndDevice() }
 
     LaunchedEffect(layer) {
+        if (isLowEnd) return@LaunchedEffect
         val buffer = IntBuffer.allocate(25)
         while (isActive) {
             val isResumed = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
