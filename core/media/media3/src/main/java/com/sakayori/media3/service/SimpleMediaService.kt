@@ -154,18 +154,10 @@ internal class SimpleMediaService :
                                 notification: Notification,
                                 ongoing: Boolean,
                             ) {
-                                fun startFg() {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                        startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-                                    } else {
-                                        startForeground(notificationId, notification)
-                                    }
-                                }
-                                coroutineScope.launch {
-                                    while (coroutineScope.isActive) {
-                                        startFg()
-                                        delay(30.seconds)
-                                    }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    startForeground(notificationId, notification, FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                                } else {
+                                    startForeground(notificationId, notification)
                                 }
                             }
                         },
@@ -174,13 +166,6 @@ internal class SimpleMediaService :
             playerNotificationManager.setPlayer(player)
             playerNotificationManager.setSmallIcon(R.drawable.mono)
             mediaSession?.platformToken?.let { playerNotificationManager.setMediaSessionToken(it) }
-        }
-
-        simpleMediaServiceHandler.onUpdateNotification = { list ->
-            val commandButtonList = list.map { it.toCommandButton(this) }
-            mediaSession?.setMediaButtonPreferences(
-                commandButtonList,
-            )
         }
     }
 

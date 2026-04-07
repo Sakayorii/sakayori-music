@@ -137,7 +137,9 @@ fun MiniPlayer(
     onClose: () -> Unit,
     onClick: () -> Unit,
 ) {
-    val isLiquidGlassEnabled by sharedViewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
+    val rawLiquidGlassEnabled by sharedViewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
+    val isLowEnd = remember { com.sakayori.music.utils.DeviceCapability.isLowEndDevice() }
+    val isLiquidGlassEnabled = if (isLowEnd) DataStoreManager.FALSE else rawLiquidGlassEnabled
     val controllerState by sharedViewModel.controllerState.collectAsStateWithLifecycle()
     val timelineState by sharedViewModel.timeline.collectAsStateWithLifecycle()
 

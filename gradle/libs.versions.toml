@@ -1,6 +1,6 @@
 [versions]
-version-name = "2.0.5"
-version-code = "51"
+version-name = "2.0.6"
+version-code = "52"
 
 android = "8.13.2"
 kotlin = "2.3.10"

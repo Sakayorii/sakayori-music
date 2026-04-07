@@ -66,7 +66,16 @@
 -keep class com.sakayori.domain.** { *; }
 -keep class com.sakayori.music.** { *; }
 -keep class com.sakayori.media3.** { *; }
--keep class com.sakayori.logger.** { *; }
+-assumenosideeffects class com.sakayori.logger.Logger {
+    public *** d(...);
+    public *** i(...);
+    public *** w(...);
+}
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
 -keep class com.sakayori.common.** { *; }
 
 -dontwarn org.slf4j.impl.StaticLoggerBinder

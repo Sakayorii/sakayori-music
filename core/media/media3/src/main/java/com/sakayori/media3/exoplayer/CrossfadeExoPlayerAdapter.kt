@@ -181,7 +181,10 @@ internal class CrossfadeExoPlayerAdapter(
     private var retryVideoId: String? = null
     private val maxRetryCount = 2
 
-    private val audioMetaCache = ConcurrentHashMap<String, SongAudioMeta>()
+    private val audioMetaCache = object : java.util.LinkedHashMap<String, SongAudioMeta>(128, 0.75f, true) {
+        override fun removeEldestEntry(eldest: Map.Entry<String, SongAudioMeta>?): Boolean = size > 200
+    }
+    private val audioMetaCacheLock = Any()
 
     
     private fun setCrossfading(value: Boolean) {
@@ -269,16 +272,21 @@ internal class CrossfadeExoPlayerAdapter(
                         .setBufferDurationsMs(
                             DefaultLoadControl.DEFAULT_MIN_BUFFER_MS * 4,
                             DefaultLoadControl.DEFAULT_MAX_BUFFER_MS * 4,
-                            0,
-                            0,
-                        ).build(),
+                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+                        ).setPrioritizeTimeOverSizeThresholds(true)
+                        .build(),
                 ).setWakeMode(C.WAKE_MODE_NETWORK)
                 .setHandleAudioBecomingNoisy(handleAudioFocus)
                 .setSeekForwardIncrementMs(5000)
                 .setSeekBackIncrementMs(5000)
                 .setMediaSourceFactory(mediaSourceFactory)
                 .setRenderersFactory(perPlayerRenderers)
+                .setPauseAtEndOfMediaItems(false)
                 .build()
+                .apply {
+                    skipSilenceEnabled = false
+                }
 
         return PlayerWithFilter(player, crossfadeFilter)
     }
@@ -1547,7 +1555,7 @@ internal class CrossfadeExoPlayerAdapter(
         keyScale: String?,
     ) {
         if (bpm != null || key != null) {
-            audioMetaCache[videoId] = SongAudioMeta(bpm, key, keyScale)
+            synchronized(audioMetaCacheLock) { audioMetaCache[videoId] = SongAudioMeta(bpm, key, keyScale) }
             Logger.d(TAG, "AutoMix meta updated: videoId=$videoId, bpm=$bpm, key=$key $keyScale")
         }
     }
@@ -1555,7 +1563,7 @@ internal class CrossfadeExoPlayerAdapter(
 
     
     private suspend fun loadAudioMetaIfNeeded(videoId: String) {
-        if (videoId.isBlank() || audioMetaCache.containsKey(videoId)) return
+        if (videoId.isBlank() || synchronized(audioMetaCacheLock) { audioMetaCache.containsKey(videoId) }) return
         try {
             val format = streamRepository.getNewFormat(videoId).firstOrNull()
             if (format == null) {
@@ -1563,7 +1571,7 @@ internal class CrossfadeExoPlayerAdapter(
                 return
             }
             if (format.bpm != null || format.musicKey != null) {
-                audioMetaCache[videoId] = SongAudioMeta(format.bpm, format.musicKey, format.keyScale)
+                synchronized(audioMetaCacheLock) { audioMetaCache[videoId] = SongAudioMeta(format.bpm, format.musicKey, format.keyScale) }
                 Logger.d(TAG, "AutoMix meta loaded: videoId=$videoId, bpm=${format.bpm}, key=${format.musicKey} ${format.keyScale}")
             } else {
                 Logger.d(TAG, "AutoMix meta: format exists but no bpm/key data for videoId=$videoId")
@@ -1594,8 +1602,8 @@ internal class CrossfadeExoPlayerAdapter(
         currentVideoId: String,
         nextVideoId: String,
     ): Int {
-        val currentBpm = audioMetaCache[currentVideoId]?.bpm
-        val nextBpm = audioMetaCache[nextVideoId]?.bpm
+        val currentBpm = synchronized(audioMetaCacheLock) { audioMetaCache[currentVideoId]?.bpm }
+        val nextBpm = synchronized(audioMetaCacheLock) { audioMetaCache[nextVideoId]?.bpm }
         val bpm = currentBpm ?: nextBpm ?: return AUTO_FALLBACK_DURATION_MS
 
         if (bpm <= 0) return AUTO_FALLBACK_DURATION_MS
@@ -1615,8 +1623,8 @@ internal class CrossfadeExoPlayerAdapter(
         currentVideoId: String,
         nextVideoId: String,
     ): Float {
-        val currentMeta = audioMetaCache[currentVideoId]
-        val nextMeta = audioMetaCache[nextVideoId]
+        val currentMeta = synchronized(audioMetaCacheLock) { audioMetaCache[currentVideoId] }
+        val nextMeta = synchronized(audioMetaCacheLock) { audioMetaCache[nextVideoId] }
         val currentBpm = currentMeta?.bpm
         val nextBpm = nextMeta?.bpm
 
@@ -1687,8 +1695,8 @@ internal class CrossfadeExoPlayerAdapter(
         currentVideoId: String,
         nextVideoId: String,
     ): Float {
-        val currentMeta = audioMetaCache[currentVideoId]
-        val nextMeta = audioMetaCache[nextVideoId]
+        val currentMeta = synchronized(audioMetaCacheLock) { audioMetaCache[currentVideoId] }
+        val nextMeta = synchronized(audioMetaCacheLock) { audioMetaCache[nextVideoId] }
         val currentKey = currentMeta?.key
         val nextKey = nextMeta?.key
 

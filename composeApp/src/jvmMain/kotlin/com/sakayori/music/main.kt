@@ -103,16 +103,26 @@ fun main(args: Array<String>) {
         changeLanguageNative(language)
 
         VersionManager.initialize()
-        if (BuildKonfig.sentryDsn.isNotEmpty()) {
-            Sentry.init { options ->
-                options.dsn = BuildKonfig.sentryDsn
-                options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"
-                options.setDiagnosticLevel(SentryLevel.ERROR)
+
+        Thread {
+            try {
+                if (BuildKonfig.sentryDsn.isNotEmpty()) {
+                    Sentry.init { options ->
+                        options.dsn = BuildKonfig.sentryDsn
+                        options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"
+                        options.setDiagnosticLevel(SentryLevel.ERROR)
+                    }
+                }
+                Thread.sleep(2000)
+                getKoin().get<SharedViewModel>().checkForUpdate()
+            } catch (_: Throwable) {
             }
-        }
+        }.apply {
+            isDaemon = true
+            name = "DeferredInit"
+        }.start()
 
         val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
-        getKoin().get<SharedViewModel>().checkForUpdate()
 
         mediaPlayerHandler.showToast = { type ->
             showToast(

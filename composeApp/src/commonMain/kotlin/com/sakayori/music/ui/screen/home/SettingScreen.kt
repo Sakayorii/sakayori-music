@@ -220,6 +220,8 @@ import com.sakayori.music.generated.resources.downloaded_cache
 import com.sakayori.music.generated.resources.enable_canvas
 import com.sakayori.music.generated.resources.enable_liquid_glass_effect
 import com.sakayori.music.generated.resources.enable_liquid_glass_effect_description
+import com.sakayori.music.generated.resources.low_end_device_blur_disabled
+import com.sakayori.music.utils.DeviceCapability
 import com.sakayori.music.generated.resources.enable_rich_presence
 import com.sakayori.music.generated.resources.enable_sponsor_block
 import com.sakayori.music.generated.resources.enable_spotify_lyrics
@@ -449,6 +451,8 @@ fun SettingScreen(
     val autoBackupLastTime by viewModel.autoBackupLastTime.collectAsStateWithLifecycle()
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val enableLiquidGlass by viewModel.enableLiquidGlass.collectAsStateWithLifecycle()
+    val isLowEndDevice = remember { DeviceCapability.isLowEndDevice() }
+    val lowEndDisableReason = stringResource(Res.string.low_end_device_blur_disabled)
     val discordLoggedIn by viewModel.discordLoggedIn.collectAsStateWithLifecycle()
     val richPresenceEnabled by viewModel.richPresenceEnabled.collectAsStateWithLifecycle()
     val keepServiceAlive by viewModel.keepServiceAlive.collectAsStateWithLifecycle()
@@ -527,12 +531,16 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.blur_fullscreen_lyrics_description),
                     smallSubtitle = true,
                     switch = (blurFullscreenLyrics to { viewModel.setBlurFullscreenLyrics(it) }),
+                    isEnable = !isLowEndDevice,
+                    disableReason = if (isLowEndDevice) lowEndDisableReason else null,
                 )
                 SettingItem(
                     title = stringResource(Res.string.blur_player_background),
                     subtitle = stringResource(Res.string.blur_player_background_description),
                     smallSubtitle = true,
                     switch = (blurPlayerBackground to { viewModel.setBlurPlayerBackground(it) }),
+                    isEnable = !isLowEndDevice,
+                    disableReason = if (isLowEndDevice) lowEndDisableReason else null,
                 )
                 if (getPlatform() == Platform.Android) {
                     SettingItem(
@@ -540,7 +548,8 @@ fun SettingScreen(
                         subtitle = stringResource(Res.string.enable_liquid_glass_effect_description),
                         smallSubtitle = true,
                         switch = (enableLiquidGlass to { viewModel.setEnableLiquidGlass(it) }),
-                        isEnable = getPlatform() == Platform.Android,
+                        isEnable = getPlatform() == Platform.Android && !isLowEndDevice,
+                        disableReason = if (isLowEndDevice) lowEndDisableReason else null,
                     )
                 }
             }
