@@ -163,6 +163,7 @@ dependencies {
     debugImplementation(libs.ui.tooling)
     implementation(libs.activity.compose)
     implementation(libs.splashscreen)
+    implementation(libs.slf4j.android)
 
     // Custom Activity On Crash
     implementation(libs.customactivityoncrash)

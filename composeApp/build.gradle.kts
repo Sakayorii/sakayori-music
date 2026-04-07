@@ -167,12 +167,13 @@ kotlin {
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.sentry.jvm)
             implementation(libs.native.tray)
+            implementation(libs.kcef)
+            implementation(libs.slf4j.simple)
             implementation(projects.mediaJvmUi)
         }
     }
 }
 
-// VLC Setup - bundles VLC native libraries so users don't need to install VLC
 vlcSetup {
     vlcVersion = libs.versions.vlc.get()
     shouldCompressVlcFiles = false
@@ -191,15 +192,22 @@ compose.desktop {
     application {
         mainClass = "com.sakayori.music.MainKt"
         jvmArgs += "--add-opens=java.base/java.nio=ALL-UNNAMED"
+        jvmArgs += "--add-opens=java.desktop/sun.awt=ALL-UNNAMED"
+        jvmArgs += "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED"
         jvmArgs += "-Xmx512m"
-        jvmArgs += "-Xms128m"
+        jvmArgs += "-Xms64m"
         jvmArgs += "-XX:+UseG1GC"
         jvmArgs += "-XX:MaxGCPauseMillis=50"
         jvmArgs += "-XX:+UseStringDeduplication"
         jvmArgs += "-XX:+TieredCompilation"
         jvmArgs += "-XX:TieredStopAtLevel=1"
+        jvmArgs += "-XX:CICompilerCount=2"
+        jvmArgs += "-XX:+AlwaysPreTouch"
+        jvmArgs += "-XX:+DisableExplicitGC"
+        jvmArgs += "-XX:+UseCompressedOops"
         jvmArgs += "-Dfile.encoding=UTF-8"
         jvmArgs += "-Dsun.java2d.opengl=true"
+        jvmArgs += "-Dsun.java2d.d3d=false"
 
         nativeDistributions {
             appResourcesRootDir = rootDir.resolve("vlc-natives/")

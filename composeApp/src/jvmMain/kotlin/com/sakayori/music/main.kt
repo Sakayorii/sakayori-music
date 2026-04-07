@@ -71,7 +71,7 @@ fun main(args: Array<String>) {
     try {
         System.setProperty("compose.swing.render.on.graphics", "true")
         System.setProperty("compose.interop.blending", "true")
-        System.setProperty("compose.layers.type", "COMPONENT")
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")
 
         val osName = System.getProperty("os.name", "").lowercase()
         val subDir = when {
@@ -112,6 +112,8 @@ fun main(args: Array<String>) {
         }
 
         val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
+        getKoin().get<SharedViewModel>().checkForUpdate()
+
         mediaPlayerHandler.showToast = { type ->
             showToast(
                 when (type) {

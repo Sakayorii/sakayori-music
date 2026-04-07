@@ -85,6 +85,7 @@ commonsIo = "2.5"
 packagedeps = "0.2.5"
 
 [libraries]
+kcef = { group = "dev.datlag", name = "kcef", version = "2024.04.20.4" }
 splashscreen = { group = "androidx.core", name = "core-splashscreen", version = "1.0.1" }
 desugaring = { group = "com.android.tools", name = "desugar_jdk_libs_nio", version.ref = "desugaring"}
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
@@ -166,7 +167,9 @@ haze-material = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "
 kotlin-onetimepassword = { module = "dev.turingcomplete:kotlin-onetimepassword", version.ref = "onetimepassword" }
 common = { module = "commons-codec:commons-codec", version.ref = "common" }
 sakayori-ai = { module = "org.simpmusic.gemini-kotlin:openai-client", version.ref = "sakayori-ai" }
-logging = { module = "org.slf4j:slf4j-android", version.ref = "slf4j" }
+logging = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+slf4j-android = { module = "org.slf4j:slf4j-android", version.ref = "slf4j" }
 newpipe-extractor = { module = "com.github.teamnewpipe:NewPipeExtractor", version.ref = "newpipe" }
 #leak-canary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 kermit-logging = { module = "co.touchlab:kermit", version.ref = "kermit" }

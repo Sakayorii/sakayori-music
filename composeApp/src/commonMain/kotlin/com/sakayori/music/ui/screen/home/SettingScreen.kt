@@ -170,8 +170,6 @@ import com.sakayori.music.generated.resources.audio
 import com.sakayori.music.generated.resources.author
 import com.sakayori.music.generated.resources.auto_backup
 import com.sakayori.music.generated.resources.auto_backup_description
-import com.sakayori.music.generated.resources.auto_check_for_update
-import com.sakayori.music.generated.resources.auto_check_for_update_description
 import com.sakayori.music.generated.resources.backup
 import com.sakayori.music.generated.resources.backup_downloaded
 import com.sakayori.music.generated.resources.backup_downloaded_description
@@ -249,6 +247,7 @@ import com.sakayori.music.generated.resources.kill_service_on_exit_description
 import com.sakayori.music.generated.resources.language
 import com.sakayori.music.generated.resources.last_backup
 import com.sakayori.music.generated.resources.last_checked_at
+import com.sakayori.music.generated.resources.never
 import com.sakayori.music.generated.resources.limit_player_cache
 import com.sakayori.music.generated.resources.local_tracking_description
 import com.sakayori.music.generated.resources.local_tracking_title
@@ -432,7 +431,6 @@ fun SettingScreen(
     val proxyType by viewModel.proxyType.collectAsStateWithLifecycle()
     val proxyHost by viewModel.proxyHost.collectAsStateWithLifecycle()
     val proxyPort by viewModel.proxyPort.collectAsStateWithLifecycle()
-    val autoCheckUpdate by viewModel.autoCheckUpdate.collectAsStateWithLifecycle()
     val blurFullscreenLyrics by viewModel.blurFullscreenLyrics.collectAsStateWithLifecycle()
     val blurPlayerBackground by viewModel.blurPlayerBackground.collectAsStateWithLifecycle()
     val aiProvider by viewModel.aiProvider.collectAsStateWithLifecycle()
@@ -471,14 +469,18 @@ fun SettingScreen(
             if (isCheckingUpdate) {
                 return@derivedStateOf runBlocking(Dispatchers.Default) { getString(Res.string.checking) }
             } else {
-                val lastCheckLong = lastCheckUpdate?.toLong() ?: 0L
+                val lastCheckLong = lastCheckUpdate?.toLongOrNull() ?: 0L
                 return@derivedStateOf runBlocking(Dispatchers.Default) {
                     getString(
                         Res.string.last_checked_at,
-                        DateTimeFormatter
-                            .ofPattern("yyyy-MM-dd HH:mm:ss")
-                            .withZone(ZoneId.systemDefault())
-                            .format(Instant.ofEpochMilli(lastCheckLong)),
+                        if (lastCheckLong > 0L) {
+                            DateTimeFormatter
+                                .ofPattern("yyyy-MM-dd HH:mm:ss")
+                                .withZone(ZoneId.systemDefault())
+                                .format(Instant.ofEpochMilli(lastCheckLong))
+                        } else {
+                            getString(Res.string.never)
+                        },
                     )
                 }
             }
@@ -2005,11 +2007,6 @@ fun SettingScreen(
                     onClick = {
                         navController.navigate(CreditDestination)
                     },
-                )
-                SettingItem(
-                    title = stringResource(Res.string.auto_check_for_update),
-                    subtitle = stringResource(Res.string.auto_check_for_update_description),
-                    switch = (autoCheckUpdate to { viewModel.setAutoCheckUpdate(it) }),
                 )
                 SettingItem(
                     title = stringResource(Res.string.update_channel),
