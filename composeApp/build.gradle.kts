@@ -191,6 +191,15 @@ compose.desktop {
     application {
         mainClass = "com.sakayori.music.MainKt"
         jvmArgs += "--add-opens=java.base/java.nio=ALL-UNNAMED"
+        jvmArgs += "-Xmx512m"
+        jvmArgs += "-Xms128m"
+        jvmArgs += "-XX:+UseG1GC"
+        jvmArgs += "-XX:MaxGCPauseMillis=50"
+        jvmArgs += "-XX:+UseStringDeduplication"
+        jvmArgs += "-XX:+TieredCompilation"
+        jvmArgs += "-XX:TieredStopAtLevel=1"
+        jvmArgs += "-Dfile.encoding=UTF-8"
+        jvmArgs += "-Dsun.java2d.opengl=true"
 
         nativeDistributions {
             appResourcesRootDir = rootDir.resolve("vlc-natives/")
@@ -256,7 +265,7 @@ compose.desktop {
                 shortcut = true
                 menu = true
                 menuGroup = "SakayoriMusic"
-                console = true
+                console = false
                 dirChooser = true
             }
             linux {

@@ -69,8 +69,6 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 fun main(args: Array<String>) {
     try {
-        println("SakayoriMusic starting...")
-        
         System.setProperty("compose.swing.render.on.graphics", "true")
         System.setProperty("compose.interop.blending", "true")
         System.setProperty("compose.layers.type", "COMPONENT")
@@ -81,25 +79,14 @@ fun main(args: Array<String>) {
             osName.contains("mac") -> "macos"
             else -> "linux"
         }
-        
-        val packagedPath = System.getProperty("compose.application.resources.dir")
-        val appDir = System.getProperty("user.dir")
-        
-        val potentialPaths = listOf(
-            File(packagedPath ?: "", subDir),
-            File(appDir, "app/$subDir"),
-            File(appDir, subDir),
-            File("vlc-natives/$subDir")
-        )
 
-        val vlcPath = potentialPaths.firstOrNull { it.exists() && it.isDirectory }?.absolutePath
-        
-        if (vlcPath != null) {
-            println("VLC natives found at: $vlcPath")
-            System.setProperty("jna.library.path", vlcPath)
+        val resourcesDir = System.getProperty("compose.application.resources.dir")
+        val vlcPath = if (resourcesDir != null) {
+            File(resourcesDir, subDir).absolutePath
         } else {
-            println("WARNING: VLC native libraries not found in any of: ${potentialPaths.joinToString { it.absolutePath }}")
+            File("vlc-natives/$subDir").absolutePath
         }
+        System.setProperty("jna.library.path", vlcPath)
 
         startKoin {
             loadKoinModules(listOf(viewModelModule))
@@ -183,7 +170,7 @@ fun main(args: Array<String>) {
                 onCloseRequest = { isVisible = false },
                 title = stringResource(Res.string.app_name),
                 icon = painterResource(Res.drawable.circle_app_icon),
-                undecorated = false,
+                undecorated = true,
                 transparent = false,
                 state = windowState,
                 visible = isVisible,
@@ -226,13 +213,7 @@ fun main(args: Array<String>) {
                 )
             }
         }
-    } catch (e: Exception) {
-        println("FATAL ERROR: ${e.message}")
-        e.printStackTrace()
-        exitProcess(1)
-    } catch (e: Error) {
-        println("FATAL ERROR (Native): ${e.message}")
-        e.printStackTrace()
+    } catch (_: Throwable) {
         exitProcess(1)
     }
 }
