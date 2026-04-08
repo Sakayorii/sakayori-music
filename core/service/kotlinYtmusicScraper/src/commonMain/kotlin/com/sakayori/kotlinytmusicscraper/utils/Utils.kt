@@ -83,7 +83,6 @@ fun String.decodeTidalManifest(): AudioData? {
         json.decodeFromString<AudioData?>(jsonString)
     } catch (e: Exception) {
         Logger.e("Utils", "Failed to decode Tidal manifest: ${e.message}")
-        e.printStackTrace()
         null
     }
 }

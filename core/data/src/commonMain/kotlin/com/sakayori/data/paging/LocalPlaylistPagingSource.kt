@@ -45,7 +45,7 @@ internal class LocalPlaylistPagingSource(
                 nextKey = if (songs.isEmpty()) null else currentPage + 1,
             )
         } catch (e: Exception) {
-            Logger.e("LocalPlaylistPagingSource", "load: ${e.printStackTrace()}")
+            Logger.e("LocalPlaylistPagingSource", "load: ${e.message}")
             LoadResult.Error(e)
         }
     }
@@ -124,7 +124,7 @@ internal class LocalPlaylistTimeBasedPagingSource(
                     },
             )
         } catch (e: Exception) {
-            Logger.e("LocalPlaylistPagingSource", "load: ${e.printStackTrace()}")
+            Logger.e("LocalPlaylistPagingSource", "load: ${e.message}")
             LoadResult.Error(e)
         }
     }

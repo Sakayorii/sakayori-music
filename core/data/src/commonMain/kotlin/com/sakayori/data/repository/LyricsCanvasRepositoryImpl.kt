@@ -142,7 +142,6 @@ internal class LyricsCanvasRepositoryImpl(
                                 dataStoreManager.setSpotifyClientToken(it.grantedToken.token)
                                 spotifyClientToken = it.grantedToken.token
                             }.onFailure {
-                                it.printStackTrace()
                                 emit(Resource.Error<CanvasResult>(it.message ?: "Not found"))
                             }
                         spotify
@@ -155,7 +154,6 @@ internal class LyricsCanvasRepositoryImpl(
                                 )
                                 Logger.d("Canvas", "Request spotifyPersonalToken: $spotifyPersonalToken")
                             }.onFailure {
-                                it.printStackTrace()
                                 emit(Resource.Error<CanvasResult>(it.message ?: "Not found"))
                             }
                     }
@@ -209,14 +207,12 @@ internal class LyricsCanvasRepositoryImpl(
                                             }
                                         }.onFailure {
                                             Logger.e("Canvas", "Error: ${it.message}")
-                                            it.printStackTrace()
                                             emit(Resource.Error<CanvasResult>(it.message ?: "Not found"))
                                         }
                                 } else {
                                     emit(Resource.Error<CanvasResult>("Not found"))
                                 }
                             }.onFailure { throwable ->
-                                throwable.printStackTrace()
                                 emit(Resource.Error<CanvasResult>(throwable.message ?: "Not found"))
                             }
                     } else {
@@ -287,7 +283,6 @@ internal class LyricsCanvasRepositoryImpl(
                                 dataStoreManager.setSpotifyClientToken(it.grantedToken.token)
                                 spotifyClientToken = it.grantedToken.token
                             }.onFailure {
-                                it.printStackTrace()
                                 emit(Resource.Error<Lyrics>("Not found"))
                             }
                     }
@@ -302,7 +297,6 @@ internal class LyricsCanvasRepositoryImpl(
                                 )
                                 Logger.d("Lyrics", "REQUEST spotifyPersonalToken: $spotifyPersonalToken")
                             }.onFailure {
-                                it.printStackTrace()
                                 emit(Resource.Error<Lyrics>("Not found"))
                             }
                     }
@@ -348,14 +342,12 @@ internal class LyricsCanvasRepositoryImpl(
                                     .onSuccess {
                                         emit(Resource.Success<Lyrics>(it.toLyrics()))
                                     }.onFailure {
-                                        it.printStackTrace()
                                         emit(Resource.Error<Lyrics>("Not found"))
                                     }
                             } else {
                                 emit(Resource.Error<Lyrics>("Not found"))
                             }
                         }.onFailure { throwable ->
-                            throwable.printStackTrace()
                             emit(Resource.Error<Lyrics>("Not found"))
                         }
                 }
@@ -396,7 +388,6 @@ internal class LyricsCanvasRepositoryImpl(
                 .onSuccess {
                     it?.let { emit(Resource.Success<Lyrics>(it.toLyrics())) }
                 }.onFailure {
-                    it.printStackTrace()
                     emit(Resource.Error<Lyrics>("Not found"))
                 }
         }.flowOn(Dispatchers.IO)
@@ -440,7 +431,6 @@ internal class LyricsCanvasRepositoryImpl(
                     val lyrics = parseTtmlLyrics(ttml).toLyrics()
                     emit(Resource.Success(lyrics))
                 }.onFailure {
-                    it.printStackTrace()
                     emit(Resource.Error<Lyrics>("BetterLyrics search failed"))
                 }
         }.flowOn(Dispatchers.IO)

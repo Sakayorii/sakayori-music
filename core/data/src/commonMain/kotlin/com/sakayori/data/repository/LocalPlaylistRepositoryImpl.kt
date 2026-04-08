@@ -393,7 +393,6 @@ internal class LocalPlaylistRepositoryImpl(
                 }
         } else {
             val e = res.exceptionOrNull()
-            e?.printStackTrace()
             emit(LocalResource.Error(e?.message ?: errorMessage))
         }
     }
@@ -472,7 +471,6 @@ internal class LocalPlaylistRepositoryImpl(
                         }
                     }.onFailure { e ->
                         Logger.e(TAG, "updateListTrackSynced: onFailure ${e.message}")
-                        e.printStackTrace()
                         emit(false)
                     }
             }
@@ -589,7 +587,6 @@ internal class LocalPlaylistRepositoryImpl(
                         emit(LocalResource.Error("List suggestions is null"))
                     }
                 }.onFailure { e ->
-                    e.printStackTrace()
                     emit(LocalResource.Error(e.message ?: "Error"))
                 }
         }
@@ -632,7 +629,6 @@ internal class LocalPlaylistRepositoryImpl(
                             emit(LocalResource.Error("Empty data"))
                         }
                     }.onFailure { exception ->
-                        exception.printStackTrace()
                         emit(LocalResource.Error(exception.message ?: "Error"))
                     }
             }
@@ -722,7 +718,6 @@ internal class LocalPlaylistRepositoryImpl(
                             emit(playlist)
                         }
                     }.onFailure { e ->
-                        e.printStackTrace()
                         emit(emptyList())
                     }
             }

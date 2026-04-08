@@ -2,9 +2,10 @@ package com.sakayori.music.utils
 
 import android.app.ActivityManager
 import android.content.Context
-import multiplatform.network.cmptoast.AppContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
-actual object DeviceCapability {
+actual object DeviceCapability : KoinComponent {
     actual fun isLowEndDevice(): Boolean {
         val ramGb = getRamGb()
         val cores = getCpuCores()
@@ -12,7 +13,7 @@ actual object DeviceCapability {
     }
 
     actual fun getRamGb(): Int {
-        val context = AppContext.get() as? Context ?: return 8
+        val context = try { get<Context>() } catch (_: Throwable) { return 8 }
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return 8
         val memoryInfo = ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memoryInfo)
@@ -22,7 +23,7 @@ actual object DeviceCapability {
     actual fun getCpuCores(): Int = Runtime.getRuntime().availableProcessors()
 
     private fun isSystemLowRam(): Boolean {
-        val context = AppContext.get() as? Context ?: return false
+        val context = try { get<Context>() } catch (_: Throwable) { return false }
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return false
         return activityManager.isLowRamDevice
     }

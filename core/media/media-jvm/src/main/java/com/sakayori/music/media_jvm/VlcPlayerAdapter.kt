@@ -186,22 +186,6 @@ class VlcPlayerAdapter(
         if (isCrossfading != value) {
             isCrossfading = value
             notifyListeners { onCrossfadeStateChanged(value) }
-            if (value) {
-                Logger.w(TAG, "=== CROSSFADE START - THREAD DUMP ===")
-                Thread.getAllStackTraces().forEach { (thread, stack) ->
-                    if (thread.name.contains("AWT-EventQueue") ||
-                        thread.name.contains("main") ||
-                        thread.name.contains("VLC") ||
-                        thread.name.contains("Compose")
-                    ) {
-                        Logger.w(TAG, "Thread: ${thread.name} state=${thread.state}")
-                        stack.take(10).forEach { frame ->
-                            Logger.w(TAG, "  at $frame")
-                        }
-                    }
-                }
-                Logger.w(TAG, "=== END THREAD DUMP ===")
-            }
         }
     }
 
@@ -1442,10 +1426,7 @@ class VlcPlayerAdapter(
             coroutineScope.launch {
                 while (isActive && currentPlayer != null) {
                     try {
-                        if (internalState == InternalState.PLAYING ||
-                            internalState == InternalState.READY ||
-                            internalState == InternalState.PAUSED
-                        ) {
+                        if (internalState == InternalState.PLAYING) {
                             if (isCrossfading) {
                                 val nextPlayer = secondaryPlayer
                                 if (nextPlayer != null) {
@@ -1464,9 +1445,7 @@ class VlcPlayerAdapter(
                                 }
                             }
 
-                            if (crossfadeEnabled &&
-                                !isCrossfading
-                            ) {
+                            if (crossfadeEnabled && !isCrossfading) {
                                 val player = currentPlayer
                                 if (player != null) {
                                     val dur = player.length
@@ -1486,11 +1465,13 @@ class VlcPlayerAdapter(
                                     }
                                 }
                             }
+                            delay(500)
+                        } else {
+                            delay(2000)
                         }
                     } catch (_: Exception) {
+                        delay(500)
                     }
-
-                    delay(200)
                 }
             }
     }
@@ -1592,42 +1573,6 @@ class VlcPlayerAdapter(
     private fun notifyEqualizerIntent(shouldOpen: Boolean) {
         notifyListeners { shouldOpenOrCloseEqualizerIntent(shouldOpen) }
     }
-
-    fun setEqualizerEnabled(enabled: Boolean) {
-        try {
-            if (enabled) {
-                val eq = uk.co.caprica.vlcj.player.base.Equalizer(10)
-                mediaPlayer.audio().setEqualizer(eq)
-            } else {
-                mediaPlayer.audio().setEqualizer(null)
-            }
-        } catch (e: Exception) {
-            Logger.w(TAG, "setEqualizerEnabled failed: ${e.message}")
-        }
-    }
-
-    fun setEqualizerPreset(presetIndex: Int) {
-        try {
-            val presets = uk.co.caprica.vlcj.player.base.Equalizer.presets()
-            if (presetIndex in presets.indices) {
-                val eq = uk.co.caprica.vlcj.player.base.Equalizer(presets[presetIndex])
-                mediaPlayer.audio().setEqualizer(eq)
-            }
-        } catch (e: Exception) {
-            Logger.w(TAG, "setEqualizerPreset failed: ${e.message}")
-        }
-    }
-
-    fun setEqualizerBand(bandIndex: Int, gain: Float) {
-        try {
-            val current = mediaPlayer.audio().equalizer() ?: uk.co.caprica.vlcj.player.base.Equalizer(10)
-            current.setAmp(bandIndex, gain)
-            mediaPlayer.audio().setEqualizer(current)
-        } catch (e: Exception) {
-            Logger.w(TAG, "setEqualizerBand failed: ${e.message}")
-        }
-    }
-
 
     private fun createShuffleOrder() {
         if (playlist.isEmpty()) {

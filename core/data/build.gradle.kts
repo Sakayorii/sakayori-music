@@ -72,20 +72,21 @@ kotlin {
                 implementation(projects.kizzy)
 
                 implementation(libs.kotlin.stdlib)
-                // Add KMP dependencies here
-                // Kotlinx serialization
                 implementation(libs.kotlinx.serialization.json)
 
-                // DataStore
                 implementation(libs.datastore.preferences)
 
-                // Room
                 implementation(libs.room.runtime)
                 implementation(libs.androidx.sqlite.bundled)
                 implementation(libs.androidx.room.migration)
 
-                // Koin
                 implementation(libs.koin.core)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(libs.kotlin.test)
             }
         }
 

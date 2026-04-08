@@ -371,7 +371,6 @@ internal class StreamRepositoryImpl(
                         )
                     }
                 }.onFailure {
-                    it.printStackTrace()
                     Logger.e("Stream", "Error: ${it.message}")
                     emit(null)
                 }
@@ -407,7 +406,6 @@ internal class StreamRepositoryImpl(
                     .onSuccess { response ->
                         emit(response)
                     }.onFailure {
-                        it.printStackTrace()
                         emit(0)
                     }
             }
@@ -430,7 +428,6 @@ internal class StreamRepositoryImpl(
                     ).onSuccess { response ->
                         emit(response)
                     }.onFailure {
-                        it.printStackTrace()
                         emit(0)
                     }
             }

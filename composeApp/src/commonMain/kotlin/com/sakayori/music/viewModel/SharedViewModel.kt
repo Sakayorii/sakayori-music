@@ -670,7 +670,6 @@ class SharedViewModel(
         viewModelScope.launch {
             mediaPlayerHandler.clearMediaItems()
             songRepository.insertSong(track.toSongEntity()).lastOrNull()?.let {
-                println("insertSong: $it")
                 songRepository
                     .getSongById(track.videoId)
                     .collect { songEntity ->

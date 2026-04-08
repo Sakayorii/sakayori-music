@@ -233,7 +233,7 @@ open class DiscordWebSocket(
         resumeGatewayUrl = null
         sessionId = null
         connected = false
-        runBlocking {
+        runBlocking(kotlinx.coroutines.Dispatchers.Default) {
             websocket?.close()
             Logger.e(TAG,"Connection to gateway closed")
         }

@@ -153,8 +153,9 @@ fun MiniPlayer(
     )
 
     LaunchedEffect(layer, isLiquidGlassEnabled) {
+        if (isLiquidGlassEnabled != DataStoreManager.TRUE) return@LaunchedEffect
         val buffer = IntArray(25)
-        while (isActive && isLiquidGlassEnabled == DataStoreManager.TRUE) {
+        while (isActive) {
             try {
                 withContext(Dispatchers.Main) {
                     val imageBitmap = layer.toImageBitmap()
@@ -175,7 +176,7 @@ fun MiniPlayer(
                 )
             } catch (_: Exception) {
             }
-            delay(2.seconds)
+            delay(5.seconds)
         }
     }
 

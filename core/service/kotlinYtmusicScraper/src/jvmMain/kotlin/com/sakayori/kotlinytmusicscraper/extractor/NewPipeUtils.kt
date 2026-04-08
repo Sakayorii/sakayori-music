@@ -109,7 +109,6 @@ class NewPipeUtils(
                 url,
             )
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 }

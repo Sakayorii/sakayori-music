@@ -43,7 +43,6 @@ object CrashDialog {
                 }
             } catch (_: Exception) {
                 System.err.println("Fatal crash in thread ${thread.name}:")
-                throwable.printStackTrace()
             }
 
             exitProcess(1)

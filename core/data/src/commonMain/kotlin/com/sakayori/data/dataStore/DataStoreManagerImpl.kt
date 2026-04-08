@@ -740,7 +740,6 @@ internal class DataStoreManagerImpl(
                     return@runBlocking null
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
                 return@runBlocking null
             }
         }

@@ -197,7 +197,6 @@ internal class PlaylistRepositoryImpl(
                             Logger.w("Repository", "playlistBrowse: $playlistBrowse")
                             emit(Resource.Success<Pair<PlaylistBrowse, String?>>(Pair(playlistBrowse, continuation)))
                         }.onFailure { exception ->
-                            exception.printStackTrace()
                             emit(Resource.Error<Pair<PlaylistBrowse, String?>>(exception.message.toString()))
                         }
                 }
@@ -532,7 +531,6 @@ internal class PlaylistRepositoryImpl(
                                 >("Error"),
                             )
                         } catch (e: Exception) {
-                            e.printStackTrace()
                             emit(
                                 Resource.Error<
                                     Pair<PlaylistBrowse, String?>,
@@ -604,7 +602,6 @@ internal class PlaylistRepositoryImpl(
                                     parseNextLibraryPlaylist(nextInput),
                                 )
                             }.onFailure { exception ->
-                                exception.printStackTrace()
                                 Logger.e("Library", "Error: ${exception.message}")
                                 continuation = null
                             }
@@ -628,7 +625,6 @@ internal class PlaylistRepositoryImpl(
                     }
                 }.onFailure { e ->
                     Logger.e("Library", "Error: ${e.message}")
-                    e.printStackTrace()
                     val account = localDataSource.getUsedGoogleAccount()
                     val isNeeded =
                         dataStoreManager.keepYouTubePlaylistOffline.first() == DataStoreManager.TRUE &&
@@ -723,7 +719,6 @@ internal class PlaylistRepositoryImpl(
                                     parseNextLibraryPlaylist(nextInput),
                                 )
                             }.onFailure { exception ->
-                                exception.printStackTrace()
                                 Logger.e("Mixed For You", "Error: ${exception.message}")
                                 continuation = null
                             }
@@ -791,7 +786,6 @@ internal class PlaylistRepositoryImpl(
                         }
                     emit(Resource.Success(result))
                 }.onFailure { exception ->
-                    exception.printStackTrace()
                     emit(Resource.Error<List<ChartItem>>(exception.message ?: "Unknown error"))
                 }
         }.flowOn(Dispatchers.IO)

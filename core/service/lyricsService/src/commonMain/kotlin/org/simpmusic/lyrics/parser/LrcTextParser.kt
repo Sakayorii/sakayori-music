@@ -12,8 +12,8 @@ fun parseSyncedLyrics(data: String): Lyrics {
         if (matchResult != null) {
             val minutes = matchResult.groupValues[1].toLong()
             val seconds = matchResult.groupValues[2].toLong()
-            val milliseconds = matchResult.groupValues[3].toLong()
-            val timeInMillis = minutes * 60_000L + seconds * 1000L + milliseconds
+            val centiseconds = matchResult.groupValues[3].toLong()
+            val timeInMillis = minutes * 60_000L + seconds * 1000L + centiseconds * 10L
             val content = (if (matchResult.groupValues[4] == " ") " ♫" else matchResult.groupValues[4]).removeRange(0, 1)
             linesLyrics.add(
                 Lyrics.LyricsX.Line(
@@ -51,9 +51,7 @@ fun parseRichSyncLyrics(data: String): Lyrics {
             line.isNotBlank() && !line.trim().startsWith("[offset:")
         }
 
-    println("[parseRichSyncLyrics] Total lines: ${lines.size}, Filtered lines: ${lyricsLines.size}")
     if (lyricsLines.isNotEmpty()) {
-        println("[parseRichSyncLyrics] First line sample: ${lyricsLines.first()}")
     }
 
     val regex = Regex("\\[(\\d{1,2}):(\\d{2})\\.(\\d{2,3})\\](.+)")
@@ -83,12 +81,9 @@ fun parseRichSyncLyrics(data: String): Lyrics {
             }
         } else {
             if (index < 3) {
-                println("[parseRichSyncLyrics] Line $index failed to match: '${line.take(100)}'")
             }
         }
     }
-
-    println("[parseRichSyncLyrics] Parsed ${linesLyrics.size} lines successfully")
 
     return Lyrics(
         lyrics =

@@ -158,7 +158,6 @@ internal class PodcastRepositoryImpl(
                                             ?.nextContinuationData
                                             ?.continuation
                                 }.onFailure {
-                                    it.printStackTrace()
                                     continueParam = null
                                 }
                         }

@@ -26,7 +26,6 @@ class Converters {
         try {
             value?.let { json.decodeFromString<List<String>>(it) }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 
@@ -40,7 +39,6 @@ class Converters {
                 json.decodeFromString<List<Track>>(value)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 
@@ -63,7 +61,6 @@ class Converters {
                 json.decodeFromString<List<Line>>(value)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 
@@ -74,7 +71,6 @@ class Converters {
                 json.decodeFromString<List<String?>>(value)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 

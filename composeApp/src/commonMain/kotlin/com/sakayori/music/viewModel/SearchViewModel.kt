@@ -283,7 +283,6 @@ class SearchViewModel(
                 }
                 _searchScreenUIState.value = SearchScreenUIState.Success
             } catch (e: Exception) {
-                e.printStackTrace()
                 _searchScreenUIState.value = SearchScreenUIState.Error
             }
         }

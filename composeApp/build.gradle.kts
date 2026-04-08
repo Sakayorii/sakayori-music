@@ -514,12 +514,42 @@ tasks.withType<AbstractJPackageTask>().configureEach {
     notCompatibleWithConfigurationCache("Compose Desktop JPackage tasks are not yet compatible with configuration cache")
 }
 
-// Mark vlc-setup tasks as not compatible with configuration cache
-// The plugin (v0.1.0) uses Task.project at execution time which is unsupported
-// Also mark 'clean' because it captures a reference to VlcSetupTask during serialization
 listOf("vlcExtract", "vlcFilterPlugins", "vlcSetup", "clean").forEach { taskName ->
     tasks.findByName(taskName)?.let {
         it.notCompatibleWithConfigurationCache("vlc-setup plugin tasks are not yet compatible with configuration cache")
+    }
+}
+
+tasks.named("clean").configure {
+    setDependsOn(emptyList<Any>())
+    doFirst {
+        val preserveDirs = listOf(
+            rootDir.resolve("vlc-natives/windows"),
+            rootDir.resolve("vlc-natives/linux"),
+            rootDir.resolve("vlc-natives/macos"),
+        )
+        preserveDirs.forEach { dir ->
+            if (dir.exists()) {
+                val backup = File(dir.parentFile, "${dir.name}.preserved")
+                if (backup.exists()) backup.deleteRecursively()
+                dir.copyRecursively(backup, overwrite = true)
+            }
+        }
+    }
+    doLast {
+        val preserveDirs = listOf(
+            rootDir.resolve("vlc-natives/windows"),
+            rootDir.resolve("vlc-natives/linux"),
+            rootDir.resolve("vlc-natives/macos"),
+        )
+        preserveDirs.forEach { dir ->
+            val backup = File(dir.parentFile, "${dir.name}.preserved")
+            if (backup.exists()) {
+                if (dir.exists()) dir.deleteRecursively()
+                backup.copyRecursively(dir, overwrite = true)
+                backup.deleteRecursively()
+            }
+        }
     }
 }
 

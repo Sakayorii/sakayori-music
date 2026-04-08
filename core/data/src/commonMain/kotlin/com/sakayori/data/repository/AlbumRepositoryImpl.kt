@@ -137,7 +137,6 @@ internal class AlbumRepositoryImpl(
                             ),
                         )
                     }.onFailure {
-                        it.printStackTrace()
                         emit(null)
                     }
             }

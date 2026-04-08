@@ -241,7 +241,6 @@ class JvmMediaPlayerHandlerImpl(
         try {
             value?.let { json.decodeFromString<List<Int>>(it) }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 
@@ -365,7 +364,6 @@ class JvmMediaPlayerHandlerImpl(
                     format.collectLatest { formatTemp ->
                         if (dataStoreManager.sendBackToGoogle.first() == TRUE) {
                             if (formatTemp != null) {
-                                println("format in viewModel: $formatTemp")
                                 Logger.d(TAG, "Collect format ${formatTemp.videoId}")
                                 Logger.w(TAG, "Format expire at ${formatTemp.expiredTime}")
                                 Logger.i(TAG, "AtrUrl ${formatTemp.playbackTrackingAtrUrl}")

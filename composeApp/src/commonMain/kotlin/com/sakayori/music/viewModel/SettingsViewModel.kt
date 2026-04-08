@@ -1112,7 +1112,6 @@ class SettingsViewModel(
                 }
             }.onFailure {
                 withContext(Dispatchers.Main) {
-                    it.printStackTrace()
                     makeToast(getString(Res.string.backup_create_failed))
                 }
             }
@@ -1129,7 +1128,6 @@ class SettingsViewModel(
                     }
                 }.onFailure {
                     withContext(Dispatchers.Main) {
-                        it.printStackTrace()
                         makeToast(getString(Res.string.restore_failed))
                     }
                 }

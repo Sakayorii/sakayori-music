@@ -166,7 +166,6 @@ internal fun parsePlaylistData(
                             }
                         } catch (e: Exception) {
                             Logger.e("PlaylistParser", "Error parsing track count: ${e.message}")
-                            e.printStackTrace()
                             0
                         }
                 }

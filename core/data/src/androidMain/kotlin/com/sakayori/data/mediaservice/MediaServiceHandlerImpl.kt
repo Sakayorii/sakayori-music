@@ -222,7 +222,6 @@ internal class MediaServiceHandlerImpl(
         try {
             value?.let { json.decodeFromString<List<Int>>(it) }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 
@@ -317,7 +316,6 @@ internal class MediaServiceHandlerImpl(
                     format.collectLatest { formatTemp ->
                         if (dataStoreManager.sendBackToGoogle.first() == TRUE) {
                             if (formatTemp != null) {
-                                println("format in viewModel: $formatTemp")
                                 Logger.d(TAG, "Collect format ${formatTemp.videoId}")
                                 Logger.w(TAG, "Format expire at ${formatTemp.expiredTime}")
                                 Logger.i(TAG, "AtrUrl ${formatTemp.playbackTrackingAtrUrl}")
@@ -1974,7 +1972,6 @@ internal class MediaServiceHandlerImpl(
                 loudnessEnhancer = LoudnessEnhancer(player.audioSessionId)
             } catch (e: Exception) {
                 Logger.e(TAG, "mayBeNormalizeVolume: ${e.message}")
-                e.printStackTrace()
             }
         }
 
@@ -2013,7 +2010,6 @@ internal class MediaServiceHandlerImpl(
                                     )
                                 } catch (e: Exception) {
                                     Logger.e(TAG, "mayBeNormalizeVolume: ${e.message}")
-                                    e.printStackTrace()
                                 }
                                 try {
                                     secondLoudnessEnhancer?.setTargetGain(0f.toMb() - loudnessMb)
@@ -2024,7 +2020,6 @@ internal class MediaServiceHandlerImpl(
                                     )
                                 } catch (e: Exception) {
                                     Logger.e(TAG, "mayBeNormalizeVolume: ${e.message}")
-                                    e.printStackTrace()
                                 }
                             }
                         }

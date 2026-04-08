@@ -131,7 +131,6 @@ internal fun parseMixedContent(
                                             Logger.i("parse_mixed_content", "Removed last artist")
                                         }.onFailure {
                                             Logger.e("parse_mixed_content", "Failed to remove last artist")
-                                            it.printStackTrace()
                                         }
                                 }
                                 Logger.w("Song", ytItem.toString())
@@ -188,7 +187,6 @@ internal fun parseMixedContent(
                                             Logger.i("parse_mixed_content", "Removed last artist")
                                         }.onFailure {
                                             Logger.e("parse_mixed_content", "Failed to remove last artist")
-                                            it.printStackTrace()
                                         }
                                 }
                                 if (ytItem != null) {
@@ -731,7 +729,6 @@ internal fun parseNewRelease(
                                 Logger.i("parse_mixed_content", "Removed last artist")
                             }.onFailure {
                                 Logger.e("parse_mixed_content", "Failed to remove last artist")
-                                it.printStackTrace()
                             }
                     }
                     Content(

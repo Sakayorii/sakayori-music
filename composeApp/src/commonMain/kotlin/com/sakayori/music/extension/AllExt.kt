@@ -109,7 +109,6 @@ fun parseTimestampToMilliseconds(timestamp: String): Double {
                     val seconds = parts[1].toDouble()
                     (minutes * 60 + seconds)
                 } catch (e: NumberFormatException) {
-                    e.printStackTrace()
                     return 0.0
                 }
             }
@@ -121,7 +120,6 @@ fun parseTimestampToMilliseconds(timestamp: String): Double {
                     val seconds = parts[2].toDouble()
                     (hours * 3600 + minutes * 60 + seconds)
                 } catch (e: NumberFormatException) {
-                    e.printStackTrace()
                     return 0.0
                 }
             }

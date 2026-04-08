@@ -184,7 +184,6 @@ class YouTube {
         }.onSuccess {
             ytMusic.proxy = it
         }.onFailure {
-            it.printStackTrace()
         }
     }
 
@@ -1083,7 +1082,6 @@ class YouTube {
             Logger.d(TAG, "Playback Tracking $playbackTracking")
             return Triple(cookie, visitorData ?: this@YouTube.visitorData ?: "", playbackTracking)
         } catch (e: Exception) {
-            e.printStackTrace()
             return Triple("", "", null)
         }
     }
@@ -1598,7 +1596,6 @@ class YouTube {
                 .first { (it as? JsonPrimitive)?.content?.startsWith(VISITOR_DATA_PREFIX) == true }
                 .jsonPrimitive.content
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 
@@ -1714,7 +1711,6 @@ class YouTube {
                     ).body<Transcript>()
                     .tryDecodeText()
             } catch (e: Exception) {
-                e.printStackTrace()
                 null
             }
         return@runCatching baseCaption to translateCaption
@@ -1940,7 +1936,6 @@ class YouTube {
                         }.onSuccess {
                             Logger.d(TAG, "Download Video Success")
                         }.onFailure {
-                            it.printStackTrace()
                             trySend(DownloadProgress.failed(it.message ?: "Download failed"))
                         }
                     } else {
@@ -1963,12 +1958,10 @@ class YouTube {
                                 ),
                             )
                         }.onFailure { e ->
-                            e.printStackTrace()
                             trySend(DownloadProgress.failed(e.message ?: "Download failed"))
                         }
                     }
                 }.onFailure {
-                    it.printStackTrace()
                     Logger.d(TAG, "Player Response is null")
                     trySend(DownloadProgress.failed(it.message ?: "Player response is null"))
                 }

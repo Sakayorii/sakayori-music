@@ -65,7 +65,6 @@ actual fun getCookies(url: String, packageName: String): CookieItem {
             db.close()
             CookieItem(url, cookieList)
         } catch (e: Exception) {
-            e.printStackTrace()
             CookieItem(url, emptyList())
         }
 }

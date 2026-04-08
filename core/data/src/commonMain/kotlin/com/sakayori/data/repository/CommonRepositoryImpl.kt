@@ -264,7 +264,6 @@ internal class CommonRepositoryImpl(
                 return true
             }
         } catch (e: IOException) {
-            e.printStackTrace()
             return false
         }
     }

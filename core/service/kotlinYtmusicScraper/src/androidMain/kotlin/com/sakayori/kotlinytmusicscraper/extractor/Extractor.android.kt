@@ -61,8 +61,7 @@ actual class Extractor {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
                 FileSystem.SYSTEM.delete("$filePath.mp4".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.VIDEO_DONE)
         } else if (ReturnCode.isCancel(session.returnCode)) {
@@ -71,8 +70,7 @@ actual class Extractor {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
                 FileSystem.SYSTEM.delete("$filePath.mp4".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.failed(session.failStackTrace ?: "Command cancelled"))
         } else {
@@ -81,8 +79,7 @@ actual class Extractor {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
                 FileSystem.SYSTEM.delete("$filePath.mp4".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.failed(session.failStackTrace ?: "FFmpeg command failed"))
         }
@@ -107,8 +104,7 @@ actual class Extractor {
             if (FileSystem.SYSTEM.exists("$filePath-SakayoriMusic.mp3".toPath())) {
                 FileSystem.SYSTEM.delete("$filePath-SakayoriMusic.mp3".toPath())
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
+        } catch (_: IOException) {
         }
 
         val session =
@@ -119,16 +115,14 @@ actual class Extractor {
             Logger.d(TAG, "Command succeeded ${session.state}, ${session.returnCode}")
             try {
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
         } else if (ReturnCode.isCancel(session.returnCode)) {
             Logger.d(TAG, "Command cancelled ${session.state}, ${session.returnCode}")
             try {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.failed("Error"))
         } else {
@@ -136,8 +130,7 @@ actual class Extractor {
             try {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.failed("Error"))
         }
@@ -170,8 +163,7 @@ actual class Extractor {
                 FileSystem.SYSTEM.delete("$filePath.mp3".toPath())
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.AUDIO_DONE)
         } else if (ReturnCode.isCancel(sessionInject.returnCode)) {
@@ -180,8 +172,7 @@ actual class Extractor {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
                 FileSystem.SYSTEM.delete("$filePath-SakayoriMusic.mp3".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.failed("Error"))
         } else {
@@ -190,8 +181,7 @@ actual class Extractor {
                 FileSystem.SYSTEM.delete("$filePath.jpg".toPath())
                 FileSystem.SYSTEM.delete("$filePath.webm".toPath())
                 FileSystem.SYSTEM.delete("$filePath-SakayoriMusic.mp3".toPath())
-            } catch (e: IOException) {
-                e.printStackTrace()
+            } catch (_: IOException) {
             }
             return (DownloadProgress.failed("Error"))
         }

@@ -122,7 +122,6 @@ internal class SearchRepositoryImpl(
                 youTube
                     .search(query, YouTube.SearchFilter.FILTER_PODCAST)
                     .onSuccess { result ->
-                        println(query)
                         val listPlaylist: ArrayList<PlaylistsResult> = arrayListOf()
                         var countinueParam = result.continuation
                         Logger.w("Podcast", "result: $result")

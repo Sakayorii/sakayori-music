@@ -225,7 +225,23 @@ fun main(args: Array<String>) {
                 )
             }
         }
-    } catch (_: Throwable) {
+    } catch (t: Throwable) {
+        try {
+            val crashLog = File(System.getProperty("user.home"), ".sakayori-music/crash.log")
+            crashLog.parentFile.mkdirs()
+            crashLog.writeText(buildString {
+                append("Crash at ${java.time.LocalDateTime.now()}\n")
+                append("${t.javaClass.name}: ${t.message}\n")
+                t.stackTrace.forEach { append("  at $it\n") }
+                var cause = t.cause
+                while (cause != null) {
+                    append("Caused by: ${cause.javaClass.name}: ${cause.message}\n")
+                    cause.stackTrace.forEach { append("  at $it\n") }
+                    cause = cause.cause
+                }
+            })
+        } catch (_: Throwable) {
+        }
         exitProcess(1)
     }
 }

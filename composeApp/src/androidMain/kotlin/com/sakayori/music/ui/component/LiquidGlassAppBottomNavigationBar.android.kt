@@ -156,7 +156,7 @@ actual fun LiquidGlassAppBottomNavigationBar(
                 } catch (_: Exception) {
                 }
             }
-            delay(2.seconds)
+            delay(5.seconds)
         }
     }
 

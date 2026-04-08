@@ -34,7 +34,6 @@ class Spotify {
         }.onSuccess {
             spotifyClient.proxy = it
         }.onFailure {
-            it.printStackTrace()
         }
     }
 

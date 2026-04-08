@@ -977,8 +977,7 @@ class Ytmusic {
                     if (fileSystem.exists(path)) {
                         fileSystem.delete(path)
                     }
-                } catch (e: IOException) {
-                    e.printStackTrace()
+                } catch (_: IOException) {
                 }
                 downloadedBytes = 0L
                 val delayMs = (500L * (1 shl (attempt - 1))).coerceAtMost(10000L)
@@ -1067,7 +1066,6 @@ class Ytmusic {
         return try {
             return httpClient.head(url).status.value in 400..499
         } catch (e: Exception) {
-            e.printStackTrace()
             true
         }
     }

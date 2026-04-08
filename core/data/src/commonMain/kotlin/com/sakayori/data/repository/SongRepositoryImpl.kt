@@ -213,7 +213,6 @@ internal class SongRepositoryImpl(
                             newContinuation = next.continuation
                             emit(Pair(data.toListTrack(), newContinuation))
                         }.onFailure { exception ->
-                            exception.printStackTrace()
                             emit(Pair(null, null))
                         }
                 } else {
@@ -283,7 +282,6 @@ internal class SongRepositoryImpl(
                             song,
                         )
                     }.onFailure {
-                        it.printStackTrace()
                         emit(getSongInfoEntity(videoId).lastOrNull())
                     }
             }
@@ -297,7 +295,6 @@ internal class SongRepositoryImpl(
                     .onSuccess {
                         if (it == LikeStatus.LIKE) emit(true) else emit(false)
                     }.onFailure {
-                        it.printStackTrace()
                         emit(false)
                     }
             }
@@ -313,7 +310,6 @@ internal class SongRepositoryImpl(
                             Logger.d(TAG, "Liked -> Success: $it")
                             emit(it)
                         }.onFailure {
-                            it.printStackTrace()
                             emit(0)
                         }
                 }
@@ -330,7 +326,6 @@ internal class SongRepositoryImpl(
                             Logger.d(TAG, "Liked -> Success: $it")
                             emit(it)
                         }.onFailure {
-                            it.printStackTrace()
                             emit(0)
                         }
                 }
@@ -379,7 +374,6 @@ internal class SongRepositoryImpl(
                         val nextContinuation = next.continuation
                         emit(Resource.Success<Pair<List<Track>, String?>>(Pair(data.toListTrack().toList(), nextContinuation)))
                     }.onFailure { exception ->
-                        exception.printStackTrace()
                         emit(Resource.Error<Pair<List<Track>, String?>>(exception.message.toString()))
                     }
             }
@@ -393,7 +387,6 @@ internal class SongRepositoryImpl(
                     .onSuccess { next ->
                         emit(Resource.Success(Pair(next.items.toListTrack(), next.continuation)))
                     }.onFailure {
-                        it.printStackTrace()
                         emit(Resource.Error(it.message ?: "Error"))
                     }
             }
