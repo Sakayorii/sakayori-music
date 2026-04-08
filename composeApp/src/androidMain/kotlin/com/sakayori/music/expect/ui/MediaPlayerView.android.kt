@@ -13,7 +13,6 @@ import com.sakayori.media3.ui.MediaPlayerView
 import com.sakayori.media3.ui.MediaPlayerViewWithSubtitle
 import com.sakayori.music.extension.findActivity
 import com.sakayori.music.extension.getScreenSizeInfo
-import com.sakayori.music.ui.theme.typo
 
 @Composable
 actual fun MediaPlayerView(
@@ -55,7 +54,7 @@ actual fun MediaPlayerViewWithSubtitle(
         context = LocalContext.current,
         activity = LocalActivity.current as? ComponentActivity ?: LocalContext.current.findActivity(),
         isInPipMode = isInPipMode,
-        mainTextStyle = typo().bodyLarge,
-        translatedTextStyle = typo().bodyMedium,
+        mainTextStyle = mainTextStyle,
+        translatedTextStyle = translatedTextStyle,
     )
 }

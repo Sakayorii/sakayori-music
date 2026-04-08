@@ -431,7 +431,7 @@ internal fun CanvasResponse.toCanvasResult(): CanvasResult? {
                         .maxByOrNull {
                             (it.height ?: 0) + (it.width ?: 0)
                         }?.url
-                } ?: canvasThumbs.first().url
+                } ?: canvasThumbs.firstOrNull()?.url
             )
         } else {
             null

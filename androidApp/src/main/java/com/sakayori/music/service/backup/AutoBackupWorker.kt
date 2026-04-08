@@ -53,7 +53,10 @@ class AutoBackupWorker(
 
             val success = saveToDownloads(tempBackupFile)
 
-            tempBackupFile.delete()
+            try {
+                tempBackupFile.delete()
+            } catch (_: Exception) {
+            }
 
             if (success) {
                 cleanupOldBackups(maxFiles)
@@ -77,36 +80,52 @@ class AutoBackupWorker(
 
         FileOutputStream(tempFile).buffered().use { bufferedOutput ->
             ZipOutputStream(bufferedOutput).use { zipOutputStream ->
-                val dataStoreFile = File(context.filesDir, "datastore/$SETTINGS_FILENAME.preferences_pb")
-                if (dataStoreFile.exists()) {
-                    zipOutputStream.putNextEntry(ZipEntry("$SETTINGS_FILENAME.preferences_pb"))
-                    dataStoreFile.inputStream().buffered().use { inputStream ->
-                        inputStream.copyTo(zipOutputStream)
-                    }
-                    zipOutputStream.closeEntry()
-                }
-
-                commonRepository.databaseDaoCheckpoint()
-                val dbPath = commonRepository.getDatabasePath()
-                FileInputStream(dbPath).use { inputStream ->
-                    zipOutputStream.putNextEntry(ZipEntry(DB_NAME))
-                    inputStream.copyTo(zipOutputStream)
-                    zipOutputStream.closeEntry()
-                }
-
-                if (backupDownloaded) {
-                    val exoPlayerDb = context.getDatabasePath(EXOPLAYER_DB_NAME)
-                    if (exoPlayerDb.exists()) {
-                        zipOutputStream.putNextEntry(ZipEntry(EXOPLAYER_DB_NAME))
-                        exoPlayerDb.inputStream().buffered().use { inputStream ->
+                try {
+                    val dataStoreFile = File(context.filesDir, "datastore/$SETTINGS_FILENAME.preferences_pb")
+                    if (dataStoreFile.exists()) {
+                        zipOutputStream.putNextEntry(ZipEntry("$SETTINGS_FILENAME.preferences_pb"))
+                        dataStoreFile.inputStream().buffered().use { inputStream ->
                             inputStream.copyTo(zipOutputStream)
                         }
                         zipOutputStream.closeEntry()
                     }
+                } catch (e: Exception) {
+                    Logger.e(TAG, "Failed to backup datastore: ${e.message}")
+                }
 
-                    val downloadFolder = File(context.filesDir, DOWNLOAD_EXOPLAYER_FOLDER)
-                    if (downloadFolder.exists() && downloadFolder.isDirectory) {
-                        backupFolder(downloadFolder, DOWNLOAD_EXOPLAYER_FOLDER, zipOutputStream)
+                try {
+                    commonRepository.databaseDaoCheckpoint()
+                    val dbPath = commonRepository.getDatabasePath()
+                    FileInputStream(dbPath).use { inputStream ->
+                        zipOutputStream.putNextEntry(ZipEntry(DB_NAME))
+                        inputStream.copyTo(zipOutputStream)
+                        zipOutputStream.closeEntry()
+                    }
+                } catch (e: Exception) {
+                    Logger.e(TAG, "Failed to backup database: ${e.message}")
+                }
+
+                if (backupDownloaded) {
+                    try {
+                        val exoPlayerDb = context.getDatabasePath(EXOPLAYER_DB_NAME)
+                        if (exoPlayerDb.exists()) {
+                            zipOutputStream.putNextEntry(ZipEntry(EXOPLAYER_DB_NAME))
+                            exoPlayerDb.inputStream().buffered().use { inputStream ->
+                                inputStream.copyTo(zipOutputStream)
+                            }
+                            zipOutputStream.closeEntry()
+                        }
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "Failed to backup exoplayer db: ${e.message}")
+                    }
+
+                    try {
+                        val downloadFolder = File(context.filesDir, DOWNLOAD_EXOPLAYER_FOLDER)
+                        if (downloadFolder.exists() && downloadFolder.isDirectory) {
+                            backupFolder(downloadFolder, DOWNLOAD_EXOPLAYER_FOLDER, zipOutputStream)
+                        }
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "Failed to backup download folder: ${e.message}")
                     }
                 }
             }
@@ -123,15 +142,18 @@ class AutoBackupWorker(
         if (!folder.exists() || !folder.isDirectory) return
 
         folder.listFiles()?.forEach { file ->
-            if (file.isFile) {
-                val entryName = "$baseName/${file.name}"
-                zipOutputStream.putNextEntry(ZipEntry(entryName))
-                file.inputStream().buffered().use { inputStream ->
-                    inputStream.copyTo(zipOutputStream)
+            try {
+                if (file.isFile) {
+                    val entryName = "$baseName/${file.name}"
+                    zipOutputStream.putNextEntry(ZipEntry(entryName))
+                    file.inputStream().buffered().use { inputStream ->
+                        inputStream.copyTo(zipOutputStream)
+                    }
+                    zipOutputStream.closeEntry()
+                } else if (file.isDirectory) {
+                    backupFolder(file, "$baseName/${file.name}", zipOutputStream)
                 }
-                zipOutputStream.closeEntry()
-            } else if (file.isDirectory) {
-                backupFolder(file, "$baseName/${file.name}", zipOutputStream)
+            } catch (_: Exception) {
             }
         }
     }

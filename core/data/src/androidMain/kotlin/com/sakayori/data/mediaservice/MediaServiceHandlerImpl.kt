@@ -346,15 +346,26 @@ internal class MediaServiceHandlerImpl(
             val discordRPCEnabledJob =
                 launch {
                     dataStoreManager.richPresenceEnabled.collectLatest {
-                        if (it == TRUE && discordRPC == null) {
-                            discordRPC = DiscordRPC(dataStoreManager.discordToken.first())
-                            nowPlayingState.value.songEntity?.let { song ->
-                                discordRPC?.updateSong(song)
+                        try {
+                            if (it == TRUE && discordRPC == null) {
+                                discordRPC = DiscordRPC(dataStoreManager.discordToken.first())
+                                nowPlayingState.value.songEntity?.let { song ->
+                                    try {
+                                        discordRPC?.updateSong(song)
+                                    } catch (_: Exception) {
+                                    }
+                                }
+                            } else if (it == FALSE) {
+                                try {
+                                    if (discordRPC?.isRpcRunning() == true) {
+                                        discordRPC?.closeRPC()
+                                    }
+                                } catch (_: Exception) {
+                                }
+                                discordRPC = null
                             }
-                        } else if (it == FALSE) {
-                            if (discordRPC?.isRpcRunning() == true) {
-                                discordRPC?.closeRPC()
-                            }
+                        } catch (e: Exception) {
+                            Logger.e(TAG, "Discord RPC init error: ${e.message}")
                             discordRPC = null
                         }
                     }
@@ -683,9 +694,15 @@ internal class MediaServiceHandlerImpl(
     override fun startProgressUpdate() {
         progressJob =
             coroutineScope.launch {
+                var lastEmittedSecond = -1L
                 while (true) {
-                    delay(100)
-                    _simpleMediaState.value = SimpleMediaState.Progress(player.currentPosition)
+                    delay(500)
+                    val currentPos = player.currentPosition
+                    val currentSecond = currentPos / 1000
+                    if (currentSecond != lastEmittedSecond) {
+                        lastEmittedSecond = currentSecond
+                        _simpleMediaState.value = SimpleMediaState.Progress(currentPos)
+                    }
                 }
             }
     }
@@ -2078,8 +2095,11 @@ internal class MediaServiceHandlerImpl(
     override fun release() {
         Logger.w("ServiceHandler", "Starting release process")
         try {
-            if (discordRPC?.isRpcRunning() == true) {
-                discordRPC?.closeRPC()
+            try {
+                if (discordRPC?.isRpcRunning() == true) {
+                    discordRPC?.closeRPC()
+                }
+            } catch (_: Exception) {
             }
             discordRPC = null
             mayBeSaveRecentSong(true)
@@ -2185,8 +2205,11 @@ internal class MediaServiceHandlerImpl(
             stopProgressUpdate()
             mayBeSaveRecentSong()
             mayBeSavePlaybackState()
-            if (discordRPC?.isRpcRunning() == true) {
-                discordRPC?.closeRPC()
+            try {
+                if (discordRPC?.isRpcRunning() == true) {
+                    discordRPC?.closeRPC()
+                }
+            } catch (_: Exception) {
             }
         }
         updateNextPreviousTrackAvailability()
@@ -2274,7 +2297,11 @@ internal class MediaServiceHandlerImpl(
 
     private fun updateDiscordRpc(song: SongEntity) {
         coroutineScope.launch {
-            discordRPC?.updateSong(song)
+            try {
+                discordRPC?.updateSong(song)
+            } catch (e: Exception) {
+                Logger.e(TAG, "Discord RPC updateSong failed: ${e.message}")
+            }
         }
     }
 

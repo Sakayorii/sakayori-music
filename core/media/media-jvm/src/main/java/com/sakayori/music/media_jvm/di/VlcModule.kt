@@ -4,8 +4,10 @@ import com.sakayori.common.Config.SERVICE_SCOPE
 import com.sakayori.domain.mediaservice.handler.DownloadHandler
 import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
 import com.sakayori.domain.repository.CacheRepository
+import com.sakayori.logger.Logger
 import com.sakayori.music.media_jvm.VlcPlayerAdapter
 import com.sakayori.music.media_jvm.download.DownloadUtils
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -20,7 +22,10 @@ private val vlcModule =
             val vlcDispatcher = Executors.newSingleThreadExecutor { r ->
                 Thread(r, "VLC-Player-Thread").apply { isDaemon = true }
             }.asCoroutineDispatcher()
-            CoroutineScope(vlcDispatcher + SupervisorJob())
+            val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+                Logger.e("VlcScope", "Uncaught coroutine exception: ${throwable.message}")
+            }
+            CoroutineScope(vlcDispatcher + SupervisorJob() + exceptionHandler)
         }
 
         single<VlcPlayerAdapter> {

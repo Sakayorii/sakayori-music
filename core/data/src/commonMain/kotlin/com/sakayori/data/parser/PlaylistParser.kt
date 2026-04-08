@@ -36,7 +36,7 @@ internal fun parsePlaylistData(
             is BrowseResponse.Header.MusicDetailHeaderRenderer -> {
                 title +=
                     header.title.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text
                 Logger.d("PlaylistParser", "title: $title")
                 if (!header.subtitle.runs.isNullOrEmpty() && (header.subtitle.runs?.size ?: 0) > 2) {
@@ -44,13 +44,13 @@ internal fun parsePlaylistData(
                         Author(
                             id =
                                 header.subtitle.runs
-                                    ?.get(2)
+                                    ?.getOrNull(2)
                                     ?.navigationEndpoint
                                     ?.browseEndpoint
                                     ?.browseId ?: "",
                             name =
                                 header.subtitle.runs
-                                    ?.get(2)
+                                    ?.getOrNull(2)
                                     ?.text ?: "",
                         )
                     listAuthor.add(author)
@@ -70,7 +70,7 @@ internal fun parsePlaylistData(
                 if (!header.subtitle.runs.isNullOrEmpty() && (header.subtitle.runs?.size ?: 0) > 4) {
                     year =
                         header.subtitle.runs
-                            ?.get(4)
+                            ?.getOrNull(4)
                             ?.text ?: now().year.toString()
                 }
                 header.thumbnail.croppedSquareThumbnailRenderer
@@ -85,7 +85,7 @@ internal fun parsePlaylistData(
                     header.header.musicDetailHeaderRenderer
                         ?.title
                         ?.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text
                 Logger.d("PlaylistParser", "title: $title")
                 val author =
@@ -94,7 +94,7 @@ internal fun parsePlaylistData(
                             header.header.musicDetailHeaderRenderer
                                 ?.subtitle
                                 ?.runs
-                                ?.get(2)
+                                ?.getOrNull(2)
                                 ?.navigationEndpoint
                                 ?.browseEndpoint
                                 ?.browseId
@@ -103,7 +103,7 @@ internal fun parsePlaylistData(
                             header.header.musicDetailHeaderRenderer
                                 ?.subtitle
                                 ?.runs
-                                ?.get(2)
+                                ?.getOrNull(2)
                                 ?.text ?: "",
                     )
                 listAuthor.add(author)
@@ -180,7 +180,7 @@ internal fun parsePlaylistData(
                         id =
                             header.straplineTextOne
                                 ?.runs
-                                ?.get(0)
+                                ?.getOrNull(0)
                                 ?.navigationEndpoint
                                 ?.browseEndpoint
                                 ?.browseId
@@ -196,7 +196,7 @@ internal fun parsePlaylistData(
                         name =
                             header.straplineTextOne
                                 ?.runs
-                                ?.get(0)
+                                ?.getOrNull(0)
                                 ?.text
                                 ?: header.facepile
                                     ?.avatarStackViewModel
@@ -268,21 +268,21 @@ internal fun parsePlaylistData(
                     duration =
                         content.musicResponsiveListItemRenderer
                             ?.fixedColumns
-                            ?.get(0)
+                            ?.getOrNull(0)
                             ?.musicResponsiveListItemFlexColumnRenderer
                             ?.text
                             ?.runs
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.text ?: "",
                     durationSeconds =
                         content.musicResponsiveListItemRenderer
                             ?.fixedColumns
-                            ?.get(0)
+                            ?.getOrNull(0)
                             ?.musicResponsiveListItemFlexColumnRenderer
                             ?.text
                             ?.runs
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.text
                             ?.let {
@@ -293,7 +293,11 @@ internal fun parsePlaylistData(
                                 } else {
                                     listOf(it)
                                 }
-                            }?.let { it[0].toInt() * 60 + it[1].toInt() } ?: 0,
+                            }?.let {
+                                runCatching {
+                                    (it.getOrNull(0)?.toInt() ?: 0) * 60 + (it.getOrNull(1)?.toInt() ?: 0)
+                                }.getOrNull() ?: 0
+                            } ?: 0,
                     isAvailable = false,
                     isExplicit = false,
                     likeStatus = "INDIFFERENT",
@@ -312,7 +316,7 @@ internal fun parsePlaylistData(
                             ?.musicResponsiveListItemFlexColumnRenderer
                             ?.text
                             ?.runs
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.text ?: "",
                     videoId =
@@ -322,7 +326,7 @@ internal fun parsePlaylistData(
                             ?.musicResponsiveListItemFlexColumnRenderer
                             ?.text
                             ?.runs
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.navigationEndpoint
                             ?.watchEndpoint
@@ -375,7 +379,7 @@ internal fun parseSetVideoId(
                 ?.serviceEndpoint
                 ?.playlistEditEndpoint
                 ?.actions
-                ?.get(
+                ?.getOrNull(
                     0,
                 )?.setVideoId
         if (videoId != null && setVideoId != null) {

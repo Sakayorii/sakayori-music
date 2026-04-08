@@ -338,30 +338,44 @@ internal class SongRepositoryImpl(
         videoId: String,
         isVideo: Boolean,
     ): Flow<DownloadProgress> =
-        youTube
-            .download(
-                track.toSongItemForDownload(),
-                path,
-                videoId,
-                runBlocking(Dispatchers.IO) {
-                    (
-                        dataStoreManager.prefer320kbpsStream.first() == TRUE &&
-                            dataStoreManager.your320kbpsUrl.first().isNotEmpty()
-                    ) to
-                        dataStoreManager.your320kbpsUrl.first()
-                },
-                isVideo,
-            ).map {
-                DownloadProgress(
-                    audioDownloadProgress = it.audioDownloadProgress,
-                    videoDownloadProgress = it.videoDownloadProgress,
-                    downloadSpeed = it.downloadSpeed,
-                    errorMessage = it.errorMessage,
-                    isMerging = it.isMerging,
-                    isError = it.isError,
-                    isDone = it.isDone,
-                )
+        flow {
+            try {
+                val prefer320kbps = try {
+                    runBlocking(Dispatchers.IO) {
+                        (
+                            dataStoreManager.prefer320kbpsStream.first() == TRUE &&
+                                dataStoreManager.your320kbpsUrl.first().isNotEmpty()
+                        ) to
+                            dataStoreManager.your320kbpsUrl.first()
+                    }
+                } catch (e: Exception) {
+                    Logger.e(TAG, "Failed to read 320kbps prefs: ${e.message}")
+                    false to ""
+                }
+
+                youTube
+                    .download(
+                        track.toSongItemForDownload(),
+                        path,
+                        videoId,
+                        prefer320kbps,
+                        isVideo,
+                    ).map {
+                        DownloadProgress(
+                            audioDownloadProgress = it.audioDownloadProgress,
+                            videoDownloadProgress = it.videoDownloadProgress,
+                            downloadSpeed = it.downloadSpeed,
+                            errorMessage = it.errorMessage,
+                            isMerging = it.isMerging,
+                            isError = it.isError,
+                            isDone = it.isDone,
+                        )
+                    }.collect { emit(it) }
+            } catch (e: Exception) {
+                Logger.e(TAG, "downloadToFile error for $videoId: ${e.message}")
+                emit(DownloadProgress.failed(e.message ?: "Unknown download error"))
             }
+        }.flowOn(Dispatchers.IO)
 
     override fun getRelatedData(videoId: String): Flow<Resource<Pair<List<Track>, String?>>> =
         flow {

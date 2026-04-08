@@ -717,10 +717,16 @@ class JvmMediaPlayerHandlerImpl(
     override fun startProgressUpdate() {
         progressJob =
             coroutineScope.launch {
+                var lastEmittedSecond = -1L
                 while (true) {
-                    delay(100)
-                    _simpleMediaState.value = SimpleMediaState.Progress(player.currentPosition)
-                    updateMacOSElapsedTime()
+                    delay(500)
+                    val currentPos = player.currentPosition
+                    val currentSecond = currentPos / 1000
+                    if (currentSecond != lastEmittedSecond) {
+                        lastEmittedSecond = currentSecond
+                        _simpleMediaState.value = SimpleMediaState.Progress(currentPos)
+                        updateMacOSElapsedTime()
+                    }
                 }
             }
     }

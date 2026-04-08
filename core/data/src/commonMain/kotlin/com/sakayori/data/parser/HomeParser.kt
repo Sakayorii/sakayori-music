@@ -31,11 +31,11 @@ internal fun parseMixedContent(
                 val title =
                     results.header
                         ?.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text ?: ""
                 val content =
                     results.description.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text ?: ""
                 if (title.isNotEmpty()) {
                     list.add(
@@ -70,7 +70,7 @@ internal fun parseMixedContent(
                         ?.musicCarouselShelfBasicHeaderRenderer
                         ?.title
                         ?.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text
                         ?: ""
                 Logger.w("parse_mixed_content", title)
@@ -271,7 +271,7 @@ internal fun parseMixedContent(
                                         title =
                                             musicTwoRowItemRenderer.title
                                                 ?.runs
-                                                ?.get(0)
+                                                ?.getOrNull(0)
                                                 ?.text
                                                 ?: "",
                                         videoId = "",
@@ -317,7 +317,7 @@ internal fun parseMixedContent(
                                             title =
                                                 musicTwoRowItemRenderer.title
                                                     ?.runs
-                                                    ?.get(
+                                                    ?.getOrNull(
                                                         0,
                                                     )?.text ?: "",
                                             videoId = "",
@@ -418,7 +418,7 @@ internal fun parseMixedContent(
                                     title =
                                         multiRow.title
                                             ?.runs
-                                            ?.get(0)
+                                            ?.getOrNull(0)
                                             ?.text ?: "",
                                     videoId = multiRow.onTap?.watchEndpoint?.videoId ?: "",
                                     album = null,
@@ -465,27 +465,27 @@ internal fun parseSongFlat(
         return Content(
             album =
                 if (column.size > 2 &&
-                    column[2] != null &&
-                    column[2]
+                    column.getOrNull(2) != null &&
+                    column.getOrNull(2)
                         ?.text
                         ?.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text != null
                 ) {
                     Album(
                         id =
-                            column[2]
+                            column.getOrNull(2)
                                 ?.text
                                 ?.runs
-                                ?.get(0)
+                                ?.getOrNull(0)
                                 ?.navigationEndpoint
                                 ?.browseEndpoint
                                 ?.browseId ?: "",
                         name =
-                            column[2]
+                            column.getOrNull(2)
                                 ?.text
                                 ?.runs
-                                ?.get(0)
+                                ?.getOrNull(0)
                                 ?.text ?: "",
                     )
                 } else {
@@ -504,36 +504,36 @@ internal fun parseSongFlat(
                     ?.toListThumbnail()
                     ?: listOf(),
             title =
-                column[0]
+                column.getOrNull(0)
                     ?.text
                     ?.runs
-                    ?.get(0)
+                    ?.getOrNull(0)
                     ?.text ?: "",
             videoId =
-                column[0]
+                column.getOrNull(0)
                     ?.text
                     ?.runs
-                    ?.get(0)
+                    ?.getOrNull(0)
                     ?.navigationEndpoint
                     ?.watchEndpoint
                     ?.videoId
                     ?: "",
             views =
                 if (column.size <= 2 ||
-                    column[2] == null ||
-                    column[2]
+                    column.getOrNull(2) == null ||
+                    column.getOrNull(2)
                         ?.text
                         ?.runs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.text == null
                 ) {
-                    column[1]
+                    column.getOrNull(1)
                         ?.text
                         ?.runs
-                        ?.last()
+                        ?.lastOrNull()
                         ?.text
                         ?.split(" ")
-                        ?.get(0) ?: ""
+                        ?.getOrNull(0) ?: ""
                 } else {
                     null
                 },
@@ -609,7 +609,7 @@ internal fun parsePlaylist(
         playlistId =
             data.title
                 ?.runs
-                ?.get(0)
+                ?.getOrNull(0)
                 ?.navigationEndpoint
                 ?.browseEndpoint
                 ?.browseId,
@@ -618,7 +618,7 @@ internal fun parsePlaylist(
         title =
             data.title
                 ?.runs
-                ?.get(0)
+                ?.getOrNull(0)
                 ?.text ?: "",
         videoId = null,
         views = null,
@@ -631,19 +631,20 @@ internal fun parseSongArtistsRuns(
 ): List<Artist> {
     val artists = mutableListOf<Artist>()
     for (i in 0..(runs.size / 2)) {
-        if (runs[i * 2].navigationEndpoint?.browseEndpoint?.browseId != null) {
+        val run = runs.getOrNull(i * 2) ?: continue
+        if (run.navigationEndpoint?.browseEndpoint?.browseId != null) {
             artists.add(
                 Artist(
-                    name = runs[i * 2].text,
-                    id = runs[i * 2].navigationEndpoint?.browseEndpoint?.browseId,
+                    name = run.text,
+                    id = run.navigationEndpoint?.browseEndpoint?.browseId,
                 ),
             )
         } else {
-            if (!runs[i * 2].text.contains(
+            if (!run.text.contains(
                     viewString.removeRange(0..4),
                 )
             ) {
-                artists.add(Artist(name = runs[i * 2].text, id = null))
+                artists.add(Artist(name = run.text, id = null))
             }
         }
     }

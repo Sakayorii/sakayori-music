@@ -72,20 +72,28 @@ class VlcPlayerAdapter(
     private val mediaPlayerFactory: MediaPlayerFactory
 
     init {
-        val foundPath = DefaultVlcDiscoverer.findBundledVlcPath()
-        if (foundPath != null) {
-            Logger.i(TAG, "Setting jna.library.path to $foundPath")
-            System.setProperty("jna.library.path", foundPath)
-        } else {
-            System.getProperty("compose.application.resources.dir")?.let {
-                System.setProperty("jna.library.path", it)
+        try {
+            val foundPath = DefaultVlcDiscoverer.findBundledVlcPath()
+            if (foundPath != null) {
+                Logger.i(TAG, "Setting jna.library.path to $foundPath")
+                System.setProperty("jna.library.path", foundPath)
+            } else {
+                System.getProperty("compose.application.resources.dir")?.let {
+                    System.setProperty("jna.library.path", it)
+                }
             }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Error setting up VLC paths: ${e.message}")
         }
 
         val discovery = NativeDiscovery(DefaultVlcDiscoverer(), MacOsVlcDiscoverer())
-        val found = discovery.discover()
-        if (!found) {
-            Logger.e(TAG, "VLC native libraries not found! Please install VLC media player.")
+        try {
+            val found = discovery.discover()
+            if (!found) {
+                Logger.e(TAG, "VLC native libraries not found! Please install VLC media player.")
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "VLC discovery failed: ${e.message}")
         }
 
         val factoryArgs =
@@ -318,7 +326,10 @@ class VlcPlayerAdapter(
             currentLoadJob?.cancel()
 
             localCurrentMediaItemIndex = mediaItemIndex
-            currentPlayer?.release()
+            try {
+                currentPlayer?.release()
+            } catch (_: Exception) {
+            }
             currentPlayer = null
             currentPlayerIsVideo = false
             _currentVideoSurface.value = null
@@ -796,12 +807,18 @@ class VlcPlayerAdapter(
         positionUpdateJob?.cancel()
         crossfadeJob?.cancel()
 
-        secondaryPlayer?.release()
+        try {
+            secondaryPlayer?.release()
+        } catch (_: Exception) {
+        }
         secondaryPlayer = null
         isCrossfading = false
         crossfadeFromIndex = -1
 
-        coroutineScope.cancel()
+        try {
+            coroutineScope.cancel()
+        } catch (_: Exception) {
+        }
         cleanupCurrentPlayerInternal()
         clearAllPrecacheInternal()
         listeners.clear()
@@ -948,17 +965,29 @@ class VlcPlayerAdapter(
 
                     if (cachedPrecache != null) {
                         if (shouldPlay) {
-                            player.mediaPlayer.controls().play()
+                            try {
+                                player.mediaPlayer.controls().play()
+                            } catch (e: Exception) {
+                                Logger.e(TAG, "Failed to play precached: ${e.message}")
+                                transitionToState(InternalState.ERROR)
+                                return@launch
+                            }
                         }
                         Logger.d(TAG, "Playing from precache for $videoId")
                     } else {
                         val source = resolvedSource
                         if (source != null) {
                             val options = buildVlcOptions(source)
-                            if (shouldPlay) {
-                                player.mediaPlayer.media().play(source.url, *options)
-                            } else {
-                                player.mediaPlayer.media().startPaused(source.url, *options)
+                            try {
+                                if (shouldPlay) {
+                                    player.mediaPlayer.media().play(source.url, *options)
+                                } else {
+                                    player.mediaPlayer.media().startPaused(source.url, *options)
+                                }
+                            } catch (e: Exception) {
+                                Logger.e(TAG, "Failed to play media: ${e.message}")
+                                transitionToState(InternalState.ERROR)
+                                return@launch
                             }
                         } else {
                             Logger.e(TAG, "resolvedSource is null — should not happen")
@@ -1005,8 +1034,12 @@ class VlcPlayerAdapter(
             val videoPanel = VlcVideoSurfacePanel()
 
             val embeddedPlayer = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer()
-            val surface = videoPanel.createVideoSurface(mediaPlayerFactory)
-            embeddedPlayer.videoSurface().set(surface)
+            try {
+                val surface = videoPanel.createVideoSurface(mediaPlayerFactory)
+                embeddedPlayer.videoSurface().set(surface)
+            } catch (e: Exception) {
+                Logger.e(TAG, "Failed to set video surface: ${e.message}")
+            }
 
             return VlcPlayer(
                 mediaPlayer = embeddedPlayer,
@@ -1247,9 +1280,14 @@ class VlcPlayerAdapter(
                             Logger.e(TAG, "Failed to extract URL for crossfade")
                             null
                         } else {
-                            createMediaPlayerInternal(nextSource).also { newPlayer ->
-                                val options = buildVlcOptions(nextSource)
-                                newPlayer.mediaPlayer.media().startPaused(nextSource.url, *options)
+                            try {
+                                createMediaPlayerInternal(nextSource).also { newPlayer ->
+                                    val options = buildVlcOptions(nextSource)
+                                    newPlayer.mediaPlayer.media().startPaused(nextSource.url, *options)
+                                }
+                            } catch (e: Exception) {
+                                Logger.e(TAG, "Failed to prepare crossfade player: ${e.message}")
+                                null
                             }
                         }
                     }
@@ -1262,7 +1300,10 @@ class VlcPlayerAdapter(
                                 Logger.e(TAG, "Secondary player error during crossfade")
                                 coroutineScope.launch {
                                     crossfadeJob?.cancel()
-                                    secondaryPlayer?.release()
+                                    try {
+                                        secondaryPlayer?.release()
+                                    } catch (_: Exception) {
+                                    }
                                     secondaryPlayer = null
                                     setCrossfading(false)
                                     seekTo(nextIndex, 0)
@@ -1271,7 +1312,19 @@ class VlcPlayerAdapter(
                         },
                     )
                     nextPlayer.setVolume(0)
-                    nextPlayer.mediaPlayer.controls().play()
+                    try {
+                        nextPlayer.mediaPlayer.controls().play()
+                    } catch (e: Exception) {
+                        Logger.e(TAG, "Failed to start crossfade play: ${e.message}")
+                        try {
+                            nextPlayer.release()
+                        } catch (_: Exception) {
+                        }
+                        secondaryPlayer = null
+                        setCrossfading(false)
+                        seekTo(nextIndex, 0)
+                        return@launch
+                    }
                 }
 
                 if (nextPlayer == null) {
@@ -1330,7 +1383,10 @@ class VlcPlayerAdapter(
         crossfadeJob = null
         job?.cancel()
         job?.join()
-        secondaryPlayer?.release()
+        try {
+            secondaryPlayer?.release()
+        } catch (_: Exception) {
+        }
         secondaryPlayer = null
         if (revertIndex && crossfadeFromIndex >= 0) {
             localCurrentMediaItemIndex = crossfadeFromIndex
@@ -1379,7 +1435,10 @@ class VlcPlayerAdapter(
             finalizeCrossfade(nextIndex, nextPlayer)
         } catch (e: CancellationException) {
             Logger.d(TAG, "Crossfade cancelled")
-            nextPlayer.release()
+            try {
+                nextPlayer.release()
+            } catch (_: Exception) {
+            }
             secondaryPlayer = null
             setCrossfading(false)
         }
@@ -1682,11 +1741,11 @@ class VlcPlayerAdapter(
             val videoUrl = format.videoUrl
 
             if (shouldFindVideo && !videoUrl.isNullOrEmpty()) {
-                val is403Video = streamRepository.is403Url(videoUrl).firstOrNull() != false
+                val is403Video = streamRepository.is403Url(videoUrl).firstOrNull() == true
                 if (!is403Video) {
                     val audioSlave =
                         if (!audioUrl.isNullOrEmpty()) {
-                            val is403Audio = streamRepository.is403Url(audioUrl).firstOrNull() != false
+                            val is403Audio = streamRepository.is403Url(audioUrl).firstOrNull() == true
                             if (!is403Audio) audioUrl else null
                         } else {
                             null
@@ -1700,7 +1759,7 @@ class VlcPlayerAdapter(
                     )
                 }
             } else if (!shouldFindVideo && !audioUrl.isNullOrEmpty()) {
-                val is403Url = streamRepository.is403Url(audioUrl).firstOrNull() != false
+                val is403Url = streamRepository.is403Url(audioUrl).firstOrNull() == true
                 if (!is403Url) {
                     Logger.w("Stream", "Audio from format")
                     return PlayableSource(isVideo = false, url = audioUrl)
@@ -1839,21 +1898,36 @@ class VlcPlayer(
         isReleased = true
         try {
             setEventListener(null)
+            try {
+                mediaPlayer.controls().setPause(true)
+            } catch (_: Throwable) {
+            }
+            try {
+                mediaPlayer.controls().stop()
+            } catch (_: Throwable) {
+            }
+            try {
+                mediaPlayer.audio().setVolume(0)
+            } catch (_: Throwable) {
+            }
+
             val releaseThread = Thread {
                 try {
-                    mediaPlayer.controls().stop()
+                    Thread.sleep(100)
                     mediaPlayer.release()
-                } catch (e: Exception) {
-                    Logger.w(TAG, "Error in async release: ${e.message}")
+                } catch (_: Throwable) {
                 }
             }.apply {
                 isDaemon = true
                 name = "VlcPlayerRelease"
+                priority = Thread.MIN_PRIORITY
             }
             releaseThread.start()
-            releaseThread.join(3000)
-        } catch (e: Exception) {
-            Logger.w(TAG, "Error releasing player: ${e.message}")
+            try {
+                releaseThread.join(5000)
+            } catch (_: InterruptedException) {
+            }
+        } catch (_: Throwable) {
         }
     }
 }

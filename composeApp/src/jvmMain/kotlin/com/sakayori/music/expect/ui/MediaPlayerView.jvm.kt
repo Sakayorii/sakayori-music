@@ -7,7 +7,6 @@ import com.sakayori.domain.data.model.metadata.Lyrics
 import com.sakayori.domain.data.model.streams.TimeLine
 import com.sakayori.media_jvm_ui.ui.MediaPlayerViewWithSubtitleJvm
 import com.sakayori.media_jvm_ui.ui.MediaPlayerViewWithUrl
-import com.sakayori.music.ui.theme.typo
 
 @Composable
 actual fun MediaPlayerView(
@@ -42,7 +41,7 @@ actual fun MediaPlayerViewWithSubtitle(
         timelineState = timelineState,
         lyricsData = lyricsData,
         translatedLyricsData = translatedLyricsData,
-        mainTextStyle = typo().bodyLarge,
-        translatedTextStyle = typo().bodyMedium,
+        mainTextStyle = mainTextStyle,
+        translatedTextStyle = translatedTextStyle,
     )
 }

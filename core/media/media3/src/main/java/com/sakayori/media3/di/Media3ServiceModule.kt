@@ -92,7 +92,10 @@ private val mediaServiceModule =
             createdAtStart = true,
             qualifier = named(SERVICE_SCOPE),
         ) {
-            CoroutineScope(Dispatchers.Main + SupervisorJob())
+            val exceptionHandler = kotlinx.coroutines.CoroutineExceptionHandler { _, throwable ->
+                Logger.e("MediaServiceScope", "Uncaught coroutine exception: ${throwable.message}")
+            }
+            CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
         }
         single<DatabaseProvider>(
             createdAtStart = true,

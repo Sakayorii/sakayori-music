@@ -212,13 +212,21 @@ compose.desktop {
 
         nativeDistributions {
             appResourcesRootDir = rootDir.resolve("vlc-natives/")
+            val currentOs = org.gradle.internal.os.OperatingSystem.current()
             val listTarget = mutableListOf<TargetFormat>()
-            if (org.gradle.internal.os.OperatingSystem
-                    .current()
-                    .isWindows
-            ) {
-                listTarget.add(TargetFormat.Exe)
-                listTarget.add(TargetFormat.Msi)
+            when {
+                currentOs.isWindows -> {
+                    listTarget.add(TargetFormat.Exe)
+                    listTarget.add(TargetFormat.Msi)
+                }
+                currentOs.isMacOsX -> {
+                    listTarget.add(TargetFormat.Dmg)
+                    listTarget.add(TargetFormat.Pkg)
+                }
+                currentOs.isLinux -> {
+                    listTarget.add(TargetFormat.Deb)
+                    listTarget.add(TargetFormat.Rpm)
+                }
             }
             targetFormats(*listTarget.toTypedArray())
             modules("jdk.unsupported")

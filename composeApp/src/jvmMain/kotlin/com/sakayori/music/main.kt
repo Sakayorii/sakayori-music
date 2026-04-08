@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +70,11 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 fun main(args: Array<String>) {
     try {
+        if (!com.sakayori.music.utils.SingleInstance.acquire()) {
+            com.sakayori.music.utils.SingleInstance.signalExisting()
+            exitProcess(0)
+        }
+
         System.setProperty("compose.swing.render.on.graphics", "true")
         System.setProperty("compose.interop.blending", "true")
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")
@@ -92,6 +98,20 @@ fun main(args: Array<String>) {
             loadKoinModules(listOf(viewModelModule))
             loadAllModules()
         }
+
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                try {
+                    val handler = getKoin().getOrNull<MediaPlayerHandler>()
+                    handler?.release()
+                    Thread.sleep(300)
+                } catch (_: Throwable) {
+                }
+            }.apply {
+                name = "SakayoriShutdownHook"
+                isDaemon = false
+            },
+        )
 
         val language = runBlocking(Dispatchers.IO) {
             getKoin()
@@ -142,6 +162,15 @@ fun main(args: Array<String>) {
                 size = DpSize(1500.dp, 860.dp),
             )
             var isVisible by remember { mutableStateOf(true) }
+
+            LaunchedEffect(Unit) {
+                com.sakayori.music.utils.SingleInstance.setOnFocusRequested {
+                    javax.swing.SwingUtilities.invokeLater {
+                        isVisible = true
+                        windowState.isMinimized = false
+                    }
+                }
+            }
 
             val openAppString = stringResource(Res.string.open_app)
             val quitAppString = stringResource(Res.string.quit_app)

@@ -361,10 +361,10 @@ class SharedViewModel(
 
                             is SimpleMediaState.Progress -> {
                                 if (mediaState.progress >= 0L && mediaState.progress != _timeline.value.current) {
-                                    if (_timeline.value.total > 0L) {
+                                    val cachedTotal = _timeline.value.total
+                                    if (cachedTotal > 0L) {
                                         _timeline.update {
                                             it.copy(
-                                                total = mediaPlayerHandler.getPlayerDuration(),
                                                 current = mediaState.progress,
                                                 loading = false,
                                             )

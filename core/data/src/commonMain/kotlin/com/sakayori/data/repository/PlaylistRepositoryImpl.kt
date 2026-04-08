@@ -223,13 +223,13 @@ internal class PlaylistRepositoryImpl(
                             result.contents
                                 ?.singleColumnBrowseResultsRenderer
                                 ?.tabs
-                                ?.get(
+                                ?.getOrNull(
                                     0,
                                 )?.tabRenderer
                                 ?.content
                                 ?.sectionListRenderer
                                 ?.contents
-                                ?.get(
+                                ?.getOrNull(
                                     0,
                                 )?.musicPlaylistShelfRenderer
                                 ?.contents
@@ -238,7 +238,7 @@ internal class PlaylistRepositoryImpl(
                                     ?.secondaryContents
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicPlaylistShelfRenderer
                                     ?.contents
                         if (data != null) {
@@ -252,22 +252,22 @@ internal class PlaylistRepositoryImpl(
                                 ?: result.contents
                                     ?.twoColumnBrowseResultsRenderer
                                     ?.tabs
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.tabRenderer
                                     ?.content
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicResponsiveHeaderRenderer
                                 ?: result.contents
                                     ?.twoColumnBrowseResultsRenderer
                                     ?.tabs
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.tabRenderer
                                     ?.content
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicEditablePlaylistDetailHeaderRenderer
                                     ?.header
                                     ?.musicResponsiveHeaderRenderer
@@ -322,13 +322,13 @@ internal class PlaylistRepositoryImpl(
                             result.contents
                                 ?.singleColumnBrowseResultsRenderer
                                 ?.tabs
-                                ?.get(
+                                ?.getOrNull(
                                     0,
                                 )?.tabRenderer
                                 ?.content
                                 ?.sectionListRenderer
                                 ?.contents
-                                ?.get(
+                                ?.getOrNull(
                                     0,
                                 )?.musicPlaylistShelfRenderer
                                 ?.contents
@@ -337,7 +337,7 @@ internal class PlaylistRepositoryImpl(
                                     ?.secondaryContents
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicPlaylistShelfRenderer
                                     ?.contents
                         if (data != null) {
@@ -350,22 +350,22 @@ internal class PlaylistRepositoryImpl(
                                 ?: result.contents
                                     ?.twoColumnBrowseResultsRenderer
                                     ?.tabs
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.tabRenderer
                                     ?.content
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicResponsiveHeaderRenderer
                                 ?: result.contents
                                     ?.twoColumnBrowseResultsRenderer
                                     ?.tabs
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.tabRenderer
                                     ?.content
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicEditablePlaylistDetailHeaderRenderer
                                     ?.header
                                     ?.musicResponsiveHeaderRenderer
@@ -452,13 +452,13 @@ internal class PlaylistRepositoryImpl(
                             result.contents
                                 ?.singleColumnBrowseResultsRenderer
                                 ?.tabs
-                                ?.get(
+                                ?.getOrNull(
                                     0,
                                 )?.tabRenderer
                                 ?.content
                                 ?.sectionListRenderer
                                 ?.contents
-                                ?.get(
+                                ?.getOrNull(
                                     0,
                                 )?.musicPlaylistShelfRenderer
                                 ?.contents
@@ -467,7 +467,7 @@ internal class PlaylistRepositoryImpl(
                                     ?.secondaryContents
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicPlaylistShelfRenderer
                                     ?.contents
                         if (data != null) {
@@ -480,22 +480,22 @@ internal class PlaylistRepositoryImpl(
                                 ?: result.contents
                                     ?.twoColumnBrowseResultsRenderer
                                     ?.tabs
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.tabRenderer
                                     ?.content
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicResponsiveHeaderRenderer
                                 ?: result.contents
                                     ?.twoColumnBrowseResultsRenderer
                                     ?.tabs
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.tabRenderer
                                     ?.content
                                     ?.sectionListRenderer
                                     ?.contents
-                                    ?.get(0)
+                                    ?.getOrNull(0)
                                     ?.musicEditablePlaylistDetailHeaderRenderer
                                     ?.header
                                     ?.musicResponsiveHeaderRenderer
@@ -557,13 +557,13 @@ internal class PlaylistRepositoryImpl(
                         data.contents
                             ?.singleColumnBrowseResultsRenderer
                             ?.tabs
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
                             ?.contents
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.gridRenderer
                             ?.items
@@ -674,13 +674,13 @@ internal class PlaylistRepositoryImpl(
                         data.contents
                             ?.singleColumnBrowseResultsRenderer
                             ?.tabs
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
                             ?.contents
-                            ?.get(
+                            ?.getOrNull(
                                 0,
                             )?.gridRenderer
                             ?.items

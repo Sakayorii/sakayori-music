@@ -83,21 +83,21 @@ internal fun parseArtistChart(contents: List<MusicCarouselShelfRenderer.Content>
                 val title =
                     content.musicResponsiveListItemRenderer
                         ?.flexColumns
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.musicResponsiveListItemFlexColumnRenderer
                         ?.text
                         ?.runs
-                        ?.get(
+                        ?.getOrNull(
                             0,
                         )?.text
                 val subscriber =
                     content.musicResponsiveListItemRenderer
                         ?.flexColumns
-                        ?.get(1)
+                        ?.getOrNull(1)
                         ?.musicResponsiveListItemFlexColumnRenderer
                         ?.text
                         ?.runs
-                        ?.get(
+                        ?.getOrNull(
                             0,
                         )?.text
                 val thumbnails =

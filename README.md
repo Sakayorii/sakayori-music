@@ -6,11 +6,13 @@
 
 **A modern, cross-platform YouTube Music client built with Kotlin Multiplatform & Compose**
 
-[![Version](https://img.shields.io/badge/version-2.0.7-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
-![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-lightgrey.svg)
-[![License](https://img.shields.io/badge/license-Free%20for%20All-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.0.8-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 [Download](#download) · [Features](#features) · [Screenshots](#screenshots) · [Build](#build) · [Credits](#credits)
+
+**English** · [Tiếng Việt](docs/README.vi.md) · [日本語](docs/README.ja.md)
 
 </div>
 
@@ -71,8 +73,8 @@ Download the latest release from the [Releases page](https://github.com/Sakayori
 |----------|--------|-------------|
 | **Android** | `.apk` | Universal APK for all devices |
 | **Windows** | `.msi` / `.exe` | Installer with GUI setup wizard |
-| **Linux** | Coming soon | AppImage / .deb |
-| **macOS** | Coming soon | .dmg |
+| **Linux** | `.deb` / `.rpm` | Debian/Ubuntu and Fedora/RHEL packages |
+| **macOS** | `.dmg` | Apple Silicon and Intel builds |
 
 ### Windows Installation Note
 
@@ -87,8 +89,8 @@ This is normal for unsigned open-source applications.
 
 - **Android** 8.0 (API 26) and above
 - **Windows** 10 / 11 (x64)
-- **Linux** — planned
-- **macOS** — planned
+- **Linux** Ubuntu 20.04+, Fedora 34+, or equivalent (x64)
+- **macOS** 11.0 Big Sur and above (Intel + Apple Silicon)
 
 ## Build
 
@@ -159,7 +161,7 @@ sakayori-music/
 
 Copyright © 2026 **Sakayori Studio**.
 
-This project is free and open source. Anyone can use, modify, redistribute, or build upon it without needing permission. See [LICENSE](LICENSE) for details.
+Licensed under the [MIT License](LICENSE) — free to use, modify, distribute, and build upon. No permission required.
 
 ## Disclaimer
 

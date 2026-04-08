@@ -9,6 +9,7 @@ import com.my.kizzy.gateway.entities.presence.Presence
 import com.my.kizzy.gateway.entities.presence.Timestamps
 import com.my.kizzy.repository.KizzyRepository
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
@@ -83,20 +84,32 @@ open class KizzyRPC(token: String) {
 
     companion object {
         suspend fun getUserInfo(token: String): Result<UserInfo> = runCatching {
-            val client = HttpClient()
-            val rawRes = client.get("https://discord.com/api/v9/users/@me") {
-                header("Authorization", token)
-            }.bodyAsText()
-            val json = Json {
-                ignoreUnknownKeys = true
-                explicitNulls = false
+            val client = HttpClient {
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 15000
+                    connectTimeoutMillis = 10000
+                    socketTimeoutMillis = 15000
+                }
             }
-            val response = json.decodeFromString<MeResponse>(rawRes)
-            val username = response.username ?: "Unknown"
-            val name = response.globalName ?: username
-            client.close()
+            try {
+                val rawRes = client.get("https://discord.com/api/v9/users/@me") {
+                    header("Authorization", token)
+                }.bodyAsText()
+                val json = Json {
+                    ignoreUnknownKeys = true
+                    explicitNulls = false
+                }
+                val response = json.decodeFromString<MeResponse>(rawRes)
+                val username = response.username ?: "Unknown"
+                val name = response.globalName ?: username
 
-            UserInfo(username, name)
+                UserInfo(username, name)
+            } finally {
+                try {
+                    client.close()
+                } catch (_: Exception) {
+                }
+            }
         }
     }
 }
