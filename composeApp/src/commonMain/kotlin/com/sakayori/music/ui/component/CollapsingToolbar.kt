@@ -239,6 +239,7 @@ private fun Header(
                     .crossfade(true)
                     .build(),
             onSuccess = {
+                @Suppress("DEPRECATION")
                 onImageLoaded(
                     it.result.image
                         .toBitmap()

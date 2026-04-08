@@ -118,9 +118,10 @@ fun LibraryDynamicPlaylistScreen(
     var tempTopTracks by remember { mutableStateOf(analyticsUIState.topTracks.data ?: emptyList()) }
     var tempTopArtists by remember { mutableStateOf(analyticsUIState.topArtists.data ?: emptyList()) }
     var tempTopAlbums by remember { mutableStateOf(analyticsUIState.topAlbums.data ?: emptyList()) }
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
     val hazeState =
         rememberHazeState(
-            blurEnabled = true,
+            blurEnabled = isBlurEnabled,
         )
 
     LaunchedEffect(query) {
@@ -490,7 +491,7 @@ fun LibraryDynamicPlaylistScreen(
                 modifier =
                     Modifier
                         .hazeEffect(hazeState, style = HazeMaterials.ultraThin()) {
-                            blurEnabled = true
+                            blurEnabled = isBlurEnabled
                         },
                 colors =
                     TopAppBarDefaults.topAppBarColors(

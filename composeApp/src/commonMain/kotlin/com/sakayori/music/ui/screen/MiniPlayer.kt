@@ -44,7 +44,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Speaker
 import androidx.compose.material3.Card
@@ -152,8 +152,9 @@ fun MiniPlayer(
         animationSpec = tween(500),
     )
 
-    LaunchedEffect(layer, isLiquidGlassEnabled) {
-        if (isLiquidGlassEnabled != DataStoreManager.TRUE) return@LaunchedEffect
+    val lowResourceMode = com.sakayori.music.extension.LocalLowResourceMode.current
+    LaunchedEffect(layer, isLiquidGlassEnabled, lowResourceMode) {
+        if (isLiquidGlassEnabled != DataStoreManager.TRUE || lowResourceMode) return@LaunchedEffect
         val buffer = IntArray(25)
         while (isActive) {
             try {
@@ -433,7 +434,7 @@ fun MiniPlayer(
                                             .align(Alignment.CenterVertically),
                                     ) {
                                         Text(
-                                            text = (songEntity?.title ?: "").toString(),
+                                            text = songEntity?.title ?: "",
                                             style = typo().labelSmall,
                                             color = textColor,
                                             maxLines = 1,
@@ -589,7 +590,7 @@ fun MiniPlayer(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = (songEntity?.title ?: "").toString(),
+                                text = songEntity?.title ?: "",
                                 style = typo().labelSmall,
                                 color = textColor,
                                 maxLines = 1,
@@ -799,7 +800,7 @@ fun MiniPlayer(
                         if (getPlatform() == Platform.Desktop) {
                             IconButton(onClick = { toggleMiniPlayer() }) {
                                 Icon(
-                                    imageVector = Icons.Outlined.OpenInNew,
+                                    imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
                                     contentDescription = "Mini Player",
                                 )
                             }

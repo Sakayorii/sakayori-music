@@ -716,7 +716,8 @@ fun FullscreenLyricsSheet(
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         shape = RectangleShape,
     ) {
-        val sliderTrackColor: Color = if (timelineState.isCrossfading) {
+        val lowResourceMode = com.sakayori.music.extension.LocalLowResourceMode.current
+        val sliderTrackColor: Color = if (timelineState.isCrossfading && !lowResourceMode) {
             val infiniteTransition = rememberInfiniteTransition(label = "crossfadeRainbow")
             val rainbowHue by infiniteTransition.animateFloat(
                 initialValue = 0f,
@@ -733,7 +734,8 @@ fun FullscreenLyricsSheet(
             Color.White
         }
         Box(modifier = Modifier.fillMaxSize()) {
-            val hazeState = rememberHazeState(blurEnabled = true)
+            val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
+            val hazeState = rememberHazeState(blurEnabled = isBlurEnabled)
 
             if (shouldHaze) {
                 Box(
@@ -796,7 +798,7 @@ fun FullscreenLyricsSheet(
                                     hazeState,
                                     style = CupertinoMaterials.regular(),
                                 ) {
-                                    blurEnabled = true
+                                    blurEnabled = isBlurEnabled
                                 }
                             } else {
                                 Modifier

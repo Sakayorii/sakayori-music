@@ -1188,7 +1188,7 @@ class SharedViewModel(
                 DataStoreManager.BETTER_LYRICS -> {
                     getBetterLyrics(
                         song,
-                        (artist ?: "").toString(),
+                        artist ?: "",
                         duration,
                     )
                 }
@@ -1586,6 +1586,14 @@ class SharedViewModel(
     fun getTranslucentBottomBar() = dataStoreManager.translucentBottomBar
 
     fun getEnableLiquidGlass() = dataStoreManager.enableLiquidGlass
+
+    fun getLowResourceMode() = dataStoreManager.lowResourceMode
+
+    fun setLowResourceMode(enable: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.setLowResourceMode(enable)
+        }
+    }
 
     private val _reloadDestination: MutableStateFlow<KClass<*>?> = MutableStateFlow(null)
     val reloadDestination: StateFlow<KClass<*>?> = _reloadDestination.asStateFlow()

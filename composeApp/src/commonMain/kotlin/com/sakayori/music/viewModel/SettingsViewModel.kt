@@ -154,6 +154,9 @@ class SettingsViewModel(
     private val _enableLiquidGlass: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val enableLiquidGlass: StateFlow<Boolean> = _enableLiquidGlass
 
+    private val _lowResourceMode: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val lowResourceMode: StateFlow<Boolean> = _lowResourceMode
+
     private val _explicitContentEnabled = MutableStateFlow(false)
     val explicitContentEnabled: StateFlow<Boolean> = _explicitContentEnabled
 
@@ -269,6 +272,7 @@ class SettingsViewModel(
         getBackupDownloaded()
         getUpdateChannel()
         getEnableLiquidGlass()
+        getLowResourceMode()
         getExplicitContentEnabled()
         getDiscordLoggedIn()
         getDiscordRichPresenceEnabled()
@@ -529,6 +533,20 @@ class SettingsViewModel(
         viewModelScope.launch {
             dataStoreManager.setEnableLiquidGlass(enableLiquidGlass)
             getEnableLiquidGlass()
+        }
+    }
+
+    private fun getLowResourceMode() {
+        viewModelScope.launch {
+            dataStoreManager.lowResourceMode.collect { value ->
+                _lowResourceMode.value = value == DataStoreManager.TRUE
+            }
+        }
+    }
+
+    fun setLowResourceMode(enable: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.setLowResourceMode(enable)
         }
     }
 

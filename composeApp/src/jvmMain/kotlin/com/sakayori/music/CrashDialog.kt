@@ -27,10 +27,38 @@ object CrashDialog {
     fun install() {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
+                val crashLog = java.io.File(System.getProperty("user.home"), ".sakayori-music/uncaught.log")
+                crashLog.parentFile.mkdirs()
+                val entry = buildString {
+                    append("[${java.time.LocalDateTime.now()}] Thread: ${thread.name}\n")
+                    append("${throwable.javaClass.name}: ${throwable.message}\n")
+                    throwable.stackTrace.take(20).forEach { append("  at $it\n") }
+                    var cause = throwable.cause
+                    while (cause != null) {
+                        append("Caused by: ${cause.javaClass.name}: ${cause.message}\n")
+                        cause.stackTrace.take(10).forEach { append("  at $it\n") }
+                        cause = cause.cause
+                    }
+                    append("\n")
+                }
+                crashLog.appendText(entry)
+            } catch (_: Throwable) {
+            }
+
+            try {
                 if (BuildKonfig.sentryDsn.isNotEmpty()) {
                     Sentry.captureException(throwable)
                 }
             } catch (_: Exception) {
+            }
+
+            val isFatalThread = thread.name == "main" ||
+                thread.name.startsWith("AWT-EventQueue") ||
+                SwingUtilities.isEventDispatchThread()
+
+            if (!isFatalThread) {
+                System.err.println("Non-fatal uncaught exception in ${thread.name}: ${throwable.message}")
+                return@setDefaultUncaughtExceptionHandler
             }
 
             try {

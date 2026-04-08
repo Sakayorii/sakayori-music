@@ -257,6 +257,11 @@ class JvmMediaPlayerHandlerImpl(
         getSkipSegmentsJob = Job()
         getFormatJob = Job()
         jobWatchtime = Job()
+        coroutineScope.launch {
+            dataStoreManager.lowResourceMode.collect { value ->
+                lowResourceModeActive = value == TRUE
+            }
+        }
         skipSilent = runBlocking(Dispatchers.IO) { dataStoreManager.skipSilent.first() == TRUE }
         normalizeVolume =
             runBlocking(Dispatchers.IO) { dataStoreManager.normalizeVolume.first() == TRUE }
@@ -426,7 +431,7 @@ class JvmMediaPlayerHandlerImpl(
             }
         val track =
             queueData.value.data.listTracks
-                ?.find { it.videoId == videoId }
+                .find { it.videoId == videoId }
         _nowPlayingState.update {
             it.copy(
                 mediaItem = mediaItem,
@@ -714,12 +719,15 @@ class JvmMediaPlayerHandlerImpl(
             }
     }
 
+    @Volatile
+    private var lowResourceModeActive: Boolean = false
+
     override fun startProgressUpdate() {
         progressJob =
             coroutineScope.launch {
                 var lastEmittedSecond = -1L
                 while (true) {
-                    delay(500)
+                    delay(if (lowResourceModeActive) 1000 else 500)
                     val currentPos = player.currentPosition
                     val currentSecond = currentPos / 1000
                     if (currentSecond != lastEmittedSecond) {
@@ -732,14 +740,6 @@ class JvmMediaPlayerHandlerImpl(
     }
 
     override fun startBufferedUpdate() {
-        bufferedJob =
-            coroutineScope.launch {
-                while (true) {
-                    delay(500)
-                    _simpleMediaState.value =
-                        SimpleMediaState.Loading(100, player.duration)
-                }
-            }
     }
 
     override fun stopProgressUpdate() {
@@ -1081,7 +1081,7 @@ class JvmMediaPlayerHandlerImpl(
     override fun loadMore() {
         if (queueData.value.queueState == QueueData.StateSource.STATE_INITIALIZING) return
         val playlistId = _queueData.value.data.playlistId ?: return
-        Logger.w("Check loadMore", playlistId.toString())
+        Logger.w("Check loadMore", playlistId)
         val continuation = _queueData.value.data.continuation
         Logger.w("Check loadMore", continuation.toString())
         if (continuation != null) {
@@ -1176,7 +1176,7 @@ class JvmMediaPlayerHandlerImpl(
                                     ).lastOrNull()
                                     ?.let { pair ->
                                         Logger.w("Check loadMore response", pair.size.toString())
-                                        songRepository.getSongsByListVideoId(pair.map { it.songId }).single().let { songs ->
+                                        songRepository.getSongsByListVideoId(pair.map { it.songId }).singleOrNull()?.let { songs ->
                                             if (songs.isNotEmpty()) {
                                                 delay(300)
                                                 loadMoreCatalog(songs.toArrayListTrack())
@@ -1228,7 +1228,7 @@ class JvmMediaPlayerHandlerImpl(
                                     ).lastOrNull()
                                     ?.let { pair ->
                                         Logger.w("Check loadMore response", pair.size.toString())
-                                        songRepository.getSongsByListVideoId(pair.map { it.songId }).single().let { songs ->
+                                        songRepository.getSongsByListVideoId(pair.map { it.songId }).singleOrNull()?.let { songs ->
                                             if (songs.isNotEmpty()) {
                                                 delay(300)
                                                 loadMoreCatalog(songs.toArrayListTrack())
@@ -1936,7 +1936,7 @@ class JvmMediaPlayerHandlerImpl(
                 is SongEntity -> anyTrack.toTrack()
                 else -> return
             }
-        if (track.isExplicit && runBlocking(Dispatchers.IO) { dataStoreManager.explicitContentEnabled.first() } == FALSE) {
+        if (track.isExplicit && dataStoreManager.explicitContentEnabled.first() == FALSE) {
             showToast(ToastType.ExplicitContent)
             return
         }
@@ -2047,53 +2047,79 @@ class JvmMediaPlayerHandlerImpl(
 
     override fun release() {
         Logger.w("ServiceHandler", "Starting release process")
-        nypc?.removeListener()
-        clearMacOSNowPlayingInfo()
-        macOSMediaIntegration?.release()
+        try {
+            nypc?.removeListener()
+        } catch (_: Throwable) {
+        }
+        try {
+            clearMacOSNowPlayingInfo()
+        } catch (_: Throwable) {
+        }
+        try {
+            macOSMediaIntegration?.release()
+        } catch (_: Throwable) {
+        }
         try {
             if (discordRPC?.isRpcRunning() == true) {
                 discordRPC?.closeRPC()
             }
             discordRPC = null
-            mayBeSaveRecentSong(true)
-            mayBeSavePlaybackState()
-
-            player.removeListener(this)
-
-
-            sendCloseEqualizerIntent()
-
-            progressJob?.cancel()
-            progressJob = null
-            bufferedJob?.cancel()
-            bufferedJob = null
-            sleepTimerJob?.cancel()
-            sleepTimerJob = null
-            volumeNormalizationJob?.cancel()
-            volumeNormalizationJob = null
-            toggleLikeJob?.cancel()
-            toggleLikeJob = null
-            updateNotificationJob?.cancel()
-            updateNotificationJob = null
-            loadJob?.cancel()
-            loadJob = null
-            songEntityJob?.cancel()
-            songEntityJob = null
-            getSkipSegmentsJob?.cancel()
-            getSkipSegmentsJob = null
-            getFormatJob?.cancel()
-            getFormatJob = null
-            jobWatchtime?.cancel()
-            jobWatchtime = null
-            getDataOfNowPlayingTrackStateJob?.cancel()
-            getDataOfNowPlayingTrackStateJob = null
-
-            coroutineScope.cancel()
-
-            Logger.w("ServiceHandler", "Handler released successfully. Scope active: ${coroutineScope.isActive}")
-        } catch (e: Exception) {
-            Logger.e("ServiceHandler", "Error during release ${e.message}")
+        } catch (_: Throwable) {
         }
+        try {
+            mayBeSaveRecentSong(true)
+        } catch (_: Throwable) {
+        }
+        try {
+            mayBeSavePlaybackState()
+        } catch (_: Throwable) {
+        }
+        try {
+            player.removeListener(this)
+        } catch (_: Throwable) {
+        }
+        try {
+            sendCloseEqualizerIntent()
+        } catch (_: Throwable) {
+        }
+
+        progressJob?.cancel()
+        progressJob = null
+        bufferedJob?.cancel()
+        bufferedJob = null
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        volumeNormalizationJob?.cancel()
+        volumeNormalizationJob = null
+        toggleLikeJob?.cancel()
+        toggleLikeJob = null
+        updateNotificationJob?.cancel()
+        updateNotificationJob = null
+        loadJob?.cancel()
+        loadJob = null
+        songEntityJob?.cancel()
+        songEntityJob = null
+        getSkipSegmentsJob?.cancel()
+        getSkipSegmentsJob = null
+        getFormatJob?.cancel()
+        getFormatJob = null
+        jobWatchtime?.cancel()
+        jobWatchtime = null
+        getDataOfNowPlayingTrackStateJob?.cancel()
+        getDataOfNowPlayingTrackStateJob = null
+
+        try {
+            coroutineScope.cancel()
+        } catch (_: Throwable) {
+        }
+
+        try {
+            player.release()
+        } catch (e: Throwable) {
+            Logger.e("ServiceHandler", "Error releasing player: ${e.message}")
+        }
+
+        Logger.w("ServiceHandler", "Handler released successfully")
     }
 
     override fun onVolumeChanged(volume: Float) {

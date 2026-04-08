@@ -13,6 +13,7 @@ object SingleInstance {
     private const val FOCUS_COMMAND = "SAKAYORI_FOCUS"
     private const val LOCALHOST = "127.0.0.1"
 
+    @Volatile
     private var serverSocket: ServerSocket? = null
     private val focusListener = AtomicReference<(() -> Unit)?>(null)
 

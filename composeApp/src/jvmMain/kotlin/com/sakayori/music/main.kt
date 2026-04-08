@@ -75,6 +75,8 @@ fun main(args: Array<String>) {
             exitProcess(0)
         }
 
+        CrashDialog.install()
+
         System.setProperty("compose.swing.render.on.graphics", "true")
         System.setProperty("compose.interop.blending", "true")
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")
@@ -207,24 +209,33 @@ fun main(args: Array<String>) {
                 }
             }
 
+            val isMacOS = remember { System.getProperty("os.name", "").lowercase().contains("mac") }
+
             Window(
                 onCloseRequest = { isVisible = false },
                 title = stringResource(Res.string.app_name),
                 icon = painterResource(Res.drawable.circle_app_icon),
-                undecorated = true,
+                undecorated = !isMacOS,
                 transparent = false,
                 state = windowState,
                 visible = isVisible,
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    CustomTitleBar(
-                        title = stringResource(Res.string.app_name),
-                        windowState = windowState,
-                        window = window,
-                        onCloseRequest = { isVisible = false },
-                    )
+                    if (!isMacOS) {
+                        CustomTitleBar(
+                            title = stringResource(Res.string.app_name),
+                            windowState = windowState,
+                            window = window,
+                            onCloseRequest = { isVisible = false },
+                        )
+                    }
 
                     val context = LocalPlatformContext.current
+                    val lowResourceMode = runBlocking(Dispatchers.IO) {
+                        getKoin().get<DataStoreManager>().lowResourceMode.first() == "TRUE"
+                    }
+                    val memoryCacheMaxBytes = if (lowResourceMode) 32L * 1024 * 1024 else 128L * 1024 * 1024
+                    val diskCacheMaxBytes = if (lowResourceMode) 128L * 1024 * 1024 else 512L * 1024 * 1024
                     setSingletonImageLoaderFactory {
                         ImageLoader.Builder(context)
                             .components {
@@ -232,13 +243,18 @@ fun main(args: Array<String>) {
                             }
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .networkCachePolicy(CachePolicy.ENABLED)
+                            .memoryCache {
+                                coil3.memory.MemoryCache.Builder()
+                                    .maxSizeBytes(memoryCacheMaxBytes)
+                                    .build()
+                            }
                             .diskCache {
                                 DiskCache.Builder()
                                     .directory(System.getProperty("java.io.tmpdir").toPath() / "image_cache")
-                                    .maxSizeBytes(512L * 1024 * 1024)
+                                    .maxSizeBytes(diskCacheMaxBytes)
                                     .build()
                             }
-                            .crossfade(true)
+                            .crossfade(!lowResourceMode)
                             .build()
                     }
                     App()

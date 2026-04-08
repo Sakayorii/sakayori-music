@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -77,6 +78,10 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
+
+val LocalBlurEnabled = staticCompositionLocalOf { true }
+
+val LocalLowResourceMode = staticCompositionLocalOf { false }
 
 fun generateRandomColor(): Color {
     val red = Random.nextInt(256)
@@ -457,7 +462,7 @@ expect fun rememberIsInPipMode(): Boolean
 
 @Composable
 fun animateAlignmentAsState(targetAlignment: Alignment): State<Alignment> {
-    val biased = targetAlignment as BiasAlignment
+    val biased = targetAlignment as? BiasAlignment ?: BiasAlignment(0f, 0f)
     val horizontal by animateFloatAsState(biased.horizontalBias)
     val vertical by animateFloatAsState(biased.verticalBias)
     return remember { derivedStateOf { BiasAlignment(horizontal, vertical) } }

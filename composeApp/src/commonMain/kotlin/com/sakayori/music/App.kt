@@ -31,9 +31,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -85,6 +87,7 @@ import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.datetime.LocalDateTime
@@ -109,7 +112,7 @@ import com.sakayori.music.generated.resources.version_format
 import com.sakayori.music.generated.resources.yes
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun App(viewModel: SharedViewModel = koinInject()) {
     val windowSize = currentWindowAdaptiveInfo().windowSizeClass
@@ -122,6 +125,11 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     val isTranslucentBottomBar by viewModel.getTranslucentBottomBar().collectAsStateWithLifecycle(DataStoreManager.FALSE)
     val isLiquidGlassEnabled by viewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
+    val isLowResourceMode by viewModel.getLowResourceMode().collectAsStateWithLifecycle(DataStoreManager.FALSE)
+    val isLowEndDevice = remember { com.sakayori.music.utils.DeviceCapability.isLowEndDevice() }
+    val blurEnabledGlobal = isLiquidGlassEnabled == DataStoreManager.TRUE &&
+        !isLowEndDevice &&
+        isLowResourceMode != DataStoreManager.TRUE
     var isShowMiniPlayer by rememberSaveable {
         mutableStateOf(true)
     }
@@ -144,7 +152,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     val hazeState =
         rememberHazeState(
-            blurEnabled = true,
+            blurEnabled = blurEnabledGlobal,
         )
 
     LaunchedEffect(nowPlayingData) {
@@ -301,6 +309,10 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     val backdrop = rememberBackdrop()
 
+    CompositionLocalProvider(
+        com.sakayori.music.extension.LocalBlurEnabled provides blurEnabledGlobal,
+        com.sakayori.music.extension.LocalLowResourceMode provides (isLowResourceMode == DataStoreManager.TRUE),
+    ) {
     AppTheme {
         Scaffold(
             bottomBar = {
@@ -437,7 +449,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                                             .height(84.dp)
                                             .background(Color.Transparent)
                                             .hazeEffect(hazeState, style = HazeMaterials.ultraThin()) {
-                                                blurEnabled = true
+                                                blurEnabled = blurEnabledGlobal
                                             }
                                     },
                                     backdrop = backdrop,
@@ -654,5 +666,6 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                 }
             },
         )
+    }
     }
 }

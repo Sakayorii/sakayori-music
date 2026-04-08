@@ -134,9 +134,10 @@ fun LibraryScreen(
     val chartPlaylists by viewModel.chartPlaylists.collectAsStateWithLifecycle()
     val recentlyAdded by viewModel.recentlyAdded.collectAsStateWithLifecycle()
     val accountThumbnail by viewModel.accountThumbnail.collectAsStateWithLifecycle()
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
     val hazeState =
         rememberHazeState(
-            blurEnabled = true,
+            blurEnabled = isBlurEnabled,
         )
 
     var topAppBarHeight by remember {
@@ -428,7 +429,7 @@ fun LibraryScreen(
         Modifier
             .background(transparent)
             .hazeEffect(hazeState, style = HazeMaterials.ultraThin()) {
-                blurEnabled = true
+                blurEnabled = isBlurEnabled
             }.onGloballyPositioned { coordinates ->
                 topAppBarHeight = with(density) { coordinates.size.height.toDp() }
             },

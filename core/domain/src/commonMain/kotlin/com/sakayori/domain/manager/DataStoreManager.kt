@@ -311,6 +311,10 @@ interface DataStoreManager {
 
     suspend fun setEnableLiquidGlass(enable: Boolean)
 
+    val lowResourceMode: Flow<String>
+
+    suspend fun setLowResourceMode(enable: Boolean)
+
     val explicitContentEnabled: Flow<String>
 
     suspend fun setExplicitContentEnabled(enabled: Boolean)

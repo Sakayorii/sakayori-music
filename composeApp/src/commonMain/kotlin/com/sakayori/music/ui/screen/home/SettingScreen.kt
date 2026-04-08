@@ -220,6 +220,8 @@ import com.sakayori.music.generated.resources.downloaded_cache
 import com.sakayori.music.generated.resources.enable_canvas
 import com.sakayori.music.generated.resources.enable_liquid_glass_effect
 import com.sakayori.music.generated.resources.enable_liquid_glass_effect_description
+import com.sakayori.music.generated.resources.very_low_performance_mode
+import com.sakayori.music.generated.resources.very_low_performance_mode_description
 import com.sakayori.music.generated.resources.low_end_device_blur_disabled
 import com.sakayori.music.utils.DeviceCapability
 import com.sakayori.music.generated.resources.enable_rich_presence
@@ -451,6 +453,7 @@ fun SettingScreen(
     val autoBackupLastTime by viewModel.autoBackupLastTime.collectAsStateWithLifecycle()
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val enableLiquidGlass by viewModel.enableLiquidGlass.collectAsStateWithLifecycle()
+    val lowResourceMode by viewModel.lowResourceMode.collectAsStateWithLifecycle()
     val isLowEndDevice = remember { DeviceCapability.isLowEndDevice() }
     val lowEndDisableReason = stringResource(Res.string.low_end_device_blur_disabled)
     val discordLoggedIn by viewModel.discordLoggedIn.collectAsStateWithLifecycle()
@@ -463,9 +466,10 @@ fun SettingScreen(
 
     val isCheckingUpdate by sharedViewModel.isCheckingUpdate.collectAsStateWithLifecycle()
 
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
     val hazeState =
         rememberHazeState(
-            blurEnabled = true,
+            blurEnabled = isBlurEnabled,
         )
 
     val checkForUpdateSubtitle by remember {
@@ -552,6 +556,12 @@ fun SettingScreen(
                         disableReason = if (isLowEndDevice) lowEndDisableReason else null,
                     )
                 }
+                SettingItem(
+                    title = stringResource(Res.string.very_low_performance_mode),
+                    subtitle = stringResource(Res.string.very_low_performance_mode_description),
+                    smallSubtitle = true,
+                    switch = (lowResourceMode to { viewModel.setLowResourceMode(it) }),
+                )
             }
         }
         item(key = "content") {
@@ -2580,7 +2590,7 @@ fun SettingScreen(
         modifier =
             Modifier
                 .hazeEffect(hazeState, style = HazeMaterials.ultraThin()) {
-                    blurEnabled = true
+                    blurEnabled = isBlurEnabled
                 },
         colors =
             TopAppBarDefaults.topAppBarColors(

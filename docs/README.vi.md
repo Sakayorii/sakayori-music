@@ -6,7 +6,7 @@
 
 **Trình phát YouTube Music đa nền tảng hiện đại, xây dựng bằng Kotlin Multiplatform & Compose**
 
-[![Version](https://img.shields.io/badge/version-2.0.8-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Version](https://img.shields.io/badge/version-2.0.9-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE)
 

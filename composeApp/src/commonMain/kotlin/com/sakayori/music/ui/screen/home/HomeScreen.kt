@@ -272,9 +272,10 @@ fun HomeScreen(
         mutableIntStateOf(0)
     }
 
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
     val hazeState =
         rememberHazeState(
-            blurEnabled = true,
+            blurEnabled = isBlurEnabled,
         )
 
     LaunchedEffect(scrollState) {
@@ -707,7 +708,7 @@ fun HomeScreen(
                             } else {
                                 Modifier
                                     .hazeEffect(hazeState, style = HazeMaterials.ultraThin()) {
-                                        blurEnabled = true
+                                        blurEnabled = isBlurEnabled
                                     }
                             },
                         ).onGloballyPositioned { coordinates ->
