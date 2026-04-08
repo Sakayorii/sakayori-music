@@ -66,6 +66,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -146,8 +147,13 @@ fun MiniPlayer(
     val layer = rememberGraphicsLayer()
     val luminanceAnimation = remember { Animatable(0f) }
 
+    val textColorTarget by remember {
+        derivedStateOf {
+            if (luminanceAnimation.value > 0.6f) Color.Black else Color.White
+        }
+    }
     val textColor by animateColorAsState(
-        targetValue = if (luminanceAnimation.value > 0.6f) Color.Black else Color.White,
+        targetValue = textColorTarget,
         label = "MiniPlayerTextColor",
         animationSpec = tween(500),
     )

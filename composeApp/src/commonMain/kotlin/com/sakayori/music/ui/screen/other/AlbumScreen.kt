@@ -94,7 +94,7 @@ import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import com.sakayori.music.extension.getStringBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -364,9 +364,7 @@ fun AlbumScreen(
                                                                             CircleShape,
                                                                         ).clickable {
                                                                             viewModel.makeToast(
-                                                                                runBlocking(Dispatchers.Default) {
-                                                                                    getString(Res.string.downloaded)
-                                                                                },
+                                                                                getStringBlocking(Res.string.downloaded),
                                                                             )
                                                                         },
                                                             ) {
@@ -391,9 +389,7 @@ fun AlbumScreen(
                                                                             CircleShape,
                                                                         ).clickable {
                                                                             viewModel.makeToast(
-                                                                                runBlocking(Dispatchers.Default) {
-                                                                                    getString(Res.string.downloading)
-                                                                                },
+                                                                                getStringBlocking(Res.string.downloading),
                                                                             )
                                                                         },
                                                             ) {

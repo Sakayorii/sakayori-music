@@ -881,11 +881,21 @@ internal class CrossfadeExoPlayerAdapter(
     override var playbackParameters: GenericPlaybackParameters
         get() = GenericPlaybackParameters(internalPlaybackSpeed, internalPlaybackPitch)
         set(value) {
-            internalPlaybackSpeed = value.speed
-            internalPlaybackPitch = value.pitch
-            val params = PlaybackParameters(value.speed, value.pitch)
-            currentPlayer?.playbackParameters = params
-            secondaryPlayer?.playbackParameters = params
+            val safeSpeed = value.speed.coerceIn(0.2f, 2f)
+            val safePitch = value.pitch.coerceIn(0.5f, 2f)
+            internalPlaybackSpeed = safeSpeed
+            internalPlaybackPitch = safePitch
+            val params = PlaybackParameters(safeSpeed, safePitch)
+            try {
+                currentPlayer?.playbackParameters = params
+            } catch (e: Throwable) {
+                Logger.e(TAG, "Failed to set currentPlayer playback params: ${e.message}")
+            }
+            try {
+                secondaryPlayer?.playbackParameters = params
+            } catch (e: Throwable) {
+                Logger.e(TAG, "Failed to set secondaryPlayer playback params: ${e.message}")
+            }
         }
 
 
@@ -1059,11 +1069,22 @@ internal class CrossfadeExoPlayerAdapter(
                         playerFilter = cachedPlayerEntry.filter
                     } else {
                         Logger.d(TAG, "Creating new player for $videoId")
-                        val pwf = createExoPlayerInstance(handleAudioFocus = false)
+                        val pwf = try {
+                            createExoPlayerInstance(handleAudioFocus = false)
+                        } catch (e: Throwable) {
+                            Logger.e(TAG, "Failed to create secondary player: ${e.message}")
+                            return@launch
+                        }
                         player = pwf.player
                         playerFilter = pwf.filter
-                        player.setMediaItem(mediaItem.toMedia3MediaItem())
-                        player.prepare()
+                        try {
+                            player.setMediaItem(mediaItem.toMedia3MediaItem())
+                            player.prepare()
+                        } catch (e: Throwable) {
+                            Logger.e(TAG, "Failed to prepare secondary player: ${e.message}")
+                            try { player.release() } catch (_: Throwable) {}
+                            return@launch
+                        }
                     }
 
 

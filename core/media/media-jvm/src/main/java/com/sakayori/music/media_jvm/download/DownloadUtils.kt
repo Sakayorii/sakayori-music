@@ -74,10 +74,13 @@ internal class DownloadUtils(
     override fun removeDownload(videoId: String) {
         File(getDownloadPath())
             .listFiles()
-            .filter {
+            ?.filter {
                 it.name.contains(videoId)
-            }.forEach {
-                it.delete()
+            }?.forEach {
+                try {
+                    it.delete()
+                } catch (_: Throwable) {
+                }
                 coroutineScope.launch {
                     songRepository.updateDownloadState(
                         videoId,
@@ -88,8 +91,11 @@ internal class DownloadUtils(
     }
 
     override fun removeAllDownloads() {
-        File(getDownloadPath()).listFiles().forEach {
-            it.delete()
+        File(getDownloadPath()).listFiles()?.forEach {
+            try {
+                it.delete()
+            } catch (_: Throwable) {
+            }
             coroutineScope.launch {
                 songRepository.updateDownloadState(
                     it.name.split(".").first().removePrefix(
@@ -102,4 +108,12 @@ internal class DownloadUtils(
     }
 }
 
-fun getDownloadPath(): String = System.getProperty("user.home") + File.separator + ".SakayoriMusic" + File.separator + "downloads"
+fun getDownloadPath(): String {
+    val path = System.getProperty("user.home") + File.separator + ".SakayoriMusic" + File.separator + "downloads"
+    try {
+        val dir = File(path)
+        if (!dir.exists()) dir.mkdirs()
+    } catch (_: Throwable) {
+    }
+    return path
+}

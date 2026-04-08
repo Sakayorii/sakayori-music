@@ -248,7 +248,9 @@ fun LyricsView(
                                             .clickable {
                                                 onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
                                             }.onGloballyPositioned { c ->
-                                                currentLineHeight = c.size.height
+                                                if (c.size.height != currentLineHeight) {
+                                                    currentLineHeight = c.size.height
+                                                }
                                             },
                                 )
                             } else {
@@ -262,7 +264,9 @@ fun LyricsView(
                                             .clickable {
                                                 onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
                                             }.onGloballyPositioned { c ->
-                                                currentLineHeight = c.size.height
+                                                if (c.size.height != currentLineHeight) {
+                                                    currentLineHeight = c.size.height
+                                                }
                                             },
                                 )
                             }
@@ -279,7 +283,9 @@ fun LyricsView(
                                         .clickable(enabled = lyricsData.lyrics.syncType == "LINE_SYNCED") {
                                             onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
                                         }.onGloballyPositioned { c ->
-                                            currentLineHeight = c.size.height
+                                            if (c.size.height != currentLineHeight) {
+                                                currentLineHeight = c.size.height
+                                            }
                                         },
                             )
                         }

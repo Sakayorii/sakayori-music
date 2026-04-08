@@ -269,7 +269,7 @@ fun ArtistScreen(
                                         if (state.data.shuffleParam != null) {
                                             viewModel.onShuffleClick(state.data.shuffleParam)
                                         } else {
-                                            viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.error) })
+                                            viewModel.makeToast(getStringBlocking(Res.string.error))
                                         }
                                     },
                                 ) {
@@ -281,7 +281,7 @@ fun ArtistScreen(
                                         if (state.data.radioParam != null) {
                                             viewModel.onRadioClick(state.data.radioParam)
                                         } else {
-                                            viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.error) })
+                                            viewModel.makeToast(getStringBlocking(Res.string.error))
                                         }
                                     },
                                     colors =
@@ -322,7 +322,7 @@ fun ArtistScreen(
                                             if (id != null) {
                                                 navController.navigate(PlaylistDestination(id))
                                             } else {
-                                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.error) })
+                                                viewModel.makeToast(getStringBlocking(Res.string.error))
                                             }
                                         },
                                         colors =

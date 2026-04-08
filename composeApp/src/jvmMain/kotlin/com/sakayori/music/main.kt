@@ -109,6 +109,10 @@ fun main(args: Array<String>) {
                     Thread.sleep(300)
                 } catch (_: Throwable) {
                 }
+                try {
+                    Sentry.close()
+                } catch (_: Throwable) {
+                }
             }.apply {
                 name = "SakayoriShutdownHook"
                 isDaemon = false

@@ -157,6 +157,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import com.sakayori.music.extension.getStringBlocking
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
 import org.jetbrains.compose.resources.StringResource
@@ -1813,7 +1814,7 @@ fun NowPlayingBottomSheet(
                         viewModel.onUIEvent(
                             NowPlayingBottomSheetUIEvent.StartRadio(
                                 videoId = uiState.songUIState.videoId,
-                                name = "\"${uiState.songUIState.title}\" ${runBlocking(Dispatchers.Default) { getString(Res.string.radio) }}",
+                                name = "\"${uiState.songUIState.title}\" ${getStringBlocking(Res.string.radio)}",
                             ),
                         )
                         hideModalBottomSheet()
@@ -2399,7 +2400,7 @@ fun SleepTimerBottomSheet(
                                     }
                                 } else {
                                     showToast(
-                                        runBlocking(Dispatchers.Default) { getString(Res.string.sleep_timer_set_error) },
+                                        getStringBlocking(Res.string.sleep_timer_set_error),
                                         ToastGravity.Bottom,
                                     )
                                 }
@@ -2413,7 +2414,7 @@ fun SleepTimerBottomSheet(
                             }
                             else -> {
                                 showToast(
-                                    runBlocking(Dispatchers.Default) { getString(Res.string.sleep_timer_set_error) },
+                                    getStringBlocking(Res.string.sleep_timer_set_error),
                                     ToastGravity.Bottom,
                                 )
                             }
@@ -3134,7 +3135,7 @@ fun DevLogInBottomSheet(
                     shape = RoundedCornerShape(50),
                 ) {}
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(text = runBlocking(Dispatchers.Default) { type.getTitle() }, style = typo().labelSmall)
+                Text(text = type.getTitleBlocking(), style = typo().labelSmall)
                 Spacer(modifier = Modifier.height(5.dp))
                 OutlinedTextField(
                     value = value,
@@ -3159,11 +3160,11 @@ fun DevLogInBottomSheet(
                         if (value.isNotEmpty() && value.isNotBlank() &&
                             (type != DevLogInType.YouTube || (secondValue.isNotEmpty() && secondValue.isNotBlank()))
                         ) {
-                            showToast(runBlocking(Dispatchers.Default) { getString(Res.string.processing) }, ToastGravity.Bottom)
+                            showToast(getStringBlocking(Res.string.processing), ToastGravity.Bottom)
                             onDismiss()
                             onDone(value, secondValue)
                         } else {
-                            showToast(runBlocking(Dispatchers.Default) { getString(Res.string.can_not_be_empty) }, ToastGravity.Bottom)
+                            showToast(getStringBlocking(Res.string.can_not_be_empty), ToastGravity.Bottom)
                         }
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
@@ -3269,5 +3270,12 @@ sealed class DevLogInType {
             is Spotify -> getString(Res.string.your_sp_dc_param_of_spotify_cookie)
             is YouTube -> getString(Res.string.your_youtube_cookie)
             is Discord -> getString(Res.string.your_discord_token)
+        }
+
+    fun getTitleBlocking(): String =
+        when (this) {
+            is Spotify -> com.sakayori.music.extension.getStringBlocking(Res.string.your_sp_dc_param_of_spotify_cookie)
+            is YouTube -> com.sakayori.music.extension.getStringBlocking(Res.string.your_youtube_cookie)
+            is Discord -> com.sakayori.music.extension.getStringBlocking(Res.string.your_discord_token)
         }
 }

@@ -83,33 +83,31 @@ open class KizzyRPC(token: String) {
     }
 
     companion object {
-        suspend fun getUserInfo(token: String): Result<UserInfo> = runCatching {
-            val client = HttpClient {
+        private val sharedClient by lazy {
+            HttpClient {
                 install(HttpTimeout) {
                     requestTimeoutMillis = 15000
                     connectTimeoutMillis = 10000
                     socketTimeoutMillis = 15000
                 }
             }
-            try {
-                val rawRes = client.get("https://discord.com/api/v9/users/@me") {
-                    header("Authorization", token)
-                }.bodyAsText()
-                val json = Json {
-                    ignoreUnknownKeys = true
-                    explicitNulls = false
-                }
-                val response = json.decodeFromString<MeResponse>(rawRes)
-                val username = response.username ?: "Unknown"
-                val name = response.globalName ?: username
+        }
 
-                UserInfo(username, name)
-            } finally {
-                try {
-                    client.close()
-                } catch (_: Exception) {
-                }
+        private val sharedJson by lazy {
+            Json {
+                ignoreUnknownKeys = true
+                explicitNulls = false
             }
+        }
+
+        suspend fun getUserInfo(token: String): Result<UserInfo> = runCatching {
+            val rawRes = sharedClient.get("https://discord.com/api/v9/users/@me") {
+                header("Authorization", token)
+            }.bodyAsText()
+            val response = sharedJson.decodeFromString<MeResponse>(rawRes)
+            val username = response.username ?: "Unknown"
+            val name = response.globalName ?: username
+            UserInfo(username, name)
         }
     }
 }

@@ -240,8 +240,14 @@ open class DiscordWebSocket(
     }
 
     suspend fun sendActivity(presence: Presence) {
-        while (!isSocketConnectedToAccount()){
-            delay(10.milliseconds)
+        var attempts = 0
+        val maxAttempts = 200
+        while (!isSocketConnectedToAccount()) {
+            if (attempts++ >= maxAttempts) {
+                Logger.w(TAG, "sendActivity: timeout waiting for socket connection, skipping presence update")
+                return
+            }
+            delay(50.milliseconds)
         }
         Logger.i(TAG,"Sending ${OpCode.PRESENCE_UPDATE}")
         send(

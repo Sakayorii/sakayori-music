@@ -222,6 +222,10 @@ internal class SimpleMediaService :
     override fun onTaskRemoved(rootIntent: Intent?) {
         Logger.w("Service", "Simple Media Service Task Removed")
         if (simpleMediaServiceHandler.shouldReleaseOnTaskRemoved()) {
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } catch (_: Throwable) {
+            }
             release()
             super.onTaskRemoved(rootIntent)
             exitProcess(0)

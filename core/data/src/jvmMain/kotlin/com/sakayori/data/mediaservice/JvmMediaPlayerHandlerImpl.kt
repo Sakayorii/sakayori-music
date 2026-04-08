@@ -75,9 +75,12 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
@@ -386,14 +389,16 @@ class JvmMediaPlayerHandlerImpl(
                 launch {
                     combine(dataStoreManager.playbackSpeed, dataStoreManager.pitch) { speed, pitch ->
                         Pair(speed, pitch)
-                    }.distinctUntilChanged().collectLatest { pair ->
+                    }.distinctUntilChanged().debounce(150).collectLatest { pair ->
                         Logger.w(TAG, "Playback speed: ${pair.first}, Pitch: ${pair.second}")
-                        player.playbackParameters =
-                            GenericPlaybackParameters(
-                                pair.first,
-                                2f.pow(pair.second.toFloat() / 12),
-                            )
-                        Logger.w(TAG, "Playback current speed: ${player.playbackParameters.speed}, Pitch: ${player.playbackParameters.pitch}")
+                        try {
+                            val clampedSpeed = pair.first.coerceIn(0.2f, 2f)
+                            val pitchFactor = 2f.pow(pair.second.toFloat() / 12).coerceIn(0.5f, 2f)
+                            player.playbackParameters = GenericPlaybackParameters(clampedSpeed, pitchFactor)
+                            Logger.w(TAG, "Playback current speed: ${player.playbackParameters.speed}, Pitch: ${player.playbackParameters.pitch}")
+                        } catch (e: Throwable) {
+                            Logger.e(TAG, "Failed to set playback params: ${e.message}")
+                        }
                     }
                 }
             val discordRPCEnabledJob =
@@ -444,7 +449,7 @@ class JvmMediaPlayerHandlerImpl(
         getDataOfNowPlayingTrackStateJob =
             coroutineScope.launch {
                 Logger.w(TAG, "getDataOfNowPlayingState: $videoId")
-                songRepository.getSongById(videoId).cancellable().singleOrNull().let { songEntity ->
+                songRepository.getSongById(videoId).cancellable().firstOrNull().let { songEntity ->
                     if (songEntity != null) {
                         _controlState.update { it.copy(isLiked = songEntity.liked) }
                         var thumbUrl =
@@ -894,9 +899,13 @@ class JvmMediaPlayerHandlerImpl(
 
     override fun toggleLike() {
         Logger.w(TAG, "toggleLike: ${nowPlayingState.value.mediaItem.mediaId}")
-        toggleLikeJob?.cancel()
+        val previousJob = toggleLikeJob
         toggleLikeJob =
             coroutineScope.launch {
+                try {
+                    previousJob?.cancelAndJoin()
+                } catch (_: Throwable) {
+                }
                 var id = (player.currentMediaItem?.mediaId ?: "")
                 if (id.contains("Video")) {
                     id = id.removePrefix("Video")
@@ -964,14 +973,14 @@ class JvmMediaPlayerHandlerImpl(
 
     override fun removeMediaItem(position: Int) {
         player.removeMediaItem(position)
-        val temp =
-            _queueData.value.data.listTracks
-                .toMutableList()
-        temp.removeAt(position)
-        _queueData.update {
-            it.copy(
+        _queueData.update { current ->
+            val list = current.data.listTracks
+            if (position < 0 || position >= list.size) return@update current
+            val temp = list.toMutableList()
+            temp.removeAt(position)
+            current.copy(
                 data =
-                    it.data.copy(
+                    current.data.copy(
                         listTracks = temp,
                     ),
             )

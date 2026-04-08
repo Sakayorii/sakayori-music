@@ -600,7 +600,8 @@ fun AnalyticsScreen(
                             topTracks.data?.let {
                                 if (it.size > 5) it.subList(0, 5) else it
                             } ?: return@item
-                        val maxPlays = tracks.maxOf { it.first.playCount }
+                        if (tracks.isEmpty()) return@item
+                        val maxPlays = (tracks.maxOfOrNull { it.first.playCount } ?: 1).coerceAtLeast(1)
                         Column {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -720,7 +721,8 @@ fun AnalyticsScreen(
                 when (uiState.scrobblesLineChart) {
                     is LocalResource.Success if (!uiState.scrobblesLineChart.data.isNullOrEmpty()) -> {
                         val data = uiState.scrobblesLineChart.data ?: return@item
-                        val maxPlays = data.maxOf { it.second }
+                        if (data.isEmpty()) return@item
+                        val maxPlays = (data.maxOfOrNull { it.second } ?: 1).coerceAtLeast(1)
                         Column(
                             modifier =
                                 Modifier

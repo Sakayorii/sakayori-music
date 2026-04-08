@@ -79,6 +79,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -333,14 +334,16 @@ internal class MediaServiceHandlerImpl(
                 launch {
                     combine(dataStoreManager.playbackSpeed, dataStoreManager.pitch) { speed, pitch ->
                         Pair(speed, pitch)
-                    }.collectLatest { pair ->
+                    }.distinctUntilChanged().debounce(150).collectLatest { pair ->
                         Logger.w(TAG, "Playback speed: ${pair.first}, Pitch: ${pair.second}")
-                        player.playbackParameters =
-                            GenericPlaybackParameters(
-                                pair.first,
-                                2f.pow(pair.second.toFloat() / 12),
-                            )
-                        Logger.w(TAG, "Playback current speed: ${player.playbackParameters.speed}, Pitch: ${player.playbackParameters.pitch}")
+                        try {
+                            val clampedSpeed = pair.first.coerceIn(0.2f, 2f)
+                            val pitchFactor = 2f.pow(pair.second.toFloat() / 12).coerceIn(0.5f, 2f)
+                            player.playbackParameters = GenericPlaybackParameters(clampedSpeed, pitchFactor)
+                            Logger.w(TAG, "Playback current speed: ${player.playbackParameters.speed}, Pitch: ${player.playbackParameters.pitch}")
+                        } catch (e: Throwable) {
+                            Logger.e(TAG, "Failed to set playback params: ${e.message}")
+                        }
                     }
                 }
             val discordRPCEnabledJob =

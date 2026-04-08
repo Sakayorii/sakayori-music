@@ -285,24 +285,25 @@ internal class DownloadUtils(
         }
 
         val result = mutableMapOf<String, Pair<DownloadHandler.Download?, DownloadHandler.Download?>>()
-        val cursor = downloadManager.downloadIndex.getDownloads()
-        while (cursor.moveToNext()) {
-            val id = cursor.download.request.id
-            val isVideo = id.contains(MERGING_DATA_TYPE.VIDEO)
-            val songId =
-                if (id.contains(MERGING_DATA_TYPE.VIDEO)) {
-                    id.removePrefix(MERGING_DATA_TYPE.VIDEO)
-                } else {
-                    id
-                }
-            result[songId] =
-                if (isVideo) {
-                    result[songId]?.copy(second = DownloadHandler.Download(cursor.download.state))
-                        ?: Pair(null, DownloadHandler.Download(cursor.download.state))
-                } else {
-                    result[songId]?.copy(first = DownloadHandler.Download(cursor.download.state))
-                        ?: Pair(DownloadHandler.Download(cursor.download.state), null)
-                }
+        downloadManager.downloadIndex.getDownloads().use { cursor ->
+            while (cursor.moveToNext()) {
+                val id = cursor.download.request.id
+                val isVideo = id.contains(MERGING_DATA_TYPE.VIDEO)
+                val songId =
+                    if (id.contains(MERGING_DATA_TYPE.VIDEO)) {
+                        id.removePrefix(MERGING_DATA_TYPE.VIDEO)
+                    } else {
+                        id
+                    }
+                result[songId] =
+                    if (isVideo) {
+                        result[songId]?.copy(second = DownloadHandler.Download(cursor.download.state))
+                            ?: Pair(null, DownloadHandler.Download(cursor.download.state))
+                    } else {
+                        result[songId]?.copy(first = DownloadHandler.Download(cursor.download.state))
+                            ?: Pair(DownloadHandler.Download(cursor.download.state), null)
+                    }
+            }
         }
         _downloads.value = result
         downloadManager.addListener(

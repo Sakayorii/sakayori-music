@@ -10,11 +10,14 @@ fun parseSyncedLyrics(data: String): Lyrics {
     lines.map { line ->
         val matchResult = regex.matchEntire(line)
         if (matchResult != null) {
-            val minutes = matchResult.groupValues[1].toLong()
-            val seconds = matchResult.groupValues[2].toLong()
-            val centiseconds = matchResult.groupValues[3].toLong()
+            val minutes = matchResult.groupValues[1].toLongOrNull() ?: 0L
+            val seconds = matchResult.groupValues[2].toLongOrNull() ?: 0L
+            val centiseconds = matchResult.groupValues[3].toLongOrNull() ?: 0L
+            if (minutes > 10_000 || seconds > 59 || centiseconds > 99) return@map
             val timeInMillis = minutes * 60_000L + seconds * 1000L + centiseconds * 10L
-            val content = (if (matchResult.groupValues[4] == " ") " ♫" else matchResult.groupValues[4]).removeRange(0, 1)
+            val raw = matchResult.groupValues[4]
+            val base = if (raw == " ") " ♫" else raw
+            val content = if (base.isNotEmpty()) base.substring(1) else base
             linesLyrics.add(
                 Lyrics.LyricsX.Line(
                     endTimeMs = "0",

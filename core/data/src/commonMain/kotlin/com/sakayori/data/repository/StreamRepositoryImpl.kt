@@ -112,8 +112,9 @@ internal class StreamRepositoryImpl(
                 }
             var playerResult = youTube.player(videoId, noLogIn = muxed)
             var attempts = 1
-            while (playerResult.isFailure && attempts < 3) {
-                kotlinx.coroutines.delay(500L * attempts)
+            while (playerResult.isFailure && attempts < 4) {
+                val backoff = 500L * (1L shl (attempts - 1))
+                kotlinx.coroutines.delay(backoff)
                 attempts++
                 playerResult = youTube.player(videoId, noLogIn = muxed)
             }

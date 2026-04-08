@@ -193,6 +193,24 @@ class SharedViewModel(
         )
     val timeline: StateFlow<TimeLine> = _timeline
 
+    val timelineIsCrossfading: StateFlow<Boolean> =
+        _timeline
+            .map { it.isCrossfading }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val timelineLoading: StateFlow<Boolean> =
+        _timeline
+            .map { it.loading }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val timelineTotal: StateFlow<Long> =
+        _timeline
+            .map { it.total }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, -1L)
+
     private var _nowPlayingScreenData =
         MutableStateFlow<NowPlayingScreenData>(
             NowPlayingScreenData.initial(),
@@ -216,59 +234,51 @@ class SharedViewModel(
                 )
             }
             dataStoreManager.openApp()
-            val timeLineJob =
-                launch {
-                    nowPlayingState
-                        .filterNotNull()
-                        .flatMapLatest { nowPlayingState ->
-                            timeline.map { timeLine ->
-                                Pair(timeLine, nowPlayingState)
+            launch {
+                nowPlayingState
+                    .filterNotNull()
+                    .flatMapLatest { nowPlayingState ->
+                        timeline.map { timeLine ->
+                            Pair(timeLine, nowPlayingState)
+                        }
+                    }.distinctUntilChanged { old, new ->
+                        (old.first.total.toString() + old.second.songEntity?.videoId).hashCode() ==
+                            (new.first.total.toString() + new.second.songEntity?.videoId).hashCode()
+                    }.collectLatest {
+                        log("Timeline job ${(it.first.total.toString() + it.second.songEntity?.videoId).hashCode()}")
+                        val nowPlaying = it.second
+                        val timeline = it.first
+                        if (timeline.total > 0 && nowPlaying.songEntity != null) {
+                            if (nowPlaying.mediaItem.isSong() && nowPlayingScreenData.value.canvasData == null) {
+                                Logger.w(tag, "Duration is ${timeline.total}")
+                                Logger.w(tag, "MediaId is ${nowPlaying.mediaItem.mediaId}")
+                                getCanvas(nowPlaying.mediaItem.mediaId, (timeline.total / 1000).toInt())
                             }
-                        }.distinctUntilChanged { old, new ->
-                            (old.first.total.toString() + old.second.songEntity?.videoId).hashCode() ==
-                                (new.first.total.toString() + new.second.songEntity?.videoId).hashCode()
-                        }.collectLatest {
-                            log("Timeline job ${(it.first.total.toString() + it.second.songEntity?.videoId).hashCode()}")
-                            val nowPlaying = it.second
-                            val timeline = it.first
-                            if (timeline.total > 0 && nowPlaying.songEntity != null) {
-                                if (nowPlaying.mediaItem.isSong() && nowPlayingScreenData.value.canvasData == null) {
-                                    Logger.w(tag, "Duration is ${timeline.total}")
-                                    Logger.w(tag, "MediaId is ${nowPlaying.mediaItem.mediaId}")
-                                    getCanvas(nowPlaying.mediaItem.mediaId, (timeline.total / 1000).toInt())
-                                }
-                                nowPlaying.songEntity?.let { song ->
-                                    if (nowPlayingScreenData.value.lyricsData == null) {
-                                        Logger.w(tag, "Get lyrics from format")
-                                        getLyricsFromFormat(nowPlaying.mediaItem.isVideo(), song, (timeline.total / 1000).toInt())
-                                    }
+                            nowPlaying.songEntity?.let { song ->
+                                if (nowPlayingScreenData.value.lyricsData == null) {
+                                    Logger.w(tag, "Get lyrics from format")
+                                    getLyricsFromFormat(nowPlaying.mediaItem.isVideo(), song, (timeline.total / 1000).toInt())
                                 }
                             }
                         }
-                }
-            val checkGetVideoJob =
-                launch {
-                    dataStoreManager.watchVideoInsteadOfPlayingAudio.collectLatest {
-                        Logger.w(tag, "GetVideo is $it")
-                        _getVideo.value = it == TRUE
                     }
+            }
+            launch {
+                dataStoreManager.watchVideoInsteadOfPlayingAudio.collectLatest {
+                    Logger.w(tag, "GetVideo is $it")
+                    _getVideo.value = it == TRUE
                 }
-            val lyricsProviderJob =
-                launch {
-                    dataStoreManager.lyricsProvider.distinctUntilChanged().collectLatest {
-                        setLyricsProvider()
-                    }
+            }
+            launch {
+                dataStoreManager.lyricsProvider.distinctUntilChanged().collectLatest {
+                    setLyricsProvider()
                 }
-            val shareSavedLyricsJob =
-                launch {
-                    dataStoreManager.helpBuildLyricsDatabase.distinctUntilChanged().collectLatest {
-                        _shareSavedLyrics.value = it == TRUE
-                    }
+            }
+            launch {
+                dataStoreManager.helpBuildLyricsDatabase.distinctUntilChanged().collectLatest {
+                    _shareSavedLyrics.value = it == TRUE
                 }
-            timeLineJob.join()
-            checkGetVideoJob.join()
-            lyricsProviderJob.join()
-            shareSavedLyricsJob.join()
+            }
         }
 
         viewModelScope.launch {

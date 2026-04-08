@@ -140,6 +140,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import com.sakayori.music.extension.getStringBlocking
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
@@ -577,7 +578,7 @@ fun LocalPlaylistScreen(
                                                             .clip(
                                                                 CircleShape,
                                                             ).clickable {
-                                                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.downloaded) })
+                                                                viewModel.makeToast(getStringBlocking(Res.string.downloaded))
                                                             },
                                                 ) {
                                                     Icon(
@@ -600,7 +601,7 @@ fun LocalPlaylistScreen(
                                                             .clip(
                                                                 CircleShape,
                                                             ).clickable {
-                                                                viewModel.makeToast(runBlocking(Dispatchers.Default) { getString(Res.string.downloading) })
+                                                                viewModel.makeToast(getStringBlocking(Res.string.downloading))
                                                             },
                                                 ) {
                                                     Image(

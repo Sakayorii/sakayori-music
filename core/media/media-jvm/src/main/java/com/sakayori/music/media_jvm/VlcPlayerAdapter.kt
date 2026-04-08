@@ -146,6 +146,7 @@ class VlcPlayerAdapter(
 
     @Volatile
     private var internalPlaybackSpeed = 1.0f
+    private var internalPlaybackPitch = 1.0f
 
     @Volatile
     private var cachedPosition = 0L
@@ -764,13 +765,15 @@ class VlcPlayerAdapter(
         }
 
     override var playbackParameters: GenericPlaybackParameters
-        get() = GenericPlaybackParameters(internalPlaybackSpeed, internalPlaybackSpeed)
+        get() = GenericPlaybackParameters(internalPlaybackSpeed, internalPlaybackPitch)
         set(value) {
-            internalPlaybackSpeed = value.speed
+            val clampedSpeed = value.speed.coerceIn(0.2f, 2f)
+            internalPlaybackSpeed = clampedSpeed
+            internalPlaybackPitch = value.pitch.coerceIn(0.5f, 2f)
             currentPlayer?.let { player ->
                 try {
-                    player.mediaPlayer.controls().setRate(value.speed)
-                } catch (e: Exception) {
+                    player.mediaPlayer.controls().setRate(clampedSpeed)
+                } catch (e: Throwable) {
                     Logger.e(TAG, "Failed to set playback speed: ${e.message}")
                 }
             }
@@ -1056,6 +1059,10 @@ class VlcPlayerAdapter(
     }
 
     private fun setupPlayerEventsInternal(player: VlcPlayer) {
+        try {
+            player.setEventListener(null)
+        } catch (_: Throwable) {
+        }
         cleanupEventListenerInternal()
 
         val listener =
@@ -1551,6 +1558,7 @@ class VlcPlayerAdapter(
                     val indicesToPrecache = mutableListOf<Int>()
 
                     val index = localCurrentMediaItemIndex
+                    val validIds = mutableSetOf<String>()
                     for (i in 1..maxPrecacheCount) {
                         val nextIndex =
                             when (internalRepeatMode) {
@@ -1563,10 +1571,25 @@ class VlcPlayerAdapter(
                                 }
                             }
 
+                        val nextMediaId = playlist.getOrNull(nextIndex)?.mediaId
+                        if (nextMediaId != null) validIds.add(nextMediaId)
                         if (nextIndex != localCurrentMediaItemIndex &&
-                            !precachedPlayers.containsKey(playlist.getOrNull(nextIndex)?.mediaId)
+                            !precachedPlayers.containsKey(nextMediaId)
                         ) {
                             indicesToPrecache.add(nextIndex)
+                        }
+                    }
+
+                    val currentId = currentMediaItem?.mediaId
+                    precachedPlayers.entries.removeIf { (id, cached) ->
+                        if (id != currentId && id !in validIds) {
+                            try {
+                                cleanupPlayerInternal(cached.player)
+                            } catch (_: Throwable) {
+                            }
+                            true
+                        } else {
+                            false
                         }
                     }
 

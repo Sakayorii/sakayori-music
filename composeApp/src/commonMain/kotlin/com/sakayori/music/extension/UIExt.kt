@@ -507,6 +507,13 @@ fun getStringBlocking(res: StringResource): String =
         }
     }
 
+fun getStringBlocking(res: StringResource, vararg args: Any): String {
+    if (args.isEmpty()) return getStringBlocking(res)
+    return runBlocking(Dispatchers.Default) {
+        getString(res, *args)
+    }
+}
+
 fun hsvToColor(
     hue: Float,
     saturation: Float,

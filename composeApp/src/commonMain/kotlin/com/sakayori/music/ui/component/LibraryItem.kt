@@ -64,6 +64,7 @@ import com.sakayori.music.viewModel.LibraryViewModel
 import com.sakayori.music.viewModel.SharedViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import com.sakayori.music.extension.getStringBlocking
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -245,7 +246,7 @@ fun LibraryItem(
                                                     listTracks = arrayListOf(firstQueue),
                                                     firstPlayedTrack = firstQueue,
                                                     playlistId = "RDAMVM${firstQueue.videoId}",
-                                                    playlistName = "\"${song.title}\" ${runBlocking(Dispatchers.Default) { getString(Res.string.radio) }}",
+                                                    playlistName = "\"${song.title}\" ${getStringBlocking(Res.string.radio)}",
                                                     playlistType = DomainPlaylistType.RADIO,
                                                     continuation = null,
                                                 ),
