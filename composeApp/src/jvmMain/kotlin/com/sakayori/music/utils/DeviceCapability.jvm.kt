@@ -13,13 +13,13 @@ actual object DeviceCapability {
             val osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean()
             val method = osBean.javaClass.getMethod("getTotalMemorySize")
             method.isAccessible = true
-            method.invoke(osBean) as Long
+            (method.invoke(osBean) as? Long) ?: maxMem
         } catch (_: Throwable) {
             try {
                 val osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean()
                 val method = osBean.javaClass.getMethod("getTotalPhysicalMemorySize")
                 method.isAccessible = true
-                method.invoke(osBean) as Long
+                (method.invoke(osBean) as? Long) ?: maxMem
             } catch (_: Throwable) {
                 maxMem
             }

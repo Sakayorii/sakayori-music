@@ -65,7 +65,8 @@ fun LoginScreen(
     hideBottomNavigation: () -> Unit,
     showBottomNavigation: () -> Unit,
 ) {
-    val hazeState = rememberHazeState()
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
+    val hazeState = rememberHazeState(blurEnabled = isBlurEnabled)
     val coroutineScope = rememberCoroutineScope()
     var devLoginSheet by rememberSaveable {
         mutableStateOf(false)
@@ -161,7 +162,7 @@ fun LoginScreen(
                 Modifier
                     .align(Alignment.TopCenter)
                     .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin()) {
-                        blurEnabled = true
+                        blurEnabled = isBlurEnabled
                     },
             title = {
                 Text(

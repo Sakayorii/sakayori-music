@@ -237,6 +237,7 @@ fun PodcastScreen(
                                         contentDescription = null,
                                         contentScale = ContentScale.FillHeight,
                                         onSuccess = {
+                                            @Suppress("DEPRECATION")
                                             bitmap =
                                                 it.result.image
                                                     .toBitmap()

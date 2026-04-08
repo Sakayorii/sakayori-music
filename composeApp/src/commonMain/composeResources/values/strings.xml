@@ -489,6 +489,8 @@
     <string name="update_channel">Update channel</string>
     <string name="enable_liquid_glass_effect">Enable liquid glass (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Enable iOS\'s liquid glass effect in some position (Android 13+)</string>
+    <string name="very_low_performance_mode">Very Low Performance Mode</string>
+    <string name="very_low_performance_mode_description">For slow or low-memory devices. Disables blur, rainbow effects, reduces image cache to 32MB, and slows playback polling. Keeps the full UI layout intact.</string>
     <string name="low_end_device_blur_disabled">This effect requires a device with at least 4GB RAM and 4 CPU cores. Your device does not meet these requirements, so this option has been disabled to prevent lag.</string>
     <string name="your_library">Your library</string>
     <string name="play_explicit_content">Play explicit content</string>

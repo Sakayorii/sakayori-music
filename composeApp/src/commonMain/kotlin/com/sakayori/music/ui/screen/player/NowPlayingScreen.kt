@@ -95,6 +95,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -404,9 +405,17 @@ fun NowPlayingScreenContent(
             30,
         )
     }
+    val artworkSizeDp by remember(screenInfo.hDP, screenInfo.wDP) {
+        derivedStateOf {
+            val widthBased = (screenInfo.wDP - 40).coerceAtLeast(120)
+            val heightBased = ((screenInfo.hDP * 0.5f).toInt()).coerceAtLeast(120)
+            minOf(widthBased, heightBased)
+        }
+    }
     LaunchedEffect(
         topAppBarHeightDp,
         screenInfo,
+        middleLayoutHeightDp,
         infoLayoutHeightDp,
         minimumPaddingDp,
     ) {
@@ -438,7 +447,8 @@ fun NowPlayingScreenContent(
         }
     }
 
-    val sliderTrackColor: Color = if (timelineState.isCrossfading) {
+    val lowResourceMode = com.sakayori.music.extension.LocalLowResourceMode.current
+    val sliderTrackColor: Color = if (timelineState.isCrossfading && !lowResourceMode) {
         val infiniteTransition = rememberInfiniteTransition(label = "crossfadeRainbow")
         val rainbowHue by infiniteTransition.animateFloat(
             initialValue = 0f,
@@ -664,9 +674,10 @@ fun NowPlayingScreenContent(
         )
     }
 
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
     val hazeState =
         rememberHazeState(
-            blurEnabled = true,
+            blurEnabled = isBlurEnabled,
         )
 
     if (screenDataState.lyricsData != null && controllerState.isPlaying) {
@@ -727,7 +738,7 @@ fun NowPlayingScreenContent(
                             Modifier
                                 .background(Color.Transparent)
                                 .hazeEffect(hazeState, style = CupertinoMaterials.thin()) {
-                                    blurEnabled = true
+                                    blurEnabled = isBlurEnabled
                                 }
                         } else {
                             Modifier
@@ -927,8 +938,8 @@ fun NowPlayingScreenContent(
                             Box(
                                 modifier =
                                     Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp)
+                                        .align(Alignment.CenterHorizontally)
+                                        .size(artworkSizeDp.dp)
                                         .onGloballyPositioned {
                                             middleLayoutHeightDp =
                                                 with(localDensity) {
@@ -939,7 +950,7 @@ fun NowPlayingScreenContent(
                                                 }
                                         }.alpha(
                                             if (showHideMiddleLayout) 1f else 0f,
-                                        ).aspectRatio(1f),
+                                        ),
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -968,6 +979,7 @@ fun NowPlayingScreenContent(
                                                 .build(),
                                         contentDescription = "",
                                         onSuccess = {
+                                            @Suppress("DEPRECATION")
                                             sharedViewModel.setBitmap(
                                                 it.result.image
                                                     .toBitmap()

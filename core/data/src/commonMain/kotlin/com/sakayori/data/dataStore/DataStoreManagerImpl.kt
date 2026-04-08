@@ -1251,6 +1251,20 @@ internal class DataStoreManagerImpl(
         }
     }
 
+    override val lowResourceMode: Flow<String>
+        get() =
+            settingsDataStore.data.map { preferences ->
+                preferences[LOW_RESOURCE_MODE] ?: FALSE
+            }
+
+    override suspend fun setLowResourceMode(enable: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[LOW_RESOURCE_MODE] = if (enable) TRUE else FALSE
+            }
+        }
+    }
+
     override val explicitContentEnabled: Flow<String> =
         settingsDataStore.data.map { preferences ->
             preferences[EXPLICIT_CONTENT_ENABLED] ?: TRUE
@@ -1444,6 +1458,8 @@ internal class DataStoreManagerImpl(
         val BACKUP_DOWNLOADED = stringPreferencesKey("backup_downloaded")
 
         val LIQUID_GLASS = stringPreferencesKey("liquid_glass")
+
+        val LOW_RESOURCE_MODE = stringPreferencesKey("low_resource_mode")
 
         val EXPLICIT_CONTENT_ENABLED = stringPreferencesKey("explicit_content_enabled")
 

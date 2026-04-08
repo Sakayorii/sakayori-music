@@ -169,7 +169,7 @@ actual fun PlatformWebView(
 actual fun DiscordWebView(
     state: MutableState<WebViewState>,
     aboveContent: @Composable (BoxScope.() -> Unit),
-    onLoginDone: (String) -> Unit,
+    onLoginDone: (token: String) -> Unit,
 ) {
     var browserRef by remember { mutableStateOf<CefBrowser?>(null) }
     Box(modifier = Modifier.fillMaxSize()) {

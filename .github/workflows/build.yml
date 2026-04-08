@@ -73,36 +73,6 @@ jobs:
             composeApp/build/compose/binaries/main/deb/*.deb
             composeApp/build/compose/binaries/main/rpm/*.rpm
 
-  build-macos-x64:
-    needs: lint-and-test
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Setup VLC natives
-        run: ./gradlew vlcSetup
-
-      - name: Build macOS x64 DMG
-        run: ./gradlew composeApp:packageDmg
-
-      - name: Upload macOS x64 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-x64-build
-          path: composeApp/build/compose/binaries/main/dmg/*.dmg
-
   build-macos-arm:
     needs: lint-and-test
     runs-on: macos-14
@@ -134,7 +104,7 @@ jobs:
           path: composeApp/build/compose/binaries/main/dmg/*.dmg
 
   release:
-    needs: [build-linux, build-macos-x64, build-macos-arm]
+    needs: [build-linux, build-macos-arm]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -148,7 +118,6 @@ jobs:
         with:
           files: |
             artifacts/linux-builds/*
-            artifacts/macos-x64-build/*
             artifacts/macos-arm-build/*
           draft: true
           generate_release_notes: true

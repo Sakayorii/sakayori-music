@@ -96,11 +96,8 @@ fun LibraryItem(
         }
     val noPlaylistTitle =
         when (state.type) {
-            LibraryItemType.DownloadedPlaylist -> stringResource(Res.string.no_playlists_downloaded)
-            LibraryItemType.FavoritePlaylist -> stringResource(Res.string.no_favorite_playlists)
             is LibraryItemType.RecentlyAdded -> stringResource(Res.string.recently_added)
             is LibraryItemType.CanvasSong -> stringResource(Res.string.most_played)
-            else -> return
         }
     Box {
         if (showBottomSheet) {

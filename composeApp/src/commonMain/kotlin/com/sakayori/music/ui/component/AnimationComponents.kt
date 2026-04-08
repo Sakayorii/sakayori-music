@@ -1,12 +1,11 @@
 package com.sakayori.music.ui.component
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -18,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,17 +48,20 @@ fun InfiniteBorderAnimationView(
     oneCircleDurationMillis: Int = 3000,
     content: @Composable () -> Unit,
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "Infinite Color Animation")
-    val degrees by infiniteTransition.animateFloat(
-        initialValue = 90f,
-        targetValue = 450f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = oneCircleDurationMillis, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-            ),
-        label = "Infinite Colors",
-    )
+    val degrees = remember { Animatable(90f) }
+    LaunchedEffect(isAnimated, oneCircleDurationMillis) {
+        if (isAnimated) {
+            degrees.animateTo(
+                targetValue = 450f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = oneCircleDurationMillis, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            )
+        } else {
+            degrees.stop()
+        }
+    }
     val scaleAnimationValue by animateFloatAsState(
         if (isAnimated) 1f else 0f,
         tween(800),
@@ -72,13 +75,15 @@ fun InfiniteBorderAnimationView(
                 .graphicsLayer {
                     compositingStrategy = CompositingStrategy.Offscreen
                 }.drawBehind {
-                    scale(scale = scaleAnimationValue) {
-                        rotate(degrees = degrees) {
-                            drawCircle(
-                                brush = brush,
-                                radius = size.width,
-                                blendMode = BlendMode.SrcIn,
-                            )
+                    if (scaleAnimationValue > 0f) {
+                        scale(scale = scaleAnimationValue) {
+                            rotate(degrees = degrees.value) {
+                                drawCircle(
+                                    brush = brush,
+                                    radius = size.width,
+                                    blendMode = BlendMode.SrcIn,
+                                )
+                            }
                         }
                     }
                 }.animateContentSize(),
@@ -128,17 +133,20 @@ fun LimitedBorderAnimationView(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "Infinite Color Animation")
-    val degrees by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = oneCircleDurationMillis, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-            ),
-        label = "Infinite Colors",
-    )
+    val degrees = remember { Animatable(0f) }
+    LaunchedEffect(shouldAnimate, oneCircleDurationMillis) {
+        if (shouldAnimate) {
+            degrees.animateTo(
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = oneCircleDurationMillis, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            )
+        } else {
+            degrees.stop()
+        }
+    }
     Surface(
         modifier =
             Modifier
@@ -148,11 +156,11 @@ fun LimitedBorderAnimationView(
                 .graphicsLayer {
                     compositingStrategy = CompositingStrategy.Offscreen
                 }.drawBehind {
-                    if (isAnimated) {
+                    if (shouldAnimate) {
                         scale(
                             scale = scaleAnimationValue,
                         ) {
-                            rotate(degrees = degrees) {
+                            rotate(degrees = degrees.value) {
                                 drawCircle(
                                     brush = brush,
                                     radius = size.width,

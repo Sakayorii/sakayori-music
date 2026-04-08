@@ -64,7 +64,8 @@ fun RecentlySongsScreen(
     viewModel: RecentlySongsViewModel = koinViewModel(),
     sharedViewModel: SharedViewModel = koinInject(),
 ) {
-    val hazeState = rememberHazeState()
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
+    val hazeState = rememberHazeState(blurEnabled = isBlurEnabled)
 
     val recentlyItems = viewModel.recentlySongs.collectAsLazyPagingItems()
     val playingTrack by sharedViewModel.nowPlayingState.map { it?.songEntity }.collectAsState(initial = null)
@@ -213,7 +214,7 @@ fun RecentlySongsScreen(
                 Modifier
                     .align(Alignment.TopCenter)
                     .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin()) {
-                        blurEnabled = true
+                        blurEnabled = isBlurEnabled
                     },
             title = {
                 Text(

@@ -54,7 +54,8 @@ fun CreditScreen(
     paddingValues: PaddingValues,
     navController: NavController,
 ) {
-    val hazeState = rememberHazeState()
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
+    val hazeState = rememberHazeState(blurEnabled = isBlurEnabled)
     Column(
         modifier =
             Modifier
@@ -181,7 +182,7 @@ fun CreditScreen(
         modifier =
             Modifier
                 .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin()) {
-                    blurEnabled = true
+                    blurEnabled = isBlurEnabled
                 },
         title = {
             Text(

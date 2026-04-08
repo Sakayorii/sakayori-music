@@ -41,6 +41,7 @@ class AllExtTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun beforeXDays_subtractsDays() {
         val date = LocalDateTime(2025, 6, 15, 12, 0, 0)
         val earlier = date.beforeXDays(5)
@@ -49,6 +50,7 @@ class AllExtTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun beforeXDays_crossesMonth() {
         val date = LocalDateTime(2025, 6, 3, 12, 0, 0)
         val earlier = date.beforeXDays(5)

@@ -344,7 +344,9 @@ fun SearchScreen(
                                 onItemClick = { item ->
                                     when (item) {
                                         is SongsResult, is VideosResult -> {
-                                            val firstTrack: Track = (item as? SongsResult)?.toTrack() ?: (item as VideosResult).toTrack()
+                                            val firstTrack: Track = (item as? SongsResult)?.toTrack()
+                                                ?: (item as? VideosResult)?.toTrack()
+                                                ?: return@SuggestItemRow
                                             searchViewModel.setQueueData(
                                                 QueueData.Data(
                                                     listTracks = arrayListOf(firstTrack),

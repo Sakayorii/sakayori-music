@@ -65,7 +65,8 @@ fun SpotifyLoginScreen(
     hideBottomNavigation: () -> Unit,
     showBottomNavigation: () -> Unit,
 ) {
-    val hazeState = rememberHazeState()
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
+    val hazeState = rememberHazeState(blurEnabled = isBlurEnabled)
     val spotifyStatus by viewModel.spotifyStatus.collectAsStateWithLifecycle()
 
     val fullSpotifyCookies by viewModel.fullSpotifyCookies.collectAsStateWithLifecycle()
@@ -185,7 +186,7 @@ fun SpotifyLoginScreen(
                 Modifier
                     .align(Alignment.TopCenter)
                     .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin()) {
-                        blurEnabled = true
+                        blurEnabled = isBlurEnabled
                     },
             title = {
                 Text(
