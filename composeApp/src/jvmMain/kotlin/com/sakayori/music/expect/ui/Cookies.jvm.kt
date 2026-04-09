@@ -145,7 +145,16 @@ private fun KcefBrowserView(
                 factory = {
                     val comp = b.uiComponent
                     comp.background = java.awt.Color(10, 10, 10)
+                    javax.swing.SwingUtilities.invokeLater {
+                        comp.revalidate()
+                        comp.repaint()
+                        b.createImmediately()
+                    }
                     comp
+                },
+                update = { comp ->
+                    comp.revalidate()
+                    comp.repaint()
                 },
             )
         } else {
