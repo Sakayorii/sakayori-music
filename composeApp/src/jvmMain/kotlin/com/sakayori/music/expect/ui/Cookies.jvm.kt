@@ -1,7 +1,5 @@
 package com.sakayori.music.expect.ui
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -20,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.datlag.kcef.KCEF
@@ -82,7 +79,6 @@ private fun KcefBrowserView(
 ) {
     var ready by remember { mutableStateOf(kcefInitialized) }
     var browser by remember { mutableStateOf<CefBrowser?>(null) }
-    var firstLoadDone by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (!kcefInitialized) {
@@ -92,7 +88,7 @@ private fun KcefBrowserView(
         if (ready) {
             try {
                 val client = KCEF.newClientOrNullBlocking()
-                val b = client?.createBrowser(url, org.cef.browser.CefRendering.OFFSCREEN, false)
+                val b = client?.createBrowser(url, org.cef.browser.CefRendering.DEFAULT, false)
                 browser = b
                 if (b != null) onBrowserReady(b)
             } catch (_: Throwable) {
@@ -105,9 +101,6 @@ private fun KcefBrowserView(
         val client = b?.client
         val loadHandler = object : CefLoadHandlerAdapter() {
             override fun onLoadEnd(cb: CefBrowser?, frame: CefFrame?, httpStatusCode: Int) {
-                if (frame?.isMain == true) {
-                    firstLoadDone = true
-                }
                 cb?.url?.let { onPageFinished(it) }
             }
         }
@@ -135,38 +128,29 @@ private fun KcefBrowserView(
         }
     }
 
-    val browserAlpha by animateFloatAsState(
-        targetValue = if (firstLoadDone) 1f else 0f,
-        animationSpec = tween(250),
-    )
-
-    Box(
-        modifier = Modifier.fillMaxSize().background(com.sakayori.music.ui.theme.md_theme_dark_background),
-    ) {
+    if (!ready) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(com.sakayori.music.ui.theme.md_theme_dark_background),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(48.dp), color = Color.White)
+        }
+    } else {
         val b = browser
-        if (ready && b != null) {
+        if (b != null) {
             SwingPanel(
-                modifier = Modifier.fillMaxSize().alpha(browserAlpha),
+                modifier = Modifier.fillMaxSize(),
                 factory = {
                     val comp = b.uiComponent
                     comp.background = java.awt.Color(10, 10, 10)
                     comp
                 },
             )
-        } else if (ready && b == null) {
+        } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Failed to initialize browser", color = Color.White)
-            }
-        }
-
-        if (!firstLoadDone) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(com.sakayori.music.ui.theme.md_theme_dark_background),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(48.dp), color = Color.White)
             }
         }
     }

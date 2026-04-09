@@ -77,7 +77,7 @@ fun main(args: Array<String>) {
 
         CrashDialog.install()
 
-        System.setProperty("compose.swing.render.on.graphics", "true")
+        System.setProperty("compose.swing.render.on.graphics", "false")
         System.setProperty("compose.interop.blending", "true")
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")
 
