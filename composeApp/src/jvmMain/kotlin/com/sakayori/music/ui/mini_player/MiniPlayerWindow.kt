@@ -100,11 +100,18 @@ fun MiniPlayerWindow(
         },
     ) {
         LaunchedEffect(Unit) {
-            (window as? java.awt.Window)?.minimumSize =
-                Dimension(
-                    (minWidth * window.graphicsConfiguration.defaultTransform.scaleX).toInt(),
-                    (minHeight * window.graphicsConfiguration.defaultTransform.scaleY).toInt(),
-                )
+            try {
+                val scaleX = window.graphicsConfiguration?.defaultTransform?.scaleX ?: 1.0
+                val scaleY = window.graphicsConfiguration?.defaultTransform?.scaleY ?: 1.0
+                (window as? java.awt.Window)?.minimumSize =
+                    Dimension(
+                        (minWidth * scaleX).toInt(),
+                        (minHeight * scaleY).toInt(),
+                    )
+            } catch (_: Throwable) {
+                (window as? java.awt.Window)?.minimumSize =
+                    Dimension(minWidth.toInt(), minHeight.toInt())
+            }
         }
 
         MiniPlayerRoot(
