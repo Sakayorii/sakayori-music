@@ -159,6 +159,27 @@ fun App(viewModel: SharedViewModel = koinInject()) {
         isShowMiniPlayer = !(nowPlayingData?.mediaItem == null || nowPlayingData?.mediaItem == GenericMediaItem.EMPTY)
     }
 
+    LaunchedEffect(Unit) {
+        var idleMinutes = 0
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            val isPlaying = viewModel.controllerState.value.isPlaying
+            if (!isPlaying) {
+                idleMinutes++
+                if (idleMinutes >= 5) {
+                    try {
+                        Runtime.getRuntime().gc()
+                    } catch (_: Throwable) {
+                    }
+                    idleMinutes = 0
+                    Logger.d("IdleMode", "Idle GC triggered")
+                }
+            } else {
+                idleMinutes = 0
+            }
+        }
+    }
+
     LaunchedEffect(intent) {
         val intent = intent ?: return@LaunchedEffect
         val data = intent.data
@@ -169,6 +190,33 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                 navController.navigate(
                     NotificationDestination,
                 )
+            } else if (data.host == "music.sakayori.dev") {
+                val segments = data.pathSegments
+                Logger.d("MainActivity", "music.sakayori.dev deep link, segments: $segments")
+                viewModel.setIntent(null)
+                when (segments.firstOrNull()) {
+                    "play" -> {
+                        segments.getOrNull(1)?.let { videoId ->
+                            viewModel.loadSharedMediaItem(videoId)
+                        }
+                    }
+
+                    "playlist" -> {
+                        segments.getOrNull(1)?.let { playlistId ->
+                            if (playlistId.startsWith("OLAK5uy_")) {
+                                navController.navigate(AlbumDestination(browseId = playlistId))
+                            } else if (playlistId.startsWith("VL")) {
+                                navController.navigate(PlaylistDestination(playlistId = playlistId))
+                            } else {
+                                navController.navigate(PlaylistDestination(playlistId = "VL$playlistId"))
+                            }
+                        }
+                    }
+
+                    else -> {
+                        viewModel.makeToast(getString(Res.string.this_link_is_not_supported))
+                    }
+                }
             } else if (data.host == "SakayoriMusic.org" || data.scheme == "SakayoriMusic") {
                 val segments = data.pathSegments
                 val appPath = if (data.scheme == "SakayoriMusic") {

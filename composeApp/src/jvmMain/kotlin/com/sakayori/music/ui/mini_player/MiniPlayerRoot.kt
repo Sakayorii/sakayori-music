@@ -67,8 +67,17 @@ fun MiniPlayerRoot(
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     val aspectRatio = maxWidth.value / maxHeight.value
                     val isSquareOrTall = aspectRatio <= 1.3f && maxHeight >= 200.dp
+                    val isTooShort = maxHeight < 80.dp
 
                     when {
+                        isTooShort -> {
+                            CompactMiniLayout(
+                                controllerState = controllerState,
+                                timeline = timeline,
+                                onUIEvent = sharedViewModel::onUIEvent,
+                            )
+                        }
+
                         isSquareOrTall -> {
                             SquareMiniLayout(
                                 nowPlayingData = nowPlayingData,
@@ -87,7 +96,7 @@ fun MiniPlayerRoot(
                             )
                         }
 
-                        maxWidth < 360.dp -> {
+                        maxWidth < 360.dp || maxHeight < 100.dp -> {
                             MediumMiniLayout(
                                 nowPlayingData = nowPlayingData,
                                 controllerState = controllerState,

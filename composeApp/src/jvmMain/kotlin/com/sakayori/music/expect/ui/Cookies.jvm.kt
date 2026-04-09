@@ -1,6 +1,5 @@
 package com.sakayori.music.expect.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -129,12 +128,7 @@ private fun KcefBrowserView(
     }
 
     if (!ready) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(com.sakayori.music.ui.theme.md_theme_dark_background),
-            contentAlignment = Alignment.Center,
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(modifier = Modifier.size(48.dp), color = Color.White)
         }
     } else {
@@ -142,20 +136,7 @@ private fun KcefBrowserView(
         if (b != null) {
             SwingPanel(
                 modifier = Modifier.fillMaxSize(),
-                factory = {
-                    val comp = b.uiComponent
-                    comp.background = java.awt.Color(10, 10, 10)
-                    javax.swing.SwingUtilities.invokeLater {
-                        comp.revalidate()
-                        comp.repaint()
-                        b.createImmediately()
-                    }
-                    comp
-                },
-                update = { comp ->
-                    comp.revalidate()
-                    comp.repaint()
-                },
+                factory = { b.uiComponent },
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

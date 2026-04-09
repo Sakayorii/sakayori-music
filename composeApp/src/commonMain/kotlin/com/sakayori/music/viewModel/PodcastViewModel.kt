@@ -330,7 +330,7 @@ class PodcastViewModel(
             }
 
             is PodcastUIEvent.Share -> {
-                val url = "https://SakayoriMusic.org/app/playlist?list=${event.podcastId}"
+                val url = "https://music.sakayori.dev/playlist/${event.podcastId}"
                 shareUrl(
                     title = getString(Res.string.share_url),
                     url = url,

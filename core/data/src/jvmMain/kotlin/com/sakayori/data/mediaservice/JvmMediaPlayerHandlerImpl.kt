@@ -260,41 +260,44 @@ class JvmMediaPlayerHandlerImpl(
         getSkipSegmentsJob = Job()
         getFormatJob = Job()
         jobWatchtime = Job()
+        _nowPlaying.value = player.currentMediaItem
         coroutineScope.launch {
             dataStoreManager.lowResourceMode.collect { value ->
                 lowResourceModeActive = value == TRUE
             }
         }
-        skipSilent = runBlocking(Dispatchers.IO) { dataStoreManager.skipSilent.first() == TRUE }
-        normalizeVolume =
-            runBlocking(Dispatchers.IO) { dataStoreManager.normalizeVolume.first() == TRUE }
-        _nowPlaying.value = player.currentMediaItem
-        if (runBlocking(Dispatchers.IO) { dataStoreManager.saveStateOfPlayback.first() } == TRUE) {
-            Logger.d(TAG, "SaveStateOfPlayback TRUE")
-            val shuffleKey = runBlocking(Dispatchers.IO) { dataStoreManager.shuffleKey.first() }
-            val repeatKey = runBlocking(Dispatchers.IO) { dataStoreManager.repeatKey.first() }
-            Logger.d(TAG, "Shuffle: $shuffleKey")
-            Logger.d(TAG, "Repeat: $repeatKey")
-            val restoredShuffle = shuffleKey == TRUE
-            val restoredRepeatMode =
-                when (repeatKey) {
-                    DataStoreManager.REPEAT_ONE -> PlayerConstants.REPEAT_MODE_ONE
-                    DataStoreManager.REPEAT_ALL -> PlayerConstants.REPEAT_MODE_ALL
-                    else -> PlayerConstants.REPEAT_MODE_OFF
+        coroutineScope.launch {
+            try {
+                skipSilent = dataStoreManager.skipSilent.first() == TRUE
+                normalizeVolume = dataStoreManager.normalizeVolume.first() == TRUE
+                player.volume = dataStoreManager.playerVolume.first()
+
+                if (dataStoreManager.saveStateOfPlayback.first() == TRUE) {
+                    val shuffleKey = dataStoreManager.shuffleKey.first()
+                    val repeatKey = dataStoreManager.repeatKey.first()
+                    val restoredShuffle = shuffleKey == TRUE
+                    val restoredRepeatMode =
+                        when (repeatKey) {
+                            DataStoreManager.REPEAT_ONE -> PlayerConstants.REPEAT_MODE_ONE
+                            DataStoreManager.REPEAT_ALL -> PlayerConstants.REPEAT_MODE_ALL
+                            else -> PlayerConstants.REPEAT_MODE_OFF
+                        }
+                    player.shuffleModeEnabled = restoredShuffle
+                    player.repeatMode = restoredRepeatMode
+                    _controlState.value = _controlState.value.copy(
+                        isShuffle = restoredShuffle,
+                        repeatState = when (restoredRepeatMode) {
+                            PlayerConstants.REPEAT_MODE_ONE -> RepeatState.One
+                            PlayerConstants.REPEAT_MODE_ALL -> RepeatState.All
+                            else -> RepeatState.None
+                        },
+                    )
                 }
-            player.shuffleModeEnabled = restoredShuffle
-            player.repeatMode = restoredRepeatMode
-            _controlState.value = _controlState.value.copy(
-                isShuffle = restoredShuffle,
-                repeatState = when (restoredRepeatMode) {
-                    PlayerConstants.REPEAT_MODE_ONE -> RepeatState.One
-                    PlayerConstants.REPEAT_MODE_ALL -> RepeatState.All
-                    else -> RepeatState.None
-                },
-            )
+                mayBeRestoreQueue()
+            } catch (e: Throwable) {
+                Logger.e(TAG, "Init deferred: ${e.message}")
+            }
         }
-        player.volume = runBlocking(Dispatchers.IO) { dataStoreManager.playerVolume.first() }
-        mayBeRestoreQueue()
         nypc?.setListener(
             object : NowPlayingListener {
                 override fun onPlayPause() {

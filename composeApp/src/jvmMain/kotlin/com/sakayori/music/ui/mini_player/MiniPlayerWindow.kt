@@ -34,12 +34,12 @@ fun MiniPlayerWindow(
     val prefs = remember { Preferences.userRoot().node("SakayoriMusic/MiniPlayer") }
 
     val minWidth = 200f
-    val minHeight = 56f
+    val minHeight = 80f
 
     val savedX = prefs.getFloat("windowX", Float.NaN)
     val savedY = prefs.getFloat("windowY", Float.NaN)
     val savedWidth = prefs.getFloat("windowWidth", 400f).coerceAtLeast(minWidth)
-    val savedHeight = prefs.getFloat("windowHeight", 56f).coerceAtLeast(minHeight)
+    val savedHeight = prefs.getFloat("windowHeight", 80f).coerceAtLeast(minHeight)
 
     var windowState by remember {
         mutableStateOf(

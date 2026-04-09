@@ -36,7 +36,7 @@ data class SongItem(
     val setVideoId: String? = null,
 ) : YTItem() {
     override val shareLink: String
-        get() = "https://SakayoriMusic.org/app/watch?v=$id"
+        get() = "https://music.sakayori.dev/play/$id"
     override val type: YTItemType
         get() = YTItemType.SONG
 
@@ -62,7 +62,7 @@ data class VideoItem(
     val setVideoId: String? = null,
 ) : YTItem() {
     override val shareLink: String
-        get() = "https://SakayoriMusic.org/app/watch?v=$id"
+        get() = "https://music.sakayori.dev/play/$id"
     override val type: YTItemType
         get() = YTItemType.VIDEO
 }
@@ -79,7 +79,7 @@ data class AlbumItem(
     override val explicit: Boolean = false,
 ) : YTItem() {
     override val shareLink: String
-        get() = "https://SakayoriMusic.org/app/playlist?list=$playlistId"
+        get() = "https://music.sakayori.dev/playlist/$playlistId"
     override val type: YTItemType
         get() = YTItemType.ALBUM
 }
@@ -97,7 +97,7 @@ data class PlaylistItem(
     override val explicit: Boolean
         get() = false
     override val shareLink: String
-        get() = "https://SakayoriMusic.org/app/playlist?list=$id"
+        get() = "https://music.sakayori.dev/playlist/$id"
     override val type: YTItemType
         get() = YTItemType.PLAYLIST
 }
@@ -113,7 +113,7 @@ data class ArtistItem(
     override val explicit: Boolean
         get() = false
     override val shareLink: String
-        get() = "https://SakayoriMusic.org/app/channel/$id"
+        get() = "https://music.sakayori.dev/play/$id"
     override val type: YTItemType
         get() = YTItemType.ARTIST
 }

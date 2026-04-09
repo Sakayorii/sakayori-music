@@ -110,9 +110,14 @@ object DesktopDeepLinkHandler {
                 val pathSuffix = parsed.pathSegments.joinToString("/").let {
                     if (it.isNotEmpty()) "/$it" else ""
                 }
-                val convertedUrl = "https://SakayoriMusic.org/app/$host$pathSuffix$query"
+                val convertedUrl = "https://music.sakayori.dev/$host$pathSuffix$query"
                 Logger.d(TAG, "Converted SakayoriMusic:// to: $convertedUrl")
                 Uri.parse(convertedUrl)
+            }
+
+            parsed.host == "music.sakayori.dev" -> {
+                Logger.d(TAG, "Handling music.sakayori.dev URL: $uri")
+                parsed
             }
 
             else -> parsed

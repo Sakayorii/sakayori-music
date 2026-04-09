@@ -864,11 +864,11 @@ fun InfoPlayerBottomSheet(
                         buildAnnotatedString {
                             withLink(
                                 LinkAnnotation.Url(
-                                    "https://SakayoriMusic.org/app/watch?v=${songEntity?.videoId}",
+                                    "https://music.sakayori.dev/play/${songEntity?.videoId}",
                                     TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline)),
                                 ),
                             ) {
-                                append("https://SakayoriMusic.org/app/watch?v=${songEntity?.videoId}")
+                                append("https://music.sakayori.dev/play/${songEntity?.videoId}")
                             }
                         },
                     modifier =
@@ -2839,7 +2839,7 @@ fun PlaylistBottomSheet(
                 }
                 val shareTitle = stringResource(Res.string.share)
                 ActionButton(icon = painterResource(Res.drawable.baseline_share_24), text = Res.string.share) {
-                    val url = "https://SakayoriMusic.org/app/playlist?list=${playlistId.replaceFirst("VL", "")}"
+                    val url = "https://music.sakayori.dev/playlist/${playlistId.replaceFirst("VL", "")}"
                     shareUrl(shareTitle, url)
                 }
                 EndOfModalBottomSheet()
@@ -3002,7 +3002,7 @@ fun LocalPlaylistBottomSheet(
                         text = if (ytPlaylistId != null) Res.string.share else Res.string.sync_first,
                         enable = (ytPlaylistId != null),
                     ) {
-                        val url = "https://SakayoriMusic.org/app/playlist?list=${ytPlaylistId?.replaceFirst("VL", "")}"
+                        val url = "https://music.sakayori.dev/playlist/${ytPlaylistId?.replaceFirst("VL", "")}"
                         shareUrl(shareTitle, url)
                     }
                     EndOfModalBottomSheet()

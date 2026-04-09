@@ -9,7 +9,7 @@ import org.koin.dsl.module
 
 val mediaHandlerModule =
     module {
-        single<MediaPlayerHandler>(createdAtStart = true) {
+        single<MediaPlayerHandler> {
             createMediaServiceHandler(
                 dataStoreManager = get(),
                 songRepository = get(),

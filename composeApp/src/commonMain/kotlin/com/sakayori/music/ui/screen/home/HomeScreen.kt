@@ -268,8 +268,9 @@ fun HomeScreen(
         mutableStateOf(false)
     }
 
+    val density = LocalDensity.current
     var topAppBarHeightPx by rememberSaveable {
-        mutableIntStateOf(0)
+        mutableIntStateOf(with(density) { 96.dp.roundToPx() })
     }
 
     val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current

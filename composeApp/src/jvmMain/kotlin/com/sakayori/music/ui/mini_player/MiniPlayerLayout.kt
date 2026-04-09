@@ -701,6 +701,8 @@ fun ExpandedMiniLayout(
                 .animateContentSize(animationSpec = tween(300)),
         color = Color(0xFF1C1C1E),
     ) {
+        BoxWithConstraints {
+            val artSize = if (maxHeight < 100.dp) 40.dp else 64.dp
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
@@ -709,7 +711,7 @@ fun ExpandedMiniLayout(
                     Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -721,7 +723,7 @@ fun ExpandedMiniLayout(
                     contentScale = ContentScale.Crop,
                     modifier =
                         Modifier
-                            .size(64.dp)
+                            .size(artSize)
                             .scale(artworkScale)
                             .clip(RoundedCornerShape(8.dp))
                             .hoverable(artworkInteractionSource),
@@ -901,5 +903,6 @@ fun ExpandedMiniLayout(
                 )
             }
         }
+    }
     }
 }
