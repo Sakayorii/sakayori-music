@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay5
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -712,6 +713,27 @@ fun FullscreenPlayer(
                                                 )
                                             }
                                         }
+                                    }
+                                    Spacer(Modifier.width(8.dp))
+                                    FilledTonalIconButton(
+                                        colors =
+                                            IconButtonDefaults.iconButtonColors().copy(
+                                                containerColor = Color.Transparent,
+                                            ),
+                                        modifier =
+                                            Modifier
+                                                .wrapContentSize()
+                                                .clip(CircleShape),
+                                        onClick = {
+                                            showBottom = true
+                                        },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Speed,
+                                            tint = Color.White,
+                                            contentDescription = "",
+                                            modifier = Modifier.size(24.dp),
+                                        )
                                     }
                                     Spacer(Modifier.width(8.dp))
                                     FilledTonalIconButton(

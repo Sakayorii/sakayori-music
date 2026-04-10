@@ -62,7 +62,7 @@ data class VideoItem(
     val setVideoId: String? = null,
 ) : YTItem() {
     override val shareLink: String
-        get() = "https://music.sakayori.dev/play/$id"
+        get() = "https://music.sakayori.dev/play/$id?type=video"
     override val type: YTItemType
         get() = YTItemType.VIDEO
 }

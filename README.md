@@ -6,7 +6,7 @@
 
 **A modern, cross-platform YouTube Music client built with Kotlin Multiplatform & Compose**
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 

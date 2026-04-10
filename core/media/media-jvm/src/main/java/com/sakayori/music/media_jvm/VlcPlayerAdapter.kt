@@ -1027,6 +1027,8 @@ class VlcPlayerAdapter(
         if (source.isVideo) {
             options.add(":network-caching=15000")
             options.add(":http-reconnect")
+        } else {
+            options.add(":no-video")
         }
         return options.toTypedArray()
     }
@@ -1051,10 +1053,11 @@ class VlcPlayerAdapter(
         }
 
         Logger.d(TAG, "Creating audio-only player")
-        val player = mediaPlayerFactory.mediaPlayers().newMediaPlayer()
+        val player = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer()
         return VlcPlayer(
             mediaPlayer = player,
             videoSurface = null,
+            isAudioOnly = true,
         )
     }
 
@@ -1826,6 +1829,7 @@ class VlcPlayerAdapter(
 class VlcPlayer(
     val mediaPlayer: MediaPlayer,
     val videoSurface: Component? = null,
+    val isAudioOnly: Boolean = false,
 ) {
     companion object {
         private const val TAG = "VlcPlayer"
