@@ -120,19 +120,19 @@ fun main(args: Array<String>) {
             },
         )
 
+        val language = runBlocking(Dispatchers.IO) {
+            getKoin()
+                .get<DataStoreManager>()
+                .language
+                .first()
+                .take(2)
+        }
+        changeLanguageNative(language)
+
         VersionManager.initialize()
 
         Thread {
             try {
-                val language = getKoin()
-                    .get<DataStoreManager>()
-                    .let { ds ->
-                        kotlinx.coroutines.runBlocking(Dispatchers.IO) {
-                            ds.language.first().take(2)
-                        }
-                    }
-                changeLanguageNative(language)
-
                 if (BuildKonfig.sentryDsn.isNotEmpty()) {
                     Sentry.init { options ->
                         options.dsn = BuildKonfig.sentryDsn
@@ -140,7 +140,7 @@ fun main(args: Array<String>) {
                         options.setDiagnosticLevel(SentryLevel.ERROR)
                     }
                 }
-                Thread.sleep(1000)
+                Thread.sleep(2000)
                 getKoin().get<SharedViewModel>().checkForUpdate()
             } catch (_: Throwable) {
             }
@@ -148,6 +148,21 @@ fun main(args: Array<String>) {
             isDaemon = true
             name = "DeferredInit"
         }.start()
+
+        val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
+
+        mediaPlayerHandler.showToast = { type ->
+            showToast(
+                when (type) {
+                    ToastType.ExplicitContent -> {
+                        getStringBlocking(Res.string.explicit_content_blocked)
+                    }
+                    is ToastType.PlayerError -> {
+                        getStringBlocking(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error)
+                    }
+                }
+            )
+        }
 
         application {
             val windowState = rememberWindowState(
@@ -161,20 +176,6 @@ fun main(args: Array<String>) {
                         isVisible = true
                         windowState.isMinimized = false
                     }
-                }
-
-                val handler = getKoin().get<MediaPlayerHandler>()
-                handler.showToast = { type ->
-                    showToast(
-                        when (type) {
-                            ToastType.ExplicitContent -> {
-                                getStringBlocking(Res.string.explicit_content_blocked)
-                            }
-                            is ToastType.PlayerError -> {
-                                getStringBlocking(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error)
-                            }
-                        }
-                    )
                 }
             }
 
@@ -208,10 +209,7 @@ fun main(args: Array<String>) {
                 }
                 Divider()
                 Item(quitAppString) {
-                    try {
-                        getKoin().getOrNull<MediaPlayerHandler>()?.release()
-                    } catch (_: Throwable) {
-                    }
+                    mediaPlayerHandler.release()
                     exitApplication()
                 }
             }

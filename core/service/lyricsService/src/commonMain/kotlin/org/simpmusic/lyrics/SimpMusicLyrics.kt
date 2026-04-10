@@ -34,7 +34,7 @@ class SakayoriMusicLyrics {
             httpClient = createClient()
         }
 
-    private val baseUrl = "https://api-lyrics.SakayoriMusic.org/v1/"
+    private val baseUrl = "https://lyrics.sakayori.dev/v1/"
 
     private fun createClient() =
         HttpClient(getEngine()) {
@@ -64,7 +64,7 @@ class SakayoriMusicLyrics {
                 deflate(0.8F)
             }
             defaultRequest {
-                url("https://api-lyrics.SakayoriMusic.org/v1")
+                url("https://lyrics.sakayori.dev/v1")
             }
             if (proxy != null) {
                 engine {

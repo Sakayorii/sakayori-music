@@ -359,7 +359,7 @@ class Ytmusic {
     }
 
     suspend fun getSakayoriMusicChart() =
-        httpClient.get("https://chart.SakayoriMusic.org/api/playlists") {
+        httpClient.get("https://chart.sakayori.dev/api/playlists") {
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
         }

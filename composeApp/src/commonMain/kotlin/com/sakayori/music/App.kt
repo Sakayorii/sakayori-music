@@ -600,8 +600,8 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                     AlertDialog(
                         properties =
                             DialogProperties(
-                                dismissOnBackPress = false,
-                                dismissOnClickOutside = false,
+                                dismissOnBackPress = true,
+                                dismissOnClickOutside = true,
                             ),
                         onDismissRequest = {
                             shouldShowUpdateDialog = false
@@ -674,7 +674,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                             Column(
                                 Modifier
                                     .heightIn(
-                                        max = 400.dp,
+                                        max = 150.dp,
                                     ).verticalScroll(
                                         rememberScrollState(),
                                     ),
