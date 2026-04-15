@@ -65,9 +65,12 @@ import com.sakayori.domain.utils.toTrack
 import com.sakayori.logger.Logger
 import com.sakayori.music.extension.getScreenSizeInfo
 import com.sakayori.music.extension.getStringBlocking
+import com.sakayori.music.ui.component.BarChart
+import com.sakayori.music.ui.component.BarChartEntry
 import com.sakayori.music.ui.component.CenterLoadingBox
 import com.sakayori.music.ui.component.EndOfPage
 import com.sakayori.music.ui.component.FiveImagesComponent
+import com.sakayori.music.ui.component.HorizontalBarChart
 import com.sakayori.music.ui.component.ImageData
 import com.sakayori.music.ui.component.NowPlayingBottomSheet
 import com.sakayori.music.ui.component.SongFullWidthItems
@@ -162,17 +165,7 @@ fun AnalyticsScreen(
         )
     }
 
-    LaunchedEffect(uiState) {
-        Logger.d(
-            "AnalyticsScreen",
-            "UI State updated: ${uiState.scrobblesCount.data}, ${uiState.artistCount.data}, ${uiState.totalListenTimeInSeconds.data}",
-        )
-        Logger.d("AnalyticsScreen", "Top Tracks: ${uiState.topTracks.data?.joinToString { it.second.title }}")
-        Logger.d("AnalyticsScreen", "Top Artists: ${uiState.topArtists.data?.joinToString { it.second.name }}")
-        Logger.d("AnalyticsScreen", "Top Albums: ${uiState.topAlbums.data?.joinToString { it.second.title }}")
-        Logger.d("AnalyticsScreen", "Recently Played: ${uiState.recentlyRecord.data?.joinToString { it.second.title }}")
-        Logger.d("AnalyticsScreen", "Scrobbles line chart data: ${uiState.scrobblesLineChart.data}")
-    }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -345,6 +338,9 @@ fun AnalyticsScreen(
 
                     when (val totalPlayedTime = uiState.totalListenTimeInSeconds) {
                         is LocalResource.Success -> {
+                            val totalSec = totalPlayedTime.data ?: 0L
+                            val hrs = totalSec / 3600
+                            val mins = (totalSec % 3600) / 60
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
@@ -356,7 +352,7 @@ fun AnalyticsScreen(
                                     maxLines = 1,
                                 )
                                 Text(
-                                    "${totalPlayedTime.data ?: 0} ${stringResource(Res.string.seconds)}",
+                                    "${hrs}h ${mins}m",
                                     style = typo().bodyLarge,
                                     maxLines = 1,
                                 )
@@ -722,7 +718,7 @@ fun AnalyticsScreen(
                     is LocalResource.Success if (!uiState.scrobblesLineChart.data.isNullOrEmpty()) -> {
                         val data = uiState.scrobblesLineChart.data ?: return@item
                         if (data.isEmpty()) return@item
-                        val maxPlays = (data.maxOfOrNull { it.second } ?: 1).coerceAtLeast(1)
+                        val isMonthView = data.firstOrNull()?.first is AnalyticsUiState.ChartType.Month
                         Column(
                             modifier =
                                 Modifier
@@ -733,86 +729,40 @@ fun AnalyticsScreen(
                                 text = stringResource(Res.string.date_range),
                                 style = typo().labelMedium,
                                 color = Color.White,
+                                modifier = Modifier.padding(bottom = 12.dp),
                             )
-                            Row(
-                                modifier = Modifier.padding(top = 12.dp),
-                            ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    data.map { it.first }.forEach { chartType ->
-                                        Box(
-                                            modifier = Modifier.height(32.dp),
-                                            contentAlignment = Alignment.CenterStart,
-                                        ) {
-                                            when (chartType) {
-                                                is AnalyticsUiState.ChartType.Day -> {
-                                                    Text(
-                                                        text =
-                                                            chartType.day.format(
-                                                                LocalDate.Format {
-                                                                    day()
-                                                                    char(' ')
-                                                                    monthName(MonthNames.ENGLISH_ABBREVIATED)
-                                                                    char(' ')
-                                                                    year()
-                                                                },
-                                                            ),
-                                                        style = typo().bodyMedium,
-                                                        modifier = Modifier.padding(horizontal = 8.dp),
-                                                    )
-                                                }
-
-                                                is AnalyticsUiState.ChartType.Month -> {
-                                                    Text(
-                                                        text = "${chartType.month} - ${chartType.year}",
-                                                        style = typo().bodySmall,
-                                                        modifier = Modifier.padding(horizontal = 8.dp),
-                                                    )
-                                                }
-                                            }
+                            if (isMonthView) {
+                                HorizontalBarChart(
+                                    entries = data.map { (chartType, count) ->
+                                        val label = when (chartType) {
+                                            is AnalyticsUiState.ChartType.Month ->
+                                                "${chartType.month.name.take(3)} ${chartType.year}"
+                                            is AnalyticsUiState.ChartType.Day ->
+                                                chartType.day.dayOfMonth.toString()
                                         }
-                                    }
-                                }
-
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    data.map { it.second }.forEach { playCount ->
-                                        Box(
-                                            modifier = Modifier.height(32.dp),
-                                        ) {
-                                            Box(Modifier.fillMaxWidth()) {
-                                                Box(
-                                                    modifier =
-                                                        Modifier
-                                                            .fillMaxHeight()
-                                                            .fillMaxWidth(playCount.toFloat() / maxPlays)
-                                                            .padding(vertical = 4.dp)
-                                                            .clip(CircleShape)
-                                                            .background(Color.DarkGray),
-                                                ) {
-                                                    Text(
-                                                        text = "",
-                                                        style = typo().bodySmall,
-                                                        modifier =
-                                                            Modifier
-                                                                .align(Alignment.CenterStart)
-                                                                .padding(horizontal = 4.dp),
-                                                    )
-                                                }
-                                                Text(
-                                                    text = "$playCount ${stringResource(Res.string.lower_plays)}",
-                                                    style = typo().bodySmall,
-                                                    modifier =
-                                                        Modifier
-                                                            .align(Alignment.CenterStart)
-                                                            .padding(horizontal = 8.dp),
-                                                )
+                                        BarChartEntry(label, count)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            } else {
+                                val displayData = data.reversed()
+                                val maxLabels = if (displayData.size > 14) 10 else displayData.size
+                                val step = (displayData.size.toFloat() / maxLabels).toInt().coerceAtLeast(1)
+                                BarChart(
+                                    entries = displayData.mapIndexed { index, (chartType, count) ->
+                                        val label = when (chartType) {
+                                            is AnalyticsUiState.ChartType.Day -> {
+                                                if (index % step == 0 || index == displayData.lastIndex) {
+                                                    "${chartType.day.dayOfMonth}/${chartType.day.monthNumber}"
+                                                } else ""
                                             }
+                                            is AnalyticsUiState.ChartType.Month ->
+                                                chartType.month.name.take(3)
                                         }
-                                    }
-                                }
+                                        BarChartEntry(label, count)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
                             }
                         }
                     }

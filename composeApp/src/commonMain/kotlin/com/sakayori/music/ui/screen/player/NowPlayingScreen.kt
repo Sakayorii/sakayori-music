@@ -113,6 +113,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -245,10 +246,6 @@ fun NowPlayingScreen(
             confirmValueChange = { swipeEnabled },
         )
 
-    LaunchedEffect(swipeEnabled) {
-        Logger.d(TAG, "Swipe Enabled: $swipeEnabled")
-    }
-
     val hideSheet: () -> Unit = {
         coroutineScope.launch {
             sheetState.hide()
@@ -366,7 +363,6 @@ fun NowPlayingScreenContent(
     val blurBg by sharedViewModel.blurBg.collectAsStateWithLifecycle()
 
     LaunchedEffect(screenDataState) {
-        Logger.d(TAG, "ScreenDataState: $screenDataState")
         showHideMiddleLayout = screenDataState.canvasData == null
         snapshotFlow { screenDataState.bitmap }.collectLatest {
             if (it != null) {
@@ -385,9 +381,6 @@ fun NowPlayingScreenContent(
             }
     }
 
-    LaunchedEffect(spotShadowColor) {
-        Logger.d(TAG, "spotShadowColor: $spotShadowColor")
-    }
     var topAppBarHeightDp by rememberSaveable {
         mutableIntStateOf(0)
     }
@@ -960,7 +953,7 @@ fun NowPlayingScreenContent(
                                             .background(Color.Transparent)
                                             .shadow(
                                                 elevation = 3.dp,
-                                                shape = RoundedCornerShape(8.dp),
+                                                shape = if (!screenDataState.isVideo) CircleShape else RoundedCornerShape(8.dp),
                                                 spotColor =
                                                     spotShadowColor.copy(
                                                         alpha = 0.6f,
@@ -968,6 +961,22 @@ fun NowPlayingScreenContent(
                                                 ambientColor = Color.Transparent,
                                             ),
                                 ) {
+                                    val vinylRotation = remember { Animatable(0f) }
+                                    LaunchedEffect(controllerState.isPlaying, screenDataState.isVideo) {
+                                        if (controllerState.isPlaying && !screenDataState.isVideo) {
+                                            while (true) {
+                                                vinylRotation.animateTo(
+                                                    targetValue = vinylRotation.value + 360f,
+                                                    animationSpec = tween(
+                                                        durationMillis = 12000,
+                                                        easing = LinearEasing,
+                                                    ),
+                                                )
+                                            }
+                                        } else {
+                                            vinylRotation.stop()
+                                        }
+                                    }
                                     AsyncImage(
                                         model =
                                             ImageRequest
@@ -977,7 +986,7 @@ fun NowPlayingScreenContent(
                                                 .diskCacheKey(screenDataState.thumbnailURL + "BIGGER")
                                                 .crossfade(550)
                                                 .build(),
-                                        contentDescription = "",
+                                        contentDescription = null,
                                         onSuccess = {
                                             @Suppress("DEPRECATION")
                                             sharedViewModel.setBitmap(
@@ -996,8 +1005,12 @@ fun NowPlayingScreenContent(
                                                 .background(Color.Transparent)
                                                 .aspectRatio(
                                                     if (!screenDataState.isVideo) 1f else 16f / 9,
-                                                ).clip(
-                                                    RoundedCornerShape(8.dp),
+                                                ).graphicsLayer {
+                                                    if (!screenDataState.isVideo) {
+                                                        rotationZ = vinylRotation.value
+                                                    }
+                                                }.clip(
+                                                    if (!screenDataState.isVideo) CircleShape else RoundedCornerShape(8.dp),
                                                 ).alpha(
                                                     if (!screenDataState.isVideo || !shouldShowVideo) 1f else 0f,
                                                 ),

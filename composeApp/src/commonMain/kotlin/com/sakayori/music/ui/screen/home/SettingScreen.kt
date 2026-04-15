@@ -37,8 +37,20 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Lyrics
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material.icons.outlined.SettingsEthernet
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.VpnKey
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
@@ -115,7 +127,9 @@ import com.sakayori.music.ui.component.CenterLoadingBox
 import com.sakayori.music.ui.component.EndOfPage
 import com.sakayori.music.ui.component.RippleIconButton
 import com.sakayori.music.ui.component.SettingItem
+import com.sakayori.music.ui.component.SettingSection
 import com.sakayori.music.ui.navigation.destination.home.CreditDestination
+import com.sakayori.music.ui.navigation.destination.home.EqualizerDestination
 import com.sakayori.music.ui.navigation.destination.login.DiscordLoginDestination
 import com.sakayori.music.ui.navigation.destination.login.LoginDestination
 import com.sakayori.music.ui.navigation.destination.login.SpotifyLoginDestination
@@ -128,6 +142,7 @@ import com.sakayori.music.viewModel.SettingAlertState
 import com.sakayori.music.viewModel.SettingBasicAlertState
 import com.sakayori.music.viewModel.SettingsViewModel
 import com.sakayori.music.viewModel.SharedViewModel
+import com.sakayori.music.viewModel.UIEvent
 import com.mikepenz.aboutlibraries.entity.Library
 import com.mikepenz.aboutlibraries.ui.compose.ChipColors
 import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
@@ -207,6 +222,10 @@ import com.sakayori.music.generated.resources.crossfade_auto
 import com.sakayori.music.generated.resources.crossfade_description
 import com.sakayori.music.generated.resources.crossfade_dj_mode
 import com.sakayori.music.generated.resources.crossfade_dj_mode_description
+import com.sakayori.music.generated.resources.builtin_equalizer_with_presets
+import com.sakayori.music.generated.resources.crossfade_preview
+import com.sakayori.music.generated.resources.crossfade_preview_description
+import com.sakayori.music.generated.resources.open_equalizer
 import com.sakayori.music.generated.resources.crossfade_duration
 import com.sakayori.music.generated.resources.custom_ai_model_id
 import com.sakayori.music.generated.resources.custom_model_id_messages
@@ -518,9 +537,11 @@ fun SettingScreen(
             Spacer(Modifier.height(64.dp))
         }
         item(key = "user_interface") {
-            Column {
-                Spacer(Modifier.height(16.dp))
-                Text(text = stringResource(Res.string.user_interface), style = typo().labelMedium, color = white)
+            Spacer(Modifier.height(16.dp))
+            SettingSection(
+                title = stringResource(Res.string.user_interface),
+                icon = Icons.Outlined.Palette,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.translucent_bottom_navigation_bar),
                     subtitle = stringResource(Res.string.you_can_see_the_content_below_the_bottom_bar),
@@ -562,9 +583,10 @@ fun SettingScreen(
             }
         }
         item(key = "content") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.content),
+            SettingSection(
+                title = stringResource(Res.string.content),
+                icon = Icons.Outlined.Language,
+            ) {
                     style = typo().labelMedium,
                     color = white,
                     modifier = Modifier.padding(vertical = 8.dp),
@@ -910,13 +932,10 @@ fun SettingScreen(
         }
         if (getPlatform() == Platform.Android) {
             item(key = "audio") {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.audio),
-                        style = typo().labelMedium,
-                        color = white,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                    )
+                SettingSection(
+                    title = stringResource(Res.string.audio),
+                    icon = Icons.Outlined.MusicNote,
+                ) {
                     SettingItem(
                         title = stringResource(Res.string.normalize_volume),
                         subtitle = stringResource(Res.string.balance_media_loudness),
@@ -926,6 +945,13 @@ fun SettingScreen(
                         title = stringResource(Res.string.skip_silent),
                         subtitle = stringResource(Res.string.skip_no_music_part),
                         switch = (skipSilent to { viewModel.setSkipSilent(it) }),
+                    )
+                    SettingItem(
+                        title = stringResource(Res.string.open_equalizer),
+                        subtitle = stringResource(Res.string.builtin_equalizer_with_presets),
+                        onClick = {
+                            navController.navigate(EqualizerDestination)
+                        },
                     )
                     SettingItem(
                         title = stringResource(Res.string.open_system_equalizer),
@@ -940,13 +966,10 @@ fun SettingScreen(
             }
         }
         item(key = "playback") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.playback),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+            SettingSection(
+                title = stringResource(Res.string.playback),
+                icon = Icons.Outlined.PlayCircle,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.save_playback_state),
                     subtitle = stringResource(Res.string.save_shuffle_and_repeat_mode),
@@ -1043,18 +1066,29 @@ fun SettingScreen(
                                 switch = ((crossfadeDjMode) to { viewModel.setCrossfadeDjMode(it) }),
                             )
                         }
+                        SettingItem(
+                            title = stringResource(Res.string.crossfade_preview),
+                            subtitle = stringResource(Res.string.crossfade_preview_description),
+                            smallSubtitle = true,
+                            onClick = {
+                                val duration = sharedViewModel.getPlayerDuration()
+                                if (duration > 0) {
+                                    val previewMs = crossfadeDuration.coerceAtLeast(5000)
+                                    val seekTo = (duration - previewMs).coerceAtLeast(0L)
+                                    val progress = seekTo.toFloat() / duration.toFloat()
+                                    sharedViewModel.onUIEvent(UIEvent.UpdateProgress(progress))
+                                }
+                            },
+                        )
                     }
                 }
             }
         }
         item(key = "lyrics") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.lyrics),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+            SettingSection(
+                title = stringResource(Res.string.lyrics),
+                icon = Icons.Outlined.Lyrics,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.main_lyrics_provider),
                     subtitle =
@@ -1499,9 +1533,6 @@ fun SettingScreen(
                                                             SponsorBlockType.toList().getOrNull(index)?.value,
                                                         ) == true
                                                     ) to item
-                                                }.also {
-                                                    Logger.w("SettingScreen", "SettingAlertState: $skipSegments")
-                                                    Logger.w("SettingScreen", "SettingAlertState: $it")
                                                 },
                                     ),
                                 confirm =
@@ -2106,16 +2137,6 @@ fun SettingScreen(
                 val googleAccounts by viewModel.googleAccounts.collectAsStateWithLifecycle(
                     minActiveState = Lifecycle.State.RESUMED,
                 )
-                LaunchedEffect(googleAccounts) {
-                    Logger.w(
-                        "SettingScreen",
-                        "LaunchedEffect: ${
-                            googleAccounts.data?.map {
-                                it.name to it.isUsed
-                            }
-                        }",
-                    )
-                }
                 LazyColumn(modifier = Modifier.padding(8.dp)) {
                     item {
                         Box(

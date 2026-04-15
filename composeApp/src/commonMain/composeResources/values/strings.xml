@@ -86,6 +86,8 @@
     <string name="edit_title">Edit title</string>
     <string name="edit_thumbnail">Edit thumbnail</string>
     <string name="delete_playlist">Delete playlist</string>
+    <string name="export_playlist">Export Playlist</string>
+    <string name="import_playlist">Import Playlist</string>
     <string name="add_to_a_playlist">Add to a playlist</string>
     <string name="share">Share</string>
     <string name="move_up">Move up</string>
@@ -159,7 +161,14 @@
     <string name="normalize_volume">Normalize Volume</string>
     <string name="audio">Audio</string>
     <string name="no_equalizer">Your device doesn't have equalizer</string>
-    <string name="open_system_equalizer">Open system equalizer</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="open_equalizer">Open Equalizer</string>
+    <string name="builtin_equalizer_with_presets">Built-in equalizer with presets</string>
+    <string name="equalizer_not_available">Equalizer Not Available</string>
+    <string name="enable_equalizer">Enable Equalizer</string>
+    <string name="eq_presets">Presets</string>
+    <string name="eq_bands">Bands</string>
+    <string name="open_system_equalizer">Open System Equalizer</string>
     <string name="use_your_system_equalizer">Use your system equalizer</string>
     <string name="version_format" translatable="false">v%1$s</string>
     <string name="streaming_data_provider_piped">Streaming data provider (Piped)</string>
@@ -459,6 +468,8 @@
     <string name="crossfade_auto_description">Automatically calculate duration based on BPM (requires 320kbps stream with BPM data)</string>
     <string name="crossfade_dj_mode">DJ-Style Transition</string>
     <string name="crossfade_dj_mode_description">Apply low-pass and high-pass filter sweeps during crossfade for a smoother, DJ-like transition (similar to Apple Music Automix).</string>
+    <string name="crossfade_preview">Preview Crossfade</string>
+    <string name="crossfade_preview_description">Skip to end of current track to preview the crossfade transition</string>
     <string name="youtube_subtitle_language">YouTube Subtitle Translation Language</string>
     <string name="youtube_subtitle_language_message">Type language code (Eg: en) (2 letters). This is the preferred translation language for YouTube subtitles.</string>
     <string name="use_anonymous">Use anonymous name to contribute</string>

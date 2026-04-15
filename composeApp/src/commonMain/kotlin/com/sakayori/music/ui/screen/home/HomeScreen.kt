@@ -293,16 +293,13 @@ fun HomeScreen(
     val onRefresh: () -> Unit = {
         isRefreshing = true
         viewModel.getHomeItemList(params)
-        Logger.w("HomeScreen", "onRefresh")
     }
     LaunchedEffect(key1 = reloadDestination) {
         if (reloadDestination == HomeDestination::class) {
             if (scrollState.firstVisibleItemIndex > 1) {
-                Logger.w("HomeScreen", "scrollState.firstVisibleItemIndex: ${scrollState.firstVisibleItemIndex}")
                 scrollState.animateScrollToItem(0)
                 sharedViewModel.reloadDestinationDone()
             } else {
-                Logger.w("HomeScreen", "scrollState.firstVisibleItemIndex: ${scrollState.firstVisibleItemIndex}")
                 onRefresh.invoke()
             }
         }
@@ -320,7 +317,6 @@ fun HomeScreen(
         accountShow = homeData.find { it.subtitle == accountInfo?.first } == null
     }
     LaunchedEffect(openAppTime, shareLyricsPermissions) {
-        Logger.w("HomeScreen", "openAppTime: $openAppTime, shareLyricsPermissions: $shareLyricsPermissions")
         if (openAppTime >= 10 && openAppTime % 10 == 0 && openAppTime <= 50) {
             showReviewDialog = true
         } else if ((openAppTime == 1 || openAppTime % 15 == 0) && openAppTime <= 60 && !shareLyricsPermissions) {
@@ -344,9 +340,6 @@ fun HomeScreen(
         }
 
     LaunchedEffect(key1 = shouldStartPaginate.value) {
-        Logger.d("HomeScreen", "shouldStartPaginate: ${shouldStartPaginate.value}")
-        Logger.d("HomeScreen", "homeListState: $homeListState")
-        Logger.d("HomeScreen", "Continuation: $continuation")
         if (shouldStartPaginate.value && homeListState == ListState.IDLE) {
             viewModel.getContinueHomeItem(
                 continuation,
@@ -631,7 +624,6 @@ fun HomeScreen(
                                     ChartTitle()
                                     Spacer(modifier = Modifier.height(5.dp))
                                     Crossfade(targetState = regionChart) {
-                                        Logger.w("HomeScreen", "regionChart: $it")
                                         if (it != null) {
                                             DropdownButton(
                                                 items = CHART_SUPPORTED_COUNTRY.itemsData.toList(),

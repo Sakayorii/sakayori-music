@@ -37,6 +37,8 @@ import com.sakayori.domain.utils.toArrayListTrack
 import com.sakayori.domain.utils.toSongEntity
 import com.sakayori.domain.utils.toTrack
 import com.sakayori.logger.Logger
+import com.sakayori.music.expect.io.readTextFromUri
+import com.sakayori.music.expect.io.writeTextToUri
 import com.sakayori.music.pagination.PagingActions
 import com.sakayori.music.ui.theme.md_theme_dark_background
 import com.sakayori.music.viewModel.base.BaseViewModel
@@ -899,6 +901,76 @@ class LocalPlaylistViewModel(
             } else {
                 makeToast(getString(Res.string.playlist_is_empty))
                 hideLoadingDialog()
+            }
+        }
+    }
+
+    fun exportPlaylist(uri: String) {
+        viewModelScope.launch {
+            val state = uiState.value
+            val tracks = localPlaylistRepository.getFullPlaylistTracks(id = state.id)
+            val json = buildString {
+                append("{")
+                append("\"title\":\"${state.title.replace("\"", "\\\"")}\",")
+                append("\"thumbnail\":${state.thumbnail?.let { "\"${it.replace("\"", "\\\"")}\"" } ?: "null"},")
+                append("\"trackCount\":${tracks.size},")
+                append("\"tracks\":[")
+                tracks.forEachIndexed { index, song ->
+                    if (index > 0) append(",")
+                    append("{")
+                    append("\"videoId\":\"${song.videoId}\",")
+                    append("\"title\":\"${song.title.replace("\"", "\\\"")}\",")
+                    append("\"artistName\":${song.artistName?.joinToString(",")?.let { "\"${it.replace("\"", "\\\"")}\"" } ?: "null"},")
+                    append("\"thumbnails\":${song.thumbnails?.let { "\"${it.replace("\"", "\\\"")}\"" } ?: "null"},")
+                    append("\"duration\":${song.durationSeconds ?: 0}")
+                    append("}")
+                }
+                append("]}")
+            }
+            val success = writeTextToUri(json, uri)
+            if (success) {
+                makeToast("Exported ${tracks.size} tracks")
+            } else {
+                makeToast("Export failed")
+            }
+        }
+    }
+
+    fun importPlaylist(uri: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val json = readTextFromUri(uri)
+            if (json == null) {
+                makeToast("Failed to read file")
+                return@launch
+            }
+            try {
+                val titleMatch = Regex("\"title\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").find(json)
+                val title = titleMatch?.groupValues?.get(1) ?: "Imported Playlist"
+                val videoIds = Regex("\"videoId\"\\s*:\\s*\"([^\"]+)\"").findAll(json).map { it.groupValues[1] }.toList()
+                if (videoIds.isEmpty()) {
+                    makeToast("No tracks found in file")
+                    return@launch
+                }
+                val currentState = uiState.value
+                var addedCount = 0
+                videoIds.forEach { videoId ->
+                    val song = songRepository.getSongById(videoId).lastOrNull()
+                    if (song != null) {
+                        localPlaylistRepository.addTrackToLocalPlaylist(
+                            currentState.id,
+                            song,
+                            "Added",
+                            "Added",
+                            "Error",
+                        ).lastOrNull()
+                        addedCount++
+                    }
+                }
+                makeToast("Imported $addedCount/${videoIds.size} tracks")
+                updatePlaylistState(currentState.id, refresh = true)
+                onComplete()
+            } catch (e: Exception) {
+                makeToast("Import failed: ${e.message}")
             }
         }
     }
