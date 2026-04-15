@@ -310,6 +310,7 @@ import com.sakayori.music.generated.resources.proxy_type
 import com.sakayori.music.generated.resources.quality
 import com.sakayori.music.generated.resources.restore_your_data
 import com.sakayori.music.generated.resources.restore_your_saved_data
+import com.sakayori.music.generated.resources.desktop_rpc_auto_description
 import com.sakayori.music.generated.resources.rich_presence_info
 import com.sakayori.music.generated.resources.save
 import com.sakayori.music.generated.resources.save_all_your_playlist_data
@@ -1248,8 +1249,10 @@ fun SettingScreen(
             }
         }
         item(key = "AI") {
-            Column {
-                Text(text = stringResource(Res.string.ai), style = typo().labelMedium, color = white, modifier = Modifier.padding(vertical = 8.dp))
+            SettingSection(
+                title = stringResource(Res.string.ai),
+                icon = Icons.Outlined.Psychology,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.ai_provider),
                     subtitle =
@@ -1417,13 +1420,10 @@ fun SettingScreen(
             }
         }
         item(key = "spotify") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.spotify),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+            SettingSection(
+                title = stringResource(Res.string.spotify),
+                icon = Icons.Outlined.MusicNote,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.log_in_to_spotify),
                     subtitle =
@@ -1465,50 +1465,52 @@ fun SettingScreen(
             }
         }
         item(key = "discord") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.discord_integration),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-                SettingItem(
-                    title = stringResource(Res.string.log_in_to_discord),
-                    subtitle =
-                        if (discordLoggedIn) {
-                            stringResource(Res.string.logged_in)
-                        } else {
-                            stringResource(Res.string.intro_login_to_discord)
+            SettingSection(
+                title = stringResource(Res.string.discord_integration),
+                icon = Icons.Outlined.SettingsEthernet,
+            ) {
+                if (getPlatform() == Platform.Android) {
+                    SettingItem(
+                        title = stringResource(Res.string.log_in_to_discord),
+                        subtitle =
+                            if (discordLoggedIn) {
+                                stringResource(Res.string.logged_in)
+                            } else {
+                                stringResource(Res.string.intro_login_to_discord)
+                            },
+                        onClick = {
+                            if (discordLoggedIn) {
+                                viewModel.logOutDiscord()
+                            } else {
+                                navController.navigate(DiscordLoginDestination)
+                            }
                         },
-                    onClick = {
-                        if (discordLoggedIn) {
-                            viewModel.logOutDiscord()
-                        } else {
-                            navController.navigate(DiscordLoginDestination)
-                        }
-                    },
-                )
-                SettingItem(
-                    title = stringResource(Res.string.enable_rich_presence),
-                    subtitle = stringResource(Res.string.rich_presence_info),
-                    switch = (richPresenceEnabled to { viewModel.setDiscordRichPresenceEnabled(it) }),
-                    isEnable = discordLoggedIn,
-                    onDisable = {
-                        if (discordLoggedIn) {
-                            viewModel.setDiscordRichPresenceEnabled(false)
-                        }
-                    },
-                )
+                    )
+                    SettingItem(
+                        title = stringResource(Res.string.enable_rich_presence),
+                        subtitle = stringResource(Res.string.rich_presence_info),
+                        switch = (richPresenceEnabled to { viewModel.setDiscordRichPresenceEnabled(it) }),
+                        isEnable = discordLoggedIn,
+                        onDisable = {
+                            if (discordLoggedIn) {
+                                viewModel.setDiscordRichPresenceEnabled(false)
+                            }
+                        },
+                    )
+                } else {
+                    SettingItem(
+                        title = stringResource(Res.string.enable_rich_presence),
+                        subtitle = stringResource(Res.string.desktop_rpc_auto_description),
+                        switch = (richPresenceEnabled to { viewModel.setDiscordRichPresenceEnabled(it) }),
+                    )
+                }
             }
         }
         item(key = "sponsor_block") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.sponsorBlock),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+            SettingSection(
+                title = stringResource(Res.string.sponsorBlock),
+                icon = Icons.Outlined.Tune,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.enable_sponsor_block),
                     subtitle = stringResource(Res.string.skip_sponsor_part_of_video),
@@ -1577,13 +1579,10 @@ fun SettingScreen(
         }
         if (getPlatform() == Platform.Android) {
             item(key = "storage") {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.storage),
-                        style = typo().labelMedium,
-                        color = white,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                    )
+                SettingSection(
+                    title = stringResource(Res.string.storage),
+                    icon = Icons.Outlined.Storage,
+                ) {
                     SettingItem(
                         title = stringResource(Res.string.player_cache),
                         subtitle = "${playerCache.bytesToMB()} MB",
@@ -1888,13 +1887,10 @@ fun SettingScreen(
             }
         }
         item(key = "backup") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.backup),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+            SettingSection(
+                title = stringResource(Res.string.backup),
+                icon = Icons.Outlined.Backup,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.backup_downloaded),
                     subtitle = stringResource(Res.string.backup_downloaded_description),
@@ -2012,13 +2008,10 @@ fun SettingScreen(
             }
         }
         item(key = "about_us") {
-            Column {
-                Text(
-                    text = stringResource(Res.string.about_us),
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+            SettingSection(
+                title = stringResource(Res.string.about_us),
+                icon = Icons.Outlined.Info,
+            ) {
                 SettingItem(
                     title = stringResource(Res.string.version),
                     subtitle = stringResource(Res.string.version_format, VersionManager.getVersionName()),

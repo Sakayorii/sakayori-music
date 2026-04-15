@@ -62,7 +62,7 @@ import com.sakayori.domain.utils.toListName
 import com.sakayori.domain.utils.toSongEntity
 import com.sakayori.domain.utils.toTrack
 import com.sakayori.logger.Logger
-import com.my.kizzy.DiscordRPC
+import com.sakayori.data.discord.DiscordIpcClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -133,7 +133,7 @@ class JvmMediaPlayerHandlerImpl(
     }
 
     override val player: MediaPlayerInterface = getKoin().get()
-    private var discordRPC: DiscordRPC? = null
+    private var discordIpc: DiscordIpcClient? = null
     override var onUpdateNotification: (List<GenericCommandButton>) -> Unit = {}
     override var showToast: (ToastType) -> Unit = {}
     override var pushPlayerError: (PlayerError) -> Unit = {}
@@ -403,16 +403,15 @@ class JvmMediaPlayerHandlerImpl(
                     dataStoreManager.richPresenceEnabled
                         .distinctUntilChanged()
                         .collectLatest {
-                            if (it == TRUE && discordRPC == null) {
-                                discordRPC = DiscordRPC(dataStoreManager.discordToken.first())
+                            if (it == TRUE && discordIpc == null) {
+                                discordIpc = DiscordIpcClient()
+                                discordIpc?.connect()
                                 nowPlayingState.value.songEntity?.let { song ->
-                                    discordRPC?.updateSong(song)
+                                    discordIpc?.updateActivity(song)
                                 }
                             } else if (it == FALSE) {
-                                if (discordRPC?.isRpcRunning() == true) {
-                                    discordRPC?.closeRPC()
-                                }
-                                discordRPC = null
+                                discordIpc?.disconnect()
+                                discordIpc = null
                             }
                         }
                 }
@@ -2066,10 +2065,8 @@ class JvmMediaPlayerHandlerImpl(
         } catch (_: Throwable) {
         }
         try {
-            if (discordRPC?.isRpcRunning() == true) {
-                discordRPC?.closeRPC()
-            }
-            discordRPC = null
+            discordIpc?.disconnect()
+            discordIpc = null
         } catch (_: Throwable) {
         }
         try {
@@ -2188,9 +2185,7 @@ class JvmMediaPlayerHandlerImpl(
             stopProgressUpdate()
             mayBeSaveRecentSong()
             mayBeSavePlaybackState()
-            if (discordRPC?.isRpcRunning() == true) {
-                discordRPC?.closeRPC()
-            }
+            coroutineScope.launch { discordIpc?.clearActivity() }
         }
         updateNextPreviousTrackAvailability()
         updateMacOSPlaybackState(isPlaying)
@@ -2278,7 +2273,7 @@ class JvmMediaPlayerHandlerImpl(
 
     private fun updateDiscordRpc(song: SongEntity) {
         coroutineScope.launch {
-            discordRPC?.updateSong(song)
+            discordIpc?.updateActivity(song)
         }
     }
 

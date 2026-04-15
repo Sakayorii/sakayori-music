@@ -26,9 +26,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.sharp.Sort
 import androidx.compose.material.icons.rounded.AutoGraph
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,6 +79,7 @@ import com.sakayori.music.ui.component.LibraryTilingBox
 import com.sakayori.music.ui.navigation.destination.home.AnalyticsDestination
 import com.sakayori.music.ui.theme.transparent
 import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.viewModel.LibrarySortOrder
 import com.sakayori.music.viewModel.LibraryViewModel
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -91,10 +95,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.alphabetical
 import com.sakayori.music.generated.resources.baseline_people_alt_24
 import com.sakayori.music.generated.resources.chart
 import com.sakayori.music.generated.resources.create
 import com.sakayori.music.generated.resources.downloaded_playlists
+import com.sakayori.music.generated.resources.most_played
+import com.sakayori.music.generated.resources.recently_added
 import com.sakayori.music.generated.resources.favorite_playlists
 import com.sakayori.music.generated.resources.favorite_podcasts
 import com.sakayori.music.generated.resources.library
@@ -447,22 +454,46 @@ fun LibraryScreen(
                     containerColor = Color.Transparent,
                 ),
             actions = {
+                var sortMenuExpanded by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(
+                        onClick = { sortMenuExpanded = true },
+                    ) {
+                        Icon(Icons.AutoMirrored.Sharp.Sort, null, tint = Color.White)
+                    }
+                    DropdownMenu(
+                        expanded = sortMenuExpanded,
+                        onDismissRequest = { sortMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.recently_added)) },
+                            onClick = {
+                                viewModel.setSortOrder(LibrarySortOrder.RECENT)
+                                sortMenuExpanded = false
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.alphabetical)) },
+                            onClick = {
+                                viewModel.setSortOrder(LibrarySortOrder.ALPHABETICAL)
+                                sortMenuExpanded = false
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.most_played)) },
+                            onClick = {
+                                viewModel.setSortOrder(LibrarySortOrder.MOST_PLAYED)
+                                sortMenuExpanded = false
+                            },
+                        )
+                    }
+                }
                 IconButton(
                     onClick = {
                         navController.navigate(AnalyticsDestination)
                     },
                 ) {
-                    Box {
-                        Icon(Icons.Rounded.AutoGraph, "Analytics", tint = Color.White)
-                        Text(
-                            "NEW",
-                            Modifier.align(Alignment.BottomEnd),
-                            style =
-                                typo().bodySmall.copy(
-                                    fontSize = 5.sp,
-                                ),
-                        )
-                    }
+                    Icon(Icons.Rounded.AutoGraph, null, tint = Color.White)
                 }
             },
             navigationIcon = {

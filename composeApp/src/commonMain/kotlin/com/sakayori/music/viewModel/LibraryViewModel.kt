@@ -283,4 +283,25 @@ class LibraryViewModel(
             getRecentlyAdded()
         }
     }
+
+    private val _sortOrder: MutableStateFlow<LibrarySortOrder> = MutableStateFlow(LibrarySortOrder.RECENT)
+    val sortOrder: StateFlow<LibrarySortOrder> get() = _sortOrder.asStateFlow()
+
+    fun setSortOrder(order: LibrarySortOrder) {
+        _sortOrder.value = order
+        viewModelScope.launch {
+            when (_currentScreen.value) {
+                LibraryChipType.LOCAL_PLAYLIST -> getLocalPlaylist()
+                LibraryChipType.FAVORITE_PLAYLIST -> getPlaylistFavorite()
+                LibraryChipType.DOWNLOADED_PLAYLIST -> getDownloadedPlaylist()
+                else -> {}
+            }
+        }
+    }
+}
+
+enum class LibrarySortOrder {
+    RECENT,
+    ALPHABETICAL,
+    MOST_PLAYED,
 }
