@@ -3003,7 +3003,7 @@ fun LocalPlaylistBottomSheet(
                         }
                     }
                     if (onImport != null) {
-                        ActionButton(icon = painterResource(Res.drawable.download_button), text = Res.string.import_playlist) {
+                        ActionButton(icon = painterResource(Res.drawable.outline_download_for_offline_24), text = Res.string.import_playlist) {
                             onImport()
                             hideModalBottomSheet()
                         }

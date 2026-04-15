@@ -30,7 +30,7 @@ class DiscordRPC(
     }
 
     companion object {
-        private const val APPLICATION_ID = "1271273225120125040"
+        private const val APPLICATION_ID = "1493865560013017160"
         private const val APP_NAME: String = "SakayoriMusic"
         private const val APP_ICON: String =
             "https://raw.githubusercontent.com/Sakayorii/sakayori-music/main/composeApp/icon/circle_app_icon.png"

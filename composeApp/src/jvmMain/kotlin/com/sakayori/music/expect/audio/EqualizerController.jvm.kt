@@ -1,67 +1,50 @@
 package com.sakayori.music.expect.audio
 
-import uk.co.caprica.vlcj.player.base.Equalizer
-
 actual fun createEqualizerController(audioSessionId: Int): EqualizerController =
-    VlcEqualizerController()
+    JvmEqualizerController()
 
-class VlcEqualizerController : EqualizerController {
-    private var equalizer: Equalizer? = try {
-        Equalizer(Equalizer.bandCount())
-    } catch (e: Exception) {
-        null
-    }
-
-    private var enabled = false
+class JvmEqualizerController : EqualizerController {
+    private val presetData = listOf(
+        EqualizerPreset("Flat", listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)),
+        EqualizerPreset("Bass Boost", listOf(5f, 4f, 3f, 1f, 0f, 0f, 0f, 0f, 0f, 0f)),
+        EqualizerPreset("Treble Boost", listOf(0f, 0f, 0f, 0f, 0f, 1f, 3f, 4f, 5f, 5f)),
+        EqualizerPreset("Rock", listOf(4f, 3f, 1f, 0f, -1f, 0f, 2f, 3f, 4f, 4f)),
+        EqualizerPreset("Pop", listOf(-1f, 1f, 3f, 4f, 3f, 1f, -1f, -1f, -1f, -1f)),
+        EqualizerPreset("Jazz", listOf(3f, 2f, 0f, 1f, -1f, -1f, 0f, 1f, 2f, 3f)),
+        EqualizerPreset("Classical", listOf(4f, 3f, 2f, 1f, -1f, -1f, 0f, 2f, 3f, 4f)),
+        EqualizerPreset("Electronic", listOf(4f, 3f, 1f, 0f, -1f, 1f, 0f, 1f, 3f, 4f)),
+    )
 
     private val defaultFrequencies = listOf(60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000)
+    private val bandLevels = FloatArray(10) { 0f }
+    private var enabled = false
 
-    override fun isAvailable(): Boolean = equalizer != null
+    override fun isAvailable(): Boolean = true
 
-    override fun getBands(): List<EqualizerBand> {
-        val eq = equalizer ?: return emptyList()
-        val bandCount = try { Equalizer.bandCount() } catch (_: Exception) { return emptyList() }
-        return (0 until bandCount).map { i ->
-            val freq = try {
-                Equalizer.bandFrequency(i).toInt()
-            } catch (_: Exception) {
-                defaultFrequencies.getOrElse(i) { 1000 }
-            }
+    override fun getBands(): List<EqualizerBand> =
+        defaultFrequencies.mapIndexed { i, freq ->
             EqualizerBand(
                 index = i,
                 centerFrequency = freq,
-                level = eq.amp(i),
+                level = bandLevels[i],
                 minLevel = -20f,
                 maxLevel = 20f,
             )
         }
-    }
 
     override fun setBandLevel(bandIndex: Int, level: Float) {
-        try {
-            equalizer?.setAmp(bandIndex, level)
-        } catch (_: Exception) {}
-    }
-
-    override fun getPresets(): List<EqualizerPreset> {
-        val presetCount = try { Equalizer.presetCount() } catch (_: Exception) { return emptyList() }
-        val bandCount = try { Equalizer.bandCount() } catch (_: Exception) { return emptyList() }
-        return (0 until presetCount).map { i ->
-            val presetEq = try { Equalizer(i) } catch (_: Exception) { null }
-            val levels = (0 until bandCount).map { b ->
-                try { presetEq?.amp(b) ?: 0f } catch (_: Exception) { 0f }
-            }
-            EqualizerPreset(
-                name = try { Equalizer.presetName(i) } catch (_: Exception) { "Preset $i" },
-                levels = levels,
-            )
+        if (bandIndex in bandLevels.indices) {
+            bandLevels[bandIndex] = level
         }
     }
 
+    override fun getPresets(): List<EqualizerPreset> = presetData
+
     override fun applyPreset(presetIndex: Int) {
-        try {
-            equalizer = Equalizer(presetIndex)
-        } catch (_: Exception) {}
+        val preset = presetData.getOrNull(presetIndex) ?: return
+        preset.levels.forEachIndexed { i, level ->
+            if (i in bandLevels.indices) bandLevels[i] = level
+        }
     }
 
     override fun setEnabled(enabled: Boolean) {
@@ -70,9 +53,7 @@ class VlcEqualizerController : EqualizerController {
 
     override fun isEnabled(): Boolean = enabled
 
-    fun getEqualizer(): Equalizer? = if (enabled) equalizer else null
-
     override fun release() {
-        equalizer = null
+        bandLevels.fill(0f)
     }
 }

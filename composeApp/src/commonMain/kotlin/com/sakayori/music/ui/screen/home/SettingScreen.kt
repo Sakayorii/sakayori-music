@@ -588,10 +588,6 @@ fun SettingScreen(
                 title = stringResource(Res.string.content),
                 icon = Icons.Outlined.Language,
             ) {
-                    style = typo().labelMedium,
-                    color = white,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
                 SettingItem(
                     title = stringResource(Res.string.youtube_account),
                     subtitle = stringResource(Res.string.manage_your_youtube_accounts),

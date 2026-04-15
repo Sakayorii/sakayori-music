@@ -231,7 +231,8 @@ compose.desktop {
             targetFormats(*listTarget.toTypedArray())
             modules("jdk.unsupported")
             packageName = "SakayoriMusic"
-            vendor = "Iroha"
+            description = "SakayoriMusic - Music Player"
+            vendor = "Sakayorii"
             macOS {
                 val formatedDate =
                     Instant.now().let {
@@ -284,6 +285,11 @@ compose.desktop {
                 menuGroup = "SakayoriMusic"
                 console = false
                 dirChooser = true
+                upgradeUuid = "a1b2c3d4-5678-9abc-def0-1a2b3c4d5e6f"
+                msiPackageVersion =
+                    libs.versions.version.name
+                        .get()
+                        .removeSuffix("-hf")
             }
             linux {
                 includeAllModules = true

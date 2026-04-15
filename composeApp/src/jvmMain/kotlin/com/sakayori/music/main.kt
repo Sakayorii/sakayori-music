@@ -120,19 +120,16 @@ fun main(args: Array<String>) {
             },
         )
 
-        val language = runBlocking(Dispatchers.IO) {
-            getKoin()
-                .get<DataStoreManager>()
-                .language
-                .first()
-                .take(2)
-        }
-        changeLanguageNative(language)
-
         VersionManager.initialize()
+
+        val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
 
         Thread {
             try {
+                val lang = kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+                    getKoin().get<DataStoreManager>().language.first().take(2)
+                }
+                changeLanguageNative(lang)
                 if (BuildKonfig.sentryDsn.isNotEmpty()) {
                     Sentry.init { options ->
                         options.dsn = BuildKonfig.sentryDsn
@@ -148,8 +145,6 @@ fun main(args: Array<String>) {
             isDaemon = true
             name = "DeferredInit"
         }.start()
-
-        val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
 
         mediaPlayerHandler.showToast = { type ->
             showToast(
@@ -236,8 +231,9 @@ fun main(args: Array<String>) {
                     }
 
                     val context = LocalPlatformContext.current
-                    val lowResourceMode = runBlocking(Dispatchers.IO) {
-                        getKoin().get<DataStoreManager>().lowResourceMode.first() == "TRUE"
+                    var lowResourceMode by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        lowResourceMode = getKoin().get<DataStoreManager>().lowResourceMode.first() == "TRUE"
                     }
                     val memoryCacheMaxBytes = if (lowResourceMode) 32L * 1024 * 1024 else 128L * 1024 * 1024
                     val diskCacheMaxBytes = if (lowResourceMode) 128L * 1024 * 1024 else 512L * 1024 * 1024

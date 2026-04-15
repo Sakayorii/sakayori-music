@@ -14,6 +14,7 @@ import java.nio.ByteOrder
 class DiscordIpcClient {
     private var pipe: RandomAccessFile? = null
     private var connected = false
+    private var songStartTime = 0L
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -33,15 +34,13 @@ class DiscordIpcClient {
                 val response = readPacket()
                 if (response != null) {
                     connected = true
-                    Logger.d(TAG, "Connected to Discord IPC pipe $i")
                     return@withContext true
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 pipe?.close()
                 pipe = null
             }
         }
-        Logger.d(TAG, "No Discord IPC pipe found")
         connected = false
         false
     }
@@ -51,6 +50,8 @@ class DiscordIpcClient {
             if (!connect()) return@withContext
         }
         try {
+            songStartTime = System.currentTimeMillis() / 1000
+            val durationSec = song.durationSeconds?.toLong()
             val payload = json.encodeToString(
                 IpcSetActivity(
                     cmd = "SET_ACTIVITY",
@@ -61,17 +62,14 @@ class DiscordIpcClient {
                             details = song.title,
                             state = song.artistName?.joinToString(", "),
                             assets = RpcAssets(
-                                large_image = song.thumbnails,
-                                large_text = song.albumName,
-                                small_image = APP_ICON,
-                                small_text = "SakayoriMusic",
-                            ),
-                            buttons = listOf(
-                                RpcButton("Listen on SakayoriMusic", "https://music.sakayori.dev/play/${song.videoId}"),
-                                RpcButton("Visit SakayoriMusic", "https://music.sakayori.dev"),
+                                large_image = song.thumbnails?.let { "https://i.ytimg.com/vi/${song.videoId}/maxresdefault.jpg" },
+                                large_text = song.albumName ?: song.title,
+                                small_image = "app_icon",
+                                small_text = APP_NAME,
                             ),
                             timestamps = RpcTimestamps(
-                                start = System.currentTimeMillis() / 1000,
+                                start = songStartTime,
+                                end = if (durationSec != null && durationSec > 0) songStartTime + durationSec else null,
                             ),
                         ),
                     ),
@@ -81,7 +79,6 @@ class DiscordIpcClient {
             sendPacket(Opcode.FRAME, payload)
             readPacket()
         } catch (e: Exception) {
-            Logger.d(TAG, "Failed to update activity: ${e.message}")
             disconnect()
         }
     }
@@ -106,6 +103,18 @@ class DiscordIpcClient {
     fun disconnect() {
         try {
             if (connected) {
+                val payload = json.encodeToString(
+                    IpcSetActivity(
+                        cmd = "SET_ACTIVITY",
+                        args = SetActivityArgs(
+                            pid = ProcessHandle.current().pid().toInt(),
+                            activity = null,
+                        ),
+                        nonce = System.currentTimeMillis().toString(),
+                    )
+                )
+                sendPacket(Opcode.FRAME, payload)
+                Thread.sleep(100)
                 sendPacket(Opcode.CLOSE, "{}")
             }
         } catch (_: Exception) {} finally {
@@ -133,7 +142,7 @@ class DiscordIpcClient {
         val header = ByteArray(8)
         p.readFully(header)
         val buffer = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN)
-        val op = buffer.getInt()
+        buffer.getInt()
         val length = buffer.getInt()
         if (length <= 0 || length > 65536) return null
         val data = ByteArray(length)
@@ -145,15 +154,11 @@ class DiscordIpcClient {
         HANDSHAKE(0),
         FRAME(1),
         CLOSE(2),
-        PING(3),
-        PONG(4),
     }
 
     companion object {
-        private const val TAG = "DiscordIpcClient"
-        private const val APPLICATION_ID = "1271273225120125040"
-        private const val APP_ICON =
-            "https://raw.githubusercontent.com/Sakayorii/sakayori-music/main/composeApp/icon/circle_app_icon.png"
+        private const val APPLICATION_ID = "1493865560013017160"
+        private const val APP_NAME = "SakayoriMusic"
     }
 }
 
@@ -179,7 +184,6 @@ private data class RpcActivity(
     val details: String? = null,
     val state: String? = null,
     val assets: RpcAssets? = null,
-    val buttons: List<RpcButton>? = null,
     val timestamps: RpcTimestamps? = null,
 )
 
@@ -189,12 +193,6 @@ private data class RpcAssets(
     val large_text: String? = null,
     val small_image: String? = null,
     val small_text: String? = null,
-)
-
-@Serializable
-private data class RpcButton(
-    val label: String,
-    val url: String,
 )
 
 @Serializable
