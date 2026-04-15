@@ -97,6 +97,10 @@ fun main(args: Array<String>) {
         }
         System.setProperty("jna.library.path", vlcPath)
 
+        val splash = SplashScreen()
+        splash.show()
+
+        splash.updateStatus("Loading modules...")
         startKoin {
             loadKoinModules(listOf(viewModelModule))
             loadAllModules()
@@ -120,10 +124,13 @@ fun main(args: Array<String>) {
             },
         )
 
+        splash.updateStatus("Initializing version manager...")
         VersionManager.initialize()
 
+        splash.updateStatus("Initializing media player...")
         val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
 
+        splash.updateStatus("Starting background services...")
         Thread {
             try {
                 val lang = kotlinx.coroutines.runBlocking(Dispatchers.IO) {
@@ -146,6 +153,7 @@ fun main(args: Array<String>) {
             name = "DeferredInit"
         }.start()
 
+        splash.updateStatus("Configuring player...")
         mediaPlayerHandler.showToast = { type ->
             showToast(
                 when (type) {
@@ -158,6 +166,10 @@ fun main(args: Array<String>) {
                 }
             )
         }
+
+        splash.updateStatus("Done!")
+        Thread.sleep(200)
+        splash.close()
 
         application {
             val windowState = rememberWindowState(
