@@ -109,6 +109,7 @@ import com.sakayori.music.getPlatform
 import com.sakayori.music.ui.component.ExplicitBadge
 import com.sakayori.music.ui.component.HeartCheckBox
 import com.sakayori.music.ui.component.PlayPauseButton
+import com.sakayori.music.ui.component.WaveformProgressBar
 import com.sakayori.music.ui.component.PlayerControlLayout
 import com.sakayori.music.ui.theme.transparent
 import com.sakayori.music.ui.theme.typo
@@ -247,6 +248,8 @@ fun MiniPlayer(
                 background.animateTo(it.getColorFromPalette())
             }
     }
+
+    val sleepTimerState by sharedViewModel.sleepTimerState.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = true) {
         val job1 =
@@ -479,6 +482,15 @@ fun MiniPlayer(
                                                             animationMode = MarqueeAnimationMode.Immediately,
                                                         ).focusable(),
                                             )
+                                            if (sleepTimerState.timeRemaining > 0 && !sleepTimerState.isDone) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "${sleepTimerState.timeRemaining}m",
+                                                    style = typo().labelSmall,
+                                                    color = Color(0xFF06b6b6),
+                                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -516,20 +528,12 @@ fun MiniPlayer(
                                 horizontal = 10.dp,
                             ).align(Alignment.BottomCenter),
                 ) {
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(
-                                    color = Color.Transparent,
-                                    shape = RoundedCornerShape(4.dp),
-                                ),
-                        color = Color.White,
-                        trackColor = Color.Transparent,
-                        strokeCap = StrokeCap.Round,
-                        drawStopIndicator = {},
+                    WaveformProgressBar(
+                        progress = animatedProgress,
+                        isPlaying = controllerState.isPlaying,
+                        modifier = Modifier.fillMaxWidth(),
+                        barCount = 50,
+                        height = 12.dp,
                     )
                 }
             }

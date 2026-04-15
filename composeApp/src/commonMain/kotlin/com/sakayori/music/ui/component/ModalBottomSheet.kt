@@ -201,6 +201,8 @@ import com.sakayori.music.generated.resources.codec
 import com.sakayori.music.generated.resources.copied_to_clipboard
 import com.sakayori.music.generated.resources.delete
 import com.sakayori.music.generated.resources.delete_playlist
+import com.sakayori.music.generated.resources.export_playlist
+import com.sakayori.music.generated.resources.import_playlist
 import com.sakayori.music.generated.resources.delete_song_from_playlist
 import com.sakayori.music.generated.resources.description
 import com.sakayori.music.generated.resources.done
@@ -2861,6 +2863,8 @@ fun LocalPlaylistBottomSheet(
     onSync: () -> Unit,
     onUpdatePlaylist: () -> Unit,
     onDelete: () -> Unit,
+    onExport: (() -> Unit)? = null,
+    onImport: (() -> Unit)? = null,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showEditTitle by remember { mutableStateOf(false) }
@@ -2991,6 +2995,18 @@ fun LocalPlaylistBottomSheet(
                         enable = (ytPlaylistId != null),
                     ) {
                         onUpdatePlaylist()
+                    }
+                    if (onExport != null) {
+                        ActionButton(icon = painterResource(Res.drawable.baseline_downloaded), text = Res.string.export_playlist) {
+                            onExport()
+                            hideModalBottomSheet()
+                        }
+                    }
+                    if (onImport != null) {
+                        ActionButton(icon = painterResource(Res.drawable.download_button), text = Res.string.import_playlist) {
+                            onImport()
+                            hideModalBottomSheet()
+                        }
                     }
                     ActionButton(icon = painterResource(Res.drawable.baseline_delete_24), text = Res.string.delete_playlist) {
                         onDelete()

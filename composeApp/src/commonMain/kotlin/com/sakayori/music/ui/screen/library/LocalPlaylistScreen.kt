@@ -104,6 +104,8 @@ import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.utils.FilterState
 import com.sakayori.domain.utils.toTrack
 import com.sakayori.logger.Logger
+import com.sakayori.music.expect.ui.fileSaverResult
+import com.sakayori.music.expect.ui.filePickerResult
 import com.sakayori.music.extension.angledGradientBackground
 import com.sakayori.music.extension.displayNameRes
 import com.sakayori.music.extension.getColorFromPalette
@@ -338,6 +340,21 @@ fun LocalPlaylistScreen(
             .collectLatest {
                 viewModel.setBrush(listOf(it.getColorFromPalette(), md_theme_dark_background))
             }
+    }
+
+    val exportLauncher = fileSaverResult(
+        "${uiState.title.replace(" ", "_")}.json",
+        "application/json",
+    ) { uri ->
+        uri?.let { viewModel.exportPlaylist(it) }
+    }
+
+    val importLauncher = filePickerResult("application/json") { uri ->
+        uri?.let {
+            viewModel.importPlaylist(it) {
+                trackPagingItems.refresh()
+            }
+        }
     }
 
     val showLoadingDialog by viewModel.showLoadingDialog.collectAsStateWithLifecycle()
@@ -971,6 +988,12 @@ fun LocalPlaylistScreen(
             onDelete = {
                 viewModel.deletePlaylist(uiState.id)
                 navController.navigateUp()
+            },
+            onExport = {
+                coroutineScope.launch { exportLauncher.launch() }
+            },
+            onImport = {
+                coroutineScope.launch { importLauncher.launch() }
             },
         )
     }

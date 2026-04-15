@@ -161,18 +161,26 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     LaunchedEffect(Unit) {
         var idleMinutes = 0
+        var lastTrackId = ""
         while (true) {
-            kotlinx.coroutines.delay(60_000)
+            kotlinx.coroutines.delay(30_000)
             val isPlaying = viewModel.controllerState.value.isPlaying
+            val currentTrackId = viewModel.nowPlayingState.value?.mediaItem?.mediaId ?: ""
+            if (currentTrackId.isNotEmpty() && currentTrackId != lastTrackId) {
+                lastTrackId = currentTrackId
+                try {
+                    Runtime.getRuntime().gc()
+                } catch (_: Throwable) {
+                }
+            }
             if (!isPlaying) {
                 idleMinutes++
-                if (idleMinutes >= 5) {
+                if (idleMinutes >= 3) {
                     try {
                         Runtime.getRuntime().gc()
                     } catch (_: Throwable) {
                     }
                     idleMinutes = 0
-                    Logger.d("IdleMode", "Idle GC triggered")
                 }
             } else {
                 idleMinutes = 0

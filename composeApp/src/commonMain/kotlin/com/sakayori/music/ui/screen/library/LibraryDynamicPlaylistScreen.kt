@@ -125,30 +125,22 @@ fun LibraryDynamicPlaylistScreen(
         )
 
     LaunchedEffect(query) {
-        Logger.w("LibraryDynamicPlaylistScreen", "Check query: $query")
         tempFavorite = favorite.filter { it.title.contains(query, ignoreCase = true) }
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempFavorite: $tempFavorite")
         tempFollowed = followed.filter { it.name.contains(query, ignoreCase = true) }
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempFollowed: $tempFollowed")
         tempMostPlayed = mostPlayed.filter { it.title.contains(query, ignoreCase = true) }
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempMostPlayed: $tempMostPlayed")
         tempDownloaded = downloaded.filter { it.title.contains(query, ignoreCase = true) }
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempDownloaded: $tempDownloaded")
         tempTopTracks =
             analyticsUIState.topTracks.data
                 ?.filter { it.second.title.contains(query, ignoreCase = true) }
                 ?: emptyList()
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempTopTracks: $tempTopTracks")
         tempTopArtists =
             analyticsUIState.topArtists.data
                 ?.filter { it.second.name.contains(query, ignoreCase = true) }
                 ?: emptyList()
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempTopArtists: $tempTopArtists")
         tempTopAlbums =
             analyticsUIState.topAlbums.data
                 ?.filter { it.second.title.contains(query, ignoreCase = true) }
                 ?: emptyList()
-        Logger.w("LibraryDynamicPlaylistScreen", "Check tempTopAlbums: $tempTopAlbums")
     }
 
     LazyColumn(

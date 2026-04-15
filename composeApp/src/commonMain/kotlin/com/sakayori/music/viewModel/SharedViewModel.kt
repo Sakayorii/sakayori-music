@@ -156,6 +156,8 @@ class SharedViewModel(
 
     fun getQueueDataState() = mediaPlayerHandler.queueData
 
+    fun getPlayerDuration() = mediaPlayerHandler.getPlayerDuration()
+
     val blurBg: StateFlow<Boolean> =
         dataStoreManager.blurPlayerBackground
             .map { it == TRUE }
@@ -328,6 +330,10 @@ class SharedViewModel(
                             it.copy(
                                 thumbnailURL = now.metadata.artworkUri,
                                 isVideo = now.isVideo(),
+                                bitmap = null,
+                                canvasData = null,
+                                lyricsData = null,
+                                songInfoData = null,
                             )
                         }
                     }

@@ -20,8 +20,8 @@ class DiscordRPC(
             largeText = song.albumName,
             smallText = song.artistName?.firstOrNull(),
             buttons = listOf(
-                "Listen on SakayoriMusic" to "https://music.sakayori.dev/app/watch?v=${song.videoId}",
-                "Visit SakayoriMusic" to "https://github.com/Sakayorii/sakayori-music"
+                "Listen on SakayoriMusic" to "https://music.sakayori.dev/play/${song.videoId}",
+                "Visit SakayoriMusic" to "https://music.sakayori.dev"
             ),
             type = Type.LISTENING,
             since = Clock.System.now().toEpochMilliseconds(),
@@ -33,6 +33,6 @@ class DiscordRPC(
         private const val APPLICATION_ID = "1271273225120125040"
         private const val APP_NAME: String = "SakayoriMusic"
         private const val APP_ICON: String =
-            "https://fra.cloud.appwrite.io/v1/storage/buckets/683f1f620010ba0fa5b1/files/69007bc8001a28a7cea8/view?project=67ec0369002bd8a96885"
+            "https://raw.githubusercontent.com/Sakayorii/sakayori-music/main/composeApp/icon/circle_app_icon.png"
     }
 }
