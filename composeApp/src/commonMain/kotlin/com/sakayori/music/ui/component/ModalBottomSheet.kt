@@ -187,6 +187,7 @@ import com.sakayori.music.generated.resources.baseline_lyrics_24
 import com.sakayori.music.generated.resources.baseline_people_alt_24
 import com.sakayori.music.generated.resources.baseline_playlist_add_24
 import com.sakayori.music.generated.resources.baseline_queue_music_24
+import com.sakayori.music.generated.resources.queue_is_empty
 import com.sakayori.music.generated.resources.baseline_sensors_24
 import com.sakayori.music.generated.resources.baseline_share_24
 import com.sakayori.music.generated.resources.baseline_sync_24
@@ -1119,7 +1120,27 @@ fun QueueBottomSheet(
                     }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-                LazyColumn(
+                if (queue.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            androidx.compose.material3.Icon(
+                                painter = painterResource(Res.drawable.baseline_queue_music_24),
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.3f),
+                                modifier = Modifier.size(56.dp),
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = stringResource(Res.string.queue_is_empty),
+                                style = typo().bodyMedium,
+                                color = Color.White.copy(alpha = 0.5f),
+                            )
+                        }
+                    }
+                } else LazyColumn(
                     horizontalAlignment = Alignment.Start,
                     state = lazyListState,
                     modifier =
@@ -1127,7 +1148,6 @@ fun QueueBottomSheet(
                             .pointerInput(Unit) {
                                 detectDragGesturesAfterLongPress(
                                     onDrag = { change, offset ->
-                                        Logger.d("QueueBottomSheet", "onDrag $offset")
                                         change.consume()
                                         dragDropState.onDrag(offset = offset)
 

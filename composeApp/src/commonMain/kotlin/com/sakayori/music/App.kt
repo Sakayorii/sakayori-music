@@ -117,6 +117,11 @@ import kotlin.time.ExperimentalTime
 fun App(viewModel: SharedViewModel = koinInject()) {
     val windowSize = currentWindowAdaptiveInfo().windowSizeClass
     val navController = rememberNavController()
+    val currentBackStack by navController.currentBackStackEntryAsState()
+    val isAtRoot = currentBackStack?.destination?.route?.contains("Home") == true
+    com.sakayori.music.expect.PlatformBackHandler(enabled = isAtRoot) {
+        com.sakayori.music.expect.moveTaskToBack()
+    }
 
     val sleepTimerState by viewModel.sleepTimerState.collectAsStateWithLifecycle()
     val nowPlayingData by viewModel.nowPlayingState.collectAsStateWithLifecycle()

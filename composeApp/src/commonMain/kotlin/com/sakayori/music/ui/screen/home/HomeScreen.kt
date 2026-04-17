@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -74,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -510,7 +512,22 @@ fun HomeScreen(
                         itemsIndexed(homeData, key = { _, item ->
                             item.hashCode().toString() + (mainHomeThumbnail ?: "nothumb")
                         }) { index, item ->
-                            Box {
+                            val itemAlpha = remember { Animatable(0f) }
+                            val itemOffset = remember { Animatable(40f) }
+                            LaunchedEffect(Unit) {
+                                kotlinx.coroutines.delay((index.coerceAtMost(8) * 80L))
+                                itemAlpha.animateTo(1f, animationSpec = tween(400))
+                            }
+                            LaunchedEffect(Unit) {
+                                kotlinx.coroutines.delay((index.coerceAtMost(8) * 80L))
+                                itemOffset.animateTo(0f, animationSpec = tween(400))
+                            }
+                            Box(
+                                modifier = Modifier.graphicsLayer {
+                                    alpha = itemAlpha.value
+                                    translationY = itemOffset.value
+                                },
+                            ) {
                                 if (index == 0) {
                                     Box(
                                         modifier =

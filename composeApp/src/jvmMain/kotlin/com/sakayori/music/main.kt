@@ -227,7 +227,10 @@ fun main(args: Array<String>) {
             val isMacOS = remember { System.getProperty("os.name", "").lowercase().contains("mac") }
 
             Window(
-                onCloseRequest = { isVisible = false },
+                onCloseRequest = {
+                    mediaPlayerHandler.release()
+                    exitApplication()
+                },
                 title = stringResource(Res.string.app_name),
                 icon = painterResource(Res.drawable.circle_app_icon),
                 undecorated = !isMacOS,
@@ -241,7 +244,10 @@ fun main(args: Array<String>) {
                             title = stringResource(Res.string.app_name),
                             windowState = windowState,
                             window = window,
-                            onCloseRequest = { isVisible = false },
+                            onCloseRequest = {
+                                mediaPlayerHandler.release()
+                                exitApplication()
+                            },
                         )
                     }
 
