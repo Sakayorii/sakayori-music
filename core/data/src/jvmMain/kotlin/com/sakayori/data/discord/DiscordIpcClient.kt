@@ -50,8 +50,8 @@ class DiscordIpcClient {
             if (!connect()) return@withContext
         }
         try {
-            songStartTime = System.currentTimeMillis() / 1000
-            val durationSec = song.durationSeconds?.toLong()
+            songStartTime = System.currentTimeMillis()
+            val durationMs = (song.durationSeconds?.toLong() ?: 0L) * 1000L
             val payload = json.encodeToString(
                 IpcSetActivity(
                     cmd = "SET_ACTIVITY",
@@ -67,10 +67,11 @@ class DiscordIpcClient {
                                 small_image = "app_icon",
                                 small_text = APP_NAME,
                             ),
-                            timestamps = RpcTimestamps(
-                                start = songStartTime,
-                                end = if (durationSec != null && durationSec > 0) songStartTime + durationSec else null,
-                            ),
+                            timestamps = if (durationMs > 0) {
+                                RpcTimestamps(end = songStartTime + durationMs)
+                            } else {
+                                RpcTimestamps(start = songStartTime)
+                            },
                         ),
                     ),
                     nonce = System.currentTimeMillis().toString(),

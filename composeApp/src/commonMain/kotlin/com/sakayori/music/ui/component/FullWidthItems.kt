@@ -277,7 +277,7 @@ fun SongFullWidthItems(
                                 Icon(
                                     painter = painterResource(Res.drawable.download_for_offline_white),
                                     tint = Color.White,
-                                    contentDescription = "",
+                                    contentDescription = null,
                                     modifier = Modifier.size(16.dp).padding(2.dp),
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))

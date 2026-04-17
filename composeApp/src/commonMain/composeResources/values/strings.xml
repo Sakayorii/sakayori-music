@@ -350,6 +350,12 @@
     <string name="notification">Notification</string>
     <string name="month_s_ago">%1$d month(s) ago</string>
     <string name="day_s_ago">%1$d day(s) ago</string>
+    <string name="privacy">Privacy</string>
+    <string name="crash_reporting">Crash Reporting</string>
+    <string name="crash_reporting_description">Send anonymous crash reports to help improve stability. No personal data is collected.</string>
+    <string name="hours">Hours</string>
+    <string name="minutes">Minutes</string>
+    <string name="failed_to_initialize_browser">Failed To Initialize Browser</string>
     <string name="hour_s_ago">%1$d hour(s) ago</string>
     <string name="no_notification">No notification</string>
     <string name="created_at">Created at %1$s</string>

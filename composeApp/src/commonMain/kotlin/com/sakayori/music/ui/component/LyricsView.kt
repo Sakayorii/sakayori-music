@@ -924,7 +924,7 @@ fun FullscreenLyricsSheet(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.baseline_more_vert_24),
-                            contentDescription = "",
+                            contentDescription = null,
                             tint = Color.White,
                         )
                     }
@@ -1174,7 +1174,7 @@ fun FullscreenLyricsSheet(
                                             showControlButtons = true
                                         },
                                     ) {
-                                        Icon(imageVector = Icons.Outlined.Info, tint = Color.White, contentDescription = "")
+                                        Icon(imageVector = Icons.Outlined.Info, tint = Color.White, contentDescription = null)
                                     }
                                     Row(
                                         Modifier.align(Alignment.CenterEnd),
@@ -1196,7 +1196,7 @@ fun FullscreenLyricsSheet(
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Outlined.QueueMusic,
                                                 tint = Color.White,
-                                                contentDescription = "",
+                                                contentDescription = null,
                                             )
                                         }
                                     }

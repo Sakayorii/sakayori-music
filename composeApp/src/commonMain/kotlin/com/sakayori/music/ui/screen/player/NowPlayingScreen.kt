@@ -687,7 +687,7 @@ fun NowPlayingScreenContent(
                         .diskCacheKey(screenDataState.thumbnailURL + "BIGGER")
                         .crossfade(550)
                         .build(),
-                contentDescription = "",
+                contentDescription = null,
                 contentScale = ContentScale.FillHeight,
                 modifier =
                     Modifier
@@ -881,7 +881,7 @@ fun NowPlayingScreenContent(
                         }) {
                             Icon(
                                 imageVector = dismissIcon,
-                                contentDescription = "",
+                                contentDescription = null,
                                 tint = Color.White,
                             )
                         }
@@ -901,7 +901,7 @@ fun NowPlayingScreenContent(
                         }) {
                             Icon(
                                 painter = painterResource(Res.drawable.baseline_more_vert_24),
-                                contentDescription = "",
+                                contentDescription = null,
                                 tint = Color.White,
                             )
                         }
@@ -1090,7 +1090,7 @@ fun NowPlayingScreenContent(
                                                         }, Modifier.align(Alignment.TopEnd)) {
                                                             Icon(
                                                                 painter = painterResource(Res.drawable.baseline_fullscreen_24),
-                                                                contentDescription = "",
+                                                                contentDescription = null,
                                                                 tint = Color.White,
                                                             )
                                                         }
@@ -1119,7 +1119,7 @@ fun NowPlayingScreenContent(
                                                                 Icon(
                                                                     imageVector = Icons.Rounded.Replay5,
                                                                     tint = Color.White,
-                                                                    contentDescription = "",
+                                                                    contentDescription = null,
                                                                     modifier =
                                                                         Modifier
                                                                             .size(36.dp)
@@ -1145,7 +1145,7 @@ fun NowPlayingScreenContent(
                                                                 Icon(
                                                                     imageVector = Icons.Rounded.Forward5,
                                                                     tint = Color.White,
-                                                                    contentDescription = "",
+                                                                    contentDescription = null,
                                                                     modifier =
                                                                         Modifier
                                                                             .size(36.dp)
@@ -1164,7 +1164,7 @@ fun NowPlayingScreenContent(
                                                                         } else {
                                                                             Icons.Filled.Subtitles
                                                                         },
-                                                                    contentDescription = "",
+                                                                    contentDescription = null,
                                                                     tint = Color.White,
                                                                 )
                                                             }
@@ -1312,7 +1312,7 @@ fun NowPlayingScreenContent(
                                                             sharedViewModel.addToYouTubeLiked()
                                                         },
                                                     ) {
-                                                        Icon(imageVector = Icons.Rounded.CheckCircle, tint = Color.White, contentDescription = "")
+                                                        Icon(imageVector = Icons.Rounded.CheckCircle, tint = Color.White, contentDescription = null)
                                                     }
                                                 } else {
                                                     IconButton(
@@ -1330,7 +1330,7 @@ fun NowPlayingScreenContent(
                                                         Icon(
                                                             imageVector = Icons.Rounded.AddCircleOutline,
                                                             tint = Color.White,
-                                                            contentDescription = "",
+                                                            contentDescription = null,
                                                         )
                                                     }
                                                 }
@@ -1530,7 +1530,7 @@ fun NowPlayingScreenContent(
                                                 showInfoBottomSheet = true
                                             },
                                         ) {
-                                            Icon(imageVector = Icons.Outlined.Info, tint = Color.White, contentDescription = "")
+                                            Icon(imageVector = Icons.Outlined.Info, tint = Color.White, contentDescription = null)
                                         }
 
                                         Row(
@@ -1567,7 +1567,7 @@ fun NowPlayingScreenContent(
                                                 Icon(
                                                     imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
                                                     tint = Color.White,
-                                                    contentDescription = "",
+                                                    contentDescription = null,
                                                 )
                                             }
                                         }

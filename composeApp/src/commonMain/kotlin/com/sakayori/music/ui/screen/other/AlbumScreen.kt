@@ -371,7 +371,7 @@ fun AlbumScreen(
                                                                 Icon(
                                                                     painter = painterResource(Res.drawable.baseline_downloaded),
                                                                     tint = Color(0xFF00A0CB),
-                                                                    contentDescription = "",
+                                                                    contentDescription = null,
                                                                     modifier =
                                                                         Modifier
                                                                             .size(36.dp)

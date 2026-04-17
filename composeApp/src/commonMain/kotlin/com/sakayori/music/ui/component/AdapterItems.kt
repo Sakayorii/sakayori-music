@@ -162,7 +162,7 @@ fun HomeItem(
                             .diskCacheKey(data.thumbnail?.lastOrNull()?.url)
                             .crossfade(550)
                             .build(),
-                    contentDescription = "",
+                    contentDescription = null,
                     placeholder = painterResource(Res.drawable.holder),
                     error = painterResource(Res.drawable.holder),
                     modifier =
@@ -327,7 +327,7 @@ fun HomeItemContentPlaylist(
                     is com.sakayori.domain.data.model.mood.genre.Content -> data.thumbnail?.lastOrNull()?.url
                     is com.sakayori.domain.data.model.mood.moodmoments.Content -> data.thumbnails?.lastOrNull()?.url
                     is LocalPlaylistEntity -> data.thumbnail
-                    is ChartItem -> null
+                    is ChartItem -> data.thumbnail
                     is PlaylistsResult -> data.thumbnails.lastOrNull()?.url
                     is AlbumEntity -> data.thumbnails
                     is PlaylistEntity -> data.thumbnails
@@ -359,7 +359,7 @@ fun HomeItemContentPlaylist(
 
                         is ChartItem -> {
                             painterPlaylistThumbnail(
-                                "Top 50 Weekly - ${data.country.name}",
+                                data.title,
                                 style = typo().bodySmall,
                                 thumbSize * 0.9f to thumbSize * 0.9f,
                             )
@@ -381,7 +381,7 @@ fun HomeItemContentPlaylist(
 
                         is ChartItem -> {
                             painterPlaylistThumbnail(
-                                "Top 50 Weekly - ${data.country.name}",
+                                data.title,
                                 style = typo().bodySmall,
                                 thumbSize * 0.9f to thumbSize * 0.9f,
                             )
@@ -408,7 +408,7 @@ fun HomeItemContentPlaylist(
                         is com.sakayori.domain.data.model.mood.genre.Content -> data.title.title
                         is com.sakayori.domain.data.model.mood.moodmoments.Content -> data.title
                         is LocalPlaylistEntity -> data.title
-                        is ChartItem -> "Top 50 Weekly - ${data.country.name}"
+                        is ChartItem -> data.title
                         is PlaylistsResult -> data.title
                         is AlbumEntity -> data.title
                         is PlaylistEntity -> data.title
@@ -465,7 +465,7 @@ fun HomeItemContentPlaylist(
                         }
 
                         is ChartItem -> {
-                            stringResource(Res.string.app_name)
+                            data.description
                         }
 
                         is PlaylistsResult -> {

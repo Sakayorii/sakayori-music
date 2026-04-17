@@ -558,7 +558,7 @@ fun SearchScreen(
                                     Modifier
                                         .padding(top = 10.dp),
                             ) {
-                                uriHandler.openUri("https://music.sakayori.dev")
+                                uriHandler.openUri("https://chart.sakayori.dev")
                             }
                         }
                     }

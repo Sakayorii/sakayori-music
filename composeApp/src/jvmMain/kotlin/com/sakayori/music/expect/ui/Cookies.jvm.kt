@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.failed_to_initialize_browser
 import dev.datlag.kcef.KCEF
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -140,7 +143,7 @@ private fun KcefBrowserView(
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Failed to initialize browser", color = Color.White)
+                Text(stringResource(Res.string.failed_to_initialize_browser), color = Color.White)
             }
         }
     }
@@ -156,9 +159,55 @@ actual fun PlatformWebView(
     Box(modifier = Modifier.fillMaxSize()) {
         KcefBrowserView(
             url = initUrl,
-            onPageFinished = {
+            onPageFinished = { url ->
                 state.value = WebViewState.Finished
-                onPageFinished(it)
+                if (url.contains("music.youtube.com") && !url.contains("accounts.google.com")) {
+                    Thread {
+                        Thread.sleep(1000)
+                        try {
+                            val cookieManager = org.cef.network.CefCookieManager.getGlobalManager()
+                            val cookies = java.util.concurrent.CopyOnWriteArrayList<String>()
+                            val latch = java.util.concurrent.CountDownLatch(1)
+                            cookieManager.visitUrlCookies(
+                                "https://music.youtube.com",
+                                true,
+                                object : org.cef.callback.CefCookieVisitor {
+                                    override fun visit(
+                                        cookie: org.cef.network.CefCookie,
+                                        count: Int,
+                                        total: Int,
+                                        delete: org.cef.misc.BoolRef,
+                                    ): Boolean {
+                                        cookies.add("${cookie.name}=${cookie.value}")
+                                        if (count >= total - 1) latch.countDown()
+                                        return true
+                                    }
+                                },
+                            )
+                            latch.await(3, java.util.concurrent.TimeUnit.SECONDS)
+                            val cookieString = cookies.joinToString("; ")
+                            if (cookieString.isNotEmpty()) {
+                                try {
+                                    val handler = CookieHandler.getDefault() as? CookieManager
+                                        ?: CookieManager().also { CookieHandler.setDefault(it) }
+                                    cookies.forEach { pair ->
+                                        val parts = pair.split("=", limit = 2)
+                                        if (parts.size == 2) {
+                                            handler.cookieStore.add(
+                                                URI("https://music.youtube.com"),
+                                                java.net.HttpCookie(parts[0].trim(), parts[1].trim()).apply {
+                                                    domain = ".youtube.com"
+                                                    path = "/"
+                                                },
+                                            )
+                                        }
+                                    }
+                                } catch (_: Exception) {}
+                            }
+                        } catch (_: Exception) {}
+                    }.start()
+                }
+                onPageFinished(url)
             },
         )
         aboveContent()

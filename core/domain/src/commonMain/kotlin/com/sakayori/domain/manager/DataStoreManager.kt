@@ -315,6 +315,10 @@ interface DataStoreManager {
 
     suspend fun setLowResourceMode(enable: Boolean)
 
+    val crashReportingEnabled: Flow<String>
+
+    suspend fun setCrashReportingEnabled(enable: Boolean)
+
     val explicitContentEnabled: Flow<String>
 
     suspend fun setExplicitContentEnabled(enabled: Boolean)

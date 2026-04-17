@@ -245,7 +245,7 @@ internal inline fun <reified T> GridLibraryPlaylist(
                                     vertical = 16.dp,
                                 ),
                             onClick = {
-                                uriHandler.openUri("https://music.sakayori.dev")
+                                uriHandler.openUri("https://chart.sakayori.dev")
                             },
                         )
                     }
