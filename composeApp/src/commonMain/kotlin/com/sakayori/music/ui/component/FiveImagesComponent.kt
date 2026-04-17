@@ -55,7 +55,7 @@ fun FiveImagesComponent(
                         .diskCacheKey(images.first().imageUrl)
                         .crossfade(550)
                         .build(),
-                contentDescription = "",
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier =
                     Modifier
@@ -155,7 +155,7 @@ fun FiveImagesComponent(
                                 .diskCacheKey(image.imageUrl)
                                 .crossfade(550)
                                 .build(),
-                        contentDescription = "",
+                        contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier =
                             Modifier
@@ -257,7 +257,7 @@ fun FiveImagesComponent(
                                 .diskCacheKey(image.imageUrl)
                                 .crossfade(550)
                                 .build(),
-                        contentDescription = "",
+                        contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier =
                             Modifier

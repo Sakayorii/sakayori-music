@@ -512,7 +512,7 @@ fun InfoPlayerBottomSheet(
                         }) {
                             Icon(
                                 painter = painterResource(Res.drawable.baseline_keyboard_arrow_down_24),
-                                contentDescription = "",
+                                contentDescription = null,
                                 tint = Color.White,
                             )
                         }
@@ -1065,7 +1065,7 @@ fun QueueBottomSheet(
                         }) {
                             Icon(
                                 painter = painterResource(Res.drawable.baseline_keyboard_arrow_down_24),
-                                contentDescription = "",
+                                contentDescription = null,
                                 tint = Color.White,
                             )
                         }
@@ -2555,7 +2555,7 @@ fun AddToPlaylistModalBottomSheet(
                                             ) {
                                                 Image(
                                                     painter = painterResource(Res.drawable.baseline_playlist_add_24),
-                                                    contentDescription = "",
+                                                    contentDescription = null,
                                                 )
                                                 Spacer(modifier = Modifier.width(10.dp))
                                                 Text(
@@ -2589,11 +2589,11 @@ fun AddToPlaylistModalBottomSheet(
                                             ) {
                                                 Crossfade(targetState = playlist.tracks?.contains(videoId) == true) {
                                                     if (it) {
-                                                        Image(painter = painterResource(Res.drawable.done), contentDescription = "")
+                                                        Image(painter = painterResource(Res.drawable.done), contentDescription = null)
                                                     } else {
                                                         Image(
                                                             painter = painterResource(Res.drawable.baseline_playlist_add_24),
-                                                            contentDescription = "",
+                                                            contentDescription = null,
                                                         )
                                                     }
                                                 }
@@ -2679,7 +2679,7 @@ fun ArtistModalBottomSheet(
                                 ) {
                                     Image(
                                         painter = painterResource(Res.drawable.baseline_people_alt_24),
-                                        contentDescription = "",
+                                        contentDescription = null,
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(text = artist.name, style = typo().labelSmall)

@@ -764,24 +764,17 @@ internal class PlaylistRepositoryImpl(
         flow {
             youTube
                 .getSakayoriMusicChart()
-                .onSuccess { response ->
-                    val data = response.data?.filterNotNull() ?: emptyList()
+                .onSuccess { items ->
                     val result =
-                        data.mapNotNull {
+                        items.mapNotNull {
+                            val id = it.id ?: return@mapNotNull null
+                            val playlistId = id.removePrefix("VL")
                             ChartItem(
-                                country =
-                                    when (it.country) {
-                                        "global" -> ChartItem.Country.GLOBAL
-                                        "vn" -> ChartItem.Country.VIETNAM
-                                        "it" -> ChartItem.Country.ITALY
-                                        "in" -> ChartItem.Country.INDIA
-                                        "id" -> ChartItem.Country.INDONESIA
-                                        "br" -> ChartItem.Country.BRAZIL
-                                        "us" -> ChartItem.Country.UNITED_STATE
-                                        "mx" -> ChartItem.Country.MEXICO
-                                        else -> return@mapNotNull null
-                                    },
-                                ytPlaylistId = it.youtubePlaylistId ?: return@mapNotNull null,
+                                title = it.title ?: return@mapNotNull null,
+                                description = it.description ?: "",
+                                thumbnail = it.thumbnail,
+                                category = it.category ?: "top",
+                                ytPlaylistId = playlistId,
                             )
                         }
                     emit(Resource.Success(result))

@@ -42,6 +42,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Lyrics
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Palette
@@ -223,9 +224,12 @@ import com.sakayori.music.generated.resources.crossfade_description
 import com.sakayori.music.generated.resources.crossfade_dj_mode
 import com.sakayori.music.generated.resources.crossfade_dj_mode_description
 import com.sakayori.music.generated.resources.builtin_equalizer_with_presets
+import com.sakayori.music.generated.resources.crash_reporting
+import com.sakayori.music.generated.resources.crash_reporting_description
 import com.sakayori.music.generated.resources.crossfade_preview
 import com.sakayori.music.generated.resources.crossfade_preview_description
 import com.sakayori.music.generated.resources.open_equalizer
+import com.sakayori.music.generated.resources.privacy
 import com.sakayori.music.generated.resources.crossfade_duration
 import com.sakayori.music.generated.resources.custom_ai_model_id
 import com.sakayori.music.generated.resources.custom_model_id_messages
@@ -475,6 +479,7 @@ fun SettingScreen(
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val enableLiquidGlass by viewModel.enableLiquidGlass.collectAsStateWithLifecycle()
     val lowResourceMode by viewModel.lowResourceMode.collectAsStateWithLifecycle()
+    val crashReportingEnabled by viewModel.crashReportingEnabled.collectAsStateWithLifecycle()
     val isLowEndDevice = remember { DeviceCapability.isLowEndDevice() }
     val lowEndDisableReason = stringResource(Res.string.low_end_device_blur_disabled)
     val discordLoggedIn by viewModel.discordLoggedIn.collectAsStateWithLifecycle()
@@ -1880,6 +1885,19 @@ fun SettingScreen(
                         Text(text = stringResource(Res.string.free_space), style = typo().bodySmall)
                     }
                 }
+            }
+        }
+        item(key = "privacy") {
+            SettingSection(
+                title = stringResource(Res.string.privacy),
+                icon = Icons.Outlined.Lock,
+            ) {
+                SettingItem(
+                    title = stringResource(Res.string.crash_reporting),
+                    subtitle = stringResource(Res.string.crash_reporting_description),
+                    smallSubtitle = true,
+                    switch = (crashReportingEnabled to { viewModel.setCrashReportingEnabled(it) }),
+                )
             }
         }
         item(key = "backup") {

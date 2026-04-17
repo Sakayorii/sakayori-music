@@ -187,11 +187,6 @@ fun PlaylistScreen(
         }
     }
 
-    LaunchedEffect(uiState) {
-        Logger.d(tag, "uiState hash: ${uiState.hashCode()}")
-        Logger.d(tag, "uiState data: ${uiState.data}")
-    }
-
     LaunchedEffect(showSearchBar) {
         if (showSearchBar) {
             viewModel.getFullTracks {}
@@ -212,9 +207,6 @@ fun PlaylistScreen(
         }
 
     LaunchedEffect(key1 = shouldStartPaginate.value) {
-        Logger.d(tag, "shouldStartPaginate: ${shouldStartPaginate.value}")
-        Logger.d(tag, "tracksListState: $tracksListState")
-        Logger.d(tag, "Continuation: $continuation")
         if (shouldStartPaginate.value && tracksListState == ListState.IDLE) {
             viewModel.getContinuationTrack(
                 playlistId,
@@ -266,7 +258,6 @@ fun PlaylistScreen(
 
     LaunchedEffect(key1 = playlistId) {
         if (playlistId != uiState.data?.id) {
-            Logger.w(tag, "new id: $playlistId")
             viewModel.getData(playlistId)
         }
     }
@@ -303,11 +294,9 @@ fun PlaylistScreen(
     Crossfade(
         targetState = uiState,
     ) { state ->
-        Logger.w(tag, "State hash: ${state.hashCode()}")
         when (state) {
             is PlaylistUIState.Success -> {
                 val data = state.data
-                Logger.d(tag, "data: $data")
                 if (data == null) return@Crossfade
                 LazyColumn(
                     modifier =
@@ -520,7 +509,7 @@ fun PlaylistScreen(
                                                                         Icon(
                                                                             painter = painterResource(Res.drawable.baseline_downloaded),
                                                                             tint = Color(0xFF00A0CB),
-                                                                            contentDescription = "",
+                                                                            contentDescription = null,
                                                                             modifier =
                                                                                 Modifier
                                                                                     .size(36.dp)
@@ -558,7 +547,6 @@ fun PlaylistScreen(
                                                                         resId = Res.drawable.download_button,
                                                                         modifier = Modifier.size(36.dp),
                                                                     ) {
-                                                                        Logger.w("PlaylistScreen", "downloadState: $downloadState")
                                                                         viewModel.onUIEvent(PlaylistUIEvent.Download)
                                                                     }
                                                                 }
@@ -707,7 +695,6 @@ fun PlaylistScreen(
                                     track = item,
                                     onMoreClickListener = { onItemMoreClick(it) },
                                     onClickListener = {
-                                        Logger.w("PlaylistScreen", "index: $index")
                                         onPlaylistItemClick(it)
                                     },
                                     onAddToQueue = {
@@ -723,7 +710,6 @@ fun PlaylistScreen(
                                     track = item,
                                     onMoreClickListener = { onItemMoreClick(it) },
                                     onClickListener = {
-                                        Logger.w("PlaylistScreen", "index: $index")
                                         onPlaylistItemClick(it)
                                     },
                                     onAddToQueue = {
@@ -801,7 +787,6 @@ fun PlaylistScreen(
                     )
                 }
                 if (playlistBottomSheetShow) {
-                    Logger.w("PlaylistScreen", "PlaylistBottomSheet")
                     val addToQueue = {
                         viewModel.getFullTracks { track ->
                             sharedViewModel.addListToQueue(

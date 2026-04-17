@@ -157,6 +157,9 @@ class SettingsViewModel(
     private val _lowResourceMode: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val lowResourceMode: StateFlow<Boolean> = _lowResourceMode
 
+    private val _crashReportingEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val crashReportingEnabled: StateFlow<Boolean> = _crashReportingEnabled
+
     private val _explicitContentEnabled = MutableStateFlow(false)
     val explicitContentEnabled: StateFlow<Boolean> = _explicitContentEnabled
 
@@ -273,6 +276,7 @@ class SettingsViewModel(
         getUpdateChannel()
         getEnableLiquidGlass()
         getLowResourceMode()
+        getCrashReportingEnabled()
         getExplicitContentEnabled()
         getDiscordLoggedIn()
         getDiscordRichPresenceEnabled()
@@ -547,6 +551,20 @@ class SettingsViewModel(
     fun setLowResourceMode(enable: Boolean) {
         viewModelScope.launch {
             dataStoreManager.setLowResourceMode(enable)
+        }
+    }
+
+    private fun getCrashReportingEnabled() {
+        viewModelScope.launch {
+            dataStoreManager.crashReportingEnabled.collect { value ->
+                _crashReportingEnabled.value = value == DataStoreManager.TRUE
+            }
+        }
+    }
+
+    fun setCrashReportingEnabled(enable: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.setCrashReportingEnabled(enable)
         }
     }
 

@@ -192,7 +192,7 @@ fun AnalyticsScreen(
                                         .diskCacheKey(topTrack.second.thumbnails)
                                         .crossfade(550)
                                         .build(),
-                                contentDescription = "",
+                                contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier =
                                     Modifier
@@ -738,7 +738,7 @@ fun AnalyticsScreen(
                                             is AnalyticsUiState.ChartType.Month ->
                                                 "${chartType.month.name.take(3)} ${chartType.year}"
                                             is AnalyticsUiState.ChartType.Day ->
-                                                chartType.day.dayOfMonth.toString()
+                                                chartType.day.day.toString()
                                         }
                                         BarChartEntry(label, count)
                                     },
@@ -753,7 +753,7 @@ fun AnalyticsScreen(
                                         val label = when (chartType) {
                                             is AnalyticsUiState.ChartType.Day -> {
                                                 if (index % step == 0 || index == displayData.lastIndex) {
-                                                    "${chartType.day.dayOfMonth}/${chartType.day.monthNumber}"
+                                                    "${chartType.day.day}/${chartType.day.monthNumber}"
                                                 } else ""
                                             }
                                             is AnalyticsUiState.ChartType.Month ->

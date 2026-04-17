@@ -74,19 +74,7 @@ fun LoginScreen(
 
     val state = rememberWebViewState()
 
-    LaunchedEffect(state) {
-        snapshotFlow { state.value }.collect {
-            Logger.d(
-                "LogInScreen",
-                "WebViewState: ${
-                    when (it) {
-                        is com.sakayori.music.expect.ui.WebViewState.Finished -> "Finished"
-                        is com.sakayori.music.expect.ui.WebViewState.Loading -> "Loading ${it.progress}%"
-                    }
-                }",
-            )
-        }
-    }
+
 
     LaunchedEffect(Unit) {
         hideBottomNavigation()
@@ -132,25 +120,19 @@ fun LoginScreen(
                     }
                 }
             ) { url ->
-                Logger.d("LogInScreen", "Current URL: $url")
-                if (url == Config.YOUTUBE_MUSIC_MAIN_URL) {
+                if (url.contains("music.youtube.com") && !url.contains("accounts.google.com")) {
                     coroutineScope.launch {
-                        val success =
-                            createWebViewCookieManager()
-                                .getCookie(url)
-                                .takeIf {
-                                    it.isNotEmpty()
-                                }?.let {
-                                    settingsViewModel.addAccount(it)
-                                } ?: false
-
-                        createWebViewCookieManager().removeAllCookies()
-
-                        if (success) {
-                            viewModel.makeToast(getString(Res.string.login_success))
-                            navController.navigateUp()
-                        } else {
-                            viewModel.makeToast(getString(Res.string.login_failed))
+                        kotlinx.coroutines.delay(1500)
+                        val cookie = createWebViewCookieManager().getCookie(url)
+                        if (cookie.isNotEmpty()) {
+                            val success = settingsViewModel.addAccount(cookie)
+                            createWebViewCookieManager().removeAllCookies()
+                            if (success) {
+                                viewModel.makeToast(getString(Res.string.login_success))
+                                navController.navigateUp()
+                            } else {
+                                viewModel.makeToast(getString(Res.string.login_failed))
+                            }
                         }
                     }
                 }

@@ -72,14 +72,14 @@ fun PlayerControlLayout(
                         Icon(
                             imageVector = Icons.Rounded.Shuffle,
                             tint = Color.White,
-                            contentDescription = "",
+                            contentDescription = null,
                             modifier = Modifier.size(smallIcon.first),
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.Shuffle,
                             tint = seed,
-                            contentDescription = "",
+                            contentDescription = null,
                             modifier = Modifier.size(smallIcon.first),
                         )
                     }
@@ -106,7 +106,7 @@ fun PlayerControlLayout(
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
                     tint = if (controllerState.isPreviousAvailable) Color.White else Color.Gray,
-                    contentDescription = "",
+                    contentDescription = null,
                     modifier = Modifier.size(mediumIcon.first),
                 )
             }
@@ -131,14 +131,14 @@ fun PlayerControlLayout(
                         Icon(
                             imageVector = Icons.Rounded.PlayCircle,
                             tint = Color.White,
-                            contentDescription = "",
+                            contentDescription = null,
                             modifier = Modifier.size(bigIcon.first),
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.PauseCircle,
                             tint = Color.White,
-                            contentDescription = "",
+                            contentDescription = null,
                             modifier = Modifier.size(bigIcon.first),
                         )
                     }
@@ -165,7 +165,7 @@ fun PlayerControlLayout(
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
                     tint = if (controllerState.isNextAvailable) Color.White else Color.Gray,
-                    contentDescription = "",
+                    contentDescription = null,
                     modifier = Modifier.size(mediumIcon.first),
                 )
             }
@@ -190,7 +190,7 @@ fun PlayerControlLayout(
                             Icon(
                                 imageVector = Icons.Rounded.Repeat,
                                 tint = Color.White,
-                                contentDescription = "",
+                                contentDescription = null,
                                 modifier = Modifier.size(smallIcon.first),
                             )
                         }
@@ -199,7 +199,7 @@ fun PlayerControlLayout(
                             Icon(
                                 imageVector = Icons.Rounded.Repeat,
                                 tint = seed,
-                                contentDescription = "",
+                                contentDescription = null,
                                 modifier = Modifier.size(smallIcon.first),
                             )
                         }
@@ -208,7 +208,7 @@ fun PlayerControlLayout(
                             Icon(
                                 imageVector = Icons.Rounded.RepeatOne,
                                 tint = seed,
-                                contentDescription = "",
+                                contentDescription = null,
                                 modifier = Modifier.size(smallIcon.first),
                             )
                         }

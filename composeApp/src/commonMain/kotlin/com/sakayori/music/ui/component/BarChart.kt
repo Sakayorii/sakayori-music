@@ -27,6 +27,10 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sakayori.music.ui.theme.typo
+import org.jetbrains.compose.resources.stringResource
+import com.sakayori.music.generated.resources.Res
+import com.sakayori.music.generated.resources.hours
+import com.sakayori.music.generated.resources.minutes
 
 data class BarChartEntry(
     val label: String,
@@ -211,7 +215,7 @@ fun ListeningTimeChart(
                 color = Color(0xFF00BCD4),
             )
             Text(
-                text = "Hours",
+                text = stringResource(Res.string.hours),
                 style = typo().bodySmall,
                 color = Color.White.copy(alpha = 0.6f),
             )
@@ -223,7 +227,7 @@ fun ListeningTimeChart(
                 color = Color(0xFF00BCD4),
             )
             Text(
-                text = "Minutes",
+                text = stringResource(Res.string.minutes),
                 style = typo().bodySmall,
                 color = Color.White.copy(alpha = 0.6f),
             )

@@ -1265,6 +1265,20 @@ internal class DataStoreManagerImpl(
         }
     }
 
+    override val crashReportingEnabled: Flow<String>
+        get() =
+            settingsDataStore.data.map { preferences ->
+                preferences[CRASH_REPORTING_ENABLED] ?: FALSE
+            }
+
+    override suspend fun setCrashReportingEnabled(enable: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[CRASH_REPORTING_ENABLED] = if (enable) TRUE else FALSE
+            }
+        }
+    }
+
     override val explicitContentEnabled: Flow<String> =
         settingsDataStore.data.map { preferences ->
             preferences[EXPLICIT_CONTENT_ENABLED] ?: TRUE
@@ -1460,6 +1474,8 @@ internal class DataStoreManagerImpl(
         val LIQUID_GLASS = stringPreferencesKey("liquid_glass")
 
         val LOW_RESOURCE_MODE = stringPreferencesKey("low_resource_mode")
+
+        val CRASH_REPORTING_ENABLED = stringPreferencesKey("crash_reporting_enabled")
 
         val EXPLICIT_CONTENT_ENABLED = stringPreferencesKey("explicit_content_enabled")
 

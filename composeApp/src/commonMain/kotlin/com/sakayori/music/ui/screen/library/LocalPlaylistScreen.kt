@@ -270,7 +270,6 @@ fun LocalPlaylistScreen(
         snapshotFlow {
             trackPagingItems.loadState
         }.collectLatest {
-            Logger.d("PlaylistScreen", "loadState: ${trackPagingItems.loadState}")
             viewModel.setLazyTrackPagingItems(trackPagingItems)
         }
     }
@@ -306,7 +305,6 @@ fun LocalPlaylistScreen(
 
     LaunchedEffect(key1 = id) {
         if (id != uiState.id) {
-            Logger.w("PlaylistScreen", "new id: $id")
             viewModel.setOffset(0)
             viewModel.removeListSuggestion()
             viewModel.updatePlaylistState(id, true)
@@ -368,7 +366,6 @@ fun LocalPlaylistScreen(
     val dragDropState =
         rememberDragDropState(lazyState) { from, to ->
             coroutineScope.launch {
-                Logger.d(TAG, "onMove from $from to $to")
                 viewModel.changeLocalPlaylistItemPosition(from - 1, to - 1)
                 trackPagingItems.refresh()
             }
@@ -382,7 +379,6 @@ fun LocalPlaylistScreen(
                 .pointerInput(Unit) {
                     detectDragGesturesAfterLongPress(
                         onDrag = { change, offset ->
-                            Logger.d(TAG, "onDrag $offset")
                             change.consume()
                             dragDropState.onDrag(offset = offset)
 
@@ -405,16 +401,13 @@ fun LocalPlaylistScreen(
                                 ?: run { overscrollJob?.cancel() }
                         },
                         onDragStart = { offset ->
-                            Logger.d(TAG, "onDragStart $offset")
                             dragDropState.onDragStart(offset)
                         },
                         onDragEnd = {
-                            Logger.d(TAG, "onDragEnd")
                             dragDropState.onDragInterrupted(true)
                             overscrollJob?.cancel()
                         },
                         onDragCancel = {
-                            Logger.d(TAG, "onDragCancel")
                             dragDropState.onDragInterrupted()
                             overscrollJob?.cancel()
                         },
@@ -601,7 +594,7 @@ fun LocalPlaylistScreen(
                                                     Icon(
                                                         painter = painterResource(Res.drawable.baseline_downloaded),
                                                         tint = Color(0xFF00A0CB),
-                                                        contentDescription = "",
+                                                        contentDescription = null,
                                                         modifier =
                                                             Modifier
                                                                 .size(36.dp)
@@ -639,7 +632,6 @@ fun LocalPlaylistScreen(
                                                     resId = Res.drawable.download_button,
                                                     modifier = Modifier.size(36.dp),
                                                 ) {
-                                                    Logger.w("PlaylistScreen", "downloadState: $downloadState")
                                                     viewModel.downloadFullPlaylist()
                                                 }
                                             }
@@ -888,7 +880,6 @@ fun LocalPlaylistScreen(
                             songEntity = item,
                             onMoreClickListener = { onItemMoreClick(it) },
                             onClickListener = {
-                                Logger.w("PlaylistScreen", "index: $index")
                                 onPlaylistItemClick(it)
                             },
                             onAddToQueue = {
@@ -905,7 +896,6 @@ fun LocalPlaylistScreen(
                             songEntity = item,
                             onMoreClickListener = { onItemMoreClick(it) },
                             onClickListener = {
-                                Logger.w("PlaylistScreen", "index: $index")
                                 onPlaylistItemClick(it)
                             },
                             onAddToQueue = {
@@ -958,7 +948,6 @@ fun LocalPlaylistScreen(
         )
     }
     if (playlistBottomSheetShow) {
-        Logger.w("PlaylistScreen", "PlaylistBottomSheet")
         LocalPlaylistBottomSheet(
             isBottomSheetVisible = playlistBottomSheetShow,
             onDismiss = { playlistBottomSheetShow = false },

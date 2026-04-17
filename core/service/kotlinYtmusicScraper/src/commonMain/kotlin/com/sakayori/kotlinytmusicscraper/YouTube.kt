@@ -45,7 +45,7 @@ import com.sakayori.kotlinytmusicscraper.models.response.NextResponse
 import com.sakayori.kotlinytmusicscraper.models.response.PipedResponse
 import com.sakayori.kotlinytmusicscraper.models.response.PlayerResponse
 import com.sakayori.kotlinytmusicscraper.models.response.SearchResponse
-import com.sakayori.kotlinytmusicscraper.models.response.SakayoriMusicChartResponse
+import com.sakayori.kotlinytmusicscraper.models.response.SakayoriChartItem
 import com.sakayori.kotlinytmusicscraper.models.response.TidalSearchResponse
 import com.sakayori.kotlinytmusicscraper.models.response.TidalStreamResponse
 import com.sakayori.kotlinytmusicscraper.models.response.toLikeStatus
@@ -1762,7 +1762,7 @@ class YouTube {
 
     suspend fun getSakayoriMusicChart() =
         runCatching {
-            ytMusic.getSakayoriMusicChart().body<SakayoriMusicChartResponse>()
+            ytMusic.getSakayoriMusicChart().body<List<SakayoriChartItem>>()
         }
 
     suspend fun getTidalStream(

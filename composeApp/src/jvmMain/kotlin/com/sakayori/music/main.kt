@@ -137,7 +137,10 @@ fun main(args: Array<String>) {
                     getKoin().get<DataStoreManager>().language.first().take(2)
                 }
                 changeLanguageNative(lang)
-                if (BuildKonfig.sentryDsn.isNotEmpty()) {
+                val crashReportingEnabled = kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+                    getKoin().get<DataStoreManager>().crashReportingEnabled.first() == "TRUE"
+                }
+                if (crashReportingEnabled && BuildKonfig.sentryDsn.isNotEmpty()) {
                     Sentry.init { options ->
                         options.dsn = BuildKonfig.sentryDsn
                         options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"

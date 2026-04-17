@@ -6,7 +6,7 @@
 
 **A modern, cross-platform YouTube Music client built with Kotlin Multiplatform & Compose**
 
-[![Version](https://img.shields.io/badge/version-2.1.2-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Version](https://img.shields.io/badge/version-2.1.3-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -161,7 +161,30 @@ sakayori-music/
 ## Credits
 
 - **Original project:** [SimpMusic](https://github.com/maxrave-dev/SimpMusic) by maxrave-dev
-- **Maintained by:** [Sakayorii](https://github.com/Sakayorii)
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/Sakayorii">
+        <img src="https://github.com/Sakayorii.png" width="80" height="80" style="border-radius: 50%" alt="Sakayorii"/>
+        <br /><sub><b>Sakayorii</b></sub>
+      </a>
+      <br /><sub>Lead Maintainer</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Lammk">
+        <img src="https://github.com/Lammk.png" width="80" height="80" style="border-radius: 50%" alt="Lammk"/>
+        <br /><sub><b>Lammk</b></sub>
+      </a>
+      <br /><sub>Co-Maintainer</sub>
+    </td>
+  </tr>
+</table>
+
+## Special Thanks
+
+- Everyone who starred the repo and reported bugs
+- [This cat](https://tenor.com/view/anime-daebom-tiger-post-this-cat-when-they-least-expect-it-gif-7331357990544767952)
 
 ## License
 

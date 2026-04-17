@@ -398,7 +398,7 @@ fun FullscreenPlayer(
                                 Icon(
                                     imageVector = Icons.Filled.SkipPrevious,
                                     tint = if (controllerState.isPreviousAvailable) Color.White else Color.DarkGray,
-                                    contentDescription = "",
+                                    contentDescription = null,
                                     modifier =
                                         Modifier
                                             .size(36.dp),
@@ -423,7 +423,7 @@ fun FullscreenPlayer(
                                 Icon(
                                     imageVector = Icons.Filled.Replay5,
                                     tint = Color.White,
-                                    contentDescription = "",
+                                    contentDescription = null,
                                     modifier =
                                         Modifier
                                             .size(36.dp),
@@ -450,7 +450,7 @@ fun FullscreenPlayer(
                                         Icon(
                                             imageVector = Icons.Filled.Pause,
                                             tint = Color.White,
-                                            contentDescription = "",
+                                            contentDescription = null,
                                             modifier =
                                                 Modifier
                                                     .size(48.dp),
@@ -459,7 +459,7 @@ fun FullscreenPlayer(
                                         Icon(
                                             imageVector = Icons.Filled.PlayArrow,
                                             tint = Color.White,
-                                            contentDescription = "",
+                                            contentDescription = null,
                                             modifier =
                                                 Modifier
                                                     .size(48.dp),
@@ -486,7 +486,7 @@ fun FullscreenPlayer(
                                 Icon(
                                     imageVector = Icons.Filled.Forward5,
                                     tint = Color.White,
-                                    contentDescription = "",
+                                    contentDescription = null,
                                     modifier =
                                         Modifier
                                             .size(36.dp),
@@ -512,7 +512,7 @@ fun FullscreenPlayer(
                                 Icon(
                                     imageVector = Icons.Filled.SkipNext,
                                     tint = if (controllerState.isNextAvailable) Color.White else Color.DarkGray,
-                                    contentDescription = "",
+                                    contentDescription = null,
                                     modifier =
                                         Modifier
                                             .size(36.dp),
@@ -697,7 +697,7 @@ fun FullscreenPlayer(
                                                 Icon(
                                                     imageVector = Icons.Filled.SubtitlesOff,
                                                     tint = Color.White,
-                                                    contentDescription = "",
+                                                    contentDescription = null,
                                                     modifier =
                                                         Modifier
                                                             .size(24.dp),
@@ -706,7 +706,7 @@ fun FullscreenPlayer(
                                                 Icon(
                                                     imageVector = Icons.Filled.Subtitles,
                                                     tint = Color.White,
-                                                    contentDescription = "",
+                                                    contentDescription = null,
                                                     modifier =
                                                         Modifier
                                                             .size(24.dp),
@@ -731,7 +731,7 @@ fun FullscreenPlayer(
                                         Icon(
                                             imageVector = Icons.Filled.Speed,
                                             tint = Color.White,
-                                            contentDescription = "",
+                                            contentDescription = null,
                                             modifier = Modifier.size(24.dp),
                                         )
                                     }
@@ -755,7 +755,7 @@ fun FullscreenPlayer(
                                         Icon(
                                             imageVector = Icons.Filled.FullscreenExit,
                                             tint = Color.White,
-                                            contentDescription = "",
+                                            contentDescription = null,
                                             modifier =
                                                 Modifier
                                                     .size(24.dp),
