@@ -184,7 +184,9 @@ sakayori-music/
 ## Special Thanks
 
 - Everyone who starred the repo and reported bugs
-- [This cat](https://tenor.com/view/anime-daebom-tiger-post-this-cat-when-they-least-expect-it-gif-7331357990544767952)
+- This cat
+
+![cat](docs/images/anime-daebom.gif)
 
 ## License
 
