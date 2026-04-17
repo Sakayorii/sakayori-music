@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -116,6 +118,7 @@ import com.sakayori.music.generated.resources.baseline_close_24
 import com.sakayori.music.generated.resources.baseline_history_24
 import com.sakayori.music.generated.resources.baseline_search_24
 import com.sakayori.music.generated.resources.clear_search_history
+import com.sakayori.music.generated.resources.recent_searches
 import com.sakayori.music.generated.resources.error_occurred
 import com.sakayori.music.generated.resources.everything_you_need
 import com.sakayori.music.generated.resources.holder
@@ -448,6 +451,51 @@ fun SearchScreen(
                                     vertical = 10.dp,
                                 ),
                     ) {
+                        if (searchHistory.isNotEmpty()) {
+                            Text(
+                                text = stringResource(Res.string.recent_searches),
+                                style = typo().labelMedium,
+                                color = Color(0xFF00BCD4),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            )
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            ) {
+                                items(searchHistory.take(8)) { item ->
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(Color.White.copy(alpha = 0.08f))
+                                            .clickable {
+                                                searchText = item
+                                                focusManager.clearFocus()
+                                                isSearchSubmitted = true
+                                                searchViewModel.insertSearchHistory(item)
+                                                when (searchScreenState.searchType) {
+                                                    SearchType.ALL -> searchViewModel.searchAll(item)
+                                                    SearchType.SONGS -> searchViewModel.searchSongs(item)
+                                                    SearchType.VIDEOS -> searchViewModel.searchVideos(item)
+                                                    SearchType.ALBUMS -> searchViewModel.searchAlbums(item)
+                                                    SearchType.ARTISTS -> searchViewModel.searchArtists(item)
+                                                    SearchType.PLAYLISTS -> searchViewModel.searchPlaylists(item)
+                                                    SearchType.FEATURED_PLAYLISTS -> searchViewModel.searchFeaturedPlaylist(item)
+                                                    SearchType.PODCASTS -> searchViewModel.searchPodcast(item)
+                                                }
+                                            }
+                                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    ) {
+                                        Text(
+                                            text = item,
+                                            style = typo().bodySmall,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                         LazyColumn {
                             stickyHeader {
                                 Crossfade(

@@ -52,6 +52,8 @@ import androidx.compose.material.icons.outlined.SettingsEthernet
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.VpnKey
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
@@ -230,6 +232,7 @@ import com.sakayori.music.generated.resources.crossfade_preview
 import com.sakayori.music.generated.resources.crossfade_preview_description
 import com.sakayori.music.generated.resources.open_equalizer
 import com.sakayori.music.generated.resources.privacy
+import com.sakayori.music.generated.resources.search_settings
 import com.sakayori.music.generated.resources.crossfade_duration
 import com.sakayori.music.generated.resources.custom_ai_model_id
 import com.sakayori.music.generated.resources.custom_model_id_messages
@@ -532,6 +535,25 @@ fun SettingScreen(
         viewModel.getThumbCacheSize(platformContext)
     }
 
+    var settingsSearchQuery by rememberSaveable { mutableStateOf("") }
+    val uiLabel = stringResource(Res.string.user_interface)
+    val contentLabel = stringResource(Res.string.content)
+    val audioLabel = stringResource(Res.string.audio)
+    val playbackLabel = stringResource(Res.string.playback)
+    val crossfadeLabel = stringResource(Res.string.crossfade)
+    val lyricsLabel = stringResource(Res.string.lyrics)
+    val aiLabel = stringResource(Res.string.ai)
+    val spotifyLabel = stringResource(Res.string.spotify)
+    val discordLabel = stringResource(Res.string.discord_integration)
+    val sponsorLabel = stringResource(Res.string.sponsorBlock)
+    val storageLabel = stringResource(Res.string.storage)
+    val privacyLabel = stringResource(Res.string.privacy)
+    val backupLabel = stringResource(Res.string.backup)
+    val aboutLabel = stringResource(Res.string.about_us)
+
+    fun matchQuery(label: String): Boolean =
+        settingsSearchQuery.isEmpty() || label.contains(settingsSearchQuery, ignoreCase = true)
+
     LazyColumn(
         contentPadding = innerPadding,
         modifier =
@@ -542,7 +564,60 @@ fun SettingScreen(
         item {
             Spacer(Modifier.height(64.dp))
         }
-        item(key = "user_interface") {
+        item(key = "settings_search") {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF1A1A1A))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+            ) {
+                androidx.compose.foundation.layout.Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = settingsSearchQuery,
+                        onValueChange = { settingsSearchQuery = it },
+                        singleLine = true,
+                        textStyle = typo().bodyMedium.copy(color = white),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF00BCD4)),
+                        modifier = Modifier.weight(1f),
+                        decorationBox = { inner ->
+                            if (settingsSearchQuery.isEmpty()) {
+                                Text(
+                                    stringResource(Res.string.search_settings),
+                                    style = typo().bodyMedium,
+                                    color = Color.White.copy(alpha = 0.4f),
+                                )
+                            }
+                            inner()
+                        },
+                    )
+                    if (settingsSearchQuery.isNotEmpty()) {
+                        androidx.compose.material3.IconButton(
+                            onClick = { settingsSearchQuery = "" },
+                            modifier = Modifier.size(20.dp),
+                        ) {
+                            androidx.compose.material3.Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Rounded.Clear,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.6f),
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        if (matchQuery(uiLabel)) item(key = "user_interface") {
             Spacer(Modifier.height(16.dp))
             SettingSection(
                 title = stringResource(Res.string.user_interface),
@@ -588,7 +663,7 @@ fun SettingScreen(
                 )
             }
         }
-        item(key = "content") {
+        if (matchQuery(contentLabel)) item(key = "content") {
             SettingSection(
                 title = stringResource(Res.string.content),
                 icon = Icons.Outlined.Language,
@@ -933,7 +1008,7 @@ fun SettingScreen(
             }
         }
         if (getPlatform() == Platform.Android) {
-            item(key = "audio") {
+            if (matchQuery(audioLabel)) item(key = "audio") {
                 SettingSection(
                     title = stringResource(Res.string.audio),
                     icon = Icons.Outlined.MusicNote,
@@ -967,7 +1042,7 @@ fun SettingScreen(
                 }
             }
         }
-        item(key = "playback") {
+        if (matchQuery(playbackLabel)) item(key = "playback") {
             SettingSection(
                 title = stringResource(Res.string.playback),
                 icon = Icons.Outlined.PlayCircle,
@@ -996,7 +1071,7 @@ fun SettingScreen(
                 }
             }
         }
-        item(key = "crossfade_settings") {
+        if (matchQuery(crossfadeLabel)) item(key = "crossfade_settings") {
             Column {
                 SettingItem(
                     title = stringResource(Res.string.crossfade),
@@ -1086,7 +1161,7 @@ fun SettingScreen(
                 }
             }
         }
-        item(key = "lyrics") {
+        if (matchQuery(lyricsLabel)) item(key = "lyrics") {
             SettingSection(
                 title = stringResource(Res.string.lyrics),
                 icon = Icons.Outlined.Lyrics,
@@ -1249,7 +1324,7 @@ fun SettingScreen(
                 )
             }
         }
-        item(key = "AI") {
+        if (matchQuery(aiLabel)) item(key = "AI") {
             SettingSection(
                 title = stringResource(Res.string.ai),
                 icon = Icons.Outlined.Psychology,
@@ -1420,7 +1495,7 @@ fun SettingScreen(
                 )
             }
         }
-        item(key = "spotify") {
+        if (matchQuery(spotifyLabel)) item(key = "spotify") {
             SettingSection(
                 title = stringResource(Res.string.spotify),
                 icon = Icons.Outlined.MusicNote,
@@ -1465,7 +1540,7 @@ fun SettingScreen(
                 )
             }
         }
-        item(key = "discord") {
+        if (matchQuery(discordLabel)) item(key = "discord") {
             SettingSection(
                 title = stringResource(Res.string.discord_integration),
                 icon = Icons.Outlined.SettingsEthernet,
@@ -1507,7 +1582,7 @@ fun SettingScreen(
                 }
             }
         }
-        item(key = "sponsor_block") {
+        if (matchQuery(sponsorLabel)) item(key = "sponsor_block") {
             SettingSection(
                 title = stringResource(Res.string.sponsorBlock),
                 icon = Icons.Outlined.Tune,
@@ -1579,7 +1654,7 @@ fun SettingScreen(
             }
         }
         if (getPlatform() == Platform.Android) {
-            item(key = "storage") {
+            if (matchQuery(storageLabel)) item(key = "storage") {
                 SettingSection(
                     title = stringResource(Res.string.storage),
                     icon = Icons.Outlined.Storage,
@@ -1887,7 +1962,7 @@ fun SettingScreen(
                 }
             }
         }
-        item(key = "privacy") {
+        if (matchQuery(privacyLabel)) item(key = "privacy") {
             SettingSection(
                 title = stringResource(Res.string.privacy),
                 icon = Icons.Outlined.Lock,
@@ -1900,7 +1975,7 @@ fun SettingScreen(
                 )
             }
         }
-        item(key = "backup") {
+        if (matchQuery(backupLabel)) item(key = "backup") {
             SettingSection(
                 title = stringResource(Res.string.backup),
                 icon = Icons.Outlined.Backup,
@@ -2021,7 +2096,7 @@ fun SettingScreen(
                 )
             }
         }
-        item(key = "about_us") {
+        if (matchQuery(aboutLabel)) item(key = "about_us") {
             SettingSection(
                 title = stringResource(Res.string.about_us),
                 icon = Icons.Outlined.Info,
