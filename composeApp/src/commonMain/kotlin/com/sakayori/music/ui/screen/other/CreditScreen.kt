@@ -3,10 +3,13 @@ package com.sakayori.music.ui.screen.other
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +38,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.sakayori.music.expect.openUrl
 import com.sakayori.music.ui.component.RippleIconButton
 import com.sakayori.music.ui.theme.typo
@@ -108,7 +116,36 @@ fun CreditScreen(
             textAlign = TextAlign.Start,
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(Res.string.team),
+            style = typo().labelMedium,
+            color = Color(0xFF00BCD4),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 25.dp, vertical = 4.dp),
+            textAlign = TextAlign.Start,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 25.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+        ) {
+            TeamMember(
+                username = "Sakayorii",
+                role = stringResource(Res.string.lead_maintainer),
+            )
+            TeamMember(
+                username = "Lammk",
+                role = stringResource(Res.string.co_maintainer),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
             TextButton(
@@ -221,4 +258,40 @@ fun CreditScreen(
                 Color.Unspecified,
             ),
     )
+}
+
+@Composable
+private fun TeamMember(
+    username: String,
+    role: String,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable {
+            openUrl("https://github.com/$username")
+        },
+    ) {
+        AsyncImage(
+            model =
+                ImageRequest
+                    .Builder(LocalPlatformContext.current)
+                    .data("https://github.com/$username.png")
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .diskCacheKey("github-$username")
+                    .crossfade(300)
+                    .build(),
+            contentDescription = null,
+            modifier = Modifier.size(72.dp).clip(CircleShape),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = username,
+            style = typo().bodyMedium,
+        )
+        Text(
+            text = role,
+            style = typo().bodySmall,
+            color = Color.White.copy(alpha = 0.6f),
+        )
+    }
 }

@@ -108,6 +108,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
@@ -121,7 +122,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -296,6 +299,7 @@ fun NowPlayingScreenContent(
     val screenInfo = getScreenSizeInfo()
 
     val localDensity = LocalDensity.current
+    val haptic = LocalHapticFeedback.current
     val uriHandler = LocalUriHandler.current
 
     val controllerState by sharedViewModel.controllerState.collectAsStateWithLifecycle()
@@ -711,6 +715,7 @@ fun NowPlayingScreenContent(
                             when {
                                 dragAmount < -90 -> {
                                     if (controllerState.isNextAvailable) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         sharedViewModel.onUIEvent(UIEvent.Next)
                                         isSwipeHandled = true
                                     }
@@ -718,6 +723,7 @@ fun NowPlayingScreenContent(
 
                                 dragAmount > 90 -> {
                                     if (controllerState.isPreviousAvailable) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         sharedViewModel.onUIEvent(UIEvent.Previous)
                                         isSwipeHandled = true
                                     }
@@ -929,6 +935,7 @@ fun NowPlayingScreenContent(
                             )
 
                             Box(
+                                contentAlignment = Alignment.Center,
                                 modifier =
                                     Modifier
                                         .align(Alignment.CenterHorizontally)
@@ -945,6 +952,23 @@ fun NowPlayingScreenContent(
                                             if (showHideMiddleLayout) 1f else 0f,
                                         ),
                             ) {
+                                if (isBlurEnabled && !screenDataState.isVideo) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.95f)
+                                            .aspectRatio(1f)
+                                            .blur(40.dp)
+                                            .background(
+                                                Brush.radialGradient(
+                                                    colors = listOf(
+                                                        spotShadowColor.copy(alpha = 0.6f),
+                                                        Color.Transparent,
+                                                    ),
+                                                ),
+                                                shape = CircleShape,
+                                            ),
+                                    )
+                                }
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier =
@@ -1338,6 +1362,7 @@ fun NowPlayingScreenContent(
                                         }
                                         Spacer(modifier = Modifier.size(12.dp))
                                         HeartCheckBox(checked = controllerState.isLiked, size = 32) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             sharedViewModel.onUIEvent(UIEvent.ToggleLike)
                                         }
                                     }
@@ -2092,6 +2117,7 @@ fun NowPlayingScreenContent(
                         }
                         Spacer(modifier = Modifier.width(15.dp))
                         HeartCheckBox(checked = controllerState.isLiked, size = 30) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             sharedViewModel.onUIEvent(UIEvent.ToggleLike)
                         }
                         Spacer(modifier = Modifier.width(15.dp))

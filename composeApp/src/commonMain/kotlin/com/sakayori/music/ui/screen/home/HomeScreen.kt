@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
@@ -44,9 +45,12 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -73,6 +77,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -150,6 +155,9 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.sakayori.music.generated.resources.Res
 import com.sakayori.music.generated.resources.all
 import com.sakayori.music.generated.resources.app_name
+import com.sakayori.music.generated.resources.no_content_available
+import com.sakayori.music.generated.resources.pull_down_to_refresh
+import com.sakayori.music.generated.resources.retry
 import com.sakayori.music.generated.resources.baseline_history_24
 import com.sakayori.music.generated.resources.baseline_settings_24
 import com.sakayori.music.generated.resources.cancel
@@ -461,7 +469,40 @@ fun HomeScreen(
             },
         ) {
             Crossfade(targetState = loading, label = "Home Shimmer") { loading ->
-                if (!loading) {
+                if (!loading && homeData.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.CloudOff,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.3f),
+                            modifier = Modifier.size(64.dp),
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(Res.string.no_content_available),
+                            style = typo().titleMedium,
+                            color = Color.White.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(Res.string.pull_down_to_refresh),
+                            style = typo().bodySmall,
+                            color = Color.White.copy(alpha = 0.5f),
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        TextButton(onClick = { onRefresh() }) {
+                            Text(stringResource(Res.string.retry), color = Color(0xFF00BCD4))
+                        }
+                    }
+                } else if (!loading) {
                     LazyColumn(
                         state = scrollState,
                         verticalArrangement = Arrangement.spacedBy(28.dp),
