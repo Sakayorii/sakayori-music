@@ -355,6 +355,7 @@
     <string name="no_content_available">No Content Available</string>
     <string name="recent_searches">Recent Searches</string>
     <string name="search_settings">Search settings...</string>
+    <string name="queue_is_empty">Queue Is Empty</string>
     <string name="pull_down_to_refresh">Pull down to refresh, or check your internet connection.</string>
     <string name="lead_maintainer">Lead Maintainer</string>
     <string name="co_maintainer">Co-Maintainer</string>

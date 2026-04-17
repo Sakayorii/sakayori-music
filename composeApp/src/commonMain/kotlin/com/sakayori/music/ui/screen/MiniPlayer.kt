@@ -73,8 +73,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
@@ -142,6 +145,7 @@ fun MiniPlayer(
     val rawLiquidGlassEnabled by sharedViewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
     val isLowEnd = remember { com.sakayori.music.utils.DeviceCapability.isLowEndDevice() }
     val isLiquidGlassEnabled = if (isLowEnd) DataStoreManager.FALSE else rawLiquidGlassEnabled
+    val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
     val controllerState by sharedViewModel.controllerState.collectAsStateWithLifecycle()
     val timelineState by sharedViewModel.timeline.collectAsStateWithLifecycle()
 
@@ -338,6 +342,35 @@ fun MiniPlayer(
                     ),
         ) {
             Box(modifier = Modifier.fillMaxHeight()) {
+                if (isBlurEnabled && songEntity?.thumbnails != null) {
+                    AsyncImage(
+                        model = ImageRequest
+                            .Builder(LocalPlatformContext.current)
+                            .data(songEntity?.thumbnails)
+                            .size(200)
+                            .crossfade(550)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .blur(30.dp)
+                            .alpha(0.35f),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.4f),
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.4f),
+                                    ),
+                                ),
+                            ),
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier =
@@ -391,6 +424,7 @@ fun MiniPlayer(
                                     ImageRequest
                                         .Builder(LocalPlatformContext.current)
                                         .data(songEntity?.thumbnails)
+                                        .size(400)
                                         .crossfade(550)
                                         .build(),
                                 placeholder = painterResource(Res.drawable.holder),
@@ -578,6 +612,7 @@ fun MiniPlayer(
                                 ImageRequest
                                     .Builder(LocalPlatformContext.current)
                                     .data(songEntity?.thumbnails)
+                                    .size(400)
                                     .crossfade(550)
                                     .build(),
                             placeholder = painterResource(Res.drawable.holder),
