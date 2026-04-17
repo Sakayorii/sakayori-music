@@ -26,8 +26,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.automirrored.sharp.Sort
 import androidx.compose.material.icons.rounded.AutoGraph
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -48,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -454,6 +457,16 @@ fun LibraryScreen(
                     containerColor = Color.Transparent,
                 ),
             actions = {
+                var isGridView by rememberSaveable { mutableStateOf(true) }
+                IconButton(
+                    onClick = { isGridView = !isGridView },
+                ) {
+                    Icon(
+                        if (isGridView) Icons.AutoMirrored.Rounded.ViewList else Icons.Rounded.GridView,
+                        null,
+                        tint = Color.White,
+                    )
+                }
                 var sortMenuExpanded by remember { mutableStateOf(false) }
                 Box {
                     IconButton(
