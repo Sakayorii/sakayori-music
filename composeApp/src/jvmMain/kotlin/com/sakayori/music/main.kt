@@ -32,6 +32,7 @@ import com.sakayori.data.di.loader.loadAllModules
 import com.sakayori.domain.manager.DataStoreManager
 import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
 import com.sakayori.music.extension.getStringBlocking
+import com.sakayori.music.extension.makeDarkToast
 import com.sakayori.domain.mediaservice.handler.ToastType
 import com.sakayori.music.di.viewModelModule
 import com.sakayori.music.ui.component.CustomTitleBar
@@ -162,7 +163,7 @@ fun main(args: Array<String>) {
 
         splash.updateStatus("Configuring player...")
         mediaPlayerHandler.showToast = { type ->
-            showToast(
+            makeDarkToast(
                 when (type) {
                     ToastType.ExplicitContent -> {
                         getStringBlocking(Res.string.explicit_content_blocked)
@@ -285,28 +286,28 @@ fun main(args: Array<String>) {
                             val current = vm.controllerState.value.volume
                             val newVol = (current + 0.05f).coerceAtMost(1f)
                             vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.UpdateVolume(newVol))
-                            showToast("🔊 ${(newVol * 100).toInt()}%", multiplatform.network.cmptoast.ToastGravity.Top)
+                            makeDarkToast("🔊 ${(newVol * 100).toInt()}%", multiplatform.network.cmptoast.ToastGravity.Top)
                             true
                         }
                         Key.DirectionDown -> {
                             val current = vm.controllerState.value.volume
                             val newVol = (current - 0.05f).coerceAtLeast(0f)
                             vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.UpdateVolume(newVol))
-                            showToast("🔊 ${(newVol * 100).toInt()}%", multiplatform.network.cmptoast.ToastGravity.Top)
+                            makeDarkToast("🔊 ${(newVol * 100).toInt()}%", multiplatform.network.cmptoast.ToastGravity.Top)
                             true
                         }
                         Key.M -> {
                             val current = vm.controllerState.value.volume
                             val newVol = if (current > 0f) 0f else 1f
                             vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.UpdateVolume(newVol))
-                            showToast(
+                            makeDarkToast(
                                 if (newVol > 0f) "🔊 Unmuted" else "🔇 Muted",
                                 multiplatform.network.cmptoast.ToastGravity.Top,
                             )
                             true
                         }
                         Key.Slash, Key.H -> {
-                            showToast(
+                            makeDarkToast(
                                 "Shortcuts: Space=Play · ←→=Skip · ↑↓=Volume · M=Mute · L=Like · S=Shuffle · R=Repeat",
                                 multiplatform.network.cmptoast.ToastGravity.Top,
                             )

@@ -108,6 +108,18 @@ fun CreditScreen(
         )
 
         Text(
+            text = buildString {
+                append("${com.sakayori.music.utils.DeviceCapability.getRamGb()}GB RAM")
+                append(" · ")
+                append("${com.sakayori.music.utils.DeviceCapability.getCpuCores()} cores")
+                if (com.sakayori.music.utils.DeviceCapability.isLowEndDevice()) append(" · Low-end")
+            },
+            style = typo().bodySmall,
+            color = Color.White.copy(alpha = 0.4f),
+            fontSize = 10.sp,
+        )
+
+        Text(
             text = stringResource(Res.string.sakayori_dev),
             style = typo().bodyMedium,
         )

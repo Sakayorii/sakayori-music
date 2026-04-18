@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sakayori.music.extension.greyScale
 import com.sakayori.music.ui.theme.typo
 import com.sakayori.music.ui.theme.white
@@ -47,6 +48,7 @@ fun SettingItem(
     onClick: (() -> Unit)? = null,
     switch: Pair<Boolean, ((Boolean) -> Unit)>? = null,
     onDisable: (() -> Unit)? = null,
+    newBadge: Boolean = false,
     otherView: @Composable (() -> Unit)? = null,
 ) {
     var showReasonDialog by remember { mutableStateOf(false) }
@@ -97,14 +99,33 @@ fun SettingItem(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.Start,
             ) {
-                Text(
-                    text = title,
-                    style =
-                        typo().labelMedium.let {
-                            if (!isEnable) it.greyScale() else it
-                        },
-                    color = white,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        style =
+                            typo().labelMedium.let {
+                                if (!isEnable) it.greyScale() else it
+                            },
+                        color = white,
+                    )
+                    if (newBadge) {
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF00BCD4))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = "NEW",
+                                style = typo().labelSmall,
+                                color = Color.Black,
+                                fontSize = 9.sp,
+                            )
+                        }
+                    }
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = subtitle,

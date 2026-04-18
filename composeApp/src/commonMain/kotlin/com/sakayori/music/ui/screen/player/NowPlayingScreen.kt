@@ -115,6 +115,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
@@ -1268,7 +1270,13 @@ fun NowPlayingScreenContent(
                                         Column(Modifier.weight(1f)) {
                                             Text(
                                                 text = screenDataState.nowPlayingTitle,
-                                                style = typo().headlineMedium,
+                                                style = typo().headlineMedium.copy(
+                                                    shadow = Shadow(
+                                                        color = Color.Black.copy(alpha = 0.55f),
+                                                        offset = Offset(0f, 2f),
+                                                        blurRadius = 8f,
+                                                    ),
+                                                ),
                                                 maxLines = 1,
                                                 color = Color.White,
                                                 modifier =
@@ -1299,7 +1307,13 @@ fun NowPlayingScreenContent(
                                                 item(screenDataState.artistName) {
                                                     Text(
                                                         text = screenDataState.artistName,
-                                                        style = typo().bodyMedium,
+                                                        style = typo().bodyMedium.copy(
+                                                            shadow = Shadow(
+                                                                color = Color.Black.copy(alpha = 0.5f),
+                                                                offset = Offset(0f, 1f),
+                                                                blurRadius = 6f,
+                                                            ),
+                                                        ),
                                                         maxLines = 1,
                                                         modifier =
                                                             Modifier
@@ -2078,7 +2092,13 @@ fun NowPlayingScreenContent(
                             ) {
                                 Text(
                                     text = screenDataState.nowPlayingTitle,
-                                    style = typo().bodyMedium,
+                                    style = typo().bodyMedium.copy(
+                                        shadow = Shadow(
+                                            color = Color.Black.copy(alpha = 0.5f),
+                                            offset = Offset(0f, 1f),
+                                            blurRadius = 4f,
+                                        ),
+                                    ),
                                     color = Color.White,
                                     maxLines = 1,
                                     modifier =
@@ -2108,7 +2128,13 @@ fun NowPlayingScreenContent(
                                     ) {
                                         Text(
                                             text = screenDataState.artistName,
-                                            style = typo().bodySmall,
+                                            style = typo().bodySmall.copy(
+                                                shadow = Shadow(
+                                                    color = Color.Black.copy(alpha = 0.45f),
+                                                    offset = Offset(0f, 1f),
+                                                    blurRadius = 3f,
+                                                ),
+                                            ),
                                             maxLines = 1,
                                             modifier =
                                                 Modifier

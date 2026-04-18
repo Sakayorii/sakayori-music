@@ -29,7 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.automirrored.sharp.Sort
 import androidx.compose.material.icons.rounded.AutoGraph
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -122,6 +124,7 @@ import com.sakayori.music.generated.resources.SakayoriMusic_charts
 import com.sakayori.music.generated.resources.your_library
 import com.sakayori.music.generated.resources.your_playlists
 import com.sakayori.music.generated.resources.your_youtube_playlists
+import com.sakayori.music.generated.resources.filter_library
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -155,6 +158,18 @@ fun LibraryScreen(
         mutableStateOf(0.dp)
     }
     var showAddSheet by remember { mutableStateOf(false) }
+    var filterQuery by rememberSaveable { mutableStateOf("") }
+    var showFilterInput by rememberSaveable { mutableStateOf(false) }
+
+    fun <T> LocalResource<List<T>>.applyFilter(titleSelector: (T) -> String): LocalResource<List<T>> {
+        if (filterQuery.isBlank()) return this
+        val filtered = this.data?.filter { titleSelector(it).contains(filterQuery, ignoreCase = true) } ?: emptyList()
+        return when (this) {
+            is LocalResource.Success -> LocalResource.Success(filtered)
+            is LocalResource.Error -> LocalResource.Error(this.message ?: "", filtered)
+            is LocalResource.Loading -> LocalResource.Loading()
+        }
+    }
 
     LaunchedEffect(nowPlaying) {
         viewModel.getRecentlyAdded()
@@ -273,7 +288,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    youTubePlaylist,
+                    youTubePlaylist.applyFilter { it.title },
                     emptyText = Res.string.no_YouTube_playlists,
                     onScrolling = onScrolling,
                 ) {
@@ -285,7 +300,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    youTubeMixForYou,
+                    youTubeMixForYou.applyFilter { it.title },
                     emptyText = Res.string.no_mixes_found,
                     onScrolling = onScrolling,
                 ) {
@@ -297,7 +312,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    yourLocalPlaylist,
+                    yourLocalPlaylist.applyFilter { it.title },
                     onScrolling = onScrolling,
                     emptyText = Res.string.no_playlists_added,
                     createNewPlaylist = {
@@ -312,7 +327,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    favoritePlaylist,
+                    favoritePlaylist.applyFilter(::playlistTypeTitle),
                     emptyText = Res.string.no_favorite_playlists,
                     onScrolling = onScrolling,
                 ) {
@@ -324,7 +339,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    downloadedPlaylist,
+                    downloadedPlaylist.applyFilter(::playlistTypeTitle),
                     emptyText = Res.string.no_playlists_downloaded,
                     onScrolling = onScrolling,
                 ) {
@@ -336,7 +351,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    favoritePodcasts,
+                    favoritePodcasts.applyFilter(::playlistTypeTitle),
                     emptyText = Res.string.no_favorite_podcasts,
                     onScrolling = onScrolling,
                 ) {
@@ -348,7 +363,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    chartPlaylists,
+                    chartPlaylists.applyFilter { it.title },
                     emptyText = Res.string.no_charts_found,
                     onScrolling = onScrolling,
                 ) {
@@ -457,6 +472,18 @@ fun LibraryScreen(
                     containerColor = Color.Transparent,
                 ),
             actions = {
+                IconButton(
+                    onClick = {
+                        showFilterInput = !showFilterInput
+                        if (!showFilterInput) filterQuery = ""
+                    },
+                ) {
+                    Icon(
+                        if (showFilterInput) Icons.Rounded.Close else Icons.Rounded.Search,
+                        null,
+                        tint = if (showFilterInput) Color(0xFF00BCD4) else Color.White,
+                    )
+                }
                 var isGridView by rememberSaveable { mutableStateOf(true) }
                 IconButton(
                     onClick = { isGridView = !isGridView },
@@ -534,6 +561,36 @@ fun LibraryScreen(
                 }
             },
         )
+        AnimatedVisibility(visible = showFilterInput) {
+            OutlinedTextField(
+                value = filterQuery,
+                onValueChange = { filterQuery = it },
+                placeholder = {
+                    Text(
+                        text = stringResource(Res.string.filter_library),
+                        color = Color.White.copy(alpha = 0.5f),
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Rounded.Search,
+                        null,
+                        tint = Color.White.copy(alpha = 0.6f),
+                    )
+                },
+                trailingIcon = {
+                    if (filterQuery.isNotEmpty()) {
+                        IconButton(onClick = { filterQuery = "" }) {
+                            Icon(Icons.Rounded.Close, null, tint = Color.White.copy(alpha = 0.6f))
+                        }
+                    }
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 15.dp, vertical = 4.dp),
+            )
+        }
         Row(
             modifier =
                 Modifier
@@ -567,4 +624,12 @@ fun LibraryScreen(
             }
         }
     }
+}
+
+private fun playlistTypeTitle(item: com.sakayori.domain.data.type.PlaylistType): String = when (item) {
+    is com.sakayori.domain.data.entities.LocalPlaylistEntity -> item.title
+    is com.sakayori.domain.data.entities.PlaylistEntity -> item.title
+    is com.sakayori.domain.data.entities.AlbumEntity -> item.title
+    is com.sakayori.domain.data.entities.PodcastsEntity -> item.title
+    else -> ""
 }

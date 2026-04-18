@@ -8,6 +8,8 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
+import java.awt.geom.AffineTransform
+import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import javax.swing.BorderFactory
 import javax.swing.ImageIcon
@@ -25,7 +27,36 @@ class SplashScreen {
     private var statusLabel: JLabel? = null
     private var progressBar: JProgressBar? = null
     private var taglineLabel: JLabel? = null
+    private var vinylPanel: VinylPanel? = null
+    private var spinTimer: Timer? = null
     private var currentProgress = 0
+
+    private class VinylPanel(private val image: BufferedImage?, private val size: Int) : JPanel() {
+        var angle: Double = 0.0
+            set(value) {
+                field = value
+                repaint()
+            }
+
+        init {
+            preferredSize = Dimension(size, size)
+            isOpaque = false
+        }
+
+        override fun paintComponent(g: Graphics) {
+            val g2 = g as Graphics2D
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+            if (image != null) {
+                val cx = width / 2.0
+                val cy = height / 2.0
+                val tx = AffineTransform.getRotateInstance(angle, cx, cy)
+                tx.translate(cx - size / 2.0, cy - size / 2.0)
+                tx.scale(size.toDouble() / image.width, size.toDouble() / image.height)
+                g2.drawImage(image, tx, null)
+            }
+        }
+    }
 
     private val taglines = listOf(
         "Ad-free YouTube Music on your device",
@@ -80,8 +111,9 @@ class SplashScreen {
                     stream?.let { ImageIO.read(it) }
                 }
                 if (img != null) {
-                    val scaled = img.getScaledInstance(56, 56, java.awt.Image.SCALE_SMOOTH)
-                    topPanel.add(JLabel(ImageIcon(scaled)))
+                    val panel = VinylPanel(img, 56)
+                    vinylPanel = panel
+                    topPanel.add(panel)
                 }
             } catch (_: Exception) {}
 
@@ -155,6 +187,12 @@ class SplashScreen {
                     (e.source as Timer).stop()
                 }
             }.start()
+
+            spinTimer = Timer(16) {
+                val panel = vinylPanel ?: return@Timer
+                panel.angle += Math.toRadians(1.5)
+            }
+            spinTimer?.start()
         }
     }
 
@@ -187,6 +225,8 @@ class SplashScreen {
                 f.opacity = next
                 if (next <= 0f) {
                     (e.source as Timer).stop()
+                    spinTimer?.stop()
+                    spinTimer = null
                     f.isVisible = false
                     f.dispose()
                     frame = null

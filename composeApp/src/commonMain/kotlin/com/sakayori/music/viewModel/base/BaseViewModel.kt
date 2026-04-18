@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import androidx.compose.ui.graphics.Color
 import multiplatform.network.cmptoast.ToastDuration
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
@@ -59,6 +60,10 @@ abstract class BaseViewModel :
             message = message ?: "NO MESSAGE",
             duration = ToastDuration.Short,
             gravity = ToastGravity.Bottom,
+            backgroundColor = Color(0xFF1A1A1A),
+            textColor = Color.White,
+            cornerRadius = 8,
+            bottomPadding = 80,
         )
     }
 

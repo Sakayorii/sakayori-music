@@ -30,8 +30,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,6 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -338,69 +342,109 @@ fun HomeItemContentPlaylist(
                     is AlbumsResult -> data.thumbnails.lastOrNull()?.url
                     else -> null
                 }
-            AsyncImage(
-                model =
-                    ImageRequest
-                        .Builder(LocalPlatformContext.current)
-                        .data(thumb)
-                        .diskCachePolicy(CachePolicy.ENABLED)
-                        .diskCacheKey(thumb)
-                        .crossfade(550)
-                        .build(),
-                placeholder =
-                    when (data) {
-                        is LocalPlaylistEntity -> {
-                            painterPlaylistThumbnail(
-                                data.title,
-                                style = typo().bodySmall,
-                                thumbSize * 0.9f to thumbSize * 0.9f,
+            Box(modifier = Modifier.size(thumbSize)) {
+                AsyncImage(
+                    model =
+                        ImageRequest
+                            .Builder(LocalPlatformContext.current)
+                            .data(thumb)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .diskCacheKey(thumb)
+                            .crossfade(550)
+                            .build(),
+                    placeholder =
+                        when (data) {
+                            is LocalPlaylistEntity -> {
+                                painterPlaylistThumbnail(
+                                    data.title,
+                                    style = typo().bodySmall,
+                                    thumbSize * 0.9f to thumbSize * 0.9f,
+                                )
+                            }
+
+                            is ChartItem -> {
+                                painterPlaylistThumbnail(
+                                    data.title,
+                                    style = typo().bodySmall,
+                                    thumbSize * 0.9f to thumbSize * 0.9f,
+                                )
+                            }
+
+                            else -> {
+                                painterResource(Res.drawable.holder)
+                            }
+                        },
+                    error =
+                        when (data) {
+                            is LocalPlaylistEntity -> {
+                                painterPlaylistThumbnail(
+                                    data.title,
+                                    style = typo().bodySmall,
+                                    thumbSize * 0.9f to thumbSize * 0.9f,
+                                )
+                            }
+
+                            is ChartItem -> {
+                                painterPlaylistThumbnail(
+                                    data.title,
+                                    style = typo().bodySmall,
+                                    thumbSize * 0.9f to thumbSize * 0.9f,
+                                )
+                            }
+
+                            else -> {
+                                painterResource(Res.drawable.holder)
+                            }
+                        },
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier =
+                        Modifier
+                            .size(thumbSize)
+                            .aspectRatio(1f)
+                            .clip(
+                                RoundedCornerShape(10.dp),
+                            ),
+                )
+                if (data is LocalPlaylistEntity) {
+                    val trackCount = data.tracks?.size ?: 0
+                    if (trackCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(6.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color.Black.copy(alpha = 0.7f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = trackCount.toString(),
+                                style = typo().labelSmall,
+                                color = Color.White,
+                                fontSize = 10.sp,
                             )
                         }
-
-                        is ChartItem -> {
-                            painterPlaylistThumbnail(
-                                data.title,
-                                style = typo().bodySmall,
-                                thumbSize * 0.9f to thumbSize * 0.9f,
+                    }
+                    if (data.downloadState == DownloadState.STATE_DOWNLOADED) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(6.dp)
+                                .size(22.dp)
+                                .clip(RoundedCornerShape(11.dp))
+                                .background(Color(0xFF00BCD4)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Downloading,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(14.dp),
                             )
                         }
-
-                        else -> {
-                            painterResource(Res.drawable.holder)
-                        }
-                    },
-                error =
-                    when (data) {
-                        is LocalPlaylistEntity -> {
-                            painterPlaylistThumbnail(
-                                data.title,
-                                style = typo().bodySmall,
-                                thumbSize * 0.9f to thumbSize * 0.9f,
-                            )
-                        }
-
-                        is ChartItem -> {
-                            painterPlaylistThumbnail(
-                                data.title,
-                                style = typo().bodySmall,
-                                thumbSize * 0.9f to thumbSize * 0.9f,
-                            )
-                        }
-
-                        else -> {
-                            painterResource(Res.drawable.holder)
-                        }
-                    },
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier =
-                    Modifier
-                        .size(thumbSize)
-                        .aspectRatio(1f)
-                        .clip(
-                            RoundedCornerShape(10.dp),
-                        ),
-            )
+                    }
+                }
+            }
             Text(
                 text =
                     when (data) {

@@ -530,8 +530,17 @@ fun MiniPlayer(
                                                 Text(
                                                     text = "${sleepTimerState.timeRemaining}m",
                                                     style = typo().labelSmall,
-                                                    color = Color(0xFF06b6b6),
+                                                    color = Color(0xFF00BCD4),
                                                     modifier = Modifier.padding(horizontal = 4.dp),
+                                                )
+                                            }
+                                            if (timelineState.total > 0L && timelineState.current >= 0L) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "${formatDuration(timelineState.current)} / ${formatDuration(timelineState.total)}",
+                                                    style = typo().labelSmall,
+                                                    color = textColor.copy(alpha = 0.55f),
+                                                    maxLines = 1,
                                                 )
                                             }
                                         }

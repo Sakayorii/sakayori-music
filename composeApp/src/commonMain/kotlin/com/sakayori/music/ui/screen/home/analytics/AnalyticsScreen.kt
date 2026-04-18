@@ -32,6 +32,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -168,10 +170,32 @@ fun AnalyticsScreen(
 
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val dayRanges = remember { AnalyticsUiState.DayRange.entries.toTypedArray() }
+        val currentRangeIndex = dayRanges.indexOf(uiState.dayRange).coerceAtLeast(0)
+        var horizontalDragTotal by remember { mutableStateOf(0f) }
         LazyColumn(
             modifier =
                 Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .pointerInput(uiState.dayRange) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                val threshold = 120f
+                                if (horizontalDragTotal < -threshold) {
+                                    val next = (currentRangeIndex + 1).coerceAtMost(dayRanges.lastIndex)
+                                    if (next != currentRangeIndex) analyticsViewModel.setDayRange(dayRanges[next])
+                                } else if (horizontalDragTotal > threshold) {
+                                    val prev = (currentRangeIndex - 1).coerceAtLeast(0)
+                                    if (prev != currentRangeIndex) analyticsViewModel.setDayRange(dayRanges[prev])
+                                }
+                                horizontalDragTotal = 0f
+                            },
+                            onDragCancel = { horizontalDragTotal = 0f },
+                            onHorizontalDrag = { _, dragAmount ->
+                                horizontalDragTotal += dragAmount
+                            },
+                        )
+                    },
         ) {
             item {
                 Box(

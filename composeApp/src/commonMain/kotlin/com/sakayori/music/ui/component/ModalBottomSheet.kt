@@ -48,6 +48,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -161,6 +162,7 @@ import kotlinx.coroutines.runBlocking
 import com.sakayori.music.extension.getStringBlocking
 import multiplatform.network.cmptoast.ToastGravity
 import multiplatform.network.cmptoast.showToast
+import com.sakayori.music.extension.makeDarkToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
@@ -189,6 +191,8 @@ import com.sakayori.music.generated.resources.baseline_people_alt_24
 import com.sakayori.music.generated.resources.baseline_playlist_add_24
 import com.sakayori.music.generated.resources.baseline_queue_music_24
 import com.sakayori.music.generated.resources.queue_is_empty
+import com.sakayori.music.generated.resources.clear_queue
+import com.sakayori.music.generated.resources.clear_queue_description
 import com.sakayori.music.generated.resources.queue_position_of
 import com.sakayori.music.generated.resources.queue_track_count
 import com.sakayori.music.generated.resources.queue_track_count_single
@@ -937,6 +941,7 @@ fun QueueBottomSheet(
     var overscrollJob by remember { mutableStateOf<Job?>(null) }
     var shouldShowQueueItemBottomSheet by rememberSaveable { mutableStateOf(false) }
     var clickMoreIndex by rememberSaveable { mutableIntStateOf(0) }
+    var showClearQueueDialog by rememberSaveable { mutableStateOf(false) }
     val screenDataState by sharedViewModel.nowPlayingScreenData.collectAsStateWithLifecycle()
     val songEntity by sharedViewModel.nowPlayingState.map { it?.songEntity }.collectAsState(null)
     val queueData by musicServiceHandler.queueData.collectAsStateWithLifecycle()
@@ -1123,6 +1128,20 @@ fun QueueBottomSheet(
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (queue.isNotEmpty()) {
+                            IconButton(
+                                onClick = { showClearQueueDialog = true },
+                                modifier = Modifier.size(36.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.DeleteSweep,
+                                    contentDescription = stringResource(Res.string.clear_queue),
+                                    tint = Color.White.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
                         Text(
                             text = stringResource(Res.string.endless_queue),
                             style = typo().bodySmall,
@@ -1138,6 +1157,45 @@ fun QueueBottomSheet(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                     }
+                }
+                if (showClearQueueDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showClearQueueDialog = false },
+                        title = {
+                            Text(
+                                text = stringResource(Res.string.clear_queue),
+                                color = Color.White,
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = stringResource(Res.string.clear_queue_description),
+                                color = Color.White.copy(alpha = 0.8f),
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showClearQueueDialog = false
+                                    musicServiceHandler.clearMediaItems()
+                                },
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.clear_queue),
+                                    color = Color(0xFFE57373),
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showClearQueueDialog = false }) {
+                                Text(
+                                    text = stringResource(Res.string.cancel),
+                                    color = Color.White,
+                                )
+                            }
+                        },
+                        containerColor = Color(0xFF1A1A1A),
+                    )
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 if (queue.isEmpty()) {
@@ -2463,7 +2521,7 @@ fun SleepTimerBottomSheet(
                                         onDismiss()
                                     }
                                 } else {
-                                    showToast(
+                                    makeDarkToast(
                                         getStringBlocking(Res.string.sleep_timer_set_error),
                                         ToastGravity.Bottom,
                                     )
@@ -2477,7 +2535,7 @@ fun SleepTimerBottomSheet(
                                 }
                             }
                             else -> {
-                                showToast(
+                                makeDarkToast(
                                     getStringBlocking(Res.string.sleep_timer_set_error),
                                     ToastGravity.Bottom,
                                 )
@@ -2824,7 +2882,7 @@ fun PlaylistBottomSheet(
                     TextButton(
                         onClick = {
                             if (newTitle.isBlank()) {
-                                showToast(playlistNameError, ToastGravity.Bottom)
+                                makeDarkToast(playlistNameError, ToastGravity.Bottom)
                             } else {
                                 onEditTitle(newTitle)
                                 hideEditTitleBottomSheet()
@@ -2987,7 +3045,7 @@ fun LocalPlaylistBottomSheet(
                     TextButton(
                         onClick = {
                             if (newTitle.isBlank()) {
-                                showToast(playlistNameError, ToastGravity.Bottom)
+                                makeDarkToast(playlistNameError, ToastGravity.Bottom)
                             } else {
                                 onEditTitle(newTitle)
                                 hideEditTitleBottomSheet()
@@ -3238,11 +3296,11 @@ fun DevLogInBottomSheet(
                         if (value.isNotEmpty() && value.isNotBlank() &&
                             (type != DevLogInType.YouTube || (secondValue.isNotEmpty() && secondValue.isNotBlank()))
                         ) {
-                            showToast(getStringBlocking(Res.string.processing), ToastGravity.Bottom)
+                            makeDarkToast(getStringBlocking(Res.string.processing), ToastGravity.Bottom)
                             onDismiss()
                             onDone(value, secondValue)
                         } else {
-                            showToast(getStringBlocking(Res.string.can_not_be_empty), ToastGravity.Bottom)
+                            makeDarkToast(getStringBlocking(Res.string.can_not_be_empty), ToastGravity.Bottom)
                         }
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
@@ -3307,7 +3365,7 @@ fun DevCookieLogInBottomSheet(
                         val copied = stringResource(Res.string.copied_to_clipboard)
                         IconButton(onClick = {
                             copyToClipboard(cookie.first, cookie.second ?: "")
-                            showToast(copied, ToastGravity.Bottom)
+                            makeDarkToast(copied, ToastGravity.Bottom)
                         }) {
                             Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy")
                         }

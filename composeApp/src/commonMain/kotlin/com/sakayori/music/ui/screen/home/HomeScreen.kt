@@ -120,6 +120,7 @@ import com.sakayori.music.ui.component.ShareSavedLyricsDialog
 import com.sakayori.music.ui.navigation.destination.home.HomeDestination
 import com.sakayori.music.ui.navigation.destination.home.MoodDestination
 import com.sakayori.music.ui.navigation.destination.home.NotificationDestination
+import com.sakayori.music.ui.navigation.destination.search.SearchDestination
 import com.sakayori.music.ui.navigation.destination.home.RecentlySongsDestination
 import com.sakayori.music.ui.navigation.destination.home.SettingsDestination
 import com.sakayori.music.ui.navigation.destination.list.ArtistDestination
@@ -181,6 +182,7 @@ import com.sakayori.music.generated.resources.let_s_start_with_a_radio
 import com.sakayori.music.generated.resources.log_in_warning
 import com.sakayori.music.generated.resources.moods_amp_moment
 import com.sakayori.music.generated.resources.outline_notifications_24
+import com.sakayori.music.generated.resources.round_search_24
 import com.sakayori.music.generated.resources.party
 import com.sakayori.music.generated.resources.quick_picks
 import com.sakayori.music.generated.resources.relax
@@ -844,6 +846,14 @@ fun HomeTopAppBar(navController: NavController) {
             val date = now().time
             date.hour
         }
+    val notificationViewModel: com.sakayori.music.viewModel.NotificationViewModel = koinViewModel()
+    val notifications by notificationViewModel.listNotification.collectAsStateWithLifecycle()
+    val hasUnreadNotification by remember {
+        androidx.compose.runtime.derivedStateOf {
+            val list = notifications ?: emptyList()
+            list.isNotEmpty()
+        }
+    }
     TopAppBar(
         windowInsets =
             TopAppBarDefaults.windowInsets.exclude(
@@ -881,8 +891,22 @@ fun HomeTopAppBar(navController: NavController) {
             }
         },
         actions = {
-            RippleIconButton(resId = Res.drawable.outline_notifications_24) {
-                navController.navigate(NotificationDestination)
+            RippleIconButton(resId = Res.drawable.round_search_24) {
+                navController.navigate(SearchDestination)
+            }
+            Box {
+                RippleIconButton(resId = Res.drawable.outline_notifications_24) {
+                    navController.navigate(NotificationDestination)
+                }
+                if (hasUnreadNotification) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 10.dp, end = 10.dp)
+                            .size(8.dp)
+                            .background(Color(0xFF00BCD4), CircleShape),
+                    )
+                }
             }
             RippleIconButton(resId = Res.drawable.baseline_history_24) {
                 navController.navigate(RecentlySongsDestination)

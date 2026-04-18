@@ -226,21 +226,12 @@ fun ArtistScreen(
                                         Spacer(Modifier.width(12.dp))
                                     }
                                 }
-                                LimitedBorderAnimationView(
-                                    isAnimated = !isFollowed,
-                                    brush = Brush.sweepGradient(listOf(Color.Gray, Color.White)),
-                                    backgroundColor = Color.Transparent,
-                                    contentPadding = 0.dp,
-                                    borderWidth = 2.dp,
-                                    shape = ButtonDefaults.outlinedShape,
-                                    oneCircleDurationMillis = 3000,
-                                    interactionNumber = 1,
-                                ) {
-                                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                                    if (isFollowed) {
                                         OutlinedButton(
                                             onClick = {
                                                 viewModel.updateFollowed(
-                                                    if (isFollowed) 0 else 1,
+                                                    0,
                                                     state.data.channelId ?: return@OutlinedButton,
                                                 )
                                             },
@@ -250,11 +241,27 @@ fun ArtistScreen(
                                                     containerColor = Color.Transparent,
                                                 ),
                                         ) {
-                                            if (isFollowed) {
-                                                Text(text = stringResource(Res.string.followed), color = Color.White)
-                                            } else {
-                                                Text(text = stringResource(Res.string.follow), color = Color.White)
-                                            }
+                                            Text(text = stringResource(Res.string.followed), color = Color.White)
+                                        }
+                                    } else {
+                                        val channelId = state.data.channelId
+                                        androidx.compose.material3.Button(
+                                            onClick = {
+                                                if (channelId != null) {
+                                                    viewModel.updateFollowed(1, channelId)
+                                                }
+                                            },
+                                            colors =
+                                                ButtonDefaults.buttonColors().copy(
+                                                    containerColor = Color(0xFF00BCD4),
+                                                    contentColor = Color.Black,
+                                                ),
+                                        ) {
+                                            Text(
+                                                text = stringResource(Res.string.follow),
+                                                color = Color.Black,
+                                                style = typo().labelMedium,
+                                            )
                                         }
                                     }
                                 }

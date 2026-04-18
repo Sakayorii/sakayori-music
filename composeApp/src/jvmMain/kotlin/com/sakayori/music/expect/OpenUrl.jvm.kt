@@ -1,6 +1,6 @@
 package com.sakayori.music.expect
 
-import multiplatform.network.cmptoast.showToast
+import com.sakayori.music.extension.makeDarkToast
 import java.awt.Desktop
 import java.awt.Toolkit
 import java.awt.datatransfer.Clipboard
@@ -17,8 +17,9 @@ actual fun shareUrl(
     title: String,
     url: String,
 ) {
-    val stringSelection = StringSelection(url)
+    val text = "$title\n$url"
+    val stringSelection = StringSelection(text)
     val clipboard: Clipboard = Toolkit.getDefaultToolkit().systemClipboard
     clipboard.setContents(stringSelection, null)
-    showToast("Copied to clipboard")
+    makeDarkToast("Link Copied — $title")
 }

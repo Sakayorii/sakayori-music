@@ -24,9 +24,13 @@ actual fun shareUrl(
     val context: AppCompatActivity = getKoin().get()
     val shareIntent = Intent(Intent.ACTION_SEND)
     shareIntent.type = "text/plain"
-    shareIntent.putExtra(Intent.EXTRA_TEXT, url)
+    shareIntent.putExtra(Intent.EXTRA_TITLE, title)
+    shareIntent.putExtra(Intent.EXTRA_SUBJECT, title)
+    shareIntent.putExtra(Intent.EXTRA_TEXT, "$title\n$url")
     shareIntent.setFlags(FLAG_ACTIVITY_NEW_TASK)
     val chooserIntent =
-        Intent.createChooser(shareIntent, title)
+        Intent.createChooser(shareIntent, title).apply {
+            setFlags(FLAG_ACTIVITY_NEW_TASK)
+        }
     context.startActivity(chooserIntent)
 }

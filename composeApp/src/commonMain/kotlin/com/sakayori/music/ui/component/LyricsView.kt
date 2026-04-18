@@ -23,6 +23,8 @@ import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import com.sakayori.music.expect.copyToClipboard
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -240,6 +242,7 @@ fun LyricsView(
                                     result
                                 }
 
+                            val cleanedWords = remember(words) { words.replace(Regex("""<\d{2}:\d{2}\.\d{2,3}>\s*"""), "").trim() }
                             if (parsedLine != null) {
                                 RichSyncLyricsLineItem(
                                     parsedLine = parsedLine,
@@ -248,9 +251,14 @@ fun LyricsView(
                                     isCurrent = index == currentLineIndex,
                                     modifier =
                                         Modifier
-                                            .clickable {
-                                                onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
-                                            }.onGloballyPositioned { c ->
+                                            .combinedClickable(
+                                                onClick = {
+                                                    onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
+                                                },
+                                                onLongClick = {
+                                                    copyToClipboard("Lyrics", cleanedWords)
+                                                },
+                                            ).onGloballyPositioned { c ->
                                                 if (c.size.height != currentLineHeight) {
                                                     currentLineHeight = c.size.height
                                                 }
@@ -264,9 +272,14 @@ fun LyricsView(
                                     isCurrent = index == currentLineIndex,
                                     modifier =
                                         Modifier
-                                            .clickable {
-                                                onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
-                                            }.onGloballyPositioned { c ->
+                                            .combinedClickable(
+                                                onClick = {
+                                                    onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
+                                                },
+                                                onLongClick = {
+                                                    copyToClipboard("Lyrics", cleanedWords)
+                                                },
+                                            ).onGloballyPositioned { c ->
                                                 if (c.size.height != currentLineHeight) {
                                                     currentLineHeight = c.size.height
                                                 }
@@ -276,6 +289,8 @@ fun LyricsView(
                         }
 
                         else -> {
+                            val isLineInteractive = lyricsData.lyrics.syncType == "LINE_SYNCED" ||
+                                lyricsData.lyrics.syncType == "RICH_SYNCED"
                             LyricsLineItem(
                                 originalWords = words,
                                 translatedWords = translatedWords,
@@ -283,12 +298,15 @@ fun LyricsView(
                                 isCurrent = index == currentLineIndex || lyricsData.lyrics.syncType != "LINE_SYNCED",
                                 modifier =
                                     Modifier
-                                        .clickable(
-                                            enabled = lyricsData.lyrics.syncType == "LINE_SYNCED" ||
-                                                lyricsData.lyrics.syncType == "RICH_SYNCED",
-                                        ) {
-                                            onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
-                                        }.onGloballyPositioned { c ->
+                                        .combinedClickable(
+                                            enabled = isLineInteractive,
+                                            onClick = {
+                                                onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
+                                            },
+                                            onLongClick = {
+                                                copyToClipboard("Lyrics", words.trim())
+                                            },
+                                        ).onGloballyPositioned { c ->
                                             if (c.size.height != currentLineHeight) {
                                                 currentLineHeight = c.size.height
                                             }

@@ -662,6 +662,7 @@ fun SettingScreen(
                         switch = (enableLiquidGlass to { viewModel.setEnableLiquidGlass(it) }),
                         isEnable = getPlatform() == Platform.Android && !isLowEndDevice,
                         disableReason = if (isLowEndDevice) lowEndDisableReason else null,
+                        newBadge = true,
                     )
                 }
                 SettingItem(
@@ -1071,6 +1072,7 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.sleep_timer_fade_out_description),
                     smallSubtitle = true,
                     switch = (sleepTimerFadeOut to { viewModel.setSleepTimerFadeOut(it) }),
+                    newBadge = true,
                 )
                 if (getPlatform() == Platform.Android) {
                     SettingItem(
@@ -1987,6 +1989,7 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.crash_reporting_description),
                     smallSubtitle = true,
                     switch = (crashReportingEnabled to { viewModel.setCrashReportingEnabled(it) }),
+                    newBadge = true,
                 )
                 SettingItem(
                     title = stringResource(Res.string.view_privacy_policy),

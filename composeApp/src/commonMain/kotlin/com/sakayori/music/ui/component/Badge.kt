@@ -34,7 +34,7 @@ fun ExplicitBadge(modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Filled.Explicit,
             "Explicit",
-            tint = Color.LightGray,
+            tint = Color(0xFFE57373),
         )
     }
 }
