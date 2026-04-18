@@ -323,34 +323,25 @@ buildkonfig {
         buildConfigField(STRING, "versionName", versionName)
         buildConfigField(INT, "versionCode", "$versionCode")
 
-        if (isFullBuild) {
-            try {
-                println("Full build detected, enabling Sentry DSNs")
-                val properties = Properties()
-                properties.load(rootProject.file("local.properties").inputStream())
-                val legacyDsn = properties.getProperty("SENTRY_DSN") ?: ""
-                buildConfigField(
-                    STRING,
-                    "sentryDsnAndroid",
-                    properties.getProperty("SENTRY_DSN_ANDROID") ?: legacyDsn,
-                )
-                buildConfigField(
-                    STRING,
-                    "sentryDsnDesktop",
-                    properties.getProperty("SENTRY_DSN_DESKTOP") ?: legacyDsn,
-                )
-                buildConfigField(STRING, "sentryDsn", legacyDsn)
-            } catch (e: Exception) {
-                println("Failed to load SENTRY DSNs from local.properties: ${e.message}")
-                buildConfigField(STRING, "sentryDsnAndroid", "")
-                buildConfigField(STRING, "sentryDsnDesktop", "")
-                buildConfigField(STRING, "sentryDsn", "")
-            }
-        } else {
-            buildConfigField(STRING, "sentryDsnAndroid", "")
-            buildConfigField(STRING, "sentryDsnDesktop", "")
-            buildConfigField(STRING, "sentryDsn", "")
+        val defaultDsnAndroid = "https://4a0e76069c2e28dd95116965fb61dcee@o4511241357623296.ingest.us.sentry.io/4511241365422080"
+        val defaultDsnDesktop = "https://ef7be6702ae19b1dfff88553e159184f@o4511241357623296.ingest.us.sentry.io/4511241397469184"
+        val dsnAndroid = try {
+            val properties = Properties()
+            properties.load(rootProject.file("local.properties").inputStream())
+            properties.getProperty("SENTRY_DSN_ANDROID") ?: properties.getProperty("SENTRY_DSN") ?: defaultDsnAndroid
+        } catch (_: Exception) {
+            defaultDsnAndroid
         }
+        val dsnDesktop = try {
+            val properties = Properties()
+            properties.load(rootProject.file("local.properties").inputStream())
+            properties.getProperty("SENTRY_DSN_DESKTOP") ?: properties.getProperty("SENTRY_DSN") ?: defaultDsnDesktop
+        } catch (_: Exception) {
+            defaultDsnDesktop
+        }
+        buildConfigField(STRING, "sentryDsnAndroid", dsnAndroid)
+        buildConfigField(STRING, "sentryDsnDesktop", dsnDesktop)
+        buildConfigField(STRING, "sentryDsn", "")
     }
 }
 
