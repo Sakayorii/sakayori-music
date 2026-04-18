@@ -928,20 +928,24 @@ internal class MediaServiceHandlerImpl(
                     _sleepTimerState.update {
                         it.copy(isDone = false, timeRemaining = minutes)
                     }
+                    val fadeEnabled = dataStoreManager.sleepTimerFadeOut.first() == DataStoreManager.TRUE
                     val originalVolume = player.volume
                     var count = minutes
-                    while (count > 1) {
+                    val fadeAtMinute = if (fadeEnabled) 1 else 0
+                    while (count > fadeAtMinute) {
                         delay(60 * 1000L)
                         count--
                         _sleepTimerState.update {
                             it.copy(isDone = false, timeRemaining = count)
                         }
                     }
-                    val fadeSteps = 30
-                    repeat(fadeSteps) { step ->
-                        delay(1000L)
-                        val newVolume = originalVolume * (1f - (step + 1f) / fadeSteps)
-                        try { player.volume = newVolume.coerceIn(0f, 1f) } catch (_: Throwable) {}
+                    if (fadeEnabled) {
+                        val fadeSteps = 30
+                        repeat(fadeSteps) { step ->
+                            delay(1000L)
+                            val newVolume = originalVolume * (1f - (step + 1f) / fadeSteps)
+                            try { player.volume = newVolume.coerceIn(0f, 1f) } catch (_: Throwable) {}
+                        }
                     }
                     player.pause()
                     try { player.volume = originalVolume } catch (_: Throwable) {}

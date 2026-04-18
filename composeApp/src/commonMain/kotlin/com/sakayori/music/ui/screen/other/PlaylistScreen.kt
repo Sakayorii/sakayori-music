@@ -871,8 +871,9 @@ fun PlaylistScreen(
             }
 
             is PlaylistUIState.Error -> {
-                viewModel.makeToast("Error: ${state.message}")
-                navController.navigateUp()
+                com.sakayori.music.ui.component.NetworkErrorState(
+                    onRetry = { viewModel.getData(playlistId) },
+                )
             }
         }
     }

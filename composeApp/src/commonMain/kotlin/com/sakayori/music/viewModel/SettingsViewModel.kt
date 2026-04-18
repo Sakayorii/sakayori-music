@@ -160,6 +160,9 @@ class SettingsViewModel(
     private val _crashReportingEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val crashReportingEnabled: StateFlow<Boolean> = _crashReportingEnabled
 
+    private val _sleepTimerFadeOut: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val sleepTimerFadeOut: StateFlow<Boolean> = _sleepTimerFadeOut
+
     private val _explicitContentEnabled = MutableStateFlow(false)
     val explicitContentEnabled: StateFlow<Boolean> = _explicitContentEnabled
 
@@ -277,6 +280,7 @@ class SettingsViewModel(
         getEnableLiquidGlass()
         getLowResourceMode()
         getCrashReportingEnabled()
+        getSleepTimerFadeOut()
         getExplicitContentEnabled()
         getDiscordLoggedIn()
         getDiscordRichPresenceEnabled()
@@ -565,6 +569,20 @@ class SettingsViewModel(
     fun setCrashReportingEnabled(enable: Boolean) {
         viewModelScope.launch {
             dataStoreManager.setCrashReportingEnabled(enable)
+        }
+    }
+
+    private fun getSleepTimerFadeOut() {
+        viewModelScope.launch {
+            dataStoreManager.sleepTimerFadeOut.collect { value ->
+                _sleepTimerFadeOut.value = value == DataStoreManager.TRUE
+            }
+        }
+    }
+
+    fun setSleepTimerFadeOut(enable: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.setSleepTimerFadeOut(enable)
         }
     }
 

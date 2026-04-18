@@ -124,6 +124,7 @@ import com.sakayori.music.generated.resources.everything_you_need
 import com.sakayori.music.generated.resources.holder
 import com.sakayori.music.generated.resources.in_search
 import com.sakayori.music.generated.resources.no_results_found
+import com.sakayori.music.generated.resources.try_different_search_terms
 import com.sakayori.music.generated.resources.playlists
 import com.sakayori.music.generated.resources.podcasts
 import com.sakayori.music.generated.resources.retry
@@ -664,8 +665,8 @@ fun SearchScreen(
                                     state = pullToRefreshState,
                                     isRefreshing = uiState is SearchScreenUIState.Loading,
                                     modifier = Modifier.align(Alignment.TopCenter),
-                                    containerColor = PullToRefreshDefaults.indicatorContainerColor,
-                                    color = PullToRefreshDefaults.indicatorColor,
+                                    containerColor = androidx.compose.ui.graphics.Color(0xFF1A1A1A),
+                                    color = androidx.compose.ui.graphics.Color(0xFF00BCD4),
                                     maxDistance = PullToRefreshDefaults.PositionalThreshold - 5.dp,
                                 )
                             },
@@ -823,17 +824,10 @@ fun SearchScreen(
                                                         item { Spacer(modifier = Modifier.height(150.dp)) }
                                                     }
                                                 } else {
-                                                    Box(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        contentAlignment = Alignment.Center,
-                                                    ) {
-                                                        Text(
-                                                            text = stringResource(Res.string.no_results_found),
-                                                            style = typo().titleMedium,
-                                                            textAlign = TextAlign.Center,
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                        )
-                                                    }
+                                                    com.sakayori.music.ui.component.ErrorState(
+                                                        title = stringResource(Res.string.no_results_found),
+                                                        subtitle = stringResource(Res.string.try_different_search_terms),
+                                                    )
                                                 }
                                             }
                                         }
@@ -865,17 +859,10 @@ fun SearchScreen(
                                     }
 
                                     SearchScreenUIState.Empty -> {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Text(
-                                                text = stringResource(Res.string.no_results_found),
-                                                style = typo().titleMedium,
-                                                textAlign = TextAlign.Center,
-                                                modifier = Modifier.fillMaxWidth(),
-                                            )
-                                        }
+                                        com.sakayori.music.ui.component.ErrorState(
+                                            title = stringResource(Res.string.no_results_found),
+                                            subtitle = stringResource(Res.string.try_different_search_terms),
+                                        )
                                     }
                                 }
                             }

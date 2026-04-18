@@ -105,8 +105,8 @@ internal inline fun <reified T> GridLibraryPlaylist(
                         .padding(
                             top = contentPadding.calculateTopPadding(),
                         ),
-                containerColor = PullToRefreshDefaults.indicatorContainerColor,
-                color = PullToRefreshDefaults.indicatorColor,
+                containerColor = androidx.compose.ui.graphics.Color(0xFF1A1A1A),
+                color = androidx.compose.ui.graphics.Color(0xFF00BCD4),
                 maxDistance = PullToRefreshDefaults.PositionalThreshold,
             )
         },

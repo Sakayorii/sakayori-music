@@ -323,6 +323,8 @@ import com.sakayori.music.generated.resources.save
 import com.sakayori.music.generated.resources.save_all_your_playlist_data
 import com.sakayori.music.generated.resources.save_last_played
 import com.sakayori.music.generated.resources.save_last_played_track_and_queue
+import com.sakayori.music.generated.resources.sleep_timer_fade_out
+import com.sakayori.music.generated.resources.sleep_timer_fade_out_description
 import com.sakayori.music.generated.resources.save_playback_state
 import com.sakayori.music.generated.resources.save_shuffle_and_repeat_mode
 import com.sakayori.music.generated.resources.send_back_listening_data_to_google
@@ -483,6 +485,7 @@ fun SettingScreen(
     val enableLiquidGlass by viewModel.enableLiquidGlass.collectAsStateWithLifecycle()
     val lowResourceMode by viewModel.lowResourceMode.collectAsStateWithLifecycle()
     val crashReportingEnabled by viewModel.crashReportingEnabled.collectAsStateWithLifecycle()
+    val sleepTimerFadeOut by viewModel.sleepTimerFadeOut.collectAsStateWithLifecycle()
     val isLowEndDevice = remember { DeviceCapability.isLowEndDevice() }
     val lowEndDisableReason = stringResource(Res.string.low_end_device_blur_disabled)
     val discordLoggedIn by viewModel.discordLoggedIn.collectAsStateWithLifecycle()
@@ -1056,6 +1059,12 @@ fun SettingScreen(
                     title = stringResource(Res.string.save_last_played),
                     subtitle = stringResource(Res.string.save_last_played_track_and_queue),
                     switch = (saveLastPlayed to { viewModel.setSaveLastPlayed(it) }),
+                )
+                SettingItem(
+                    title = stringResource(Res.string.sleep_timer_fade_out),
+                    subtitle = stringResource(Res.string.sleep_timer_fade_out_description),
+                    smallSubtitle = true,
+                    switch = (sleepTimerFadeOut to { viewModel.setSleepTimerFadeOut(it) }),
                 )
                 if (getPlatform() == Platform.Android) {
                     SettingItem(

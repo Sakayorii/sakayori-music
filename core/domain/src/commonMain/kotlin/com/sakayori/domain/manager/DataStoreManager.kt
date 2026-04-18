@@ -319,6 +319,10 @@ interface DataStoreManager {
 
     suspend fun setCrashReportingEnabled(enable: Boolean)
 
+    val sleepTimerFadeOut: Flow<String>
+
+    suspend fun setSleepTimerFadeOut(enable: Boolean)
+
     val explicitContentEnabled: Flow<String>
 
     suspend fun setExplicitContentEnabled(enabled: Boolean)
