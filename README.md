@@ -6,11 +6,17 @@
 
 **A modern, cross-platform YouTube Music client built with Kotlin Multiplatform & Compose**
 
-[![Version](https://img.shields.io/badge/version-2.1.3-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Version](https://img.shields.io/github/v/release/Sakayorii/sakayori-music?color=00BCD4&label=release)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Sakayorii/sakayori-music/total?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/releases)
+[![Stars](https://img.shields.io/github/stars/Sakayorii/sakayori-music?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/stargazers)
+[![Issues](https://img.shields.io/github/issues/Sakayorii/sakayori-music?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/issues)
+[![License](https://img.shields.io/badge/license-MIT-00BCD4.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Kotlin](https://img.shields.io/badge/kotlin-2.0+-7F52FF.svg?logo=kotlin&logoColor=white)
+![Compose](https://img.shields.io/badge/compose-multiplatform-4285F4.svg)
+![Last Commit](https://img.shields.io/github/last-commit/Sakayorii/sakayori-music?color=00BCD4)
 
-[Download](#download) · [Features](#features) · [Screenshots](#screenshots) · [Build](#build) · [Credits](#credits)
+[Download](#download) · [Features](#features) · [Screenshots](#screenshots) · [Languages](#supported-languages) · [Build](#build) · [Credits](#credits)
 
 **English** · [Tiếng Việt](docs/README.vi.md) · [日本語](docs/README.ja.md)
 
@@ -38,7 +44,7 @@ SakayoriMusic is a free and open-source music streaming client that brings the Y
 - **Spotify Canvas** background videos
 - **Local playlists** and offline downloads
 - **Sleep timer** and crossfade
-- **Multi-language** support (20+ languages)
+- **Multi-language** support — 31 languages including 5 meme languages
 - **Backup & restore** your data
 - **Mini player** mode for desktop multitasking
 - **Android Auto** and Wear OS notifications support
@@ -157,6 +163,43 @@ sakayori-music/
 │   └── service/             External services (YouTube, Spotify, etc.)
 └── crashlytics/             Sentry integration
 ```
+
+## Supported Languages
+
+SakayoriMusic speaks **31 languages**. Switch anytime in `Settings → Content → Language`.
+
+### Regular
+
+| Language | Code | | Language | Code |
+|----------|------|-|----------|------|
+| 🇺🇸 English | en-US | | 🇻🇳 Tiếng Việt | vi-VN |
+| 🇮🇹 Italiano | it-IT | | 🇩🇪 Deutsch | de-DE |
+| 🇷🇺 Русский | ru-RU | | 🇹🇷 Türkçe | tr-TR |
+| 🇫🇮 Suomi | fi-FI | | 🇵🇱 Polski | pl-PL |
+| 🇵🇹 Português | pt-PT | | 🇫🇷 Français | fr-FR |
+| 🇪🇸 Español | es-ES | | 🇨🇳 简体中文 | zh-CN |
+| 🇮🇩 Bahasa Indonesia | id-ID | | 🇸🇦 العربية | ar-SA |
+| 🇯🇵 日本語 | ja-JP | | 🇹🇼 繁體中文 | zh-TW |
+| 🇺🇦 Українська | uk-UA | | 🇮🇱 עברית | iw-IL |
+| 🇦🇿 Azərbaycanca | az-AZ | | 🇮🇳 हिन्दी | hi-IN |
+| 🇹🇭 ภาษาไทย | th-TH | | 🇳🇱 Nederlands | nl-NL |
+| 🇰🇷 한국어 | ko-KR | | 🇪🇸 Català | ca-ES |
+| 🇮🇷 فارسی | fa-AF | | 🇧🇬 български | bg-BG |
+| 🇸🇪 Svenska | sv-SE | | 🇨🇿 Čeština | cs-CZ |
+| 🇬🇷 Ελληνικά | el-GR | | 🇭🇺 Magyar | hu-HU |
+| 🇷🇴 Română | ro-RO |
+
+### For Fun
+
+| Language | Code | Example |
+|----------|------|---------|
+| 🏴‍☠️ Pirate Speak | en-PH | *Home → "Port"* |
+| 🐱 LOLCAT | en-LC | *Library → "Mai Stuf"* |
+| 🦴 Doge Speak | en-IO | *Home → "Much Home. Very Wow."* |
+| 🌸 UwU / OwO | en-GG | *Login → "Wog In (⁄ ⁄•⁄ω⁄•⁄ ⁄)"* |
+| 1337 5p34k | en-MS | *Home → "H0m3"* |
+
+Contributors welcome to improve translations or add more languages — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 

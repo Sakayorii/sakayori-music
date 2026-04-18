@@ -358,6 +358,7 @@
     <string name="queue_is_empty">Queue Is Empty</string>
     <string name="queue_track_count">%1$d tracks</string>
     <string name="queue_track_count_single">1 track</string>
+    <string name="queue_position_of">Track %1$d of %2$d</string>
     <string name="network_error_title">Connection Problem</string>
     <string name="network_error_subtitle">Check your internet and try again.</string>
     <string name="sleep_timer_fade_out">Sleep Timer Fade Out</string>
