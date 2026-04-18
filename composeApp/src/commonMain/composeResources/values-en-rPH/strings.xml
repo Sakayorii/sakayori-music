@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Port</string>
+    <string name="explore">Chart The Seas</string>
+    <string name="library">Treasure Chest</string>
+    <string name="search">Seek Booty</string>
+    <string name="settings">Ship Controls</string>
+    <string name="log_in">Board The Ship</string>
+    <string name="log_out">Abandon Ship</string>
+    <string name="play">Hoist The Sails</string>
+    <string name="pause">Drop Anchor</string>
+    <string name="next">Sail Forward</string>
+    <string name="previous">Sail Back</string>
+    <string name="shuffle">Stir The Grog</string>
+    <string name="repeat_one">Loop The Shanty</string>
+    <string name="playlist">Songbook</string>
+    <string name="album">Treasure Map</string>
+    <string name="artist">Sea Bard</string>
+    <string name="song">Shanty</string>
+    <string name="queue">Crew Lineup</string>
+    <string name="queue_is_empty">No Crew On Deck, Matey</string>
+    <string name="downloaded">Pillaged</string>
+    <string name="favorite">Prized Booty</string>
+    <string name="no_results_found">No Booty Found, Arr!</string>
+    <string name="try_different_search_terms">Try a different bearing, ye scallywag.</string>
+    <string name="retry">Try Again, Arr!</string>
+    <string name="network_error_title">Lost At Sea</string>
+    <string name="network_error_subtitle">The winds have failed us. Check yer compass.</string>
+    <string name="no_internet_banner">No Wind In The Sails</string>
+    <string name="no_content_available">The Seas Be Empty</string>
+    <string name="pull_down_to_refresh">Haul the rope to check again.</string>
+    <string name="hours">Bells</string>
+    <string name="minutes">Moments</string>
+    <string name="recent_searches">Recent Plunders</string>
+    <string name="team">Crew</string>
+    <string name="lead_maintainer">Captain</string>
+    <string name="co_maintainer">First Mate</string>
+</resources>

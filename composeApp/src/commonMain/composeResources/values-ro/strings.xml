@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Acasă</string>
+    <string name="explore">Explorează</string>
+    <string name="library">Bibliotecă</string>
+    <string name="search">Căutare</string>
+    <string name="settings">Setări</string>
+    <string name="log_in">Autentificare</string>
+    <string name="log_out">Deconectare</string>
+    <string name="play">Redare</string>
+    <string name="pause">Pauză</string>
+    <string name="next">Următor</string>
+    <string name="previous">Anterior</string>
+    <string name="shuffle">Amestecă</string>
+    <string name="repeat_one">Repetă</string>
+    <string name="playlist">Listă</string>
+    <string name="album">Album</string>
+    <string name="artist">Artist</string>
+    <string name="song">Melodie</string>
+    <string name="queue">Coadă</string>
+    <string name="queue_is_empty">Coada este goală</string>
+    <string name="downloaded">Descărcat</string>
+    <string name="favorite">Favorit</string>
+    <string name="no_results_found">Niciun rezultat</string>
+    <string name="try_different_search_terms">Încearcă alți termeni.</string>
+    <string name="retry">Reîncearcă</string>
+    <string name="network_error_title">Problemă de conexiune</string>
+    <string name="network_error_subtitle">Verificați conexiunea la internet.</string>
+    <string name="no_internet_banner">Fără Internet</string>
+    <string name="no_content_available">Niciun conținut disponibil</string>
+    <string name="pull_down_to_refresh">Trageți în jos pentru a reîmprospăta.</string>
+    <string name="hours">Ore</string>
+    <string name="minutes">Minute</string>
+    <string name="recent_searches">Căutări recente</string>
+    <string name="team">Echipă</string>
+    <string name="lead_maintainer">Întreținător principal</string>
+    <string name="co_maintainer">Co-întreținător</string>
+</resources>

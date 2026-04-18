@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Kezdőlap</string>
+    <string name="explore">Felfedezés</string>
+    <string name="library">Könyvtár</string>
+    <string name="search">Keresés</string>
+    <string name="settings">Beállítások</string>
+    <string name="log_in">Bejelentkezés</string>
+    <string name="log_out">Kijelentkezés</string>
+    <string name="play">Lejátszás</string>
+    <string name="pause">Szünet</string>
+    <string name="next">Következő</string>
+    <string name="previous">Előző</string>
+    <string name="shuffle">Keverés</string>
+    <string name="repeat_one">Ismétlés</string>
+    <string name="playlist">Lejátszási lista</string>
+    <string name="album">Album</string>
+    <string name="artist">Előadó</string>
+    <string name="song">Dal</string>
+    <string name="queue">Sor</string>
+    <string name="queue_is_empty">A sor üres</string>
+    <string name="downloaded">Letöltve</string>
+    <string name="favorite">Kedvenc</string>
+    <string name="no_results_found">Nincs találat</string>
+    <string name="try_different_search_terms">Próbáljon más kifejezéseket.</string>
+    <string name="retry">Újra</string>
+    <string name="network_error_title">Kapcsolati hiba</string>
+    <string name="network_error_subtitle">Ellenőrizze az internetkapcsolatát.</string>
+    <string name="no_internet_banner">Nincs Internet</string>
+    <string name="no_content_available">Nincs elérhető tartalom</string>
+    <string name="pull_down_to_refresh">Húzza le a frissítéshez.</string>
+    <string name="hours">Óra</string>
+    <string name="minutes">Perc</string>
+    <string name="recent_searches">Legutóbbi keresések</string>
+    <string name="team">Csapat</string>
+    <string name="lead_maintainer">Fő karbantartó</string>
+    <string name="co_maintainer">Társ-karbantartó</string>
+</resources>

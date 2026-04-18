@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Hom</string>
+    <string name="explore">Sniff Around</string>
+    <string name="library">Mai Stuf</string>
+    <string name="search">Fynd Teh Noiz</string>
+    <string name="settings">Buttonz</string>
+    <string name="log_in">Can I Haz Acount?</string>
+    <string name="log_out">Bai Acount</string>
+    <string name="play">Mak Noiz</string>
+    <string name="pause">Shhhh</string>
+    <string name="next">Nekst Ting</string>
+    <string name="previous">Last Ting</string>
+    <string name="shuffle">Mix Em Up</string>
+    <string name="repeat_one">Again Again</string>
+    <string name="playlist">List Of Noiz</string>
+    <string name="album">Noiz Box</string>
+    <string name="artist">Noiz Makr</string>
+    <string name="song">Noiz</string>
+    <string name="queue">Wait Lyne</string>
+    <string name="queue_is_empty">No Kittehs In Lyne</string>
+    <string name="downloaded">Haz It</string>
+    <string name="favorite">Liek</string>
+    <string name="no_results_found">No Kitteh Found</string>
+    <string name="try_different_search_terms">Try Differnt Werds, Silly Hooman.</string>
+    <string name="retry">Try Agin</string>
+    <string name="network_error_title">Intranet Broke</string>
+    <string name="network_error_subtitle">Iz Not Conekt 2 Teh Tubez.</string>
+    <string name="no_internet_banner">No Tubez</string>
+    <string name="no_content_available">Noting Heer</string>
+    <string name="pull_down_to_refresh">Pawl Down 2 Fynd Moar.</string>
+    <string name="hours">Howerz</string>
+    <string name="minutes">Minnits</string>
+    <string name="recent_searches">Stuf U Lookt 4</string>
+    <string name="team">Teh Krew</string>
+    <string name="lead_maintainer">Big Kitteh</string>
+    <string name="co_maintainer">Littl Kitteh</string>
+</resources>

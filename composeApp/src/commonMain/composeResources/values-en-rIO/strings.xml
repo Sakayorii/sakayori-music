@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Much Home</string>
+    <string name="explore">Such Explore</string>
+    <string name="library">Wow Library</string>
+    <string name="search">Very Search</string>
+    <string name="settings">Many Settings</string>
+    <string name="log_in">Such Login</string>
+    <string name="log_out">Bye Bye</string>
+    <string name="play">Much Play</string>
+    <string name="pause">Such Pause</string>
+    <string name="next">Very Next</string>
+    <string name="previous">Much Back</string>
+    <string name="shuffle">Wow Shuffle</string>
+    <string name="repeat_one">Such Loop</string>
+    <string name="playlist">Many Songs</string>
+    <string name="album">Wow Album</string>
+    <string name="artist">Very Artist</string>
+    <string name="song">Much Song</string>
+    <string name="queue">Such Line</string>
+    <string name="queue_is_empty">Much Empty. Very Sad.</string>
+    <string name="downloaded">Very Download</string>
+    <string name="favorite">Such Love</string>
+    <string name="no_results_found">Wow Empty. Much Nothing.</string>
+    <string name="try_different_search_terms">Try Other Words. Very Search.</string>
+    <string name="retry">Much Retry</string>
+    <string name="network_error_title">Such Error. Very Offline.</string>
+    <string name="network_error_subtitle">No Internet. Wow Sad.</string>
+    <string name="no_internet_banner">No Internet. Much Offline.</string>
+    <string name="no_content_available">Wow Empty.</string>
+    <string name="pull_down_to_refresh">Pull Down. Very Refresh.</string>
+    <string name="hours">Many Hours</string>
+    <string name="minutes">Such Minutes</string>
+    <string name="recent_searches">Recent Wow</string>
+    <string name="team">Much Team</string>
+    <string name="lead_maintainer">Big Doge</string>
+    <string name="co_maintainer">Small Doge</string>
+</resources>

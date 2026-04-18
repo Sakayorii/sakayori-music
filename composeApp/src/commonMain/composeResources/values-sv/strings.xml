@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Hem</string>
+    <string name="explore">Utforska</string>
+    <string name="library">Bibliotek</string>
+    <string name="search">Sök</string>
+    <string name="settings">Inställningar</string>
+    <string name="log_in">Logga in</string>
+    <string name="log_out">Logga ut</string>
+    <string name="play">Spela</string>
+    <string name="pause">Paus</string>
+    <string name="next">Nästa</string>
+    <string name="previous">Föregående</string>
+    <string name="shuffle">Blanda</string>
+    <string name="repeat_one">Upprepa</string>
+    <string name="playlist">Spellista</string>
+    <string name="album">Album</string>
+    <string name="artist">Artist</string>
+    <string name="song">Låt</string>
+    <string name="queue">Kö</string>
+    <string name="queue_is_empty">Kön är tom</string>
+    <string name="downloaded">Nedladdad</string>
+    <string name="favorite">Favorit</string>
+    <string name="no_results_found">Inga resultat hittades</string>
+    <string name="try_different_search_terms">Försök med andra sökord.</string>
+    <string name="retry">Försök igen</string>
+    <string name="network_error_title">Anslutningsproblem</string>
+    <string name="network_error_subtitle">Kontrollera din internetanslutning.</string>
+    <string name="no_internet_banner">Ingen Internetanslutning</string>
+    <string name="no_content_available">Inget innehåll tillgängligt</string>
+    <string name="pull_down_to_refresh">Dra ner för att uppdatera.</string>
+    <string name="hours">Timmar</string>
+    <string name="minutes">Minuter</string>
+    <string name="recent_searches">Senaste sökningar</string>
+    <string name="team">Team</string>
+    <string name="lead_maintainer">Huvudunderhållare</string>
+    <string name="co_maintainer">Medunderhållare</string>
+</resources>

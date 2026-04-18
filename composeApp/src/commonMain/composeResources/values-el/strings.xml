@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Αρχική</string>
+    <string name="explore">Εξερεύνηση</string>
+    <string name="library">Βιβλιοθήκη</string>
+    <string name="search">Αναζήτηση</string>
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="log_in">Σύνδεση</string>
+    <string name="log_out">Αποσύνδεση</string>
+    <string name="play">Αναπαραγωγή</string>
+    <string name="pause">Παύση</string>
+    <string name="next">Επόμενο</string>
+    <string name="previous">Προηγούμενο</string>
+    <string name="shuffle">Ανάμιξη</string>
+    <string name="repeat_one">Επανάληψη</string>
+    <string name="playlist">Λίστα</string>
+    <string name="album">Άλμπουμ</string>
+    <string name="artist">Καλλιτέχνης</string>
+    <string name="song">Τραγούδι</string>
+    <string name="queue">Ουρά</string>
+    <string name="queue_is_empty">Η ουρά είναι άδεια</string>
+    <string name="downloaded">Κατεβασμένο</string>
+    <string name="favorite">Αγαπημένο</string>
+    <string name="no_results_found">Δεν βρέθηκαν αποτελέσματα</string>
+    <string name="try_different_search_terms">Δοκιμάστε διαφορετικούς όρους.</string>
+    <string name="retry">Δοκιμή ξανά</string>
+    <string name="network_error_title">Πρόβλημα σύνδεσης</string>
+    <string name="network_error_subtitle">Ελέγξτε τη σύνδεσή σας.</string>
+    <string name="no_internet_banner">Χωρίς σύνδεση</string>
+    <string name="no_content_available">Δεν υπάρχει περιεχόμενο</string>
+    <string name="pull_down_to_refresh">Τραβήξτε προς τα κάτω για ανανέωση.</string>
+    <string name="hours">Ώρες</string>
+    <string name="minutes">Λεπτά</string>
+    <string name="recent_searches">Πρόσφατες αναζητήσεις</string>
+    <string name="team">Ομάδα</string>
+    <string name="lead_maintainer">Βασικός Συντηρητής</string>
+    <string name="co_maintainer">Συν-Συντηρητής</string>
+</resources>

@@ -98,6 +98,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -969,15 +970,15 @@ fun QueueBottomSheet(
             }
     }
 
-    LaunchedEffect(queue) {
-        Logger.w("QueueBottomSheet", "queue: $queue")
-    }
-
     DisposableEffect(Unit) {
         val currentSongIndex = musicServiceHandler.currentOrderIndex().takeIf { i -> i > -1 } ?: 0
-        Logger.d("QueueBottomSheet", "currentSongIndex: $currentSongIndex")
         coroutineScope.launch {
-            lazyListState.requestScrollToItem(currentSongIndex)
+            kotlinx.coroutines.delay(150)
+            val centerOffset = -(lazyListState.layoutInfo.viewportSize.height / 3)
+            lazyListState.animateScrollToItem(
+                index = currentSongIndex.coerceAtLeast(0),
+                scrollOffset = centerOffset,
+            )
         }
         onDispose { }
     }
@@ -2037,6 +2038,22 @@ fun HeartCheckBox(
     checked: Boolean,
     onStateChange: (() -> Unit)? = null,
 ) {
+    val burstScale = remember { androidx.compose.animation.core.Animatable(1f) }
+    androidx.compose.runtime.LaunchedEffect(checked) {
+        if (checked) {
+            burstScale.snapTo(0.5f)
+            burstScale.animateTo(
+                targetValue = 1.3f,
+                animationSpec = androidx.compose.animation.core.tween(150),
+            )
+            burstScale.animateTo(
+                targetValue = 1f,
+                animationSpec = androidx.compose.animation.core.spring(
+                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                ),
+            )
+        }
+    }
     Box(
         modifier =
             Modifier
@@ -2051,7 +2068,11 @@ fun HeartCheckBox(
                 Image(
                     painter = painterResource(Res.drawable.baseline_favorite_24),
                     contentDescription = "Favorite checked",
-                    modifier = Modifier.fillMaxSize().padding(4.dp),
+                    modifier = Modifier.fillMaxSize().padding(4.dp)
+                        .graphicsLayer {
+                            scaleX = burstScale.value
+                            scaleY = burstScale.value
+                        },
                 )
             } else {
                 Image(

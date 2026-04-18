@@ -30,6 +30,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -1038,7 +1039,14 @@ fun NowPlayingScreenContent(
                                                     if (!screenDataState.isVideo) CircleShape else RoundedCornerShape(8.dp),
                                                 ).alpha(
                                                     if (!screenDataState.isVideo || !shouldShowVideo) 1f else 0f,
-                                                ),
+                                                ).pointerInput(Unit) {
+                                                    detectTapGestures(
+                                                        onDoubleTap = {
+                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                            sharedViewModel.onUIEvent(UIEvent.ToggleLike)
+                                                        },
+                                                    )
+                                                },
                                     )
                                 }
 

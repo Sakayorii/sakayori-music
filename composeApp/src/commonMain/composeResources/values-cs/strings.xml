@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayoriMusic</string>
+    <string name="home">Domů</string>
+    <string name="explore">Objevovat</string>
+    <string name="library">Knihovna</string>
+    <string name="search">Hledat</string>
+    <string name="settings">Nastavení</string>
+    <string name="log_in">Přihlásit se</string>
+    <string name="log_out">Odhlásit se</string>
+    <string name="play">Přehrát</string>
+    <string name="pause">Pozastavit</string>
+    <string name="next">Další</string>
+    <string name="previous">Předchozí</string>
+    <string name="shuffle">Náhodně</string>
+    <string name="repeat_one">Opakovat</string>
+    <string name="playlist">Playlist</string>
+    <string name="album">Album</string>
+    <string name="artist">Umělec</string>
+    <string name="song">Skladba</string>
+    <string name="queue">Fronta</string>
+    <string name="queue_is_empty">Fronta je prázdná</string>
+    <string name="downloaded">Staženo</string>
+    <string name="favorite">Oblíbené</string>
+    <string name="no_results_found">Žádné výsledky</string>
+    <string name="try_different_search_terms">Zkuste jiné výrazy.</string>
+    <string name="retry">Zkusit znovu</string>
+    <string name="network_error_title">Problém s připojením</string>
+    <string name="network_error_subtitle">Zkontrolujte internet a zkuste to znovu.</string>
+    <string name="no_internet_banner">Žádné připojení</string>
+    <string name="no_content_available">Žádný obsah</string>
+    <string name="pull_down_to_refresh">Potáhněte dolů pro obnovení.</string>
+    <string name="hours">Hodin</string>
+    <string name="minutes">Minut</string>
+    <string name="recent_searches">Nedávná hledání</string>
+    <string name="team">Tým</string>
+    <string name="lead_maintainer">Hlavní správce</string>
+    <string name="co_maintainer">Spolu-správce</string>
+</resources>

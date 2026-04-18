@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SakayowiMusic</string>
+    <string name="home">Hewwo~</string>
+    <string name="explore">Expwowe OwO</string>
+    <string name="library">Mai Libwawy (｡◕‿‿◕｡)</string>
+    <string name="search">Seawch UwU</string>
+    <string name="settings">Settings ♡</string>
+    <string name="log_in">Wog In (⁄ ⁄•⁄ω⁄•⁄ ⁄)</string>
+    <string name="log_out">Wog Out TwT</string>
+    <string name="play">Pway~</string>
+    <string name="pause">Pawse</string>
+    <string name="next">Nexties!</string>
+    <string name="previous">Pwevwous</string>
+    <string name="shuffle">Shuffwe~</string>
+    <string name="repeat_one">Wepeat ♡</string>
+    <string name="playlist">Pwaywist</string>
+    <string name="album">Awbum ♡</string>
+    <string name="artist">Awtwist</string>
+    <string name="song">Wittle Song</string>
+    <string name="queue">Queue~</string>
+    <string name="queue_is_empty">So empty UwU</string>
+    <string name="downloaded">Downwoaded (◕ᴗ◕✿)</string>
+    <string name="favorite">Fwavowite ♡</string>
+    <string name="no_results_found">Nothing fowound TwT</string>
+    <string name="try_different_search_terms">Twy diffewent wowrds pwease~</string>
+    <string name="retry">Twy Agwain</string>
+    <string name="network_error_title">Oopsie~ Connection pwoblem</string>
+    <string name="network_error_subtitle">Pwease check youw intewnet ♡</string>
+    <string name="no_internet_banner">No Intewnet (´•ω•`)</string>
+    <string name="no_content_available">Nothing hewe~</string>
+    <string name="pull_down_to_refresh">Puww down fow mowe UwU</string>
+    <string name="hours">Houwies</string>
+    <string name="minutes">Minuties</string>
+    <string name="recent_searches">Wecent Seawches</string>
+    <string name="team">Teamie ♡</string>
+    <string name="lead_maintainer">Head Bwoss</string>
+    <string name="co_maintainer">Hewper Fwiend</string>
+</resources>
