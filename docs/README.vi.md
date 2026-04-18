@@ -6,11 +6,17 @@
 
 **Trình phát YouTube Music đa nền tảng hiện đại, xây dựng bằng Kotlin Multiplatform & Compose**
 
-[![Version](https://img.shields.io/badge/version-2.1.3-blue.svg)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Version](https://img.shields.io/github/v/release/Sakayorii/sakayori-music?color=00BCD4&label=release)](https://github.com/Sakayorii/sakayori-music/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Sakayorii/sakayori-music/total?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/releases)
+[![Stars](https://img.shields.io/github/stars/Sakayorii/sakayori-music?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/stargazers)
+[![Issues](https://img.shields.io/github/issues/Sakayorii/sakayori-music?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/issues)
+[![License](https://img.shields.io/badge/license-MIT-00BCD4.svg)](../LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](../LICENSE)
+![Kotlin](https://img.shields.io/badge/kotlin-2.0+-7F52FF.svg?logo=kotlin&logoColor=white)
+![Compose](https://img.shields.io/badge/compose-multiplatform-4285F4.svg)
+![Last Commit](https://img.shields.io/github/last-commit/Sakayorii/sakayori-music?color=00BCD4)
 
-[Tải xuống](#tải-xuống) · [Tính năng](#tính-năng) · [Ảnh chụp](#ảnh-chụp-màn-hình) · [Build](#build) · [Credits](#credits)
+[Tải xuống](#tải-xuống) · [Tính năng](#tính-năng) · [Ảnh chụp](#ảnh-chụp-màn-hình) · [Ngôn ngữ](#ngôn-ngữ-hỗ-trợ) · [Build](#build) · [Credits](#credits)
 
 [English](../README.md) · **Tiếng Việt** · [日本語](README.ja.md)
 
@@ -98,6 +104,24 @@ cd sakayori-music
 - **Coil** cho image loading
 - **KCEF** cho desktop WebView
 - **Sentry** cho crash reporting
+
+## Ngôn Ngữ Hỗ Trợ
+
+SakayoriMusic nói được **31 ngôn ngữ**. Đổi trong `Settings → Content → Language`.
+
+### Ngôn ngữ chính
+
+English, Tiếng Việt, Italiano, Deutsch, Русский, Türkçe, Suomi, Polski, Português, Français, Español, 简体中文, Bahasa Indonesia, العربية, 日本語, 繁體中文, Українська, עברית, Azərbaycanca, हिन्दी, ภาษาไทย, Nederlands, 한국어, Català, فارسی, български, Svenska, Čeština, Ελληνικά, Magyar, Română
+
+### Ngôn ngữ hài hước
+
+| Ngôn ngữ | Ví dụ |
+|----------|-------|
+| 🏴‍☠️ Pirate Speak | *Home → "Port"* |
+| 🐱 LOLCAT | *Library → "Mai Stuf"* |
+| 🦴 Doge Speak | *Home → "Much Home"* |
+| 🌸 UwU / OwO | *Home → "Hewwo~"* |
+| 1337 5p34k | *Home → "H0m3"* |
 
 ## Credits
 

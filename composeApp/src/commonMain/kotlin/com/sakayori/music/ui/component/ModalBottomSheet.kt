@@ -189,6 +189,7 @@ import com.sakayori.music.generated.resources.baseline_people_alt_24
 import com.sakayori.music.generated.resources.baseline_playlist_add_24
 import com.sakayori.music.generated.resources.baseline_queue_music_24
 import com.sakayori.music.generated.resources.queue_is_empty
+import com.sakayori.music.generated.resources.queue_position_of
 import com.sakayori.music.generated.resources.queue_track_count
 import com.sakayori.music.generated.resources.queue_track_count_single
 import com.sakayori.music.generated.resources.baseline_sensors_24
@@ -1107,8 +1108,11 @@ fun QueueBottomSheet(
                             style = typo().titleMedium,
                         )
                         if (queue.isNotEmpty()) {
+                            val currentIdx = musicServiceHandler.currentOrderIndex()
                             Text(
-                                text = if (queue.size == 1) {
+                                text = if (currentIdx in 0 until queue.size) {
+                                    stringResource(Res.string.queue_position_of, currentIdx + 1, queue.size)
+                                } else if (queue.size == 1) {
                                     stringResource(Res.string.queue_track_count_single)
                                 } else {
                                     stringResource(Res.string.queue_track_count, queue.size)
