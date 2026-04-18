@@ -191,23 +191,25 @@ fun LyricsView(
         }
     }
 
+    val translatedLinesWithTimes = remember(lyricsData.translatedLyrics?.first?.lines) {
+        lyricsData.translatedLyrics?.first?.lines?.map {
+            Triple(it.startTimeMs.toLongOrNull() ?: 0L, it.words, it)
+        } ?: emptyList()
+    }
+
+    val translatedCache = remember(translatedLinesWithTimes) { mutableMapOf<String, String?>() }
+
     fun findClosestTranslatedLine(originalTimeMs: String): String? {
-        val translatedLines = lyricsData.translatedLyrics?.first?.lines ?: return null
-        if (translatedLines.isEmpty()) return null
-
+        if (translatedLinesWithTimes.isEmpty()) return null
+        translatedCache[originalTimeMs]?.let { return it }
         val originalTime = originalTimeMs.toLongOrNull() ?: return null
-
-        return translatedLines
-            .minByOrNull {
-                abs((it.startTimeMs.toLongOrNull() ?: 0L) - originalTime)
-            }?.let {
-                val abs = abs((it.startTimeMs.toLongOrNull() ?: 0L) - originalTime)
-                if (abs < 1000L) {
-                    it
-                } else {
-                    null
-                }
-            }?.words
+        val result = translatedLinesWithTimes
+            .minByOrNull { abs(it.first - originalTime) }
+            ?.let {
+                if (abs(it.first - originalTime) < 1000L) it.second else null
+            }
+        translatedCache[originalTimeMs] = result
+        return result
     }
 
     Box(modifier = modifier) {

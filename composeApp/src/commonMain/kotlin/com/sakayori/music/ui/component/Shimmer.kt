@@ -218,3 +218,104 @@ fun ShimmerSearchItem() {
 fun ShimmerSearchItemPreview() {
     ShimmerSearchItem()
 }
+
+@Composable
+fun ArtistSkeleton() {
+    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
+        Box(
+            modifier = Modifier
+                .size(200.dp)
+                .clip(RoundedCornerShape(100.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Box(
+            modifier = Modifier
+                .width(180.dp)
+                .height(28.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .width(120.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Box(
+            modifier = Modifier
+                .width(100.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyRow(userScrollEnabled = false) {
+            items(5) {
+                PlaylistShimmer()
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        repeat(5) {
+            ShimmerSearchItem()
+        }
+    }
+}
+
+@Composable
+fun PlaylistSkeleton() {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(240.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Box(
+            modifier = Modifier
+                .width(200.dp)
+                .height(24.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .width(140.dp)
+                .height(14.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(shimmerBackground)
+                .shimmer(),
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Row {
+            repeat(3) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(shimmerBackground)
+                        .shimmer(),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        repeat(6) {
+            ShimmerSearchItem()
+        }
+    }
+}

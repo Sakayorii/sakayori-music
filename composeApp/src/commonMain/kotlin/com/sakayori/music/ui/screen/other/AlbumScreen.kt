@@ -588,9 +588,7 @@ fun AlbumScreen(
             }
 
             LocalPlaylistState.PlaylistLoadState.Loading -> {
-                CenterLoadingBox(
-                    modifier = Modifier.fillMaxSize(),
-                )
+                com.sakayori.music.ui.component.PlaylistSkeleton()
             }
         }
     }

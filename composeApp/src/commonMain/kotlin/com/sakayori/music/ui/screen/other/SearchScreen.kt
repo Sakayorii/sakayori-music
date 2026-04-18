@@ -201,6 +201,7 @@ fun SearchScreen(
             isExpanded = true
         }
         if (searchText.isNotEmpty() && isFocused) {
+            kotlinx.coroutines.delay(300)
             searchViewModel.suggestQuery(searchText)
         }
     }

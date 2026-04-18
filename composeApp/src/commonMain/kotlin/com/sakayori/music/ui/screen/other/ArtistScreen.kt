@@ -133,12 +133,7 @@ fun ArtistScreen(
     Crossfade(artistScreenState) { state ->
         when (state) {
             is ArtistScreenState.Loading -> {
-                Box(Modifier.fillMaxSize()) {
-                    CenterLoadingBox(
-                        Modifier
-                            .align(Alignment.Center),
-                    )
-                }
+                com.sakayori.music.ui.component.ArtistSkeleton()
             }
 
             is ArtistScreenState.Success -> {

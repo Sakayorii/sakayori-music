@@ -1934,15 +1934,15 @@ fun ActionButton(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 20.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
         ) {
             Image(
                 painter = icon,
                 contentDescription = if (text != null) stringResource(text) else textString ?: "",
                 modifier =
                     Modifier
-                        .wrapContentSize(Alignment.Center)
-                        .padding(12.dp),
+                        .size(44.dp)
+                        .padding(10.dp),
                 colorFilter =
                     if (enable) {
                         ColorFilter.tint(iconColor)
@@ -1952,11 +1952,11 @@ fun ActionButton(
             )
             Text(
                 text = if (text != null) stringResource(text) else textString ?: "",
-                style = typo().labelSmall,
-                color = if (enable) textColor ?: Color.Unspecified else Color.Gray,
+                style = typo().bodyMedium,
+                color = if (enable) textColor ?: Color.White else Color.Gray,
                 modifier =
                     Modifier
-                        .padding(start = 10.dp)
+                        .padding(start = 14.dp)
                         .wrapContentHeight(Alignment.CenterVertically),
             )
         }

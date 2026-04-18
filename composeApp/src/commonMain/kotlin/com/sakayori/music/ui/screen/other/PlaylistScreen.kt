@@ -867,14 +867,7 @@ fun PlaylistScreen(
             }
 
             is PlaylistUIState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CenterLoadingBox(
-                        modifier = Modifier.size(80.dp),
-                    )
-                }
+                com.sakayori.music.ui.component.PlaylistSkeleton()
             }
 
             is PlaylistUIState.Error -> {
