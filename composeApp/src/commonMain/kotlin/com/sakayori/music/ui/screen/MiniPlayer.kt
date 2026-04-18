@@ -80,6 +80,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -146,6 +148,7 @@ fun MiniPlayer(
     val isLowEnd = remember { com.sakayori.music.utils.DeviceCapability.isLowEndDevice() }
     val isLiquidGlassEnabled = if (isLowEnd) DataStoreManager.FALSE else rawLiquidGlassEnabled
     val isBlurEnabled = com.sakayori.music.extension.LocalBlurEnabled.current
+    val haptic = LocalHapticFeedback.current
     val controllerState by sharedViewModel.controllerState.collectAsStateWithLifecycle()
     val timelineState by sharedViewModel.timeline.collectAsStateWithLifecycle()
 
@@ -399,8 +402,10 @@ fun MiniPlayer(
                                             onDragCancel = {
                                                 coroutineScope.launch {
                                                     if (offsetX.value > 200) {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         sharedViewModel.onUIEvent(UIEvent.Previous)
                                                     } else if (offsetX.value < -120) {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         sharedViewModel.onUIEvent(UIEvent.Next)
                                                     }
                                                     offsetX.animateTo(0f)
@@ -409,8 +414,10 @@ fun MiniPlayer(
                                             onDragEnd = {
                                                 coroutineScope.launch {
                                                     if (offsetX.value > 200) {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         sharedViewModel.onUIEvent(UIEvent.Previous)
                                                     } else if (offsetX.value < -120) {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                         sharedViewModel.onUIEvent(UIEvent.Next)
                                                     }
                                                     offsetX.animateTo(0f)
@@ -547,6 +554,7 @@ fun MiniPlayer(
                             }
                         } else {
                             PlayPauseButton(isPlaying = isPlaying, modifier = Modifier.size(48.dp)) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 sharedViewModel.onUIEvent(UIEvent.PlayPause)
                             }
                         }

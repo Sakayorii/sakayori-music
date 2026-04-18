@@ -584,7 +584,9 @@ fun AlbumScreen(
             }
 
             LocalPlaylistState.PlaylistLoadState.Error -> {
-                navController.navigateUp()
+                com.sakayori.music.ui.component.NetworkErrorState(
+                    onRetry = { viewModel.updateBrowseId(browseId) },
+                )
             }
 
             LocalPlaylistState.PlaylistLoadState.Loading -> {

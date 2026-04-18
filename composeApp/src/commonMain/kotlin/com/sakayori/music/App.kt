@@ -165,6 +165,16 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     }
 
     LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(30_000)
+        try {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.sakayori.music.utils.CacheCleaner.cleanupOldFiles()
+            }
+        } catch (_: Throwable) {
+        }
+    }
+
+    LaunchedEffect(Unit) {
         var idleMinutes = 0
         var lastTrackId = ""
         while (true) {

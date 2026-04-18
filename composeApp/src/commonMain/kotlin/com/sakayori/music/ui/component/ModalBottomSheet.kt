@@ -188,6 +188,8 @@ import com.sakayori.music.generated.resources.baseline_people_alt_24
 import com.sakayori.music.generated.resources.baseline_playlist_add_24
 import com.sakayori.music.generated.resources.baseline_queue_music_24
 import com.sakayori.music.generated.resources.queue_is_empty
+import com.sakayori.music.generated.resources.queue_track_count
+import com.sakayori.music.generated.resources.queue_track_count_single
 import com.sakayori.music.generated.resources.baseline_sensors_24
 import com.sakayori.music.generated.resources.baseline_share_24
 import com.sakayori.music.generated.resources.baseline_sync_24
@@ -1094,14 +1096,27 @@ fun QueueBottomSheet(
                             .padding(10.dp),
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(Res.string.queue),
-                        style = typo().titleMedium,
-                        modifier =
-                            Modifier
-                                .padding(horizontal = 20.dp)
-                                .weight(1f),
-                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                            .weight(1f),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.queue),
+                            style = typo().titleMedium,
+                        )
+                        if (queue.isNotEmpty()) {
+                            Text(
+                                text = if (queue.size == 1) {
+                                    stringResource(Res.string.queue_track_count_single)
+                                } else {
+                                    stringResource(Res.string.queue_track_count, queue.size)
+                                },
+                                style = typo().bodySmall,
+                                color = Color.White.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = stringResource(Res.string.endless_queue),
