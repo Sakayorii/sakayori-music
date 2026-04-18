@@ -744,8 +744,9 @@ fun ArtistScreen(
             }
 
             is ArtistScreenState.Error -> {
-                viewModel.makeToast(state.message ?: stringResource(Res.string.error))
-                navController.navigateUp()
+                com.sakayori.music.ui.component.NetworkErrorState(
+                    onRetry = { viewModel.browseArtist(channelId) },
+                )
             }
         }
     }

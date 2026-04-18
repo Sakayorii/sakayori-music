@@ -1279,6 +1279,20 @@ internal class DataStoreManagerImpl(
         }
     }
 
+    override val sleepTimerFadeOut: Flow<String>
+        get() =
+            settingsDataStore.data.map { preferences ->
+                preferences[SLEEP_TIMER_FADE_OUT] ?: TRUE
+            }
+
+    override suspend fun setSleepTimerFadeOut(enable: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[SLEEP_TIMER_FADE_OUT] = if (enable) TRUE else FALSE
+            }
+        }
+    }
+
     override val explicitContentEnabled: Flow<String> =
         settingsDataStore.data.map { preferences ->
             preferences[EXPLICIT_CONTENT_ENABLED] ?: TRUE
@@ -1476,6 +1490,8 @@ internal class DataStoreManagerImpl(
         val LOW_RESOURCE_MODE = stringPreferencesKey("low_resource_mode")
 
         val CRASH_REPORTING_ENABLED = stringPreferencesKey("crash_reporting_enabled")
+
+        val SLEEP_TIMER_FADE_OUT = stringPreferencesKey("sleep_timer_fade_out")
 
         val EXPLICIT_CONTENT_ENABLED = stringPreferencesKey("explicit_content_enabled")
 
