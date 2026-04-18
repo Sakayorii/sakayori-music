@@ -2252,6 +2252,8 @@ fun SleepTimerBottomSheet(
             Preset("30 min", 30),
             Preset("45 min", 45),
             Preset("1 hour", 60),
+            Preset("90 min", 90),
+            Preset("2 hours", 120),
         )
 
     val isSetEnabled =

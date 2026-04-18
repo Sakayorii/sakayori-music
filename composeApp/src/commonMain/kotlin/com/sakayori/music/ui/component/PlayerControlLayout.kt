@@ -56,11 +56,11 @@ fun PlayerControlLayout(
             Box(
                 modifier =
                     Modifier
-                        .background(transparent)
                         .size(smallIcon.second)
                         .aspectRatio(1f)
-                        .clip(
-                            CircleShape,
+                        .clip(CircleShape)
+                        .background(
+                            if (controllerState.isShuffle) seed.copy(alpha = 0.15f) else transparent,
                         )
                         .clickable {
                             onUIEvent(UIEvent.Shuffle)
@@ -68,21 +68,12 @@ fun PlayerControlLayout(
                 contentAlignment = Alignment.Center,
             ) {
                 Crossfade(targetState = controllerState.isShuffle, label = "Shuffle Button") { isShuffle ->
-                    if (!isShuffle) {
-                        Icon(
-                            imageVector = Icons.Rounded.Shuffle,
-                            tint = Color.White,
-                            contentDescription = null,
-                            modifier = Modifier.size(smallIcon.first),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.Shuffle,
-                            tint = seed,
-                            contentDescription = null,
-                            modifier = Modifier.size(smallIcon.first),
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Rounded.Shuffle,
+                        tint = if (isShuffle) seed else Color.White,
+                        contentDescription = null,
+                        modifier = Modifier.size(smallIcon.first),
+                    )
                 }
             }
         }
@@ -176,8 +167,9 @@ fun PlayerControlLayout(
                     Modifier
                         .size(smallIcon.second)
                         .aspectRatio(1f)
-                        .clip(
-                            CircleShape,
+                        .clip(CircleShape)
+                        .background(
+                            if (controllerState.repeatState !is RepeatState.None) seed.copy(alpha = 0.15f) else transparent,
                         )
                         .clickable {
                             onUIEvent(UIEvent.Repeat)

@@ -454,7 +454,7 @@ fun AlbumScreen(
                                                     stringResource(
                                                         Res.string.album_length,
                                                         (uiState.trackCount).toString(),
-                                                        uiState.length,
+                                                        if (uiState.length.isNotEmpty()) "• ${uiState.length}" else "",
                                                     ),
                                                 color = Color.White,
                                                 style = typo().bodyMedium,

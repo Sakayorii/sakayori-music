@@ -105,6 +105,16 @@ cd sakayori-music
 - **KCEF** cho desktop WebView
 - **Sentry** cho crash reporting
 
+## Phím Tắt (Desktop)
+
+| Phím | Hành động | | Phím | Hành động |
+|------|-----------|-|------|-----------|
+| `Space` | Phát / Tạm dừng | | `M` | Tắt / Bật tiếng |
+| `→` | Bài tiếp | | `L` | Thích / Bỏ thích |
+| `←` | Bài trước | | `S` | Bật tắt Shuffle |
+| `↑` | Tăng âm lượng | | `R` | Chuyển Repeat |
+| `↓` | Giảm âm lượng | | `?` | Xem phím tắt |
+
 ## Ngôn Ngữ Hỗ Trợ
 
 SakayoriMusic nói được **31 ngôn ngữ**. Đổi trong `Settings → Content → Language`.

@@ -16,7 +16,7 @@
 ![Compose](https://img.shields.io/badge/compose-multiplatform-4285F4.svg)
 ![Last Commit](https://img.shields.io/github/last-commit/Sakayorii/sakayori-music?color=00BCD4)
 
-[Download](#download) · [Features](#features) · [Screenshots](#screenshots) · [Languages](#supported-languages) · [Build](#build) · [Credits](#credits)
+[Download](#download) · [Features](#features) · [Screenshots](#screenshots) · [Shortcuts](#keyboard-shortcuts-desktop) · [Languages](#supported-languages) · [Build](#build) · [Credits](#credits)
 
 **English** · [Tiếng Việt](docs/README.vi.md) · [日本語](docs/README.ja.md)
 
@@ -163,6 +163,18 @@ sakayori-music/
 │   └── service/             External services (YouTube, Spotify, etc.)
 └── crashlytics/             Sentry integration
 ```
+
+## Keyboard Shortcuts (Desktop)
+
+| Key | Action | | Key | Action |
+|-----|--------|-|-----|--------|
+| `Space` | Play / Pause | | `M` | Mute / Unmute |
+| `→` | Next Track | | `L` | Like / Unlike |
+| `←` | Previous Track | | `S` | Toggle Shuffle |
+| `↑` | Volume Up | | `R` | Cycle Repeat |
+| `↓` | Volume Down | | `?` | Show Shortcuts |
+
+Hardware media keys (play/pause, next, previous) work automatically.
 
 ## Supported Languages
 

@@ -3,6 +3,7 @@ package com.sakayori.music.ui.screen.other
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -100,6 +101,13 @@ fun CreditScreen(
         )
 
         Text(
+            text = "Running on ${com.sakayori.music.getPlatform().osName()}",
+            style = typo().bodySmall,
+            color = Color.White.copy(alpha = 0.5f),
+            fontSize = 11.sp,
+        )
+
+        Text(
             text = stringResource(Res.string.sakayori_dev),
             style = typo().bodyMedium,
         )
@@ -115,6 +123,34 @@ fun CreditScreen(
                     .padding(horizontal = 25.dp),
             textAlign = TextAlign.Start,
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 25.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                .background(Color.White.copy(alpha = 0.05f))
+                .clickable {
+                    openUrl("https://github.com/maxrave-dev/SimpMusic")
+                }
+                .padding(12.dp),
+        ) {
+            Column {
+                Text(
+                    text = stringResource(Res.string.forked_from),
+                    style = typo().bodySmall,
+                    color = Color(0xFF00BCD4),
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "SimpMusic by maxrave-dev",
+                    style = typo().bodyMedium,
+                    color = Color.White,
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

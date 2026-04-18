@@ -368,6 +368,13 @@
     <string name="pull_down_to_refresh">Pull down to refresh, or check your internet connection.</string>
     <string name="lead_maintainer">Lead Maintainer</string>
     <string name="co_maintainer">Co-Maintainer</string>
+    <string name="forked_from">Forked From</string>
+    <string name="view_privacy_policy">View Privacy Policy</string>
+    <string name="view_privacy_policy_subtitle">Learn what data stays on your device</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
     <string name="crash_reporting">Crash Reporting</string>
     <string name="crash_reporting_description">Send anonymous crash reports to help improve stability. No personal data is collected.</string>
     <string name="hours">Hours</string>

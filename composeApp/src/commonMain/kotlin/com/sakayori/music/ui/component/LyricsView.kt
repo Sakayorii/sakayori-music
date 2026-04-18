@@ -78,6 +78,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
@@ -282,7 +283,10 @@ fun LyricsView(
                                 isCurrent = index == currentLineIndex || lyricsData.lyrics.syncType != "LINE_SYNCED",
                                 modifier =
                                     Modifier
-                                        .clickable(enabled = lyricsData.lyrics.syncType == "LINE_SYNCED") {
+                                        .clickable(
+                                            enabled = lyricsData.lyrics.syncType == "LINE_SYNCED" ||
+                                                lyricsData.lyrics.syncType == "RICH_SYNCED",
+                                        ) {
                                             onLineClick(line.startTimeMs.toFloat() * 100 / timeLine.value.total)
                                         }.onGloballyPositioned { c ->
                                             if (c.size.height != currentLineHeight) {
@@ -322,7 +326,11 @@ fun LyricsLineItem(
                             },
                         ),
                     text = originalWords,
-                    style = typo().headlineLarge,
+                    style = if (isCurrent) {
+                        typo().headlineLarge.copy(fontWeight = FontWeight.Bold)
+                    } else {
+                        typo().headlineLarge
+                    },
                     color =
                         if (isCurrent) {
                             Color.White
