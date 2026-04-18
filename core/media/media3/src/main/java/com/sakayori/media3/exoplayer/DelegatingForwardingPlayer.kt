@@ -260,7 +260,6 @@ internal class DelegatingForwardingPlayer(
 
         reAttachVideoOutput()
 
-
         if (wrappedPlayer !== newDelegate) {
             Logger.e(TAG, "Delegate swap verification FAILED - wrappedPlayer is not the new delegate!")
         } else {
@@ -287,4 +286,3 @@ internal class DelegatingForwardingPlayer(
         }
     }
 }
-

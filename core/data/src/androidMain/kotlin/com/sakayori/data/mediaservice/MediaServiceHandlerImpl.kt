@@ -176,7 +176,6 @@ internal class MediaServiceHandlerImpl(
     private val _currentSongIndex: MutableStateFlow<Int> = MutableStateFlow(player.currentMediaItemIndex)
     override val currentSongIndex: StateFlow<Int> = _currentSongIndex.asStateFlow()
 
-
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var secondLoudnessEnhancer: LoudnessEnhancer? = null
 

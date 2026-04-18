@@ -242,6 +242,10 @@ fun MiniPlayer(
         mutableStateOf<ImageBitmap?>(null)
     }
 
+    LaunchedEffect(songEntity?.videoId) {
+        bitmap = null
+    }
+
     LaunchedEffect(bitmap) {
         val bm = bitmap
         if (bm != null) {

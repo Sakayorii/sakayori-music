@@ -23,4 +23,3 @@ producePath = {
     requireNotNull(documentDirectory).path + "/$SETTINGS_FILENAME.preferences_pb"
 }
 )
-

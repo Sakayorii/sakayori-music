@@ -78,4 +78,3 @@ class AutoBackupScheduler(
         const val WORK_TAG = "auto_backup"
     }
 }
-

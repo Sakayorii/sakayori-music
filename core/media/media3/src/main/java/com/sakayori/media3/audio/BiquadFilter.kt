@@ -113,4 +113,3 @@ class BiquadFilter {
         const val BUTTERWORTH_Q = 0.707f
     }
 }
-

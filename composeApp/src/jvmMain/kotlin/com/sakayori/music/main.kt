@@ -145,9 +145,9 @@ fun main(args: Array<String>) {
                 val crashReportingEnabled = kotlinx.coroutines.runBlocking(Dispatchers.IO) {
                     getKoin().get<DataStoreManager>().crashReportingEnabled.first() == "TRUE"
                 }
-                if (crashReportingEnabled && BuildKonfig.sentryDsn.isNotEmpty()) {
+                if (crashReportingEnabled && BuildKonfig.sentryDsnDesktop.isNotEmpty()) {
                     Sentry.init { options ->
-                        options.dsn = BuildKonfig.sentryDsn
+                        options.dsn = BuildKonfig.sentryDsnDesktop
                         options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"
                         options.setDiagnosticLevel(SentryLevel.ERROR)
                     }

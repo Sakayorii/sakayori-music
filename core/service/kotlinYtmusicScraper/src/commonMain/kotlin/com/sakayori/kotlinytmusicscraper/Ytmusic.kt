@@ -322,7 +322,6 @@ class Ytmusic {
             setBody("[\"$poTokenChallengeRequestKey\", \"$challenge\"]")
         }
 
-
     suspend fun noLogInPlayer(
         videoId: String,
         cookie: String,
@@ -503,7 +502,6 @@ class Ytmusic {
             ),
         )
     }
-
 
     suspend fun getSkipSegments(videoId: String) =
         httpClient.get("https://sponsor.ajay.app/api/skipSegments/") {
