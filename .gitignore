@@ -46,3 +46,4 @@ sentry.properties
 /crashlytics/build/
 .claude/
 bin/
+__pycache__/
