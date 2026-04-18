@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -208,6 +212,18 @@ fun main(args: Array<String>) {
                         windowState.isMinimized = false
                     }
                 }
+                val sharedVm = getKoin().get<com.sakayori.music.viewModel.SharedViewModel>()
+                val isPlaying = sharedVm.controllerState.value.isPlaying
+                Item(if (isPlaying) "Pause" else "Play") {
+                    sharedVm.onUIEvent(com.sakayori.music.viewModel.UIEvent.PlayPause)
+                }
+                Item("Next") {
+                    sharedVm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Next)
+                }
+                Item("Previous") {
+                    sharedVm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Previous)
+                }
+                Divider()
                 if (MiniPlayerManager.isOpen) {
                     Item(closeMiniPlayer) {
                         MiniPlayerManager.isOpen = false
@@ -237,6 +253,68 @@ fun main(args: Array<String>) {
                 transparent = false,
                 state = windowState,
                 visible = isVisible,
+                onKeyEvent = { event ->
+                    if (event.type != KeyEventType.KeyUp) return@Window false
+                    val vm = getKoin().get<com.sakayori.music.viewModel.SharedViewModel>()
+                    when (event.key) {
+                        Key.Spacebar -> {
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.PlayPause)
+                            true
+                        }
+                        Key.DirectionRight, Key.MediaNext -> {
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Next)
+                            true
+                        }
+                        Key.DirectionLeft, Key.MediaPrevious -> {
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Previous)
+                            true
+                        }
+                        Key.L -> {
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.ToggleLike)
+                            true
+                        }
+                        Key.S -> {
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Shuffle)
+                            true
+                        }
+                        Key.R -> {
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Repeat)
+                            true
+                        }
+                        Key.DirectionUp -> {
+                            val current = vm.controllerState.value.volume
+                            val newVol = (current + 0.05f).coerceAtMost(1f)
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.UpdateVolume(newVol))
+                            showToast("🔊 ${(newVol * 100).toInt()}%", multiplatform.network.cmptoast.ToastGravity.Top)
+                            true
+                        }
+                        Key.DirectionDown -> {
+                            val current = vm.controllerState.value.volume
+                            val newVol = (current - 0.05f).coerceAtLeast(0f)
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.UpdateVolume(newVol))
+                            showToast("🔊 ${(newVol * 100).toInt()}%", multiplatform.network.cmptoast.ToastGravity.Top)
+                            true
+                        }
+                        Key.M -> {
+                            val current = vm.controllerState.value.volume
+                            val newVol = if (current > 0f) 0f else 1f
+                            vm.onUIEvent(com.sakayori.music.viewModel.UIEvent.UpdateVolume(newVol))
+                            showToast(
+                                if (newVol > 0f) "🔊 Unmuted" else "🔇 Muted",
+                                multiplatform.network.cmptoast.ToastGravity.Top,
+                            )
+                            true
+                        }
+                        Key.Slash, Key.H -> {
+                            showToast(
+                                "Shortcuts: Space=Play · ←→=Skip · ↑↓=Volume · M=Mute · L=Like · S=Shuffle · R=Repeat",
+                                multiplatform.network.cmptoast.ToastGravity.Top,
+                            )
+                            true
+                        }
+                        else -> false
+                    }
+                },
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     if (!isMacOS) {

@@ -233,6 +233,8 @@ import com.sakayori.music.generated.resources.crossfade_preview
 import com.sakayori.music.generated.resources.crossfade_preview_description
 import com.sakayori.music.generated.resources.open_equalizer
 import com.sakayori.music.generated.resources.privacy
+import com.sakayori.music.generated.resources.view_privacy_policy
+import com.sakayori.music.generated.resources.view_privacy_policy_subtitle
 import com.sakayori.music.generated.resources.search_settings
 import com.sakayori.music.generated.resources.crossfade_duration
 import com.sakayori.music.generated.resources.custom_ai_model_id
@@ -1985,6 +1987,16 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.crash_reporting_description),
                     smallSubtitle = true,
                     switch = (crashReportingEnabled to { viewModel.setCrashReportingEnabled(it) }),
+                )
+                SettingItem(
+                    title = stringResource(Res.string.view_privacy_policy),
+                    subtitle = stringResource(Res.string.view_privacy_policy_subtitle),
+                    smallSubtitle = true,
+                    onClick = {
+                        coroutineScope.launch {
+                            com.sakayori.music.expect.openUrl("https://music.sakayori.dev/privacy")
+                        }
+                    },
                 )
             }
         }
