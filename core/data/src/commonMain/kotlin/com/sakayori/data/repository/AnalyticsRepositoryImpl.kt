@@ -60,7 +60,6 @@ internal class AnalyticsRepositoryImpl(
             analyticsDatasource.deleteOldPlaybackEvents(cutoffTimestamp)
         }
 
-
     override suspend fun queryTopPlayedSongsLastXDays(x: Int): Flow<List<TopPlayedTracks>> =
         flow {
             emit(analyticsDatasource.queryTopPlayedSongsLastXDays(x))

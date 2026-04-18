@@ -118,7 +118,7 @@ fun CustomTitleBar(
                     hoverColor = Color(0xFFE54942),
                     icon = WindowControlIcon.Close,
                 )
-                
+
                 Spacer(modifier = Modifier.width(8.dp))
 
                 WindowControlButton(

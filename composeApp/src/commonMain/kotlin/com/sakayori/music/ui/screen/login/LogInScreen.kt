@@ -74,8 +74,6 @@ fun LoginScreen(
 
     val state = rememberWebViewState()
 
-
-
     LaunchedEffect(Unit) {
         hideBottomNavigation()
         createWebViewCookieManager().removeAllCookies()

@@ -1,6 +1,5 @@
 package com.sakayori.music.ui.component
 
-
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

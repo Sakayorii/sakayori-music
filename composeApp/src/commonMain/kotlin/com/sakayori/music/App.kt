@@ -57,6 +57,8 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
+import coil3.SingletonImageLoader
+import coil3.compose.LocalPlatformContext
 import coil3.toUri
 import com.sakayori.domain.data.player.GenericMediaItem
 import com.sakayori.domain.manager.DataStoreManager
@@ -177,6 +179,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
         }
     }
 
+    val coilPlatformContext = LocalPlatformContext.current
     LaunchedEffect(Unit) {
         var idleMinutes = 0
         var lastTrackId = ""
@@ -186,6 +189,13 @@ fun App(viewModel: SharedViewModel = koinInject()) {
             val currentTrackId = viewModel.nowPlayingState.value?.mediaItem?.mediaId ?: ""
             if (currentTrackId.isNotEmpty() && currentTrackId != lastTrackId) {
                 lastTrackId = currentTrackId
+                try {
+                    SingletonImageLoader.get(coilPlatformContext).memoryCache?.let { cache ->
+                        val target = (cache.maxSize * 0.5).toLong()
+                        cache.trimToSize(target)
+                    }
+                } catch (_: Throwable) {
+                }
                 try {
                     Runtime.getRuntime().gc()
                 } catch (_: Throwable) {

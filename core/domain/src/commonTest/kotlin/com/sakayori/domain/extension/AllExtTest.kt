@@ -58,7 +58,6 @@ class AllExtTest {
         assertEquals(5, earlier.monthNumber)
     }
 
-
     @Test
     fun decodeHtmlEntities_apostrophe_decoded() {
         assertEquals("It's", decodeHtmlEntities("It&apos;s"))

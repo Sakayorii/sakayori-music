@@ -8,4 +8,3 @@ actual fun toggleMiniPlayer() {
     MiniPlayerManager.isOpen = !MiniPlayerManager.isOpen
     Logger.d("MiniPlayer", "New state: ${MiniPlayerManager.isOpen}")
 }
-

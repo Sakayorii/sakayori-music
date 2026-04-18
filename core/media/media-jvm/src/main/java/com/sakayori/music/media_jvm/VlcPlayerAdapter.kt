@@ -221,7 +221,6 @@ class VlcPlayerAdapter(
         val audioSlaveUrl: String? = null,
     )
 
-
     override fun play() {
         Logger.d(TAG, "play() called (current state: $internalState)")
         coroutineScope.launch {
@@ -396,7 +395,6 @@ class VlcPlayerAdapter(
             }
         }
     }
-
 
     override fun setMediaItem(mediaItem: GenericMediaItem) {
         coroutineScope.launch {
@@ -600,7 +598,6 @@ class VlcPlayerAdapter(
             shuffledIndex
         }
 
-
     override val isPlaying: Boolean
         get() = internalState == InternalState.PLAYING
 
@@ -643,7 +640,6 @@ class VlcPlayerAdapter(
                 InternalState.ERROR -> PlayerConstants.STATE_IDLE
                 InternalState.PAUSED -> PlayerConstants.STATE_READY
             }
-
 
     override fun hasNextMediaItem(): Boolean =
         when (internalRepeatMode) {
@@ -730,7 +726,6 @@ class VlcPlayerAdapter(
             }
         }
 
-
     override var shuffleModeEnabled: Boolean
         get() = internalShuffleModeEnabled
         set(value) {
@@ -779,7 +774,6 @@ class VlcPlayerAdapter(
             }
         }
 
-
     override val audioSessionId: Int
         get() = 0
 
@@ -794,7 +788,6 @@ class VlcPlayerAdapter(
 
     override var skipSilenceEnabled: Boolean = false
 
-
     override fun addListener(listener: MediaPlayerListener) {
         listeners.add(listener)
     }
@@ -802,7 +795,6 @@ class VlcPlayerAdapter(
     override fun removeListener(listener: MediaPlayerListener) {
         listeners.remove(listener)
     }
-
 
     override fun release() {
         currentLoadJob?.cancel()
@@ -832,7 +824,6 @@ class VlcPlayerAdapter(
             Logger.w(TAG, "Error releasing VLC factory: ${e.message}")
         }
     }
-
 
     private fun transitionToState(newState: InternalState) {
         if (internalState == newState) return
@@ -1742,7 +1733,6 @@ class VlcPlayerAdapter(
 
     fun setMaxPrecacheCount(count: Int) {
     }
-
 
     private suspend fun extractPlayableUrl(mediaItem: GenericMediaItem): PlayableSource? {
         Logger.w(TAG, "Extracting playable URL for ${mediaItem.mediaId}")

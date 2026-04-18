@@ -371,7 +371,6 @@ class LocalPlaylistViewModel(
 
     val listJob: MutableStateFlow<ArrayList<SongEntity>> = MutableStateFlow(arrayListOf())
 
-
     fun updatePlaylistTitle(
         title: String,
         id: Long,

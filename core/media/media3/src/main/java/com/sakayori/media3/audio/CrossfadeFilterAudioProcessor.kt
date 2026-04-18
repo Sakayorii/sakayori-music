@@ -137,4 +137,3 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         filter.reset()
     }
 }
-

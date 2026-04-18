@@ -167,8 +167,6 @@ fun AnalyticsScreen(
         )
     }
 
-
-
     Box(modifier = Modifier.fillMaxSize()) {
         val dayRanges = remember { AnalyticsUiState.DayRange.entries.toTypedArray() }
         val currentRangeIndex = dayRanges.indexOf(uiState.dayRange).coerceAtLeast(0)

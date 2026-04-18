@@ -5,4 +5,3 @@ import com.sakayori.music.media_jvm.di.loadVlcModule
 actual fun loadMediaService() {
     loadVlcModule()
 }
-

@@ -161,14 +161,26 @@ fun LibraryScreen(
     var filterQuery by rememberSaveable { mutableStateOf("") }
     var showFilterInput by rememberSaveable { mutableStateOf(false) }
 
-    fun <T> LocalResource<List<T>>.applyFilter(titleSelector: (T) -> String): LocalResource<List<T>> {
-        if (filterQuery.isBlank()) return this
-        val filtered = this.data?.filter { titleSelector(it).contains(filterQuery, ignoreCase = true) } ?: emptyList()
-        return when (this) {
-            is LocalResource.Success -> LocalResource.Success(filtered)
-            is LocalResource.Error -> LocalResource.Error(this.message ?: "", filtered)
-            is LocalResource.Loading -> LocalResource.Loading()
-        }
+    val filteredYouTubePlaylist = remember(youTubePlaylist, filterQuery) {
+        applyTitleFilter(youTubePlaylist, filterQuery) { it.title }
+    }
+    val filteredYouTubeMixForYou = remember(youTubeMixForYou, filterQuery) {
+        applyTitleFilter(youTubeMixForYou, filterQuery) { it.title }
+    }
+    val filteredYourLocalPlaylist = remember(yourLocalPlaylist, filterQuery) {
+        applyTitleFilter(yourLocalPlaylist, filterQuery) { it.title }
+    }
+    val filteredFavoritePlaylist = remember(favoritePlaylist, filterQuery) {
+        applyTitleFilter(favoritePlaylist, filterQuery, ::playlistTypeTitle)
+    }
+    val filteredDownloadedPlaylist = remember(downloadedPlaylist, filterQuery) {
+        applyTitleFilter(downloadedPlaylist, filterQuery, ::playlistTypeTitle)
+    }
+    val filteredFavoritePodcasts = remember(favoritePodcasts, filterQuery) {
+        applyTitleFilter(favoritePodcasts, filterQuery, ::playlistTypeTitle)
+    }
+    val filteredChartPlaylists = remember(chartPlaylists, filterQuery) {
+        applyTitleFilter(chartPlaylists, filterQuery) { it.title }
     }
 
     LaunchedEffect(nowPlaying) {
@@ -288,7 +300,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    youTubePlaylist.applyFilter { it.title },
+                    filteredYouTubePlaylist,
                     emptyText = Res.string.no_YouTube_playlists,
                     onScrolling = onScrolling,
                 ) {
@@ -300,7 +312,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    youTubeMixForYou.applyFilter { it.title },
+                    filteredYouTubeMixForYou,
                     emptyText = Res.string.no_mixes_found,
                     onScrolling = onScrolling,
                 ) {
@@ -312,7 +324,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    yourLocalPlaylist.applyFilter { it.title },
+                    filteredYourLocalPlaylist,
                     onScrolling = onScrolling,
                     emptyText = Res.string.no_playlists_added,
                     createNewPlaylist = {
@@ -327,7 +339,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    favoritePlaylist.applyFilter(::playlistTypeTitle),
+                    filteredFavoritePlaylist,
                     emptyText = Res.string.no_favorite_playlists,
                     onScrolling = onScrolling,
                 ) {
@@ -339,7 +351,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    downloadedPlaylist.applyFilter(::playlistTypeTitle),
+                    filteredDownloadedPlaylist,
                     emptyText = Res.string.no_playlists_downloaded,
                     onScrolling = onScrolling,
                 ) {
@@ -351,7 +363,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    favoritePodcasts.applyFilter(::playlistTypeTitle),
+                    filteredFavoritePodcasts,
                     emptyText = Res.string.no_favorite_podcasts,
                     onScrolling = onScrolling,
                 ) {
@@ -363,7 +375,7 @@ fun LibraryScreen(
                 GridLibraryPlaylist(
                     navController,
                     innerPadding.copy(top = topAppBarHeight),
-                    chartPlaylists.applyFilter { it.title },
+                    filteredChartPlaylists,
                     emptyText = Res.string.no_charts_found,
                     onScrolling = onScrolling,
                 ) {
@@ -632,4 +644,18 @@ private fun playlistTypeTitle(item: com.sakayori.domain.data.type.PlaylistType):
     is com.sakayori.domain.data.entities.AlbumEntity -> item.title
     is com.sakayori.domain.data.entities.PodcastsEntity -> item.title
     else -> ""
+}
+
+private fun <T> applyTitleFilter(
+    source: LocalResource<List<T>>,
+    query: String,
+    titleSelector: (T) -> String,
+): LocalResource<List<T>> {
+    if (query.isBlank()) return source
+    val filtered = source.data?.filter { titleSelector(it).contains(query, ignoreCase = true) } ?: emptyList()
+    return when (source) {
+        is LocalResource.Success -> LocalResource.Success(filtered)
+        is LocalResource.Error -> LocalResource.Error(source.message ?: "", filtered)
+        is LocalResource.Loading -> LocalResource.Loading()
+    }
 }

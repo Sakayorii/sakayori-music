@@ -1,6 +1,5 @@
 package com.sakayori.music.ui.component
 
-
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon

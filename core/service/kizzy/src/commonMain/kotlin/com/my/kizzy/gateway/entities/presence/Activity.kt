@@ -26,4 +26,3 @@ data class Activity(
     @SerialName("url")
     val url: String? = null,
 )
-

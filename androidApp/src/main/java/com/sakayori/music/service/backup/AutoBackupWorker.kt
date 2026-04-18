@@ -254,4 +254,3 @@ class AutoBackupWorker(
         private const val TAG = "AutoBackupWorker"
     }
 }
-

@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "MacOSMediaIntegration"
 
-
 object MPNowPlayingPlaybackState {
     const val Unknown = 0
     const val Playing = 1
@@ -26,7 +25,6 @@ object MPNowPlayingPlaybackState {
     const val Interrupted = 4
 }
 
-
 object MPRemoteCommandHandlerStatus {
     const val Success = 0
     const val NoSuchContent = 1
@@ -34,7 +32,6 @@ object MPRemoteCommandHandlerStatus {
     const val DeviceNotFound = 3
     const val CommandFailed = 4
 }
-
 
 object MPMediaItemProperty {
     const val Title = "title"
@@ -52,7 +49,6 @@ object MPNowPlayingInfoProperty {
     const val PlaybackQueueCount = "MPNowPlayingInfoPropertyPlaybackQueueCount"
     const val MediaType = "MPNowPlayingInfoPropertyMediaType"
 }
-
 
 object MPConstants {
     private var loaded = false
@@ -114,7 +110,6 @@ object MPConstants {
     val mediaType: Pointer? get() = get("MPNowPlayingInfoPropertyMediaType")
 }
 
-
 interface MacOSRemoteCommandListener {
     fun onPlay()
 
@@ -135,7 +130,6 @@ interface MacOSRemoteCommandListener {
     fun onChangePlaybackPosition(positionSeconds: Double)
 }
 
-
 data class NowPlayingInfo(
     val title: String,
     val artist: String,
@@ -147,7 +141,6 @@ data class NowPlayingInfo(
     val queueIndex: Int = 0,
     val queueCount: Int = 1,
 )
-
 
 @Structure.FieldOrder("reserved", "size", "copy_helper", "dispose_helper", "signature")
 class BlockDescriptor : Structure() {
@@ -166,7 +159,6 @@ class BlockDescriptor : Structure() {
     @JvmField
     var signature: Pointer? = null
 }
-
 
 @Structure.FieldOrder("isa", "flags", "reserved", "invoke", "descriptor")
 class BlockLiteral : Structure() {
@@ -194,7 +186,6 @@ class BlockLiteral : Structure() {
     }
 }
 
-
 private interface DynamicLibrary : Library {
     companion object {
         fun load(name: String): DynamicLibrary? =
@@ -205,7 +196,6 @@ private interface DynamicLibrary : Library {
             }
     }
 }
-
 
 class MacOSMediaIntegration private constructor() {
     private val initialized = AtomicBoolean(false)
@@ -229,10 +219,8 @@ class MacOSMediaIntegration private constructor() {
                 instance ?: MacOSMediaIntegration().also { instance = it }
             }
 
-        
         fun isSupported(): Boolean = Platform.isMac()
 
-        
         private fun loadMediaPlayerFramework(): Boolean {
             if (frameworkLoaded) return true
 
@@ -260,7 +248,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     fun initialize(): Boolean {
         if (!isSupported()) {
             Logger.w(TAG, "MacOS media integration not supported on this platform")
@@ -295,12 +282,10 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     fun setRemoteCommandListener(listener: MacOSRemoteCommandListener?) {
         this.remoteCommandListener = listener
     }
 
-    
     fun updateNowPlayingInfo(info: NowPlayingInfo) {
         if (!isSupported() || !initialized.get()) {
             Logger.w(TAG, "updateNowPlayingInfo: Not supported or not initialized")
@@ -409,7 +394,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     fun updatePlaybackState(isPlaying: Boolean) {
         if (!isSupported() || !initialized.get()) return
 
@@ -423,7 +407,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     fun updateCommandsEnabled(
         hasNext: Boolean,
         hasPrevious: Boolean,
@@ -469,7 +452,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     private fun setCommandEnabled(
         command: Pointer,
         enabled: Byte,
@@ -478,7 +460,6 @@ class MacOSMediaIntegration private constructor() {
         ObjCRuntime.INSTANCE.objc_msgSend(command, ObjC.sel("setEnabled:"), enabledInt)
     }
 
-    
     fun updateElapsedTime(
         elapsedSeconds: Double,
         playbackRate: Double = 1.0,
@@ -514,7 +495,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     fun clearNowPlayingInfo() {
         if (!isSupported() || !initialized.get()) return
 
@@ -528,7 +508,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     fun release() {
         if (!isSupported()) return
 
@@ -545,8 +524,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-
-    
     suspend fun loadAndSetArtwork(artworkUrl: String?) {
         if (artworkUrl.isNullOrEmpty()) {
             Logger.d(TAG, "No artwork URL provided")
@@ -582,7 +559,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     private fun downloadImageData(urlString: String): ByteArray? =
         try {
             val url = URL(urlString)
@@ -592,7 +568,6 @@ class MacOSMediaIntegration private constructor() {
             null
         }
 
-    
     private fun createArtwork(imageData: ByteArray): Pointer? {
         try {
             val nsData = createNSData(imageData) ?: return null
@@ -618,7 +593,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-    
     private fun createNSData(bytes: ByteArray): Pointer? {
         val nsDataClass = ObjC.cls("NSData") ?: return null
 
@@ -636,20 +610,17 @@ class MacOSMediaIntegration private constructor() {
         )
     }
 
-    
     private fun createNSImage(nsData: Pointer): Pointer? {
         val nsImageClass = ObjC.cls("NSImage") ?: return null
         val allocated = ObjC.msg(nsImageClass, "alloc") ?: return null
         return ObjC.msg(allocated, "initWithData:", nsData)
     }
 
-    
     private fun createArtworkWithBounds(nsImage: Pointer): Pointer? {
         Logger.w(TAG, "createArtworkWithBounds not fully implemented")
         return null
     }
 
-    
     private fun updateNowPlayingArtwork(artwork: Pointer) {
         try {
             val infoCenter = getNowPlayingInfoCenter() ?: return
@@ -671,7 +642,6 @@ class MacOSMediaIntegration private constructor() {
         }
     }
 
-
     private fun getNowPlayingInfoCenter(): Pointer? {
         val cls = ObjC.cls("MPNowPlayingInfoCenter") ?: return null
         return ObjC.msg(cls, "defaultCenter")
@@ -682,7 +652,6 @@ class MacOSMediaIntegration private constructor() {
         return ObjC.msg(cls, "sharedCommandCenter")
     }
 
-    
     private fun createCommandHandler(handler: (Pointer?) -> Int): Pointer? {
         val callback =
             object : Callback {

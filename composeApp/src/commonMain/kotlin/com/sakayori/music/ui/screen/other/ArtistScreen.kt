@@ -226,42 +226,53 @@ fun ArtistScreen(
                                         Spacer(Modifier.width(12.dp))
                                     }
                                 }
-                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                                    if (isFollowed) {
-                                        OutlinedButton(
-                                            onClick = {
-                                                viewModel.updateFollowed(
-                                                    0,
-                                                    state.data.channelId ?: return@OutlinedButton,
+                                LimitedBorderAnimationView(
+                                    isAnimated = !isFollowed,
+                                    brush = Brush.sweepGradient(listOf(Color(0xFF00BCD4), Color.White)),
+                                    backgroundColor = Color.Transparent,
+                                    contentPadding = 0.dp,
+                                    borderWidth = 2.dp,
+                                    shape = ButtonDefaults.outlinedShape,
+                                    oneCircleDurationMillis = 3000,
+                                    interactionNumber = 1,
+                                ) {
+                                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                                        if (isFollowed) {
+                                            OutlinedButton(
+                                                onClick = {
+                                                    viewModel.updateFollowed(
+                                                        0,
+                                                        state.data.channelId ?: return@OutlinedButton,
+                                                    )
+                                                },
+                                                colors =
+                                                    ButtonDefaults.outlinedButtonColors().copy(
+                                                        contentColor = Color.White,
+                                                        containerColor = Color.Transparent,
+                                                    ),
+                                            ) {
+                                                Text(text = stringResource(Res.string.followed), color = Color.White)
+                                            }
+                                        } else {
+                                            val channelId = state.data.channelId
+                                            androidx.compose.material3.Button(
+                                                onClick = {
+                                                    if (channelId != null) {
+                                                        viewModel.updateFollowed(1, channelId)
+                                                    }
+                                                },
+                                                colors =
+                                                    ButtonDefaults.buttonColors().copy(
+                                                        containerColor = Color(0xFF00BCD4),
+                                                        contentColor = Color.Black,
+                                                    ),
+                                            ) {
+                                                Text(
+                                                    text = stringResource(Res.string.follow),
+                                                    color = Color.Black,
+                                                    style = typo().labelMedium,
                                                 )
-                                            },
-                                            colors =
-                                                ButtonDefaults.outlinedButtonColors().copy(
-                                                    contentColor = Color.White,
-                                                    containerColor = Color.Transparent,
-                                                ),
-                                        ) {
-                                            Text(text = stringResource(Res.string.followed), color = Color.White)
-                                        }
-                                    } else {
-                                        val channelId = state.data.channelId
-                                        androidx.compose.material3.Button(
-                                            onClick = {
-                                                if (channelId != null) {
-                                                    viewModel.updateFollowed(1, channelId)
-                                                }
-                                            },
-                                            colors =
-                                                ButtonDefaults.buttonColors().copy(
-                                                    containerColor = Color(0xFF00BCD4),
-                                                    contentColor = Color.Black,
-                                                ),
-                                        ) {
-                                            Text(
-                                                text = stringResource(Res.string.follow),
-                                                color = Color.Black,
-                                                style = typo().labelMedium,
-                                            )
+                                            }
                                         }
                                     }
                                 }

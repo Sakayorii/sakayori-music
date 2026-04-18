@@ -325,19 +325,30 @@ buildkonfig {
 
         if (isFullBuild) {
             try {
-                println("Full build detected, enabling Sentry DSN")
+                println("Full build detected, enabling Sentry DSNs")
                 val properties = Properties()
                 properties.load(rootProject.file("local.properties").inputStream())
+                val legacyDsn = properties.getProperty("SENTRY_DSN") ?: ""
                 buildConfigField(
                     STRING,
-                    "sentryDsn",
-                    properties.getProperty("SENTRY_DSN") ?: "",
+                    "sentryDsnAndroid",
+                    properties.getProperty("SENTRY_DSN_ANDROID") ?: legacyDsn,
                 )
+                buildConfigField(
+                    STRING,
+                    "sentryDsnDesktop",
+                    properties.getProperty("SENTRY_DSN_DESKTOP") ?: legacyDsn,
+                )
+                buildConfigField(STRING, "sentryDsn", legacyDsn)
             } catch (e: Exception) {
-                println("Failed to load SENTRY_DSN from local.properties: ${e.message}")
+                println("Failed to load SENTRY DSNs from local.properties: ${e.message}")
+                buildConfigField(STRING, "sentryDsnAndroid", "")
+                buildConfigField(STRING, "sentryDsnDesktop", "")
                 buildConfigField(STRING, "sentryDsn", "")
             }
         } else {
+            buildConfigField(STRING, "sentryDsnAndroid", "")
+            buildConfigField(STRING, "sentryDsnDesktop", "")
             buildConfigField(STRING, "sentryDsn", "")
         }
     }

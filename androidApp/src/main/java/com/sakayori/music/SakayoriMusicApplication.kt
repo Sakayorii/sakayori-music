@@ -23,7 +23,9 @@ import com.sakayori.music.service.backup.AutoBackupScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import multiplatform.network.cmptoast.AppContext
 import okhttp3.OkHttpClient
 import okio.FileSystem
@@ -49,12 +51,17 @@ class SakayoriMusicApplication :
     override fun onCreate() {
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        configCrashlytics(this, BuildKonfig.sentryDsn)
         startKoin {
             androidLogger(level = Level.INFO)
             androidContext(this@SakayoriMusicApplication)
             loadAllModules()
             loadKoinModules(viewModelModule)
+        }
+        val crashReportingEnabled = runBlocking {
+            dataStoreManager.crashReportingEnabled.first() == DataStoreManager.TRUE
+        }
+        if (crashReportingEnabled && BuildKonfig.sentryDsnAndroid.isNotEmpty()) {
+            configCrashlytics(this, BuildKonfig.sentryDsnAndroid)
         }
         val workConfig =
             Configuration
