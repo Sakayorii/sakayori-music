@@ -285,6 +285,23 @@ fun SongFullWidthItems(
                         }
                         AnimatedVisibility(
                             visible =
+                                if (songEntity != null || track != null) {
+                                    downloadState == DownloadState.STATE_DOWNLOADING
+                                } else {
+                                    false
+                                },
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    color = androidx.compose.ui.graphics.Color(0xFF00BCD4),
+                                    strokeWidth = 1.5.dp,
+                                    modifier = Modifier.size(12.dp),
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible =
                                 songEntity?.isExplicit
                                     ?: (track?.isExplicit ?: false),
                         ) {

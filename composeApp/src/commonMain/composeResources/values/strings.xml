@@ -363,6 +363,7 @@
     <string name="sleep_timer_fade_out">Sleep Timer Fade Out</string>
     <string name="sleep_timer_fade_out_description">Gradually lower volume during the last 30 seconds before the sleep timer ends.</string>
     <string name="try_different_search_terms">Try different search terms or check your spelling.</string>
+    <string name="no_internet_banner">No Internet Connection</string>
     <string name="pull_down_to_refresh">Pull down to refresh, or check your internet connection.</string>
     <string name="lead_maintainer">Lead Maintainer</string>
     <string name="co_maintainer">Co-Maintainer</string>

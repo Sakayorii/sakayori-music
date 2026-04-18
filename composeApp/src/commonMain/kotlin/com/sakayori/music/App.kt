@@ -11,6 +11,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.zIndex
+import com.sakayori.music.ui.component.OfflineBanner
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -127,6 +129,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     val nowPlayingData by viewModel.nowPlayingState.collectAsStateWithLifecycle()
     val updateData by viewModel.updateResponse.collectAsStateWithLifecycle()
     val intent by viewModel.intent.collectAsStateWithLifecycle()
+    val isOnline by com.sakayori.music.expect.networkStatusFlow().collectAsStateWithLifecycle(initialValue = true)
 
     val isTranslucentBottomBar by viewModel.getTranslucentBottomBar().collectAsStateWithLifecycle(DataStoreManager.FALSE)
     val isLiquidGlassEnabled by viewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
@@ -478,6 +481,12 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                                         },
                                     ).hazeSource(hazeState),
                             ) {
+                                OfflineBanner(
+                                    isOnline = isOnline,
+                                    modifier = Modifier
+                                        .align(androidx.compose.ui.Alignment.TopCenter)
+                                        .zIndex(10f),
+                                )
                                 AppNavigationGraph(
                                     innerPadding = innerPadding,
                                     navController = navController,

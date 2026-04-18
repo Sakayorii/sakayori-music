@@ -3,6 +3,7 @@ package com.sakayori.music.ui.screen
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -432,7 +433,7 @@ fun MiniPlayer(
                                         .Builder(LocalPlatformContext.current)
                                         .data(songEntity?.thumbnails)
                                         .size(400)
-                                        .crossfade(550)
+                                        .crossfade(800)
                                         .build(),
                                 placeholder = painterResource(Res.drawable.holder),
                                 error = painterResource(Res.drawable.holder),
@@ -446,6 +447,7 @@ fun MiniPlayer(
                                     Modifier
                                         .size(40.dp)
                                         .align(Alignment.CenterVertically)
+                                        .animateContentSize()
                                         .clip(
                                             RoundedCornerShape(4.dp),
                                         ),

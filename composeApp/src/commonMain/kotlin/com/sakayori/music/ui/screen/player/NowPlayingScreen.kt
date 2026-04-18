@@ -379,9 +379,10 @@ fun NowPlayingScreenContent(
         snapshotFlow { paletteState.palette }
             .distinctUntilChanged()
             .collectLatest {
-                spotShadowColor = it.getColorFromPalette()
-                startColor.animateTo(it.getColorFromPalette())
-                endColor.animateTo(md_theme_dark_background)
+                val newColor = it.getColorFromPalette()
+                spotShadowColor = newColor
+                startColor.animateTo(newColor, animationSpec = tween(800))
+                endColor.animateTo(md_theme_dark_background, animationSpec = tween(800))
             }
     }
 
