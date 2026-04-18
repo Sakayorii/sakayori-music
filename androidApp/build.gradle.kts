@@ -193,25 +193,35 @@ dependencies {
 }
 
 sentry {
-    org.set("sakayorimusic")
-    projectName.set("android")
     ignoredFlavors.set(setOf("foss"))
     ignoredBuildTypes.set(setOf("debug"))
     autoInstallation.enabled = false
     if (isFullBuild) {
-        val token =
+        val (orgSlug, projectSlug, token) =
             try {
-                println("Full build detected, enabling Sentry Auth Token")
+                println("Full build detected, loading Sentry settings")
                 val properties = Properties()
                 properties.load(rootProject.file("local.properties").inputStream())
-                properties.getProperty("SENTRY_AUTH_TOKEN")
+                Triple(
+                    properties.getProperty("SENTRY_ORG") ?: "",
+                    properties.getProperty("SENTRY_PROJECT_ANDROID") ?: "",
+                    properties.getProperty("SENTRY_AUTH_TOKEN") ?: "",
+                )
             } catch (e: Exception) {
-                println("Failed to load SENTRY_AUTH_TOKEN from local.properties: ${e.message}")
-                null
+                println("Failed to load Sentry settings from local.properties: ${e.message}")
+                Triple("", "", "")
             }
-        authToken.set(token ?: "")
-        includeProguardMapping.set(true)
-        autoUploadProguardMapping.set(true)
+        if (orgSlug.isNotEmpty() && projectSlug.isNotEmpty() && token.isNotEmpty()) {
+            org.set(orgSlug)
+            projectName.set(projectSlug)
+            authToken.set(token)
+            includeProguardMapping.set(true)
+            autoUploadProguardMapping.set(true)
+        } else {
+            println("Sentry ORG / PROJECT / AUTH_TOKEN missing — ProGuard upload disabled")
+            includeProguardMapping.set(false)
+            autoUploadProguardMapping.set(false)
+        }
     } else {
         includeProguardMapping.set(false)
         autoUploadProguardMapping.set(false)
