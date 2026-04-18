@@ -254,7 +254,7 @@ fun SongFullWidthItems(
                         text = track?.title ?: songEntity?.title ?: "",
                         style = typo().titleSmall,
                         maxLines = 1,
-                        color = Color.White,
+                        color = if (isPlaying) Color(0xFF00BCD4) else Color.White,
                         modifier =
                             Modifier
                                 .fillMaxWidth()

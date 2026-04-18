@@ -399,8 +399,8 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                         Column {
                             AnimatedVisibility(
                                 isShowMiniPlayer && isLiquidGlassEnabled == DataStoreManager.FALSE,
-                                enter = fadeIn() + slideInHorizontally(),
-                                exit = fadeOut(),
+                                enter = fadeIn() + androidx.compose.animation.expandVertically(),
+                                exit = fadeOut() + androidx.compose.animation.shrinkVertically(),
                             ) {
                                 MiniPlayer(
                                     Modifier
