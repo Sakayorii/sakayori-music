@@ -371,7 +371,7 @@
     <string name="pull_down_to_refresh">Pull down to refresh, or check your internet connection.</string>
     <string name="lead_maintainer">Lead Maintainer</string>
     <string name="co_maintainer">Co-Maintainer</string>
-    <string name="forked_from">Forked From</string>
+    <string name="forked_from">Inspired By And Developed From</string>
     <string name="view_privacy_policy">View Privacy Policy</string>
     <string name="view_privacy_policy_subtitle">Learn what data stays on your device</string>
     <string name="play">Play</string>
