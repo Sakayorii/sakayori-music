@@ -369,12 +369,12 @@ fun MusicShelfRenderer.Content.toSongItem(): SongItem? {
                 .toDurationSeconds(),
         thumbnail =
             this.musicResponsiveListItemRenderer
-                ?.thumbnail
+                .thumbnail
                 ?.musicThumbnailRenderer
                 ?.getThumbnailUrl() ?: "",
         endpoint =
             flexColumns
-                ?.firstOrNull()
+                .firstOrNull()
                 ?.musicResponsiveListItemFlexColumnRenderer
                 ?.text
                 ?.runs
@@ -382,12 +382,12 @@ fun MusicShelfRenderer.Content.toSongItem(): SongItem? {
                 ?.navigationEndpoint
                 ?.watchEndpoint,
         explicit =
-            this.musicResponsiveListItemRenderer?.badges?.toSongBadges()?.contains(
+            this.musicResponsiveListItemRenderer.badges?.toSongBadges()?.contains(
                 SongItem.SongBadges.Explicit,
             ) ?: false,
         thumbnails =
             this.musicResponsiveListItemRenderer
-                ?.thumbnail
+                .thumbnail
                 ?.musicThumbnailRenderer
                 ?.thumbnail,
         likeStatus =
@@ -398,7 +398,7 @@ fun MusicShelfRenderer.Content.toSongItem(): SongItem? {
                 ?.likeButtonRenderer
                 ?.toLikeStatus()
                 ?: LikeStatus.INDIFFERENT,
-        badges = this.musicResponsiveListItemRenderer?.badges?.toSongBadges(),
+        badges = this.musicResponsiveListItemRenderer.badges?.toSongBadges(),
     )
 }
 

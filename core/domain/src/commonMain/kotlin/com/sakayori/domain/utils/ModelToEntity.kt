@@ -130,7 +130,7 @@ fun SongEntity.toTrack(): Track {
             listArtist.add(Artist(this.artistId?.get(i) ?: "", artistName[i]))
         }
     }
-    val isSong = (this.thumbnails?.contains("w544") == true && this.thumbnails?.contains("h544") == true)
+    val isSong = (this.thumbnails?.contains("w544") == true && this.thumbnails.contains("h544") == true)
     return Track(
         album = this.albumId?.let { this.albumName?.let { it1 -> Album(it, it1) } },
         artists = listArtist,
@@ -139,7 +139,10 @@ fun SongEntity.toTrack(): Track {
         isAvailable = this.isAvailable,
         isExplicit = this.isExplicit,
         likeStatus = this.likeStatus,
-        thumbnails = if (isSong) listOf(Thumbnail(544, this.thumbnails ?: "", 544)) else listOf(Thumbnail(720, this.thumbnails ?: "", 1080)),
+        thumbnails = run {
+            val t = this.thumbnails.orEmpty()
+            if (isSong) listOf(Thumbnail(544, t, 544)) else listOf(Thumbnail(720, t, 1080))
+        },
         title = this.title,
         videoId = this.videoId,
         videoType = this.videoType,

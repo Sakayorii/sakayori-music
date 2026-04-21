@@ -24,10 +24,10 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalTime::class)
 val databaseModule =
     module {
-        single(createdAtStart = true) {
+        single {
             Converters()
         }
-        single(createdAtStart = true) {
+        single {
             getDatabaseBuilder(
                 get<Converters>()
             )
@@ -35,35 +35,35 @@ val databaseModule =
                 .setQueryCoroutineContext(Dispatchers.IO)
                 .build()
         }
-        single(createdAtStart = true) {
+        single {
             get<MusicDatabase>().getDatabaseDao()
         }
-        single(createdAtStart = true) {
+        single {
             LocalDataSource(get<DatabaseDao>())
         }
-        single(createdAtStart = true) {
+        single {
             AnalyticsDatasource(get<DatabaseDao>())
         }
-        single(createdAtStart = true) {
+        single {
             createDataStoreInstance()
         }
-        single<DataStoreManager>(createdAtStart = true) {
+        single<DataStoreManager> {
             DataStoreManagerImpl(get<DataStore<Preferences>>())
         }
 
-        single(createdAtStart = true) {
+        single {
             YouTube()
         }
 
-        single(createdAtStart = true) {
+        single {
             Spotify()
         }
 
-        single(createdAtStart = true) {
+        single {
             AiClient()
         }
 
-        single(createdAtStart = true) {
+        single {
             SakayoriMusicLyricsClient()
         }
     }

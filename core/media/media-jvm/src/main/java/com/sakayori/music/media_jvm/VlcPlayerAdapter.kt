@@ -5,7 +5,9 @@ import com.sakayori.domain.data.player.GenericMediaItem
 import com.sakayori.domain.data.player.GenericPlaybackParameters
 import com.sakayori.domain.data.player.PlayerConstants
 import com.sakayori.domain.data.player.PlayerError
+import com.sakayori.domain.extension.isBefore
 import com.sakayori.domain.extension.isVideo
+import com.sakayori.domain.extension.now
 import com.sakayori.domain.manager.DataStoreManager
 import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
 import com.sakayori.domain.mediaservice.player.MediaPlayerListener
@@ -102,6 +104,10 @@ class VlcPlayerAdapter(
                 "--quiet",
                 "--no-metadata-network-access",
                 "--network-caching=10000",
+                "--ipv4-timeout=8000",
+                "--http-reconnect",
+                "--http-continuous",
+                "--no-snapshot-preview",
             )
 
         mediaPlayerFactory = MediaPlayerFactory(discovery, *factoryArgs.toTypedArray())
@@ -130,7 +136,12 @@ class VlcPlayerAdapter(
     private var currentPlayerIsVideo = false
 
     @Volatile
+    private var lastExtractionError: String? = null
+
+    @Volatile
     private var internalState = InternalState.IDLE
+
+    private var preparingTimeoutJob: kotlinx.coroutines.Job? = null
 
     @Volatile
     private var internalPlayWhenReady = true
@@ -847,6 +858,8 @@ class VlcPlayerAdapter(
             }
 
             InternalState.IDLE -> {
+                preparingTimeoutJob?.cancel()
+                preparingTimeoutJob = null
                 listeners.forEach { it.onPlaybackStateChanged(PlayerConstants.STATE_IDLE) }
                 listeners.forEach { it.onIsPlayingChanged(false) }
             }
@@ -856,10 +869,26 @@ class VlcPlayerAdapter(
                 cachedIsLoading = true
                 listeners.forEach { it.onPlaybackStateChanged(PlayerConstants.STATE_BUFFERING) }
                 listeners.forEach { it.onIsLoadingChanged(true) }
+                preparingTimeoutJob?.cancel()
+                preparingTimeoutJob = coroutineScope.launch {
+                    delay(45000L)
+                    if (internalState == InternalState.PREPARING) {
+                        Logger.w(TAG, "Stuck in PREPARING >45s, forcing error recovery")
+                        val err = PlayerError(
+                            errorCode = PlayerConstants.ERROR_CODE_TIMEOUT,
+                            errorCodeName = "PREPARE_TIMEOUT",
+                            message = "Playback failed to start within 45 seconds",
+                        )
+                        listeners.forEach { it.onPlayerError(err) }
+                        transitionToState(InternalState.ERROR)
+                    }
+                }
             }
 
             InternalState.READY -> {
                 Logger.d(TAG, "transitionToState READY -> isLoading=false")
+                preparingTimeoutJob?.cancel()
+                preparingTimeoutJob = null
                 cachedIsLoading = false
                 listeners.forEach { it.onPlaybackStateChanged(PlayerConstants.STATE_READY) }
                 listeners.forEach { it.onIsLoadingChanged(false) }
@@ -872,6 +901,8 @@ class VlcPlayerAdapter(
 
             InternalState.PLAYING -> {
                 Logger.d(TAG, "transitionToState PLAYING -> isLoading=false")
+                preparingTimeoutJob?.cancel()
+                preparingTimeoutJob = null
                 cachedIsLoading = false
                 listeners.forEach { it.onPlaybackStateChanged(PlayerConstants.STATE_READY) }
                 listeners.forEach { it.onIsLoadingChanged(false) }
@@ -879,19 +910,28 @@ class VlcPlayerAdapter(
             }
 
             InternalState.ENDED -> {
+                preparingTimeoutJob?.cancel()
+                preparingTimeoutJob = null
                 listeners.forEach { it.onPlaybackStateChanged(PlayerConstants.STATE_ENDED) }
                 listeners.forEach { it.onIsPlayingChanged(false) }
             }
 
             InternalState.ERROR -> {
+                preparingTimeoutJob?.cancel()
+                preparingTimeoutJob = null
                 listeners.forEach { it.onPlaybackStateChanged(PlayerConstants.STATE_IDLE) }
                 listeners.forEach { it.onIsPlayingChanged(false) }
+                val extractionDetail = lastExtractionError
+                val errorCodeName =
+                    if (extractionDetail != null) "STREAM_EXTRACT_FAILED" else "VLC_PLAYBACK_FAILED"
+                val detail = extractionDetail
+                    ?: "VLC could not play the extracted YouTube URL. This usually means VLC's HTTP client rejected the stream, the URL expired, or a codec is missing."
                 listeners.forEach {
                     it.onPlayerError(
                         PlayerError(
-                            errorCode = 403,
-                            errorCodeName = "ERROR_UNKNOWN",
-                            message = "Can not extract playable URL or playback error",
+                            errorCode = if (extractionDetail != null) 403 else 500,
+                            errorCodeName = errorCodeName,
+                            message = detail,
                         ),
                     )
                 }
@@ -942,10 +982,13 @@ class VlcPlayerAdapter(
                                 source = withContext(Dispatchers.IO) { extractPlayableUrl(mediaItem) }
                             }
                             if (source == null || source.url.isEmpty()) {
-                                Logger.e(TAG, "Failed to extract playable URL for $videoId after retry")
+                                val detail = streamRepository.consumeLastExtractionError()
+                                Logger.e(TAG, "Failed to extract playable URL for $videoId after retry: $detail")
+                                lastExtractionError = detail ?: "Stream URL extraction failed for $videoId — YouTube blocked request or video unavailable. Check login + region."
                                 transitionToState(InternalState.ERROR)
                                 return@launch
                             }
+                            lastExtractionError = null
                             resolvedSource = source
                             createMediaPlayerInternal(source)
                         }
@@ -1012,14 +1055,30 @@ class VlcPlayerAdapter(
 
     private fun buildVlcOptions(source: PlayableSource): Array<String> {
         val options = mutableListOf<String>()
+        val isRemote = source.url.startsWith("http://") || source.url.startsWith("https://")
         if (source.audioSlaveUrl != null) {
             options.add(":input-slave=${source.audioSlaveUrl}")
         }
         if (source.isVideo) {
             options.add(":network-caching=15000")
-            options.add(":http-reconnect")
         } else {
             options.add(":no-video")
+            if (isRemote) options.add(":network-caching=5000")
+        }
+        if (isRemote) {
+            options.add(":http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            options.add(":http-referrer=https://music.youtube.com/")
+            options.add(":http-reconnect")
+            options.add(":http-continuous")
+            options.add(":http-forward-cookies")
+            options.add(":network-synchronisation")
+            options.add(":no-ipv6")
+            options.add(":clock-jitter=0")
+            options.add(":clock-synchro=0")
+            options.add(":avcodec-fast")
+            options.add(":avcodec-threads=2")
+            options.add(":prefetch-buffer-size=2097152")
+            options.add(":prefetch-read-size=131072")
         }
         return options.toTypedArray()
     }
@@ -1484,6 +1543,8 @@ class VlcPlayerAdapter(
 
         positionUpdateJob =
             coroutineScope.launch {
+                var stallTrackPos = -1L
+                var stallSince = 0L
                 while (isActive && currentPlayer != null) {
                     try {
                         if (internalState == InternalState.PLAYING) {
@@ -1502,6 +1563,27 @@ class VlcPlayerAdapter(
                                     val dur = player.length
                                     if (pos > 0) cachedPosition = pos
                                     if (dur > 0) cachedDuration = dur
+
+                                    if (pos > 0 && !isCrossfading) {
+                                        if (pos == stallTrackPos) {
+                                            if (stallSince == 0L) stallSince = System.currentTimeMillis()
+                                            else if (System.currentTimeMillis() - stallSince > 20000L) {
+                                                Logger.w(TAG, "Playback stalled >20s at pos=$pos, triggering error recovery")
+                                                stallSince = 0L
+                                                stallTrackPos = -1L
+                                                val err = PlayerError(
+                                                    errorCode = PlayerConstants.ERROR_CODE_TIMEOUT,
+                                                    errorCodeName = "VLC_STALLED",
+                                                    message = "Playback stalled for 20 seconds",
+                                                )
+                                                listeners.forEach { it.onPlayerError(err) }
+                                                transitionToState(InternalState.ERROR)
+                                            }
+                                        } else {
+                                            stallTrackPos = pos
+                                            stallSince = 0L
+                                        }
+                                    }
                                 }
                             }
 
@@ -1527,6 +1609,8 @@ class VlcPlayerAdapter(
                             }
                             delay(500)
                         } else {
+                            stallTrackPos = -1L
+                            stallSince = 0L
                             delay(2000)
                         }
                     } catch (_: Exception) {
@@ -1752,7 +1836,14 @@ class VlcPlayerAdapter(
             }
         }
 
+        streamRepository.refreshIfExpiring(videoId)
+
         streamRepository.getNewFormat(videoId).lastOrNull()?.let { format ->
+            val isExpired = format.expiredTime.isBefore(now())
+            if (isExpired) {
+                Logger.w("Stream", "Cached format expired for $videoId, skipping to fresh fetch")
+                return@let
+            }
             val audioUrl = format.audioUrl
             val videoUrl = format.videoUrl
 
@@ -1784,31 +1875,31 @@ class VlcPlayerAdapter(
         }
 
         if (shouldFindVideo) {
-            val videoUrl =
-                streamRepository
-                    .getStream(
-                        dataStoreManager,
-                        videoId,
-                        isDownloading = false,
-                        isVideo = true,
-                        muxed = true,
-                    ).lastOrNull()
-            if (videoUrl != null) {
-                Logger.d(TAG, "Stream Video $videoUrl")
-                return PlayableSource(isVideo = true, url = videoUrl)
+            streamRepository
+                .getStream(
+                    dataStoreManager,
+                    videoId,
+                    isDownloading = false,
+                    isVideo = true,
+                    muxed = true,
+                ).lastOrNull()
+            val rawVideoUrl = streamRepository.getNewFormat(videoId).lastOrNull()?.videoUrl
+            if (!rawVideoUrl.isNullOrEmpty()) {
+                Logger.d(TAG, "Stream Video (raw) $rawVideoUrl")
+                return PlayableSource(isVideo = true, url = rawVideoUrl)
             }
         } else {
-            val audioUrl =
-                streamRepository
-                    .getStream(
-                        dataStoreManager,
-                        videoId,
-                        isDownloading = false,
-                        isVideo = false,
-                    ).lastOrNull()
-            if (audioUrl != null) {
-                Logger.d(TAG, "Stream Audio $audioUrl")
-                return PlayableSource(isVideo = false, url = audioUrl)
+            streamRepository
+                .getStream(
+                    dataStoreManager,
+                    videoId,
+                    isDownloading = false,
+                    isVideo = false,
+                ).lastOrNull()
+            val rawAudioUrl = streamRepository.getNewFormat(videoId).lastOrNull()?.audioUrl
+            if (!rawAudioUrl.isNullOrEmpty()) {
+                Logger.d(TAG, "Stream Audio (raw) $rawAudioUrl")
+                return PlayableSource(isVideo = false, url = rawAudioUrl)
             }
         }
 

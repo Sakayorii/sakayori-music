@@ -460,6 +460,8 @@ class SharedViewModel(
 
     fun blurFullscreenLyrics(): Boolean = runBlocking(Dispatchers.IO) { dataStoreManager.blurFullscreenLyrics.first() == TRUE }
 
+    fun blurFullscreenLyricsFlow() = dataStoreManager.blurFullscreenLyrics.map { it == TRUE }
+
     private fun getLikeStatus(videoId: String?) {
         viewModelScope.launch {
             if (videoId != null) {
@@ -899,6 +901,32 @@ class SharedViewModel(
 
     private val _updateResponse = MutableStateFlow<UpdateData?>(null)
     val updateResponse: StateFlow<UpdateData?> = _updateResponse
+
+    fun getAutoUpdateOnRestart() = dataStoreManager.autoUpdateOnRestart
+
+    fun setAutoUpdateOnRestart(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.setAutoUpdateOnRestart(enabled)
+        }
+    }
+
+    fun getPendingUpdateFile() = dataStoreManager.pendingUpdateFile
+
+    fun getPendingUpdateTag() = dataStoreManager.pendingUpdateTag
+
+    fun setPendingUpdate(path: String, tag: String) {
+        viewModelScope.launch {
+            dataStoreManager.setPendingUpdateFile(path)
+            dataStoreManager.setPendingUpdateTag(tag)
+        }
+    }
+
+    fun clearPendingUpdate() {
+        viewModelScope.launch {
+            dataStoreManager.setPendingUpdateFile("")
+            dataStoreManager.setPendingUpdateTag("")
+        }
+    }
 
     fun checkForUpdate() {
         viewModelScope.launch(Dispatchers.IO) {

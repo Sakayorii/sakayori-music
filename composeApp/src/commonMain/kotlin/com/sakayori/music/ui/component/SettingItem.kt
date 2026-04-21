@@ -114,7 +114,14 @@ fun SettingItem(
                             modifier =
                                 Modifier
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFF00BCD4))
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                            listOf(
+                                                Color(0xFF00BCD4),
+                                                Color(0xFF26C6DA),
+                                            ),
+                                        ),
+                                    )
                                     .padding(horizontal = 6.dp, vertical = 2.dp),
                         ) {
                             Text(
@@ -122,6 +129,7 @@ fun SettingItem(
                                 style = typo().labelSmall,
                                 color = Color.Black,
                                 fontSize = 9.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             )
                         }
                     }
@@ -185,22 +193,30 @@ fun SettingSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF1A1A1A))
             .padding(vertical = 8.dp),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color(0xFF00BCD4),
-                    modifier = Modifier.size(20.dp),
-                )
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF00BCD4).copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Color(0xFF00BCD4),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
             Text(
                 text = title,

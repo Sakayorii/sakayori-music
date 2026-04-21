@@ -46,7 +46,6 @@ import kotlin.math.ln
 private const val TAG = "CrossfadeExoPlayerAdapter"
 
 @SuppressLint("UnsafeOptInUsageError")
-@OptIn(UnstableApi::class)
 internal class CrossfadeExoPlayerAdapter(
     private val context: Context,
     private val coroutineScope: CoroutineScope,
@@ -1431,7 +1430,7 @@ internal class CrossfadeExoPlayerAdapter(
         t: Float,
     ): Float {
         if (start <= 0f || end <= 0f) return end
-        return exp(ln(start) + (ln(end) - ln(start)) * t).toFloat()
+        return exp(ln(start) + (ln(end) - ln(start)) * t)
     }
 
     private suspend fun performCrossfade(

@@ -9,7 +9,7 @@ import com.sakayori.kotlinytmusicscraper.models.splitBySeparator
 object NewReleaseAlbumPage {
     fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): AlbumItem? {
         return AlbumItem(
-            browseId = renderer.navigationEndpoint?.browseEndpoint?.browseId ?: return null,
+            browseId = renderer.navigationEndpoint.browseEndpoint?.browseId ?: return null,
             playlistId =
                 renderer.thumbnailOverlay
                     ?.musicItemThumbnailOverlayRenderer
@@ -20,7 +20,7 @@ object NewReleaseAlbumPage {
                     ?.playlistId ?: return null,
             title =
                 renderer.title
-                    ?.runs
+                    .runs
                     ?.firstOrNull()
                     ?.text ?: return null,
             artists =
@@ -35,7 +35,7 @@ object NewReleaseAlbumPage {
                     .lastOrNull()
                     ?.text
                     ?.toIntOrNull(),
-            thumbnail = renderer.thumbnailRenderer?.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
+            thumbnail = renderer.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl() ?: return null,
             explicit =
                 renderer.subtitleBadges?.find {
                     it.musicInlineBadgeRenderer?.icon?.iconType == "MUSIC_EXPLICIT_BADGE"

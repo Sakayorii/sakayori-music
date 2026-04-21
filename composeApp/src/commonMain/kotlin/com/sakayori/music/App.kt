@@ -66,7 +66,16 @@ import com.sakayori.domain.manager.DataStoreManager.Values.TRUE
 import com.sakayori.logger.Logger
 import com.sakayori.music.expect.Orientation
 import com.sakayori.music.expect.currentOrientation
+import com.sakayori.music.expect.deletePendingUpdate
+import com.sakayori.music.expect.installUpdateAsset
+import com.sakayori.music.expect.isValidPendingUpdate
 import com.sakayori.music.expect.openUrl
+import com.sakayori.music.expect.pickUpdateAssetName
+import kotlinx.coroutines.flow.first
+import com.sakayori.music.update.UpdateDownloadManager
+import com.sakayori.music.update.UpdateDownloadState
+import androidx.compose.material3.LinearProgressIndicator
+import org.koin.compose.koinInject
 import com.sakayori.music.expect.ui.layerBackdrop
 import com.sakayori.music.expect.ui.rememberBackdrop
 import com.sakayori.music.extension.copy
@@ -106,6 +115,12 @@ import org.koin.compose.koinInject
 import com.sakayori.music.generated.resources.Res
 import com.sakayori.music.generated.resources.cancel
 import com.sakayori.music.generated.resources.download
+import com.sakayori.music.generated.resources.install
+import com.sakayori.music.generated.resources.later
+import com.sakayori.music.generated.resources.download_complete
+import com.sakayori.music.generated.resources.installing_message
+import com.sakayori.music.generated.resources.update_size_label
+import com.sakayori.music.generated.resources.no_matching_asset
 import com.sakayori.music.generated.resources.good_night
 import com.sakayori.music.generated.resources.sleep_timer_off
 import com.sakayori.music.generated.resources.this_link_is_not_supported
@@ -167,6 +182,42 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     LaunchedEffect(nowPlayingData) {
         isShowMiniPlayer = !(nowPlayingData?.mediaItem == null || nowPlayingData?.mediaItem == GenericMediaItem.EMPTY)
+    }
+
+    val updateDownloadManager: UpdateDownloadManager = koinInject()
+    LaunchedEffect(Unit) {
+        val pendingPath = viewModel.getPendingUpdateFile().first()
+        val pendingTag = viewModel.getPendingUpdateTag().first()
+        if (pendingPath.isNotEmpty() && pendingTag.isNotEmpty()) {
+            val stillNeeded = pendingTag != "v${VersionManager.getVersionName()}"
+            if (stillNeeded && isValidPendingUpdate(pendingPath)) {
+                installUpdateAsset(pendingPath)
+                viewModel.clearPendingUpdate()
+            } else {
+                deletePendingUpdate(pendingPath)
+                viewModel.clearPendingUpdate()
+            }
+        }
+        updateDownloadManager.cleanupStalePartials()
+    }
+
+    val autoUpdateEnabled by viewModel.getAutoUpdateOnRestart().collectAsStateWithLifecycle(DataStoreManager.FALSE)
+    LaunchedEffect(updateData, autoUpdateEnabled) {
+        val data = updateData ?: return@LaunchedEffect
+        if (autoUpdateEnabled != TRUE) return@LaunchedEffect
+        val picked = data.pickAssetFor(pickUpdateAssetName(data.tagName)) ?: return@LaunchedEffect
+        val currentState = updateDownloadManager.state.value
+        if (currentState is UpdateDownloadState.Ready && currentState.tag == data.tagName) return@LaunchedEffect
+        if (currentState is UpdateDownloadState.Downloading) return@LaunchedEffect
+        updateDownloadManager.start(
+            url = picked.downloadUrl,
+            fileName = picked.name,
+            expectedSize = picked.sizeBytes,
+            tag = data.tagName,
+            onComplete = { file ->
+                viewModel.setPendingUpdate(file.absolutePath, data.tagName)
+            },
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -639,41 +690,92 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
                 if (shouldShowUpdateDialog) {
                     val response = updateData ?: return@Scaffold
+                    val downloadManager: UpdateDownloadManager = koinInject()
+                    val downloadState by downloadManager.state.collectAsStateWithLifecycle()
+                    val pickedAsset = remember(response.tagName, response.assets) {
+                        response.pickAssetFor(pickUpdateAssetName(response.tagName))
+                    }
+                    var installTriggered by remember { mutableStateOf(false) }
+                    val isDownloading = downloadState is UpdateDownloadState.Downloading
+                    val isReady = downloadState is UpdateDownloadState.Ready
+                    val isBusy = isDownloading || installTriggered
                     AlertDialog(
                         properties =
                             DialogProperties(
-                                dismissOnBackPress = true,
-                                dismissOnClickOutside = true,
+                                dismissOnBackPress = !isBusy,
+                                dismissOnClickOutside = !isBusy,
                             ),
                         onDismissRequest = {
-                            shouldShowUpdateDialog = false
-                            viewModel.showedUpdateDialog = false
+                            if (!isBusy) {
+                                shouldShowUpdateDialog = false
+                                viewModel.showedUpdateDialog = false
+                            }
                         },
                         confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    shouldShowUpdateDialog = false
-                                    viewModel.showedUpdateDialog = false
-                                    openUrl("https://music.sakayori.dev/download")
-                                },
-                            ) {
-                                Text(
-                                    stringResource(Res.string.download),
-                                    style = typo().bodySmall,
-                                )
+                            when {
+                                installTriggered -> Unit
+                                isReady -> {
+                                    TextButton(
+                                        onClick = {
+                                            val ready = downloadState as UpdateDownloadState.Ready
+                                            installTriggered = true
+                                            installUpdateAsset(ready.filePath)
+                                        },
+                                    ) {
+                                        Text(
+                                            stringResource(Res.string.install),
+                                            style = typo().bodySmall,
+                                            color = Color(0xFF00BCD4),
+                                        )
+                                    }
+                                }
+                                isDownloading -> {
+                                    TextButton(onClick = { downloadManager.cancel() }) {
+                                        Text(
+                                            stringResource(Res.string.cancel),
+                                            style = typo().bodySmall,
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    TextButton(
+                                        onClick = {
+                                            if (pickedAsset != null) {
+                                                downloadManager.start(
+                                                    url = pickedAsset.downloadUrl,
+                                                    fileName = pickedAsset.name,
+                                                    expectedSize = pickedAsset.sizeBytes,
+                                                    tag = response.tagName,
+                                                )
+                                            } else {
+                                                shouldShowUpdateDialog = false
+                                                viewModel.showedUpdateDialog = false
+                                                openUrl("https://music.sakayori.dev/download")
+                                            }
+                                        },
+                                    ) {
+                                        Text(
+                                            stringResource(Res.string.download),
+                                            style = typo().bodySmall,
+                                            color = Color(0xFF00BCD4),
+                                        )
+                                    }
+                                }
                             }
                         },
                         dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    shouldShowUpdateDialog = false
-                                    viewModel.showedUpdateDialog = false
-                                },
-                            ) {
-                                Text(
-                                    stringResource(Res.string.cancel),
-                                    style = typo().bodySmall,
-                                )
+                            if (!isBusy && !isReady) {
+                                TextButton(
+                                    onClick = {
+                                        shouldShowUpdateDialog = false
+                                        viewModel.showedUpdateDialog = false
+                                    },
+                                ) {
+                                    Text(
+                                        stringResource(Res.string.later),
+                                        style = typo().bodySmall,
+                                    )
+                                }
                             }
                         },
                         title = {
@@ -729,6 +831,71 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                                             vertical = 8.dp,
                                         ),
                                 )
+                                if (installTriggered) {
+                                    Spacer(Modifier.height(8.dp))
+                                    LinearProgressIndicator(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = Color(0xFF00BCD4),
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.installing_message),
+                                        style = typo().labelMedium,
+                                        color = Color(0xFF00BCD4),
+                                        modifier = Modifier.padding(top = 6.dp),
+                                    )
+                                } else {
+                                    when (val st = downloadState) {
+                                        is UpdateDownloadState.Downloading -> {
+                                            val progress = if (st.totalBytes > 0L) {
+                                                st.bytesDownloaded.toFloat() / st.totalBytes.toFloat()
+                                            } else 0f
+                                            Spacer(Modifier.height(8.dp))
+                                            LinearProgressIndicator(
+                                                progress = { progress.coerceIn(0f, 1f) },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                color = Color(0xFF00BCD4),
+                                            )
+                                            Text(
+                                                text = "${(progress * 100).toInt()}%  ·  ${st.bytesDownloaded / 1024 / 1024}MB / ${st.totalBytes / 1024 / 1024}MB",
+                                                style = typo().bodySmall,
+                                                modifier = Modifier.padding(top = 6.dp),
+                                            )
+                                        }
+                                        is UpdateDownloadState.Ready -> {
+                                            Spacer(Modifier.height(8.dp))
+                                            Text(
+                                                text = stringResource(Res.string.download_complete),
+                                                style = typo().labelMedium,
+                                                color = Color(0xFF00BCD4),
+                                            )
+                                        }
+                                        is UpdateDownloadState.Failed -> {
+                                            Spacer(Modifier.height(8.dp))
+                                            Text(
+                                                text = st.reason,
+                                                style = typo().bodySmall,
+                                                color = Color(0xFFE57373),
+                                            )
+                                        }
+                                        UpdateDownloadState.Idle -> {
+                                            if (pickedAsset == null) {
+                                                Spacer(Modifier.height(8.dp))
+                                                Text(
+                                                    text = stringResource(Res.string.no_matching_asset),
+                                                    style = typo().bodySmall,
+                                                    color = Color(0xFFFFAB40),
+                                                )
+                                            } else {
+                                                Spacer(Modifier.height(4.dp))
+                                                Text(
+                                                    text = "${stringResource(Res.string.update_size_label)}: ${pickedAsset.sizeBytes / 1024 / 1024} MB  ·  ${pickedAsset.name}",
+                                                    style = typo().bodySmall,
+                                                    color = Color.White.copy(alpha = 0.55f),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                                 Markdown(
                                     response.body,
                                     typography =

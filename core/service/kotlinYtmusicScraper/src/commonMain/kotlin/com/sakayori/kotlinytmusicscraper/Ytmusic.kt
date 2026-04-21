@@ -30,6 +30,7 @@ import com.sakayori.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.ProxyConfig
 import io.ktor.client.plugins.HttpRedirect
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -140,6 +141,11 @@ class Ytmusic {
     private fun createClient() =
         HttpClient(getEngine()) {
             expectSuccess = true
+            install(HttpTimeout) {
+                requestTimeoutMillis = 12000
+                connectTimeoutMillis = 8000
+                socketTimeoutMillis = 15000
+            }
             install(HttpRedirect) {
                 checkHttpMethod = false
                 allowHttpsDowngrade = true

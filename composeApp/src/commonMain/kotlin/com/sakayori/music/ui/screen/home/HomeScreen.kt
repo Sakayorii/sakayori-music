@@ -886,6 +886,8 @@ fun HomeTopAppBar(navController: NavController) {
                             }
                         },
                     style = typo().bodySmall,
+                    color = Color(0xFF00BCD4),
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 )
             }
         },

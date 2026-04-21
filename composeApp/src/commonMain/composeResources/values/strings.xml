@@ -362,6 +362,14 @@
     <string name="clear_queue">Clear Queue</string>
     <string name="clear_queue_description">Remove all tracks from the current queue? This cannot be undone.</string>
     <string name="filter_library">Filter Library</string>
+    <string name="install">Install</string>
+    <string name="download_complete">Download Complete — Ready To Install</string>
+    <string name="installing_message">Installing Update — The App Will Restart Automatically</string>
+    <string name="update_size_label">Size</string>
+    <string name="update_version_label">Version</string>
+    <string name="no_matching_asset">No Download Matches This Platform — Opening Web Page</string>
+    <string name="auto_update_on_restart">Auto Update On Restart</string>
+    <string name="auto_update_on_restart_description">Download new version in the background while you use the app. Next launch will install automatically.</string>
     <string name="network_error_title">Connection Problem</string>
     <string name="network_error_subtitle">Check your internet and try again.</string>
     <string name="sleep_timer_fade_out">Sleep Timer Fade Out</string>

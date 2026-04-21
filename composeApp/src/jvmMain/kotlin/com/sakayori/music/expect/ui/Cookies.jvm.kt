@@ -52,6 +52,25 @@ actual fun createWebViewCookieManager(): WebViewCookieManager =
         }
     }
 
+actual fun clearWebViewCacheAndCookies() {
+    try {
+        CookieHandler.setDefault(CookieManager())
+    } catch (_: Throwable) {
+    }
+    try {
+        org.cef.network.CefCookieManager.getGlobalManager().deleteCookies("", "")
+    } catch (_: Throwable) {
+    }
+    try {
+        val cacheDir = File(System.getProperty("user.home"), ".sakayori-music/kcef-bundle")
+        listOf("Cache", "Code Cache", "GPUCache", "Cookies", "Cookies-journal").forEach { name ->
+            val target = File(cacheDir, name)
+            if (target.exists()) target.deleteRecursively()
+        }
+    } catch (_: Throwable) {
+    }
+}
+
 @Volatile
 private var kcefInitialized = false
 

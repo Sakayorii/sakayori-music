@@ -72,6 +72,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -97,6 +98,7 @@ import kotlin.math.pow
 
 private val TAG = "Media3ServiceHandlerImpl"
 
+@OptIn(kotlinx.coroutines.FlowPreview::class)
 internal class MediaServiceHandlerImpl(
     private val dataStoreManager: DataStoreManager,
     private val songRepository: SongRepository,
@@ -238,35 +240,37 @@ internal class MediaServiceHandlerImpl(
         getSkipSegmentsJob = Job()
         getFormatJob = Job()
         jobWatchtime = Job()
-        skipSilent = runBlocking(Dispatchers.IO) { dataStoreManager.skipSilent.first() == TRUE }
-        normalizeVolume =
-            runBlocking(Dispatchers.IO) { dataStoreManager.normalizeVolume.first() == TRUE }
         _nowPlaying.value = player.currentMediaItem
-        if (runBlocking(Dispatchers.IO) { dataStoreManager.saveStateOfPlayback.first() } == TRUE) {
-            Logger.d(TAG, "SaveStateOfPlayback TRUE")
-            val shuffleKey = runBlocking(Dispatchers.IO) { dataStoreManager.shuffleKey.first() }
-            val repeatKey = runBlocking(Dispatchers.IO) { dataStoreManager.repeatKey.first() }
-            Logger.d(TAG, "Shuffle: $shuffleKey")
-            Logger.d(TAG, "Repeat: $repeatKey")
-            val restoredShuffle = shuffleKey == TRUE
-            val restoredRepeatMode =
-                when (repeatKey) {
-                    DataStoreManager.REPEAT_ONE -> PlayerConstants.REPEAT_MODE_ONE
-                    DataStoreManager.REPEAT_ALL -> PlayerConstants.REPEAT_MODE_ALL
-                    else -> PlayerConstants.REPEAT_MODE_OFF
+        coroutineScope.launch(Dispatchers.IO) {
+            skipSilent = dataStoreManager.skipSilent.first() == TRUE
+            normalizeVolume = dataStoreManager.normalizeVolume.first() == TRUE
+            if (dataStoreManager.saveStateOfPlayback.first() == TRUE) {
+                val shuffleKey = dataStoreManager.shuffleKey.first()
+                val repeatKey = dataStoreManager.repeatKey.first()
+                val restoredShuffle = shuffleKey == TRUE
+                val restoredRepeatMode =
+                    when (repeatKey) {
+                        DataStoreManager.REPEAT_ONE -> PlayerConstants.REPEAT_MODE_ONE
+                        DataStoreManager.REPEAT_ALL -> PlayerConstants.REPEAT_MODE_ALL
+                        else -> PlayerConstants.REPEAT_MODE_OFF
+                    }
+                withContext(Dispatchers.Main) {
+                    player.shuffleModeEnabled = restoredShuffle
+                    player.repeatMode = restoredRepeatMode
+                    _controlState.value = _controlState.value.copy(
+                        isShuffle = restoredShuffle,
+                        repeatState = when (restoredRepeatMode) {
+                            PlayerConstants.REPEAT_MODE_ONE -> RepeatState.One
+                            PlayerConstants.REPEAT_MODE_ALL -> RepeatState.All
+                            else -> RepeatState.None
+                        },
+                    )
                 }
-            player.shuffleModeEnabled = restoredShuffle
-            player.repeatMode = restoredRepeatMode
-            _controlState.value = _controlState.value.copy(
-                isShuffle = restoredShuffle,
-                repeatState = when (restoredRepeatMode) {
-                    PlayerConstants.REPEAT_MODE_ONE -> RepeatState.One
-                    PlayerConstants.REPEAT_MODE_ALL -> RepeatState.All
-                    else -> RepeatState.None
-                },
-            )
+            }
+            withContext(Dispatchers.Main) {
+                mayBeRestoreQueue()
+            }
         }
-        mayBeRestoreQueue()
         coroutineScope.launch {
             val controlStateJob =
                 launch {
@@ -389,7 +393,7 @@ internal class MediaServiceHandlerImpl(
             }
         val track =
             queueData.value.data.listTracks
-                ?.find { it.videoId == videoId }
+                .find { it.videoId == videoId }
         _nowPlayingState.update {
             it.copy(
                 mediaItem = mediaItem,
@@ -696,13 +700,12 @@ internal class MediaServiceHandlerImpl(
     override fun startProgressUpdate() {
         progressJob =
             coroutineScope.launch {
-                var lastEmittedSecond = -1L
+                var lastEmittedPos = -1L
                 while (true) {
-                    delay(500)
+                    delay(200)
                     val currentPos = player.currentPosition
-                    val currentSecond = currentPos / 1000
-                    if (currentSecond != lastEmittedSecond) {
-                        lastEmittedSecond = currentSecond
+                    if (currentPos != lastEmittedPos) {
+                        lastEmittedPos = currentPos
                         _simpleMediaState.value = SimpleMediaState.Progress(currentPos)
                     }
                 }
@@ -1062,7 +1065,7 @@ internal class MediaServiceHandlerImpl(
     override fun loadMore() {
         if (queueData.value.queueState == QueueData.StateSource.STATE_INITIALIZING) return
         val playlistId = _queueData.value.data.playlistId ?: return
-        Logger.w("Check loadMore", playlistId.toString())
+        Logger.w("Check loadMore", playlistId)
         val continuation = _queueData.value.data.continuation
         Logger.w("Check loadMore", continuation.toString())
         if (continuation != null) {

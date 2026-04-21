@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -94,30 +95,43 @@ fun CreditScreen(
             fontSize = 22.sp,
         )
 
-        Text(
-            text = stringResource(Res.string.version_format, VersionManager.getVersionName()),
-            style = typo().bodySmall,
-            fontSize = 13.sp,
-        )
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(999.dp))
+                .background(Color(0xFF00BCD4).copy(alpha = 0.12f))
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.version_format, VersionManager.getVersionName()),
+                style = typo().labelSmall,
+                color = Color(0xFF00BCD4),
+                fontSize = 12.sp,
+            )
+        }
 
-        Text(
-            text = "Running on ${com.sakayori.music.getPlatform().osName()}",
-            style = typo().bodySmall,
-            color = Color.White.copy(alpha = 0.5f),
-            fontSize = 11.sp,
-        )
+        Spacer(modifier = Modifier.height(6.dp))
 
-        Text(
-            text = buildString {
-                append("${com.sakayori.music.utils.DeviceCapability.getRamGb()}GB RAM")
-                append(" · ")
-                append("${com.sakayori.music.utils.DeviceCapability.getCpuCores()} cores")
-                if (com.sakayori.music.utils.DeviceCapability.isLowEndDevice()) append(" · Low-end")
-            },
-            style = typo().bodySmall,
-            color = Color.White.copy(alpha = 0.4f),
-            fontSize = 10.sp,
-        )
+        Box(
+            modifier = Modifier
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(999.dp))
+                .background(Color.White.copy(alpha = 0.05f))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        ) {
+            Text(
+                text = buildString {
+                    append(com.sakayori.music.getPlatform().osName())
+                    append(" · ")
+                    append("${com.sakayori.music.utils.DeviceCapability.getRamGb()}GB")
+                    append(" · ")
+                    append("${com.sakayori.music.utils.DeviceCapability.getCpuCores()}C")
+                    if (com.sakayori.music.utils.DeviceCapability.isLowEndDevice()) append(" · Low-End")
+                },
+                style = typo().bodySmall,
+                color = Color.White.copy(alpha = 0.55f),
+                fontSize = 10.sp,
+            )
+        }
 
         Text(
             text = stringResource(Res.string.sakayori_dev),
@@ -142,12 +156,17 @@ fun CreditScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 25.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                .background(Color.White.copy(alpha = 0.05f))
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .background(Color(0xFF00BCD4).copy(alpha = 0.08f))
+                .border(
+                    1.dp,
+                    Color(0xFF00BCD4).copy(alpha = 0.35f),
+                    androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                )
                 .clickable {
                     openUrl("https://github.com/maxrave-dev/SimpMusic")
                 }
-                .padding(12.dp),
+                .padding(14.dp),
         ) {
             Column {
                 Text(
@@ -167,8 +186,11 @@ fun CreditScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(Res.string.team),
-            style = typo().labelMedium,
+            text = stringResource(Res.string.team).uppercase(),
+            style = typo().labelMedium.copy(
+                letterSpacing = androidx.compose.ui.unit.TextUnit(1.5f, androidx.compose.ui.unit.TextUnitType.Sp),
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            ),
             color = Color(0xFF00BCD4),
             modifier =
                 Modifier
@@ -206,7 +228,7 @@ fun CreditScreen(
                         .padding(horizontal = 25.dp)
                         .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
             ) {
-                Text(text = stringResource(Res.string.website))
+                Text(text = stringResource(Res.string.website), color = Color(0xFF00BCD4))
             }
 
             TextButton(
@@ -219,7 +241,7 @@ fun CreditScreen(
                         .padding(horizontal = 25.dp)
                         .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
             ) {
-                Text(text = stringResource(Res.string.github))
+                Text(text = stringResource(Res.string.github), color = Color(0xFF00BCD4))
             }
 
             TextButton(
@@ -232,7 +254,7 @@ fun CreditScreen(
                         .padding(horizontal = 25.dp)
                         .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
             ) {
-                Text(text = stringResource(Res.string.issue_tracker))
+                Text(text = stringResource(Res.string.issue_tracker), color = Color(0xFF00BCD4))
             }
 
             TextButton(
@@ -245,7 +267,7 @@ fun CreditScreen(
                         .padding(horizontal = 25.dp)
                         .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
             ) {
-                Text(text = stringResource(Res.string.buy_me_a_coffee))
+                Text(text = stringResource(Res.string.buy_me_a_coffee), color = Color(0xFF00BCD4))
             }
         }
 
@@ -329,7 +351,14 @@ private fun TeamMember(
                     .crossfade(300)
                     .build(),
             contentDescription = null,
-            modifier = Modifier.size(72.dp).clip(CircleShape),
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .border(
+                    2.dp,
+                    Color(0xFF00BCD4),
+                    CircleShape,
+                ),
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(

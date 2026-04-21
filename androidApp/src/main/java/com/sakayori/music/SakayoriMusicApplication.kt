@@ -25,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import multiplatform.network.cmptoast.AppContext
 import okhttp3.OkHttpClient
 import okio.FileSystem
@@ -37,6 +36,7 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import com.sakayori.music.crashlytics.configCrashlytics
+import com.sakayori.music.crashlytics.setCrashReportingEnabled
 import java.lang.reflect.Field
 
 class SakayoriMusicApplication :
@@ -51,17 +51,19 @@ class SakayoriMusicApplication :
     override fun onCreate() {
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        if (BuildKonfig.sentryDsnAndroid.isNotEmpty()) {
+            configCrashlytics(this, BuildKonfig.sentryDsnAndroid)
+        }
         startKoin {
             androidLogger(level = Level.INFO)
             androidContext(this@SakayoriMusicApplication)
             loadAllModules()
             loadKoinModules(viewModelModule)
         }
-        val crashReportingEnabled = runBlocking {
-            dataStoreManager.crashReportingEnabled.first() == DataStoreManager.TRUE
-        }
-        if (crashReportingEnabled && BuildKonfig.sentryDsnAndroid.isNotEmpty()) {
-            configCrashlytics(this, BuildKonfig.sentryDsnAndroid)
+        applicationScope.launch {
+            dataStoreManager.crashReportingEnabled.collect { value ->
+                setCrashReportingEnabled(value == DataStoreManager.TRUE)
+            }
         }
         val workConfig =
             Configuration

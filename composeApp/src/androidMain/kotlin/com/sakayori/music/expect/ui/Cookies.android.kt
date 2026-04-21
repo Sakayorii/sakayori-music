@@ -31,6 +31,25 @@ actual fun createWebViewCookieManager(): WebViewCookieManager =
         }
     }
 
+actual fun clearWebViewCacheAndCookies() {
+    try {
+        CookieManager.getInstance().removeAllCookies(null)
+        CookieManager.getInstance().removeSessionCookies(null)
+        CookieManager.getInstance().flush()
+    } catch (_: Throwable) {
+    }
+    try {
+        val context: androidx.appcompat.app.AppCompatActivity = org.koin.mp.KoinPlatform.getKoin().get()
+        WebView(context).apply {
+            clearCache(true)
+            clearHistory()
+            clearFormData()
+            android.webkit.WebStorage.getInstance().deleteAllData()
+        }
+    } catch (_: Throwable) {
+    }
+}
+
 @Composable
 actual fun PlatformWebView(
     state: MutableState<WebViewState>,
@@ -74,7 +93,7 @@ actual fun PlatformWebView(
 actual fun DiscordWebView(
     state: MutableState<WebViewState>,
     aboveContent: @Composable (BoxScope.() -> Unit),
-    onLoginDone: (String) -> Unit
+    onLoginDone: (token: String) -> Unit
 ) {
     val url = "https://discord.com/login"
     Box {

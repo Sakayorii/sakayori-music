@@ -9,26 +9,21 @@ object Logger {
         tag: String,
         message: String,
     ) {
-        logger.d(
-            tag,
-            message = {
-                message
-            }
-        )
+        logger.d(messageString = message, tag = tag)
     }
 
     fun i(
         tag: String,
         message: String,
     ) {
-        logger.i(tag, message = { message })
+        logger.i(messageString = message, tag = tag)
     }
 
     fun w(
         tag: String,
         message: String,
     ) {
-        logger.w(tag, message = { message })
+        logger.w(messageString = message, tag = tag)
     }
 
     fun e(
@@ -36,7 +31,7 @@ object Logger {
         message: String,
         e: Throwable? = null,
     ) {
-        logger.e(tag, throwable = e, message = { message })
+        logger.e(messageString = message, throwable = e, tag = tag)
     }
 }
 

@@ -27,7 +27,6 @@ import coil3.disk.DiskCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.CachePolicy
 import coil3.request.crossfade
-import com.kdroid.composetray.tray.api.Tray
 import com.sakayori.data.di.loader.loadAllModules
 import com.sakayori.domain.manager.DataStoreManager
 import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
@@ -41,8 +40,6 @@ import com.sakayori.music.ui.mini_player.MiniPlayerWindow
 import com.sakayori.music.utils.VersionManager
 import com.sakayori.music.viewModel.SharedViewModel
 import com.sakayori.music.viewModel.changeLanguageNative
-import io.sentry.Sentry
-import io.sentry.SentryLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -82,6 +79,10 @@ fun main(args: Array<String>) {
         }
 
         CrashDialog.install()
+        com.sakayori.music.utils.DesktopCrashReporting.init(
+            BuildKonfig.sentryDsnDesktop,
+            VersionManager.getVersionName(),
+        )
 
         System.setProperty("compose.swing.render.on.graphics", "true")
         System.setProperty("compose.interop.blending", "true")
@@ -120,7 +121,7 @@ fun main(args: Array<String>) {
                 } catch (_: Throwable) {
                 }
                 try {
-                    Sentry.close()
+                    io.sentry.Sentry.close()
                 } catch (_: Throwable) {
                 }
             }.apply {
@@ -142,16 +143,13 @@ fun main(args: Array<String>) {
                     getKoin().get<DataStoreManager>().language.first().take(2)
                 }
                 changeLanguageNative(lang)
-                val crashReportingEnabled = kotlinx.coroutines.runBlocking(Dispatchers.IO) {
-                    getKoin().get<DataStoreManager>().crashReportingEnabled.first() == "TRUE"
-                }
-                if (crashReportingEnabled && BuildKonfig.sentryDsnDesktop.isNotEmpty()) {
-                    Sentry.init { options ->
-                        options.dsn = BuildKonfig.sentryDsnDesktop
-                        options.release = "sakayorimusic-desktop@${VersionManager.getVersionName()}"
-                        options.setDiagnosticLevel(SentryLevel.ERROR)
+                Thread {
+                    kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+                        getKoin().get<DataStoreManager>().crashReportingEnabled.collect { value ->
+                            com.sakayori.music.utils.DesktopCrashReporting.setEnabled(value == "TRUE")
+                        }
                     }
-                }
+                }.apply { isDaemon = true; name = "SentryToggleWatcher" }.start()
                 Thread.sleep(2000)
                 getKoin().get<SharedViewModel>().checkForUpdate()
             } catch (_: Throwable) {
@@ -194,58 +192,26 @@ fun main(args: Array<String>) {
                 }
             }
 
-            val openAppString = stringResource(Res.string.open_app)
-            val quitAppString = stringResource(Res.string.quit_app)
-            val openMiniPlayer = stringResource(Res.string.open_miniplayer)
-            val closeMiniPlayer = stringResource(Res.string.close_miniplayer)
-
-            Tray(
-                icon = painterResource(Res.drawable.circle_app_icon),
-                tooltip = stringResource(Res.string.app_name),
-                primaryAction = {
-                    isVisible = true
-                    windowState.isMinimized = false
-                },
-            ) {
-                if (!isVisible) {
-                    Item(openAppString) {
-                        isVisible = true
-                        windowState.isMinimized = false
-                    }
-                }
-                val sharedVm = getKoin().get<com.sakayori.music.viewModel.SharedViewModel>()
-                val isPlaying = sharedVm.controllerState.value.isPlaying
-                Item(if (isPlaying) "Pause" else "Play") {
-                    sharedVm.onUIEvent(com.sakayori.music.viewModel.UIEvent.PlayPause)
-                }
-                Item("Next") {
-                    sharedVm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Next)
-                }
-                Item("Previous") {
-                    sharedVm.onUIEvent(com.sakayori.music.viewModel.UIEvent.Previous)
-                }
-                Divider()
-                if (MiniPlayerManager.isOpen) {
-                    Item(closeMiniPlayer) {
-                        MiniPlayerManager.isOpen = false
-                    }
-                } else {
-                    Item(openMiniPlayer) {
-                        MiniPlayerManager.isOpen = true
-                    }
-                }
-                Divider()
-                Item(quitAppString) {
-                    mediaPlayerHandler.release()
-                    exitApplication()
-                }
-            }
-
             val isMacOS = remember { System.getProperty("os.name", "").lowercase().contains("mac") }
 
             Window(
                 onCloseRequest = {
-                    mediaPlayerHandler.release()
+                    if (com.sakayori.music.update.UpdateInstallLock.isInstalling()) {
+                        isVisible = false
+                        Thread {
+                            try { mediaPlayerHandler.release() } catch (_: Throwable) {}
+                        }.apply { isDaemon = true; name = "ReleaseOnClose" }.start()
+                        com.sakayori.music.update.UpdateInstallLock.awaitAndExit { exitApplication() }
+                        return@Window
+                    }
+                    isVisible = false
+                    Thread {
+                        try { mediaPlayerHandler.release() } catch (_: Throwable) {}
+                    }.apply { isDaemon = true; name = "ReleaseOnClose" }.start()
+                    Thread {
+                        try { Thread.sleep(3000) } catch (_: Throwable) {}
+                        Runtime.getRuntime().halt(0)
+                    }.apply { isDaemon = true; name = "ForceExitWatchdog" }.start()
                     exitApplication()
                 },
                 title = stringResource(Res.string.app_name),
@@ -335,7 +301,7 @@ fun main(args: Array<String>) {
                     LaunchedEffect(Unit) {
                         lowResourceMode = getKoin().get<DataStoreManager>().lowResourceMode.first() == "TRUE"
                     }
-                    val memoryCacheMaxBytes = if (lowResourceMode) 32L * 1024 * 1024 else 128L * 1024 * 1024
+                    val memoryCacheMaxBytes = if (lowResourceMode) 8L * 1024 * 1024 else 32L * 1024 * 1024
                     val diskCacheMaxBytes = if (lowResourceMode) 128L * 1024 * 1024 else 512L * 1024 * 1024
                     setSingletonImageLoaderFactory {
                         ImageLoader.Builder(context)

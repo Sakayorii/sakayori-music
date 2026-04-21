@@ -39,6 +39,11 @@ fun PlayerControlLayout(
     isSmallSize: Boolean = false,
     onUIEvent: (UIEvent) -> Unit,
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val withHaptic: (UIEvent) -> Unit = { event ->
+        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        onUIEvent(event)
+    }
     val height = if (isSmallSize) 48.dp else 96.dp
     val smallIcon = if (isSmallSize) 20.dp to 28.dp else 32.dp to 42.dp
     val mediumIcon = if (isSmallSize) 28.dp to 38.dp else 42.dp to 52.dp
@@ -63,7 +68,7 @@ fun PlayerControlLayout(
                             if (controllerState.isShuffle) seed.copy(alpha = 0.15f) else transparent,
                         )
                         .clickable {
-                            onUIEvent(UIEvent.Shuffle)
+                            withHaptic(UIEvent.Shuffle)
                         },
                 contentAlignment = Alignment.Center,
             ) {
@@ -89,7 +94,7 @@ fun PlayerControlLayout(
                         )
                         .clickable {
                             if (controllerState.isPreviousAvailable) {
-                                onUIEvent(UIEvent.Previous)
+                                withHaptic(UIEvent.Previous)
                             }
                         },
                 contentAlignment = Alignment.Center,
@@ -113,7 +118,7 @@ fun PlayerControlLayout(
                             CircleShape,
                         )
                         .clickable {
-                            onUIEvent(UIEvent.PlayPause)
+                            withHaptic(UIEvent.PlayPause)
                         },
                 contentAlignment = Alignment.Center,
             ) {
@@ -148,7 +153,7 @@ fun PlayerControlLayout(
                         )
                         .clickable {
                             if (controllerState.isNextAvailable) {
-                                onUIEvent(UIEvent.Next)
+                                withHaptic(UIEvent.Next)
                             }
                         },
                 contentAlignment = Alignment.Center,
@@ -172,7 +177,7 @@ fun PlayerControlLayout(
                             if (controllerState.repeatState !is RepeatState.None) seed.copy(alpha = 0.15f) else transparent,
                         )
                         .clickable {
-                            onUIEvent(UIEvent.Repeat)
+                            withHaptic(UIEvent.Repeat)
                         },
                 contentAlignment = Alignment.Center,
             ) {

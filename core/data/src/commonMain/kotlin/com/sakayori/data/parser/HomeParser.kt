@@ -151,7 +151,7 @@ internal fun parseMixedContent(
                                             browseId = null,
                                             thumbnails =
                                                 musicTwoRowItemRenderer.thumbnailRenderer
-                                                    ?.musicThumbnailRenderer
+                                                    .musicThumbnailRenderer
                                                     ?.thumbnail
                                                     ?.thumbnails
                                                     ?.toListThumbnail()
@@ -206,7 +206,7 @@ internal fun parseMixedContent(
                                             browseId = null,
                                             thumbnails =
                                                 musicTwoRowItemRenderer.thumbnailRenderer
-                                                    ?.musicThumbnailRenderer
+                                                    .musicThumbnailRenderer
                                                     ?.thumbnail
                                                     ?.thumbnails
                                                     ?.toListThumbnail()
@@ -234,7 +234,7 @@ internal fun parseMixedContent(
                                             browseId = ytItem.id,
                                             thumbnails =
                                                 musicTwoRowItemRenderer.thumbnailRenderer
-                                                    ?.musicThumbnailRenderer
+                                                    .musicThumbnailRenderer
                                                     ?.thumbnail
                                                     ?.thumbnails
                                                     ?.toListThumbnail()
@@ -252,7 +252,7 @@ internal fun parseMixedContent(
                                         album =
                                             Album(
                                                 id =
-                                                    musicTwoRowItemRenderer.navigationEndpoint?.browseEndpoint?.browseId
+                                                    musicTwoRowItemRenderer.navigationEndpoint.browseEndpoint?.browseId
                                                         ?: "",
                                                 name = title,
                                             ),
@@ -260,17 +260,17 @@ internal fun parseMixedContent(
                                         description = null,
                                         isExplicit = false,
                                         playlistId = null,
-                                        browseId = musicTwoRowItemRenderer.navigationEndpoint?.browseEndpoint?.browseId,
+                                        browseId = musicTwoRowItemRenderer.navigationEndpoint.browseEndpoint?.browseId,
                                         thumbnails =
                                             musicTwoRowItemRenderer.thumbnailRenderer
-                                                ?.musicThumbnailRenderer
+                                                .musicThumbnailRenderer
                                                 ?.thumbnail
                                                 ?.thumbnails
                                                 ?.toListThumbnail()
                                                 ?: listOf(),
                                         title =
                                             musicTwoRowItemRenderer.title
-                                                ?.runs
+                                                .runs
                                                 ?.getOrNull(0)
                                                 ?.text
                                                 ?: "",
@@ -289,7 +289,7 @@ internal fun parseMixedContent(
                                         }
                                     }
                                 }
-                                if (musicTwoRowItemRenderer.navigationEndpoint?.browseEndpoint?.browseId?.startsWith(
+                                if (musicTwoRowItemRenderer.navigationEndpoint.browseEndpoint?.browseId?.startsWith(
                                         "MPRE",
                                     ) == true
                                 ) {
@@ -298,7 +298,7 @@ internal fun parseMixedContent(
                                             album =
                                                 Album(
                                                     id =
-                                                        musicTwoRowItemRenderer.navigationEndpoint?.browseEndpoint?.browseId
+                                                        musicTwoRowItemRenderer.navigationEndpoint.browseEndpoint?.browseId
                                                             ?: "",
                                                     name = title,
                                                 ),
@@ -306,17 +306,17 @@ internal fun parseMixedContent(
                                             description = null,
                                             isExplicit = false,
                                             playlistId = null,
-                                            browseId = musicTwoRowItemRenderer.navigationEndpoint?.browseEndpoint?.browseId,
+                                            browseId = musicTwoRowItemRenderer.navigationEndpoint.browseEndpoint?.browseId,
                                             thumbnails =
                                                 musicTwoRowItemRenderer.thumbnailRenderer
-                                                    ?.musicThumbnailRenderer
+                                                    .musicThumbnailRenderer
                                                     ?.thumbnail
                                                     ?.thumbnails
                                                     ?.toListThumbnail()
                                                     ?: listOf(),
                                             title =
                                                 musicTwoRowItemRenderer.title
-                                                    ?.runs
+                                                    .runs
                                                     ?.getOrNull(
                                                         0,
                                                     )?.text ?: "",
@@ -346,7 +346,7 @@ internal fun parseMixedContent(
                                                 browseId = ytItem.id,
                                                 thumbnails =
                                                     musicTwoRowItemRenderer.thumbnailRenderer
-                                                        ?.musicThumbnailRenderer
+                                                        .musicThumbnailRenderer
                                                         ?.thumbnail
                                                         ?.thumbnails
                                                         ?.toListThumbnail()
@@ -582,7 +582,7 @@ internal fun parsePlaylist(
     val author: MutableList<Artist> = mutableListOf()
     val thumbnails =
         data.thumbnailRenderer
-            ?.musicThumbnailRenderer
+            .musicThumbnailRenderer
             ?.thumbnail
             ?.thumbnails
     if (subtitle != null) {
@@ -608,7 +608,7 @@ internal fun parsePlaylist(
         isExplicit = false,
         playlistId =
             data.title
-                ?.runs
+                .runs
                 ?.getOrNull(0)
                 ?.navigationEndpoint
                 ?.browseEndpoint
@@ -617,7 +617,7 @@ internal fun parsePlaylist(
         thumbnails = thumbnails?.toListThumbnail() ?: listOf(),
         title =
             data.title
-                ?.runs
+                .runs
                 ?.getOrNull(0)
                 ?.text ?: "",
         videoId = null,

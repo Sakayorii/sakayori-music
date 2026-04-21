@@ -52,4 +52,8 @@ interface StreamRepository {
     fun is403Url(url: String): Flow<Boolean>
 
     suspend fun invalidateFormat(videoId: String)
+
+    suspend fun refreshIfExpiring(videoId: String, thresholdSeconds: Long = 300L): Boolean
+
+    fun consumeLastExtractionError(): String?
 }

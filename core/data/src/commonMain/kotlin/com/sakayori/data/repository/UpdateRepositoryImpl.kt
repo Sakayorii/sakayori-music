@@ -17,12 +17,20 @@ internal class UpdateRepositoryImpl(
             youTube
                 .checkForGithubReleaseUpdate()
                 .onSuccess { response ->
+                    val assets = response.assets?.filterNotNull().orEmpty().map { asset ->
+                        UpdateData.AssetInfo(
+                            name = asset.name ?: "",
+                            downloadUrl = asset.browserDownloadUrl ?: "",
+                            sizeBytes = asset.size?.toLong() ?: 0L,
+                        )
+                    }
                     emit(
                         Resource.Success(
                             UpdateData(
                                 tagName = response.tagName ?: "",
                                 releaseTime = response.publishedAt ?: "",
                                 body = response.body ?: "",
+                                assets = assets,
                             ),
                         ),
                     )

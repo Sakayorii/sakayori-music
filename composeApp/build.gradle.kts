@@ -194,17 +194,21 @@ compose.desktop {
         jvmArgs += "--add-opens=java.base/java.nio=ALL-UNNAMED"
         jvmArgs += "--add-opens=java.desktop/sun.awt=ALL-UNNAMED"
         jvmArgs += "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED"
-        jvmArgs += "-Xmx512m"
-        jvmArgs += "-Xms64m"
-        jvmArgs += "-XX:+UseG1GC"
-        jvmArgs += "-XX:MaxGCPauseMillis=50"
+        jvmArgs += "-Xmx256m"
+        jvmArgs += "-Xms32m"
+        jvmArgs += "-XX:+UseSerialGC"
+        jvmArgs += "-XX:MaxMetaspaceSize=96m"
+        jvmArgs += "-XX:ReservedCodeCacheSize=64m"
+        jvmArgs += "-XX:MaxDirectMemorySize=48m"
+        jvmArgs += "-XX:MinHeapFreeRatio=5"
+        jvmArgs += "-XX:MaxHeapFreeRatio=15"
+        jvmArgs += "-XX:SoftRefLRUPolicyMSPerMB=1"
         jvmArgs += "-XX:+UseStringDeduplication"
-        jvmArgs += "-XX:+TieredCompilation"
         jvmArgs += "-XX:TieredStopAtLevel=1"
-        jvmArgs += "-XX:CICompilerCount=2"
-        jvmArgs += "-XX:+AlwaysPreTouch"
-        jvmArgs += "-XX:+DisableExplicitGC"
+        jvmArgs += "-XX:CICompilerCount=1"
         jvmArgs += "-XX:+UseCompressedOops"
+        jvmArgs += "-XX:+UseCompressedClassPointers"
+        jvmArgs += "-XX:+ExplicitGCInvokesConcurrent"
         jvmArgs += "-Xshare:auto"
         jvmArgs += "-Dfile.encoding=UTF-8"
         jvmArgs += "-Dsun.java2d.opengl=true"
@@ -285,6 +289,7 @@ compose.desktop {
                 menuGroup = "SakayoriMusic"
                 console = false
                 dirChooser = true
+                perUserInstall = false
                 upgradeUuid = "a1b2c3d4-5678-9abc-def0-1a2b3c4d5e6f"
                 msiPackageVersion =
                     libs.versions.version.name
@@ -537,6 +542,20 @@ listOf("vlcExtract", "vlcFilterPlugins", "vlcSetup", "clean").forEach { taskName
     }
 }
 
+fun isVlcBundleComplete(root: File): Boolean {
+    if (!root.exists()) return false
+    val demuxDir = root.resolve("plugins/demux")
+    if (!demuxDir.exists()) return false
+    val requiredPlugins = listOf(
+        "libmp4_plugin",
+        "libavformat_plugin",
+        "libmkv_plugin",
+        "libadaptive_plugin",
+    )
+    val presentNames = demuxDir.listFiles()?.map { it.nameWithoutExtension.substringAfterLast('/') } ?: emptyList()
+    return requiredPlugins.all { required -> presentNames.any { it.contains(required.removePrefix("lib")) } }
+}
+
 tasks.named("clean").configure {
     setDependsOn(emptyList<Any>())
     doFirst {
@@ -546,10 +565,13 @@ tasks.named("clean").configure {
             rootDir.resolve("vlc-natives/macos"),
         )
         preserveDirs.forEach { dir ->
-            if (dir.exists()) {
+            if (dir.exists() && isVlcBundleComplete(dir)) {
                 val backup = File(dir.parentFile, "${dir.name}.preserved")
                 if (backup.exists()) backup.deleteRecursively()
                 dir.copyRecursively(backup, overwrite = true)
+            } else if (dir.exists()) {
+                logger.warn("VLC bundle at ${dir.name} is incomplete, will force regeneration")
+                dir.deleteRecursively()
             }
         }
     }

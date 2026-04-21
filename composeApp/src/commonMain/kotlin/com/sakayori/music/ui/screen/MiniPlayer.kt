@@ -354,7 +354,7 @@ fun MiniPlayer(
                     AsyncImage(
                         model = ImageRequest
                             .Builder(LocalPlatformContext.current)
-                            .data(songEntity?.thumbnails)
+                            .data(songEntity.thumbnails)
                             .size(200)
                             .crossfade(550)
                             .build(),
@@ -453,7 +453,7 @@ fun MiniPlayer(
                                         .align(Alignment.CenterVertically)
                                         .animateContentSize()
                                         .clip(
-                                            RoundedCornerShape(4.dp),
+                                            RoundedCornerShape(6.dp),
                                         ),
                             )
                             Spacer(modifier = Modifier.width(10.dp))

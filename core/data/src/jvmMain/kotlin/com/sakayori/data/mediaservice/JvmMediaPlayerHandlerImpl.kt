@@ -98,6 +98,7 @@ import kotlin.math.pow
 
 private val TAG = "JvmMediaPlayerHandler"
 
+@OptIn(kotlinx.coroutines.FlowPreview::class)
 class JvmMediaPlayerHandlerImpl(
     private val dataStoreManager: DataStoreManager,
     private val songRepository: SongRepository,
@@ -725,15 +726,19 @@ class JvmMediaPlayerHandlerImpl(
     override fun startProgressUpdate() {
         progressJob =
             coroutineScope.launch {
-                var lastEmittedSecond = -1L
+                var lastEmittedPos = -1L
+                var lastMacUpdateSecond = -1L
                 while (true) {
-                    delay(if (lowResourceModeActive) 1000 else 500)
+                    delay(if (lowResourceModeActive) 500 else 200)
                     val currentPos = player.currentPosition
-                    val currentSecond = currentPos / 1000
-                    if (currentSecond != lastEmittedSecond) {
-                        lastEmittedSecond = currentSecond
+                    if (currentPos != lastEmittedPos) {
+                        lastEmittedPos = currentPos
                         _simpleMediaState.value = SimpleMediaState.Progress(currentPos)
-                        updateMacOSElapsedTime()
+                        val currentSecond = currentPos / 1000
+                        if (currentSecond != lastMacUpdateSecond) {
+                            lastMacUpdateSecond = currentSecond
+                            updateMacOSElapsedTime()
+                        }
                     }
                 }
             }

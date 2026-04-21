@@ -28,7 +28,9 @@ import com.sakayori.music.generated.resources.ai
 @Composable
 fun ExplicitBadge(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .clip(RoundedCornerShape(3.dp))
+            .background(Color(0xFFE57373).copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

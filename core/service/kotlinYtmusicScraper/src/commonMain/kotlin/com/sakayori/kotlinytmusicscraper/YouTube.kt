@@ -25,7 +25,10 @@ import com.sakayori.kotlinytmusicscraper.models.VideoItem
 import com.sakayori.kotlinytmusicscraper.models.WatchEndpoint
 import com.sakayori.kotlinytmusicscraper.models.YTItemType
 import com.sakayori.kotlinytmusicscraper.models.YouTubeClient
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.ANDROID_MUSIC
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.IOS
 import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.TVHTML5
+import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.TVHTML5_SIMPLY
 import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB
 import com.sakayori.kotlinytmusicscraper.models.YouTubeClient.Companion.WEB_REMIX
 import com.sakayori.kotlinytmusicscraper.models.YouTubeLocale
@@ -1095,12 +1098,30 @@ class YouTube {
         var sigResponse: PlayerResponse?
         Logger.d(TAG, "YouTube TempRes ${tempRes.playabilityStatus}")
         if (tempRes.playabilityStatus.status != "OK") {
+            Logger.w(TAG, "Playability status not OK: ${tempRes.playabilityStatus.status} — ${tempRes.playabilityStatus.reason}")
             return null
         } else {
             sigResponse = tempRes
         }
-        val streamsList = ytMusic.getNewPipePlayer(videoId)
-        if (streamsList.isEmpty()) return null
+        val streamsList =
+            try {
+                ytMusic.getNewPipePlayer(videoId)
+            } catch (e: Throwable) {
+                Logger.e(TAG, "NewPipe extraction threw: ${e::class.simpleName}: ${e.message}")
+                emptyList()
+            }
+
+        if (streamsList.isEmpty()) {
+            val tempHasUrls =
+                (sigResponse.streamingData?.formats?.any { !it.url.isNullOrEmpty() } == true) ||
+                    (sigResponse.streamingData?.adaptiveFormats?.any { !it.url.isNullOrEmpty() } == true)
+            if (tempHasUrls) {
+                Logger.w(TAG, "NewPipe empty — falling back to YouTube response direct URLs")
+                return sigResponse
+            }
+            Logger.e(TAG, "NewPipe empty and YouTube response has no URLs — extraction failed")
+            return null
+        }
 
         decodedSigResponse =
             sigResponse.copy(
@@ -1108,17 +1129,15 @@ class YouTube {
                     sigResponse.streamingData?.copy(
                         formats =
                             sigResponse.streamingData.formats?.map { format ->
-                                format.copy(
-                                    url = streamsList.find { it.first == format.itag }?.second,
-                                )
+                                val newPipeUrl = streamsList.find { it.first == format.itag }?.second
+                                if (newPipeUrl != null) format.copy(url = newPipeUrl) else format
                             },
                         adaptiveFormats =
                             sigResponse.streamingData.adaptiveFormats.map { adaptiveFormats ->
-                                adaptiveFormats.copy(
-                                    url = streamsList.find { it.first == adaptiveFormats.itag }?.second,
-                                )
+                                val newPipeUrl = streamsList.find { it.first == adaptiveFormats.itag }?.second
+                                if (newPipeUrl != null) adaptiveFormats.copy(url = newPipeUrl) else adaptiveFormats
                             },
-                        hlsManifestUrl = streamsList.firstOrNull { it.first == 96 }?.second,
+                        hlsManifestUrl = streamsList.firstOrNull { it.first == 96 }?.second ?: sigResponse.streamingData.hlsManifestUrl,
                     ),
             )
         decodedSigResponse =
@@ -1178,14 +1197,17 @@ class YouTube {
         listUrlSig.forEach {
             Logger.d(TAG, "YouTube NewPipe URL $it")
         }
-        val randomUrl = listUrlSig.randomOrNull() ?: return null
-        if (listUrlSig.isNotEmpty() && !is403Url(randomUrl)) {
-            Logger.d(TAG, "YouTube NewPipe Found URL $randomUrl")
-            return decodedSigResponse
-        } else {
-            Logger.d(TAG, "YouTube NewPipe No URL Found")
+        if (listUrlSig.isEmpty()) {
+            Logger.w(TAG, "YouTube NewPipe No URL Found")
             return null
         }
+        val probeUrl = listUrlSig.firstOrNull { !is403Url(it) } ?: listUrlSig.first()
+        if (!is403Url(probeUrl)) {
+            Logger.d(TAG, "YouTube NewPipe Found URL $probeUrl")
+            return decodedSigResponse
+        }
+        Logger.w(TAG, "All ${listUrlSig.size} NewPipe URLs returned 403")
+        return null
     }
 
     fun isManifestUrl(url: String): Boolean = url.contains(".m3u8") || url.contains(".mpd") || url.contains("manifest")
@@ -1208,101 +1230,112 @@ class YouTube {
                         ]
                     }.joinToString("")
 
-            var decodedSigResponse: PlayerResponse? = null
-            val tempRes =
-                ytMusic
-                    .player(
-                        WEB_REMIX,
-                        videoId,
-                        playlistId,
-                        cpn,
-                        signatureTimestamp =
-                            run {
-                                val today = Clock.System.todayIn(TimeZone.UTC)
-                                val epoch =
-                                    Instant
-                                        .fromEpochSeconds(0)
-                                        .toLocalDateTime(TimeZone.UTC)
-                                        .date
-                                epoch.daysUntil(today)
-                            },
-                    ).body<PlayerResponse>()
-                    .let {
-                        val fexp =
-                            it.streamingData
-                                ?.serverAbrStreamingUrl
-                                ?.toKmpUri()
-                                ?.getQueryParameter("fexp")
-                        val playbackTracking = it.playbackTracking
-                        it.copy(
-                            playbackTracking =
-                                playbackTracking?.copy(
-                                    atrUrl =
-                                        playbackTracking.atrUrl?.copy(
-                                            baseUrl =
-                                                playbackTracking.atrUrl.baseUrl
-                                                    ?.toKmpUri()
-                                                    ?.buildUpon()
-                                                    ?.apply {
-                                                        if (fexp != null) {
-                                                            appendQueryParameter("fexp", fexp)
-                                                        }
-                                                    }?.build()
-                                                    ?.toString(),
+            val signatureTimestamp =
+                run {
+                    val today = Clock.System.todayIn(TimeZone.UTC)
+                    val epoch =
+                        Instant
+                            .fromEpochSeconds(0)
+                            .toLocalDateTime(TimeZone.UTC)
+                            .date
+                    epoch.daysUntil(today)
+                }
+
+            val clientFallbackOrder = listOf(WEB_REMIX, TVHTML5_SIMPLY, IOS, ANDROID_MUSIC)
+            var lastFailureDetail = "No clients attempted"
+
+            for (client in clientFallbackOrder) {
+                try {
+                    val tempRes =
+                        ytMusic
+                            .player(
+                                client,
+                                videoId,
+                                playlistId,
+                                cpn,
+                                signatureTimestamp = signatureTimestamp,
+                            ).body<PlayerResponse>()
+                            .let {
+                                val fexp =
+                                    it.streamingData
+                                        ?.serverAbrStreamingUrl
+                                        ?.toKmpUri()
+                                        ?.getQueryParameter("fexp")
+                                val playbackTracking = it.playbackTracking
+                                it.copy(
+                                    playbackTracking =
+                                        playbackTracking?.copy(
+                                            atrUrl =
+                                                playbackTracking.atrUrl?.copy(
+                                                    baseUrl =
+                                                        playbackTracking.atrUrl.baseUrl
+                                                            ?.toKmpUri()
+                                                            ?.buildUpon()
+                                                            ?.apply {
+                                                                if (fexp != null) {
+                                                                    appendQueryParameter("fexp", fexp)
+                                                                }
+                                                            }?.build()
+                                                            ?.toString(),
+                                                ),
+                                            videostatsPlaybackUrl =
+                                                playbackTracking.videostatsPlaybackUrl?.copy(
+                                                    baseUrl =
+                                                        playbackTracking.videostatsPlaybackUrl.baseUrl
+                                                            ?.toKmpUri()
+                                                            ?.buildUpon()
+                                                            ?.apply {
+                                                                if (fexp != null) {
+                                                                    appendQueryParameter("fexp", fexp)
+                                                                }
+                                                            }?.build()
+                                                            ?.toString(),
+                                                ),
+                                            videostatsWatchtimeUrl =
+                                                playbackTracking.videostatsWatchtimeUrl?.copy(
+                                                    baseUrl =
+                                                        playbackTracking.videostatsWatchtimeUrl.baseUrl
+                                                            ?.toKmpUri()
+                                                            ?.buildUpon()
+                                                            ?.apply {
+                                                                if (fexp != null) {
+                                                                    appendQueryParameter("fexp", fexp)
+                                                                }
+                                                            }?.build()
+                                                            ?.toString(),
+                                                ),
                                         ),
-                                    videostatsPlaybackUrl =
-                                        playbackTracking.videostatsPlaybackUrl?.copy(
-                                            baseUrl =
-                                                playbackTracking.videostatsPlaybackUrl.baseUrl
-                                                    ?.toKmpUri()
-                                                    ?.buildUpon()
-                                                    ?.apply {
-                                                        if (fexp != null) {
-                                                            appendQueryParameter("fexp", fexp)
-                                                        }
-                                                    }?.build()
-                                                    ?.toString(),
-                                        ),
-                                    videostatsWatchtimeUrl =
-                                        playbackTracking.videostatsWatchtimeUrl?.copy(
-                                            baseUrl =
-                                                playbackTracking.videostatsWatchtimeUrl.baseUrl
-                                                    ?.toKmpUri()
-                                                    ?.buildUpon()
-                                                    ?.apply {
-                                                        if (fexp != null) {
-                                                            appendQueryParameter("fexp", fexp)
-                                                        }
-                                                    }?.build()
-                                                    ?.toString(),
-                                        ),
-                                ),
+                                )
+                            }
+
+                    val response = newPipePlayer(videoId, tempRes)
+                    if (response != null) {
+                        Logger.d(TAG, "YouTube Player succeeded with client ${client.clientName}")
+                        val firstThumb =
+                            response.videoDetails
+                                ?.thumbnail
+                                ?.thumbnails
+                                ?.firstOrNull()
+                        val thumbnails =
+                            if (firstThumb?.height == firstThumb?.width && firstThumb != null) MediaType.Song else MediaType.Video
+                        return@runCatching Triple(
+                            cpn,
+                            response.copy(
+                                videoDetails = response.videoDetails?.copy(),
+                                playbackTracking = response.playbackTracking,
+                            ),
+                            thumbnails,
                         )
                     }
-
-            val response = newPipePlayer(videoId, tempRes)
-            if (response != null) {
-                decodedSigResponse = response
-                Logger.d(TAG, "YouTube Player found URL")
-            } else {
-                Logger.d(TAG, "YouTube Player no URL found")
+                    lastFailureDetail = "${client.clientName} returned no playable URL"
+                    Logger.w(TAG, "$lastFailureDetail, trying next client")
+                } catch (e: Exception) {
+                    lastFailureDetail = "${client.clientName}: ${e::class.simpleName}: ${e.message ?: "no message"}"
+                    Logger.w(TAG, "Client $lastFailureDetail, trying next client")
+                }
             }
-            if (decodedSigResponse == null) throw RuntimeException("No URL found")
-            val firstThumb =
-                decodedSigResponse.videoDetails
-                    ?.thumbnail
-                    ?.thumbnails
-                    ?.firstOrNull()
-            val thumbnails =
-                if (firstThumb?.height == firstThumb?.width && firstThumb != null) MediaType.Song else MediaType.Video
-            return@runCatching Triple(
-                cpn,
-                decodedSigResponse.copy(
-                    videoDetails = decodedSigResponse.videoDetails?.copy(),
-                    playbackTracking = decodedSigResponse.playbackTracking,
-                ),
-                thumbnails,
-            )
+
+            throw RuntimeException("All ${clientFallbackOrder.size} YouTube clients failed. Last error: $lastFailureDetail")
         }
 
     suspend fun updateWatchTime(

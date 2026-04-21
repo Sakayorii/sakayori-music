@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
+@file:Suppress("LABEL_NAME_CLASH")
 
 package com.sakayori.music.ui.screen.player
 
@@ -593,11 +594,14 @@ fun NowPlayingScreenContent(
     }
 
     if (showFullscreenLyrics) {
+        val shouldHaze by sharedViewModel
+            .blurFullscreenLyricsFlow()
+            .collectAsStateWithLifecycle(initialValue = false)
         FullscreenLyricsSheet(
             sharedViewModel = sharedViewModel,
             navController = navController,
             color = startColor.value,
-            shouldHaze = sharedViewModel.blurFullscreenLyrics(),
+            shouldHaze = shouldHaze,
         ) {
             showFullscreenLyrics = false
         }

@@ -25,7 +25,6 @@ import com.sakayori.media3.utils.BetterShuffleOrder
 private const val TAG = "ExoPlayerAdapter"
 
 @SuppressLint("UnsafeOptInUsageError")
-@OptIn(UnstableApi::class)
 class ExoPlayerAdapter(
     private val exoPlayer: ExoPlayer,
 ) : MediaPlayerInterface {

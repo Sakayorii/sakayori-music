@@ -124,6 +124,8 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         }
     }
 
+    @Deprecated("Deprecated in Media3 — use onFlush(StreamMetadata) instead. Override kept for backwards compatibility.")
+    @Suppress("DEPRECATION")
     override fun onFlush() {
         super.onFlush()
         filter.reset()

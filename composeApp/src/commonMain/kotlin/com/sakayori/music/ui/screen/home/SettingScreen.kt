@@ -328,6 +328,8 @@ import com.sakayori.music.generated.resources.save_last_played
 import com.sakayori.music.generated.resources.save_last_played_track_and_queue
 import com.sakayori.music.generated.resources.sleep_timer_fade_out
 import com.sakayori.music.generated.resources.sleep_timer_fade_out_description
+import com.sakayori.music.generated.resources.auto_update_on_restart
+import com.sakayori.music.generated.resources.auto_update_on_restart_description
 import com.sakayori.music.generated.resources.save_playback_state
 import com.sakayori.music.generated.resources.save_shuffle_and_repeat_mode
 import com.sakayori.music.generated.resources.send_back_listening_data_to_google
@@ -654,17 +656,15 @@ fun SettingScreen(
                     isEnable = !isLowEndDevice,
                     disableReason = if (isLowEndDevice) lowEndDisableReason else null,
                 )
-                if (getPlatform() == Platform.Android) {
-                    SettingItem(
-                        title = stringResource(Res.string.enable_liquid_glass_effect),
-                        subtitle = stringResource(Res.string.enable_liquid_glass_effect_description),
-                        smallSubtitle = true,
-                        switch = (enableLiquidGlass to { viewModel.setEnableLiquidGlass(it) }),
-                        isEnable = getPlatform() == Platform.Android && !isLowEndDevice,
-                        disableReason = if (isLowEndDevice) lowEndDisableReason else null,
-                        newBadge = true,
-                    )
-                }
+                SettingItem(
+                    title = stringResource(Res.string.enable_liquid_glass_effect),
+                    subtitle = stringResource(Res.string.enable_liquid_glass_effect_description),
+                    smallSubtitle = true,
+                    switch = (enableLiquidGlass to { viewModel.setEnableLiquidGlass(it) }),
+                    isEnable = !isLowEndDevice,
+                    disableReason = if (isLowEndDevice) lowEndDisableReason else null,
+                    newBadge = true,
+                )
                 SettingItem(
                     title = stringResource(Res.string.very_low_performance_mode),
                     subtitle = stringResource(Res.string.very_low_performance_mode_description),
@@ -2160,6 +2160,14 @@ fun SettingScreen(
                             ),
                         )
                     },
+                )
+                val autoUpdateOnRestart by viewModel.autoUpdateOnRestart.collectAsStateWithLifecycle(DataStoreManager.FALSE)
+                SettingItem(
+                    title = stringResource(Res.string.auto_update_on_restart),
+                    subtitle = stringResource(Res.string.auto_update_on_restart_description),
+                    smallSubtitle = true,
+                    switch = ((autoUpdateOnRestart == DataStoreManager.TRUE) to { viewModel.setAutoUpdateOnRestart(it) }),
+                    newBadge = true,
                 )
                 SettingItem(
                     title = stringResource(Res.string.check_for_update),

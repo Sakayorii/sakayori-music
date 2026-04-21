@@ -89,7 +89,6 @@ import kotlin.time.Duration.Companion.seconds
 private val mediaServiceModule =
     module {
         single<CoroutineScope>(
-            createdAtStart = true,
             qualifier = named(SERVICE_SCOPE),
         ) {
             val exceptionHandler = kotlinx.coroutines.CoroutineExceptionHandler { _, throwable ->
@@ -97,20 +96,18 @@ private val mediaServiceModule =
             }
             CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
         }
-        single<DatabaseProvider>(
-            createdAtStart = true,
-        ) {
+        single<DatabaseProvider> {
             provideDatabaseProvider(androidContext())
         }
-        single<SimpleCache>(qualifier = named(PLAYER_CACHE), createdAtStart = true) {
+        single<SimpleCache>(qualifier = named(PLAYER_CACHE)) {
             provideSimpleCache(
                 context = androidContext(),
                 cacheName = "exoplayer",
-                cacheSize = runBlocking(Dispatchers.IO) { get<DataStoreManager>().maxSongCacheSize.first() },
+                cacheSize = -1,
                 databaseProvider = get<DatabaseProvider>(),
             )
         }
-        single<SimpleCache>(qualifier = named(DOWNLOAD_CACHE), createdAtStart = true) {
+        single<SimpleCache>(qualifier = named(DOWNLOAD_CACHE)) {
             provideSimpleCache(
                 context = androidContext(),
                 cacheName = "download",
@@ -118,7 +115,7 @@ private val mediaServiceModule =
                 databaseProvider = get<DatabaseProvider>(),
             )
         }
-        single<SimpleCache>(qualifier = named(CANVAS_CACHE), createdAtStart = true) {
+        single<SimpleCache>(qualifier = named(CANVAS_CACHE)) {
             provideSimpleCache(
                 context = androidContext(),
                 cacheName = "spotifyCanvas",
@@ -126,7 +123,7 @@ private val mediaServiceModule =
                 databaseProvider = get<DatabaseProvider>(),
             )
         }
-        single<DownloadHandler>(createdAtStart = true) {
+        single<DownloadHandler>{
             DownloadUtils(
                 context = androidContext(),
                 playerCache = get(named(PLAYER_CACHE)),
@@ -138,11 +135,11 @@ private val mediaServiceModule =
             )
         }
 
-        single<AudioAttributes>(createdAtStart = true) {
+        single<AudioAttributes>{
             provideAudioAttributes()
         }
 
-        single<MergingMediaSourceFactory>(createdAtStart = true) {
+        single<MergingMediaSourceFactory>{
             provideMergingMediaSource(
                 androidContext(),
                 get(named(DOWNLOAD_CACHE)),
@@ -153,7 +150,7 @@ private val mediaServiceModule =
             )
         }
 
-        single<DefaultRenderersFactory>(createdAtStart = true) {
+        single<DefaultRenderersFactory>{
             provideRendererFactory(androidContext())
         }
 
@@ -161,11 +158,11 @@ private val mediaServiceModule =
             (get<MediaPlayerInterface>() as CrossfadeExoPlayerAdapter).forwardingPlayer
         }
 
-        single<CoilBitmapLoader>(createdAtStart = true) {
+        single<CoilBitmapLoader>{
             provideCoilBitmapLoader(androidContext(), get(named(SERVICE_SCOPE)))
         }
 
-        single<MediaPlayerInterface>(createdAtStart = true) {
+        single<MediaPlayerInterface>{
             CrossfadeExoPlayerAdapter(
                 context = androidContext(),
                 coroutineScope = get(named(SERVICE_SCOPE)),
@@ -176,7 +173,7 @@ private val mediaServiceModule =
             )
         }
 
-        single<MediaLibrarySession.Callback>(createdAtStart = true) {
+        single<MediaLibrarySession.Callback>{
             SimpleMediaSessionCallback(
                 androidApplication(),
                 get<CoroutineScope>(named(SERVICE_SCOPE)),
@@ -190,7 +187,7 @@ private val mediaServiceModule =
             )
         }
 
-        single<CacheRepository>(createdAtStart = true) {
+        single<CacheRepository>{
             CacheRepositoryImpl(
                 playerCache = get(named(PLAYER_CACHE)),
                 downloadCache = get(named(DOWNLOAD_CACHE)),
@@ -248,6 +245,8 @@ private fun provideResolvingDataSourceFactory(
         var dataSpecReturn: DataSpec = dataSpec
         var resolved = false
         runBlocking(Dispatchers.IO) {
+            val baseId = if (mediaId.contains(MERGING_DATA_TYPE.VIDEO)) mediaId.removePrefix(MERGING_DATA_TYPE.VIDEO) else mediaId
+            streamRepository.refreshIfExpiring(baseId)
             if (mediaId.contains(MERGING_DATA_TYPE.VIDEO)) {
                 val id = mediaId.removePrefix(MERGING_DATA_TYPE.VIDEO)
                 streamRepository.getNewFormat(id).lastOrNull()?.let {
@@ -397,6 +396,7 @@ private fun provideRendererFactory(context: Context): DefaultRenderersFactory =
             enableFloatOutput: Boolean,
             enableAudioTrackPlaybackParams: Boolean,
         ): AudioSink =
+            @Suppress("DEPRECATION")
             DefaultAudioSink
                 .Builder(context)
                 .setEnableFloatOutput(enableFloatOutput)
@@ -437,8 +437,11 @@ private fun provideCacheDataSource(
                             OkHttpDataSource.Factory(
                                 OkHttpClient
                                     .Builder()
-                                    .connectTimeout(30.seconds)
-                                    .readTimeout(30.seconds)
+                                    .connectTimeout(10.seconds)
+                                    .readTimeout(20.seconds)
+                                    .writeTimeout(20.seconds)
+                                    .callTimeout(45.seconds)
+                                    .retryOnConnectionFailure(true)
                                     .proxy(
                                         proxy,
                                     ).addInterceptor(
@@ -447,7 +450,7 @@ private fun provideCacheDataSource(
                                                 level = HttpLoggingInterceptor.Level.HEADERS
                                             },
                                     ).build(),
-                            ),
+                            ).setUserAgent("Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"),
                         ),
                 ),
         ).setCacheWriteDataSinkFactory(null)

@@ -921,7 +921,7 @@ class LocalPlaylistViewModel(
                     append("\"title\":\"${song.title.replace("\"", "\\\"")}\",")
                     append("\"artistName\":${song.artistName?.joinToString(",")?.let { "\"${it.replace("\"", "\\\"")}\"" } ?: "null"},")
                     append("\"thumbnails\":${song.thumbnails?.let { "\"${it.replace("\"", "\\\"")}\"" } ?: "null"},")
-                    append("\"duration\":${song.durationSeconds ?: 0}")
+                    append("\"duration\":${song.durationSeconds}")
                     append("}")
                 }
                 append("]}")

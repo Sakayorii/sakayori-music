@@ -35,61 +35,61 @@ import org.koin.dsl.module
 
 val repositoryModule =
     module {
-        single<AccountRepository>(createdAtStart = true) {
+        single<AccountRepository> {
             AccountRepositoryImpl(get(), get())
         }
 
-        single<AlbumRepository>(createdAtStart = true) {
+        single<AlbumRepository> {
             AlbumRepositoryImpl(get(), get())
         }
 
-        single<ArtistRepository>(createdAtStart = true) {
+        single<ArtistRepository> {
             ArtistRepositoryImpl(get(), get())
         }
 
-        single<CommonRepository>(createdAtStart = true) {
+        single<CommonRepository> {
             CommonRepositoryImpl(get(named(SERVICE_SCOPE)), get(), get(), get(), get(), get()).apply {
                 this.init("${fileDir()}/ytdlp-cookie.txt", get())
             }
         }
 
-        single<HomeRepository>(createdAtStart = true) {
+        single<HomeRepository> {
             HomeRepositoryImpl(get(), get())
         }
 
-        single<LocalPlaylistRepository>(createdAtStart = true) {
+        single<LocalPlaylistRepository> {
             LocalPlaylistRepositoryImpl(get(), get(), get())
         }
 
-        single<LyricsCanvasRepository>(createdAtStart = true) {
+        single<LyricsCanvasRepository> {
             LyricsCanvasRepositoryImpl(get(), get(), get(), get(), get())
         }
 
-        single<PlaylistRepository>(createdAtStart = true) {
+        single<PlaylistRepository> {
             PlaylistRepositoryImpl(get(), get(), get())
         }
 
-        single<PodcastRepository>(createdAtStart = true) {
+        single<PodcastRepository> {
             PodcastRepositoryImpl(get(), get())
         }
 
-        single<SearchRepository>(createdAtStart = true) {
+        single<SearchRepository> {
             SearchRepositoryImpl(get(), get())
         }
 
-        single<SongRepository>(createdAtStart = true) {
+        single<SongRepository> {
             SongRepositoryImpl(get(), get(), get())
         }
 
-        single<StreamRepository>(createdAtStart = true) {
+        single<StreamRepository> {
             StreamRepositoryImpl(get(), get())
         }
 
-        single<UpdateRepository>(createdAtStart = true) {
+        single<UpdateRepository> {
             UpdateRepositoryImpl(get())
         }
 
-        single<AnalyticsRepository>(createdAtStart = true) {
+        single<AnalyticsRepository> {
             AnalyticsRepositoryImpl(get())
         }
     }

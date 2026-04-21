@@ -21,8 +21,6 @@ import com.sakayori.domain.repository.SongRepository
 import com.sakayori.domain.utils.LocalResource
 import com.sakayori.logger.LogLevel
 import com.sakayori.logger.Logger
-import com.sakayori.music.Platform
-import com.sakayori.music.getPlatform
 import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -163,6 +161,14 @@ class SettingsViewModel(
     private val _sleepTimerFadeOut: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val sleepTimerFadeOut: StateFlow<Boolean> = _sleepTimerFadeOut
 
+    val autoUpdateOnRestart = dataStoreManager.autoUpdateOnRestart
+
+    fun setAutoUpdateOnRestart(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.setAutoUpdateOnRestart(enabled)
+        }
+    }
+
     private val _explicitContentEnabled = MutableStateFlow(false)
     val explicitContentEnabled: StateFlow<Boolean> = _explicitContentEnabled
 
@@ -220,13 +226,6 @@ class SettingsViewModel(
     init {
         getYoutubeSubtitleLanguage()
         getHelpBuildLyricsDatabase()
-        viewModelScope.launch {
-            enableLiquidGlass.collect {
-                if (getPlatform() != Platform.Android && it) {
-                    setEnableLiquidGlass(false)
-                }
-            }
-        }
     }
 
     fun getAudioSessionId() = mediaPlayerHandler.player.audioSessionId
@@ -1494,6 +1493,7 @@ class SettingsViewModel(
             dataStoreManager.putString("AccountThumbUrl", "")
             dataStoreManager.setLoggedIn(false)
             dataStoreManager.setCookie("", null)
+            com.sakayori.music.expect.ui.clearWebViewCacheAndCookies()
             delay(500)
             getAllGoogleAccount()
             getLoggedIn()

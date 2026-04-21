@@ -14,6 +14,8 @@ interface WebViewCookieManager {
 
 expect fun createWebViewCookieManager(): WebViewCookieManager
 
+expect fun clearWebViewCacheAndCookies()
+
 sealed class WebViewState {
     data class Loading(
         val progress: Int,

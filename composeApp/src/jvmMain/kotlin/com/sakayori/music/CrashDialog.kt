@@ -46,8 +46,9 @@ object CrashDialog {
             }
 
             try {
-                if (BuildKonfig.sentryDsn.isNotEmpty()) {
+                if (com.sakayori.music.utils.DesktopCrashReporting.isEnabled()) {
                     Sentry.captureException(throwable)
+                    Sentry.flush(5000L)
                 }
             } catch (_: Exception) {
             }

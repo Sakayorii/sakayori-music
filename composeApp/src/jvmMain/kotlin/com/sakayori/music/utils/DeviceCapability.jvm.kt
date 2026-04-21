@@ -8,24 +8,22 @@ actual object DeviceCapability {
     }
 
     actual fun getRamGb(): Int {
-        val maxMem = Runtime.getRuntime().maxMemory()
-        val totalMem = try {
-            val osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean()
-            val method = osBean.javaClass.getMethod("getTotalMemorySize")
-            method.isAccessible = true
-            (method.invoke(osBean) as? Long) ?: maxMem
-        } catch (_: Throwable) {
-            try {
-                val osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean()
-                val method = osBean.javaClass.getMethod("getTotalPhysicalMemorySize")
-                method.isAccessible = true
-                (method.invoke(osBean) as? Long) ?: maxMem
-            } catch (_: Throwable) {
-                maxMem
-            }
-        }
-        return (totalMem / (1024L * 1024L * 1024L)).toInt()
+        val totalBytes = tryGetTotalPhysicalMemory() ?: return 8
+        return (totalBytes / (1024L * 1024L * 1024L)).toInt().coerceAtLeast(1)
     }
 
     actual fun getCpuCores(): Int = Runtime.getRuntime().availableProcessors()
+
+    private fun tryGetTotalPhysicalMemory(): Long? {
+        val osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean()
+        for (methodName in arrayOf("getTotalMemorySize", "getTotalPhysicalMemorySize")) {
+            try {
+                val method = osBean.javaClass.methods.firstOrNull { it.name == methodName } ?: continue
+                val result = method.invoke(osBean) as? Long
+                if (result != null && result > 0L) return result
+            } catch (_: Throwable) {
+            }
+        }
+        return null
+    }
 }

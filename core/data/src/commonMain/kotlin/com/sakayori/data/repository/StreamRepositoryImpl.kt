@@ -9,6 +9,7 @@ import com.sakayori.data.mapping.toTrack
 import com.sakayori.domain.data.entities.NewFormatEntity
 import com.sakayori.domain.data.model.browse.album.Track
 import com.sakayori.domain.data.model.mediaService.SponsorSkipSegments
+import com.sakayori.domain.extension.isAfter
 import com.sakayori.domain.extension.isBefore
 import com.sakayori.domain.extension.now
 import com.sakayori.domain.extension.plusSeconds
@@ -33,6 +34,24 @@ internal class StreamRepositoryImpl(
     private val localDataSource: LocalDataSource,
     private val youTube: YouTube,
 ) : StreamRepository {
+
+    @Volatile
+    private var _lastExtractionError: String? = null
+    private val lastErrorLock = Any()
+
+    override fun consumeLastExtractionError(): String? = synchronized(lastErrorLock) {
+        val msg = _lastExtractionError
+        _lastExtractionError = null
+        msg
+    }
+
+    private var lastExtractionError: String?
+        get() = _lastExtractionError
+        set(value) {
+            synchronized(lastErrorLock) {
+                _lastExtractionError = value
+            }
+        }
     override suspend fun insertNewFormat(newFormat: NewFormatEntity) =
         withContext(Dispatchers.IO) {
             localDataSource.insertNewFormat(newFormat)
@@ -112,11 +131,14 @@ internal class StreamRepositoryImpl(
                 }
             var playerResult = youTube.player(videoId, noLogIn = muxed)
             var attempts = 1
-            while (playerResult.isFailure && attempts < 4) {
-                val backoff = 500L * (1L shl (attempts - 1))
-                kotlinx.coroutines.delay(backoff)
+            while (playerResult.isFailure && attempts < 3) {
+                kotlinx.coroutines.delay(500L * attempts)
                 attempts++
                 playerResult = youTube.player(videoId, noLogIn = muxed)
+            }
+            playerResult.exceptionOrNull()?.let { ex ->
+                lastExtractionError = "${ex::class.simpleName}: ${ex.message ?: "no message"}"
+                Logger.e("Stream", "Player resolution failed after $attempts attempts: $lastExtractionError")
             }
             playerResult
                 .onSuccess { data ->
@@ -470,4 +492,15 @@ internal class StreamRepositoryImpl(
             }
         }
     }
+
+    override suspend fun refreshIfExpiring(videoId: String, thresholdSeconds: Long): Boolean =
+        withContext(Dispatchers.IO) {
+            val format = localDataSource.getNewFormat(videoId) ?: return@withContext false
+            val expiryThreshold = now().plusSeconds(thresholdSeconds)
+            if (format.expiredTime.isAfter(expiryThreshold)) return@withContext false
+            Logger.d("Stream", "Proactively refreshing format for $videoId before expiry")
+            invalidateFormat(videoId)
+            updateFormat(videoId)
+            true
+        }
 }

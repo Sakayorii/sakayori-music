@@ -382,7 +382,7 @@ fun MediaPlayerViewWithSubtitle(
                             val builder = PictureInPictureParams.Builder()
 
                             builder.setAutoEnterEnabled(shouldEnterPipMode)
-                            activity?.setPictureInPictureParams(builder.build())
+                            activity.setPictureInPictureParams(builder.build())
                         }
                     } else {
                         Modifier

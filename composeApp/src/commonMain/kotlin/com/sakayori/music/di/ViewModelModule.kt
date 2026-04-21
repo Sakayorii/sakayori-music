@@ -18,11 +18,23 @@ import com.sakayori.music.viewModel.RecentlySongsViewModel
 import com.sakayori.music.viewModel.SearchViewModel
 import com.sakayori.music.viewModel.SettingsViewModel
 import com.sakayori.music.viewModel.SharedViewModel
+import com.sakayori.music.update.UpdateDownloadManager
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule =
     module {
+        single {
+            UpdateDownloadManager(
+                HttpClient(CIO) {
+                    engine {
+                        requestTimeout = 0
+                    }
+                },
+            )
+        }
         single {
             SharedViewModel(
                 get(),

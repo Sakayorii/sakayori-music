@@ -57,10 +57,10 @@ fun Chip(
                 colors =
                     FilterChipDefaults.elevatedFilterChipColors(
                         containerColor = Color.Transparent,
-                        iconColor = Color.White,
-                        selectedContainerColor = Color.DarkGray.copy(alpha = 0.8f),
+                        iconColor = Color.Black,
+                        selectedContainerColor = Color(0xFF00BCD4),
                         labelColor = Color.LightGray,
-                        selectedLabelColor = Color.LightGray,
+                        selectedLabelColor = Color.Black,
                     ),
                 onClick = { onClick.invoke() },
                 label = {

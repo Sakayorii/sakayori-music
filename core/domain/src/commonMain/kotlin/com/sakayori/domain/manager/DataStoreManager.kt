@@ -323,6 +323,18 @@ interface DataStoreManager {
 
     suspend fun setSleepTimerFadeOut(enable: Boolean)
 
+    val autoUpdateOnRestart: Flow<String>
+
+    suspend fun setAutoUpdateOnRestart(enable: Boolean)
+
+    val pendingUpdateFile: Flow<String>
+
+    suspend fun setPendingUpdateFile(path: String)
+
+    val pendingUpdateTag: Flow<String>
+
+    suspend fun setPendingUpdateTag(tag: String)
+
     val explicitContentEnabled: Flow<String>
 
     suspend fun setExplicitContentEnabled(enabled: Boolean)

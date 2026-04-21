@@ -79,6 +79,10 @@ fun LoginScreen(
         createWebViewCookieManager().removeAllCookies()
     }
 
+    LaunchedEffect(Unit) {
+        com.sakayori.music.expect.ui.clearWebViewCacheAndCookies()
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             showBottomNavigation()

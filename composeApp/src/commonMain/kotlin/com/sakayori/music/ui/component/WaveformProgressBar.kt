@@ -26,7 +26,7 @@ fun WaveformProgressBar(
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
     barCount: Int = 40,
-    activeColor: Color = Color.White,
+    activeColor: Color = Color(0xFF00BCD4),
     inactiveColor: Color = Color.White.copy(alpha = 0.2f),
     height: Dp = 16.dp,
 ) {

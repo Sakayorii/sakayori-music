@@ -92,6 +92,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
+import kotlinx.datetime.number
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -775,7 +776,7 @@ fun AnalyticsScreen(
                                         val label = when (chartType) {
                                             is AnalyticsUiState.ChartType.Day -> {
                                                 if (index % step == 0 || index == displayData.lastIndex) {
-                                                    "${chartType.day.day}/${chartType.day.monthNumber}"
+                                                    "${chartType.day.day}/${chartType.day.month.number}"
                                                 } else ""
                                             }
                                             is AnalyticsUiState.ChartType.Month ->

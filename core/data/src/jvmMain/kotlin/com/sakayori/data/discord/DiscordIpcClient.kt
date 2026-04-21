@@ -51,7 +51,7 @@ class DiscordIpcClient {
         }
         try {
             songStartTime = System.currentTimeMillis()
-            val durationMs = (song.durationSeconds?.toLong() ?: 0L) * 1000L
+            val durationMs = song.durationSeconds.toLong() * 1000L
             val payload = json.encodeToString(
                 IpcSetActivity(
                     cmd = "SET_ACTIVITY",

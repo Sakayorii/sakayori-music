@@ -129,7 +129,14 @@ internal class SimpleMediaService :
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
         controllerFuture.addListener({ controllerFuture.get() }, MoreExecutors.directExecutor())
 
-        if (runBlocking(Dispatchers.Default) { dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE }) {
+        val keepServiceAliveSnapshot = runCatching {
+            kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.Default) {
+                kotlinx.coroutines.withTimeoutOrNull(500) {
+                    dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE
+                } ?: false
+            }
+        }.getOrDefault(false)
+        if (keepServiceAliveSnapshot) {
             val notificationManager = getSystemService<NotificationManager>()
             notificationManager?.run {
                 createNotificationChannel(

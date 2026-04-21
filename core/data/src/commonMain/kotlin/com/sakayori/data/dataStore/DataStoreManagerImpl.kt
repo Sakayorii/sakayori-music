@@ -1293,6 +1293,33 @@ internal class DataStoreManagerImpl(
         }
     }
 
+    override val autoUpdateOnRestart: Flow<String>
+        get() = settingsDataStore.data.map { it[AUTO_UPDATE_ON_RESTART] ?: FALSE }
+
+    override suspend fun setAutoUpdateOnRestart(enable: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { it[AUTO_UPDATE_ON_RESTART] = if (enable) TRUE else FALSE }
+        }
+    }
+
+    override val pendingUpdateFile: Flow<String>
+        get() = settingsDataStore.data.map { it[PENDING_UPDATE_FILE] ?: "" }
+
+    override suspend fun setPendingUpdateFile(path: String) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { it[PENDING_UPDATE_FILE] = path }
+        }
+    }
+
+    override val pendingUpdateTag: Flow<String>
+        get() = settingsDataStore.data.map { it[PENDING_UPDATE_TAG] ?: "" }
+
+    override suspend fun setPendingUpdateTag(tag: String) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { it[PENDING_UPDATE_TAG] = tag }
+        }
+    }
+
     override val explicitContentEnabled: Flow<String> =
         settingsDataStore.data.map { preferences ->
             preferences[EXPLICIT_CONTENT_ENABLED] ?: TRUE
@@ -1492,6 +1519,9 @@ internal class DataStoreManagerImpl(
         val CRASH_REPORTING_ENABLED = stringPreferencesKey("crash_reporting_enabled")
 
         val SLEEP_TIMER_FADE_OUT = stringPreferencesKey("sleep_timer_fade_out")
+        val AUTO_UPDATE_ON_RESTART = stringPreferencesKey("auto_update_on_restart")
+        val PENDING_UPDATE_FILE = stringPreferencesKey("pending_update_file")
+        val PENDING_UPDATE_TAG = stringPreferencesKey("pending_update_tag")
 
         val EXPLICIT_CONTENT_ENABLED = stringPreferencesKey("explicit_content_enabled")
 
