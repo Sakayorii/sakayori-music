@@ -296,7 +296,7 @@ compose.desktop {
                         .get()
                         .removeSuffix("-hf")
             }
-            licenseFile.set(rootProject.file("LICENSE.rtf"))
+            licenseFile.set(rootProject.file("EULA.rtf"))
             linux {
                 includeAllModules = true
                 packageVersion =
