@@ -78,7 +78,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
+import com.sakayori.music.expect.ui.toImageBitmap
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -492,9 +492,7 @@ fun LocalPlaylistScreen(
                             onSuccess = {
                                 @Suppress("DEPRECATION")
                                 bitmap =
-                                    it.result.image
-                                        .toBitmap()
-                                        .asImageBitmap()
+                                    it.result.image.toImageBitmap()
                             },
                             modifier =
                                 Modifier

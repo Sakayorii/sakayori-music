@@ -71,7 +71,10 @@ import com.sakayori.music.expect.installUpdateAsset
 import com.sakayori.music.expect.isValidPendingUpdate
 import com.sakayori.music.expect.openUrl
 import com.sakayori.music.expect.pickUpdateAssetName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import com.sakayori.music.update.UpdateDownloadManager
 import com.sakayori.music.update.UpdateDownloadState
 import androidx.compose.material3.LinearProgressIndicator
@@ -214,8 +217,8 @@ fun App(viewModel: SharedViewModel = koinInject()) {
             fileName = picked.name,
             expectedSize = picked.sizeBytes,
             tag = data.tagName,
-            onComplete = { file ->
-                viewModel.setPendingUpdate(file.absolutePath, data.tagName)
+            onComplete = { path ->
+                viewModel.setPendingUpdate(path, data.tagName)
             },
         )
     }
@@ -223,7 +226,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(30_000)
         try {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 com.sakayori.music.utils.CacheCleaner.cleanupOldFiles()
             }
         } catch (_: Throwable) {
@@ -247,16 +250,13 @@ fun App(viewModel: SharedViewModel = koinInject()) {
                     }
                 } catch (_: Throwable) {
                 }
-                try {
-                    Runtime.getRuntime().gc()
-                } catch (_: Throwable) {
-                }
+                com.sakayori.music.expect.platformRequestGc()
             }
             if (!isPlaying) {
                 idleMinutes++
                 if (idleMinutes >= 3) {
                     try {
-                        Runtime.getRuntime().gc()
+                        com.sakayori.music.expect.platformRequestGc()
                     } catch (_: Throwable) {
                     }
                     idleMinutes = 0

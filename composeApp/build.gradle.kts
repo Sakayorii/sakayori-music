@@ -53,15 +53,15 @@ kotlin {
         }
     }
 
-//    listOf(
-//        iosArm64(),
-//        iosSimulatorArm64()
-//    ).forEach { iosTarget ->
-//        iosTarget.binaries.framework {
-//            baseName = "ComposeApp"
-//            isStatic = true
-//        }
-//    }
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
 
     jvm()
 
@@ -78,9 +78,11 @@ kotlin {
             implementation(libs.koin.androidx.compose)
 
             implementation(libs.jetbrains.ui.tooling.preview)
+            implementation(libs.ui.tooling.preview)
             implementation(libs.constraintlayout.compose)
 
             api(libs.work.runtime.ktx)
+            api(libs.coil.network.okhttp)
 
             // Runtime
             api(libs.startup.runtime)
@@ -104,8 +106,6 @@ kotlin {
             implementation(libs.compose.material.icons.core)
             implementation(libs.compose.material.icons.extended)
 
-            implementation(libs.ui.tooling.preview)
-
             // Other module
             api(projects.common)
             api(projects.domain)
@@ -119,7 +119,6 @@ kotlin {
 
             // Coil
             api(libs.coil.compose)
-            api(libs.coil.network.okhttp)
             api(libs.kmpalette.core)
             api(libs.kmpalette.network)
             implementation(libs.ktor.client.cio)
@@ -169,6 +168,7 @@ kotlin {
             implementation(libs.native.tray)
             implementation(libs.kcef)
             implementation(libs.slf4j.simple)
+            implementation(libs.coil.network.okhttp)
             implementation(projects.mediaJvmUi)
         }
     }
@@ -194,21 +194,24 @@ compose.desktop {
         jvmArgs += "--add-opens=java.base/java.nio=ALL-UNNAMED"
         jvmArgs += "--add-opens=java.desktop/sun.awt=ALL-UNNAMED"
         jvmArgs += "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED"
-        jvmArgs += "-Xmx256m"
-        jvmArgs += "-Xms32m"
-        jvmArgs += "-XX:+UseSerialGC"
-        jvmArgs += "-XX:MaxMetaspaceSize=96m"
-        jvmArgs += "-XX:ReservedCodeCacheSize=64m"
-        jvmArgs += "-XX:MaxDirectMemorySize=48m"
-        jvmArgs += "-XX:MinHeapFreeRatio=5"
-        jvmArgs += "-XX:MaxHeapFreeRatio=15"
-        jvmArgs += "-XX:SoftRefLRUPolicyMSPerMB=1"
+        jvmArgs += "-Xmx768m"
+        jvmArgs += "-Xms96m"
+        jvmArgs += "-XX:+UseG1GC"
+        jvmArgs += "-XX:MaxGCPauseMillis=80"
+        jvmArgs += "-XX:MaxMetaspaceSize=192m"
+        jvmArgs += "-XX:ReservedCodeCacheSize=128m"
+        jvmArgs += "-XX:MaxDirectMemorySize=128m"
+        jvmArgs += "-XX:MinHeapFreeRatio=10"
+        jvmArgs += "-XX:MaxHeapFreeRatio=30"
+        jvmArgs += "-XX:SoftRefLRUPolicyMSPerMB=50"
         jvmArgs += "-XX:+UseStringDeduplication"
         jvmArgs += "-XX:TieredStopAtLevel=1"
-        jvmArgs += "-XX:CICompilerCount=1"
+        jvmArgs += "-XX:CICompilerCount=2"
         jvmArgs += "-XX:+UseCompressedOops"
         jvmArgs += "-XX:+UseCompressedClassPointers"
         jvmArgs += "-XX:+ExplicitGCInvokesConcurrent"
+        jvmArgs += "-XX:+HeapDumpOnOutOfMemoryError"
+        jvmArgs += "-XX:HeapDumpPath=${'$'}{user.home}/.sakayori-music/heap-oom.hprof"
         jvmArgs += "-Xshare:auto"
         jvmArgs += "-Dfile.encoding=UTF-8"
         jvmArgs += "-Dsun.java2d.opengl=true"

@@ -35,22 +35,19 @@ internal class StreamRepositoryImpl(
     private val youTube: YouTube,
 ) : StreamRepository {
 
-    @Volatile
+    @kotlin.concurrent.Volatile
     private var _lastExtractionError: String? = null
-    private val lastErrorLock = Any()
 
-    override fun consumeLastExtractionError(): String? = synchronized(lastErrorLock) {
+    override fun consumeLastExtractionError(): String? {
         val msg = _lastExtractionError
         _lastExtractionError = null
-        msg
+        return msg
     }
 
     private var lastExtractionError: String?
         get() = _lastExtractionError
         set(value) {
-            synchronized(lastErrorLock) {
-                _lastExtractionError = value
-            }
+            _lastExtractionError = value
         }
     override suspend fun insertNewFormat(newFormat: NewFormatEntity) =
         withContext(Dispatchers.IO) {

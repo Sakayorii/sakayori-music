@@ -67,6 +67,7 @@ import com.sakayori.music.utils.VersionManager
 import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -98,8 +99,10 @@ import com.sakayori.music.generated.resources.removed_from_youtube_liked
 import com.sakayori.music.generated.resources.shared
 import com.sakayori.music.generated.resources.updated
 import com.sakayori.music.generated.resources.vote_submitted
-import java.io.FileOutputStream
+import com.sakayori.music.expect.writeBytesToFile
 import kotlin.math.abs
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlin.reflect.KClass
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -928,6 +931,7 @@ class SharedViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun checkForUpdate() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -935,7 +939,7 @@ class SharedViewModel(
                 val updateChannel = dataStoreManager.updateChannel.first()
                 dataStoreManager.putString(
                     "CheckForUpdateAt",
-                    System.currentTimeMillis().toString(),
+                    Clock.System.now().toEpochMilliseconds().toString(),
                 )
                 if (updateChannel == DataStoreManager.GITHUB) {
                     updateRepository.checkForGithubReleaseUpdate().collectLatest { response ->
@@ -1665,13 +1669,13 @@ class SharedViewModel(
         viewModelScope.launch {
             nowPlayingState.value?.track?.let { track ->
                 val bytesArray = bitmap.toByteArray()
-                try {
-                    val fileOutputStream = FileOutputStream("$path.jpg")
-                    fileOutputStream.write(bytesArray)
-                    fileOutputStream.close()
-                    Logger.d(tag, "Thumbnail saved to $path.jpg")
-                } catch (e: Exception) {
-                    throw RuntimeException(e)
+                if (bytesArray != null) {
+                    try {
+                        writeBytesToFile("$path.jpg", bytesArray)
+                        Logger.d(tag, "Thumbnail saved to $path.jpg")
+                    } catch (e: Exception) {
+                        Logger.e(tag, "Failed to save thumbnail: ${e.message}")
+                    }
                 }
                 songRepository
                     .downloadToFile(

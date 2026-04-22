@@ -67,7 +67,7 @@ fun ExpandableText(
                                 text
                                     .substring(startIndex = 0, endIndex = lastCharIndex)
                                     .dropLast(showMoreText.length)
-                                    .dropLastWhile { Character.isWhitespace(it) || it == '.' }
+                                    .dropLastWhile { it.isWhitespace() || it == '.' }
                             append(adjustText)
                             withStyle(style = showMoreStyle) { append(showMoreText) }
                         }

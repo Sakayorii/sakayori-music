@@ -3,20 +3,23 @@ package com.sakayori.kotlinytmusicscraper.utils
 import com.sakayori.kotlinytmusicscraper.models.response.AudioData
 import com.sakayori.logger.Logger
 import kotlinx.serialization.json.Json
-import java.security.MessageDigest
-import java.time.Instant
+import okio.ByteString.Companion.encodeUtf8
 import kotlin.io.encoding.Base64
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
+fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> (eachByte.toInt() and 0xff).toString(16).padStart(2, '0') }
 
-fun sha1(str: String): String = MessageDigest.getInstance("SHA-1").digest(str.toByteArray()).toHex()
+fun sha1(str: String): String = str.encodeUtf8().sha1().hex()
 
 fun parseCookieString(cookie: String): Map<String, String> =
     cookie
         .split("; ")
         .filter { it.isNotEmpty() }
         .associate {
-            val (key, value) = it.split("=")
+            val parts = it.split("=", limit = 2)
+            val key = parts.getOrNull(0) ?: ""
+            val value = parts.getOrNull(1) ?: ""
             key to value
         }
 
@@ -36,13 +39,14 @@ fun String.parseTime(): Int? {
     return null
 }
 
+@OptIn(ExperimentalTime::class)
 fun generateNetscapeCookies(
     cookies: Map<String, String>,
     domain: String = ".example.com",
     path: String = "/",
     secure: Boolean = false,
     httpOnly: Boolean = false,
-    expirationTimeSeconds: Long = Instant.now().epochSecond + 86400 * 365,
+    expirationTimeSeconds: Long = Clock.System.now().epochSeconds + 86400 * 365,
 ): String {
     val header =
         "# Netscape HTTP Cookie File\n" +

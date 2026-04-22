@@ -79,6 +79,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun PlaybackSpeedChipRow(
@@ -821,6 +823,7 @@ fun CompactTimelineProgress(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun AutoScrollResumeHint(
     isManuallyScrolled: Boolean,
@@ -831,8 +834,8 @@ fun AutoScrollResumeHint(
     var tick by remember { mutableStateOf(0) }
     LaunchedEffect(isManuallyScrolled) {
         if (isManuallyScrolled) {
-            val start = System.currentTimeMillis()
-            while (System.currentTimeMillis() - start < resumeAfterMillis) {
+            val start = Clock.System.now().toEpochMilliseconds()
+            while (Clock.System.now().toEpochMilliseconds() - start < resumeAfterMillis) {
                 tick++
                 delay(100)
             }

@@ -15,6 +15,7 @@ actual fun createMediaServiceHandler(
     localPlaylistRepository: LocalPlaylistRepository,
     analyticsRepository: AnalyticsRepository,
     coroutineScope: CoroutineScope,
-): MediaPlayerHandler {
-    throw UnsupportedOperationException("iOS media handler is not yet available")
-}
+): MediaPlayerHandler = IosMediaPlayerHandler(
+    dataStoreManager = dataStoreManager,
+    streamRepository = streamRepository,
+)

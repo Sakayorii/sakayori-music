@@ -1,13 +1,6 @@
 package com.sakayori.music.expect
 
-import androidx.appcompat.app.AppCompatActivity
-import org.koin.mp.KoinPlatform.getKoin
 import java.io.File
-
-actual fun updateDownloadDir(): File {
-    val context: AppCompatActivity = getKoin().get()
-    return File(context.filesDir, "updates")
-}
 
 actual fun isValidPendingUpdate(path: String): Boolean {
     if (path.isEmpty()) return false

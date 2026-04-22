@@ -20,7 +20,7 @@ internal fun parseSearchVideo(result: SearchResult): ArrayList<VideosResult> {
                         )
                     },
                 category = "Video",
-                duration = song.duration?.let { "%02d:%02d".format(it / 60, it % 60) } ?: "",
+                duration = song.duration?.let { "${(it / 60).toString().padStart(2, '0')}:${(it % 60).toString().padStart(2, '0')}" } ?: "",
                 durationSeconds = song.duration ?: 0,
                 resultType = "Video",
                 thumbnails = listOf(Thumbnail(306, Regex("([wh])120").replace(song.thumbnail, "$1544"), 544)),
