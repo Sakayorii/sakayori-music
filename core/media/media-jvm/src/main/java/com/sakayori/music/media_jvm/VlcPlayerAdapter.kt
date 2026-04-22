@@ -108,6 +108,11 @@ class VlcPlayerAdapter(
                 "--http-reconnect",
                 "--http-continuous",
                 "--no-snapshot-preview",
+                "--no-stats",
+                "--no-osd",
+                "--no-plugins-cache",
+                "--no-lua",
+                "--no-interact",
             )
 
         mediaPlayerFactory = MediaPlayerFactory(discovery, *factoryArgs.toTypedArray())
@@ -1159,7 +1164,9 @@ class VlcPlayerAdapter(
                                 try {
                                     streamRepository.invalidateFormat(currentVideoId)
                                     streamRepository.invalidateFormat("${MERGING_DATA_TYPE.VIDEO}$currentVideoId")
+                                    streamRepository.refreshIfExpiring(currentVideoId, thresholdSeconds = Long.MAX_VALUE / 2)
                                     precachedPlayers.remove(currentVideoId)?.player?.release()
+                                    delay(500L)
                                     loadAndPlayTrackInternal(localCurrentMediaItemIndex, 0L, shouldPlay = true)
                                     return@launch
                                 } catch (e: Exception) {
@@ -1564,7 +1571,21 @@ class VlcPlayerAdapter(
                                     if (pos > 0) cachedPosition = pos
                                     if (dur > 0) cachedDuration = dur
 
-                                    if (pos > 0 && !isCrossfading) {
+                                    if (dur > 0 && pos > 0 && pos >= dur - 1200L) {
+                                        if (stallTrackPos == pos) {
+                                            if (stallSince == 0L) stallSince = System.currentTimeMillis()
+                                            else if (System.currentTimeMillis() - stallSince > 2500L) {
+                                                Logger.w(TAG, "End of track detected (pos=$pos dur=$dur) but VLC didn't emit finished — forcing track-end")
+                                                stallSince = 0L
+                                                stallTrackPos = -1L
+                                                transitionToState(InternalState.ENDED)
+                                                handleTrackEndInternal()
+                                            }
+                                        } else {
+                                            stallTrackPos = pos
+                                            stallSince = System.currentTimeMillis()
+                                        }
+                                    } else if (pos > 0 && !isCrossfading) {
                                         if (pos == stallTrackPos) {
                                             if (stallSince == 0L) stallSince = System.currentTimeMillis()
                                             else if (System.currentTimeMillis() - stallSince > 20000L) {

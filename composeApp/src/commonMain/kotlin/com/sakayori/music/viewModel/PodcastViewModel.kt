@@ -15,6 +15,8 @@ import com.sakayori.music.expect.shareUrl
 import com.sakayori.music.viewModel.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -242,10 +244,11 @@ class PodcastViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun updatePodcastInLibraryNow(id: String) {
         viewModelScope.launch {
             podcastRepository.updatePodcastInLibraryNow(id).collectLatest {
-                log("Podcast $id updated in library at ${System.currentTimeMillis()}")
+                log("Podcast $id updated in library at ${Clock.System.now().toEpochMilliseconds()}")
             }
         }
     }

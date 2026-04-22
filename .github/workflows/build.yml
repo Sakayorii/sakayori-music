@@ -1,73 +1,118 @@
-name: Build Cross-Platform Releases
+name: Build
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ main ]
+    tags: [ 'v*' ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-linux:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: 21
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
 
-      - name: Install Linux dependencies
+      - name: Install Linux deps
         run: |
           sudo apt-get update
           sudo apt-get install -y libfuse2 fakeroot rpm
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - run: chmod +x ./gradlew
 
-      - name: Setup VLC natives
-        run: ./gradlew vlcSetup
+      - run: ./gradlew vlcSetup
 
-      - name: Build Linux packages
-        run: ./gradlew composeApp:packageDeb composeApp:packageRpm
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm -PisFullBuild=true
 
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: linux-builds
+          name: SakayoriMusic-linux
           path: |
             composeApp/build/compose/binaries/main/deb/*.deb
             composeApp/build/compose/binaries/main/rpm/*.rpm
+          if-no-files-found: error
 
-  build-macos-arm:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Windows EXE + MSI
+        shell: pwsh
+        run: .\gradlew.bat vlcSetup composeApp:packageExe composeApp:packageMsi -PisFullBuild=true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-windows
+          path: |
+            composeApp/build/compose/binaries/main/exe/*.exe
+            composeApp/build/compose/binaries/main/msi/*.msi
+          if-no-files-found: error
+
+  macos:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: 21
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - run: chmod +x ./gradlew
 
-      - name: Setup VLC natives
-        run: ./gradlew vlcSetup
+      - run: ./gradlew vlcSetup
 
-      - name: Build macOS ARM DMG
-        run: ./gradlew composeApp:packageDmg
+      - run: ./gradlew composeApp:packageDmg composeApp:packagePkg -PisFullBuild=true
 
-      - name: Upload macOS ARM artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: macos-arm-build
-          path: composeApp/build/compose/binaries/main/dmg/*.dmg
+          name: SakayoriMusic-macos-arm64
+          path: |
+            composeApp/build/compose/binaries/main/dmg/*.dmg
+            composeApp/build/compose/binaries/main/pkg/*.pkg
+          if-no-files-found: error
+
+  ios-framework:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: chmod +x ./gradlew
+
+      - name: Link iOS framework (device + simulator)
+        run: ./gradlew composeApp:linkReleaseFrameworkIosArm64 composeApp:linkReleaseFrameworkIosSimulatorArm64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-ios-framework
+          path: |
+            composeApp/build/bin/iosArm64/releaseFramework/**
+            composeApp/build/bin/iosSimulatorArm64/releaseFramework/**
+          if-no-files-found: error

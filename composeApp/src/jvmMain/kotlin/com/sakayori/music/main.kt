@@ -79,6 +79,8 @@ fun main(args: Array<String>) {
         }
 
         CrashDialog.install()
+        com.sakayori.music.utils.FreezeWatchdog.start()
+        com.sakayori.music.utils.HeapPressureMonitor.start()
         com.sakayori.music.utils.DesktopCrashReporting.init(
             BuildKonfig.sentryDsnDesktop,
             VersionManager.getVersionName(),
@@ -304,7 +306,7 @@ fun main(args: Array<String>) {
                     val memoryCacheMaxBytes = if (lowResourceMode) 8L * 1024 * 1024 else 32L * 1024 * 1024
                     val diskCacheMaxBytes = if (lowResourceMode) 128L * 1024 * 1024 else 512L * 1024 * 1024
                     setSingletonImageLoaderFactory {
-                        ImageLoader.Builder(context)
+                        val loader = ImageLoader.Builder(context)
                             .components {
                                 add(OkHttpNetworkFetcherFactory(callFactory = { OkHttpClient() }))
                             }
@@ -323,6 +325,13 @@ fun main(args: Array<String>) {
                             }
                             .crossfade(!lowResourceMode)
                             .build()
+                        com.sakayori.music.utils.HeapPressureMonitor.onPressure = {
+                            try {
+                                loader.memoryCache?.clear()
+                            } catch (_: Throwable) {
+                            }
+                        }
+                        loader
                     }
                     App()
                     ToastHost()

@@ -27,7 +27,7 @@ internal fun parseSearchSong(result: SearchResult): ArrayList<SongsResult> {
                         )
                     },
                 category = "Song",
-                duration = song.duration?.let { "%02d:%02d".format(it / 60, it % 60) } ?: "",
+                duration = song.duration?.let { "${(it / 60).toString().padStart(2, '0')}:${(it % 60).toString().padStart(2, '0')}" } ?: "",
                 durationSeconds = song.duration ?: 0,
                 feedbackTokens = null,
                 isExplicit = song.explicit,

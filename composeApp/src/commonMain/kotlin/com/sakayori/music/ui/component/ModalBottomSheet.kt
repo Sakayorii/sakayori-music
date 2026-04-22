@@ -2209,7 +2209,7 @@ fun PlaybackSpeedPitchBottomSheet(
                         )
                     }
                     Text(
-                        text = "x${String.format("%.1f", playbackSpeed)}",
+                        text = "x${formatSpeedOneDecimal(playbackSpeed)}",
                         style = typo().titleMedium,
                         color = Color(0xFFD0D0C0),
                         modifier = Modifier.widthIn(min = 60.dp),
@@ -3414,4 +3414,11 @@ sealed class DevLogInType {
             is YouTube -> com.sakayori.music.extension.getStringBlocking(Res.string.your_youtube_cookie)
             is Discord -> com.sakayori.music.extension.getStringBlocking(Res.string.your_discord_token)
         }
+}
+
+private fun formatSpeedOneDecimal(value: Float): String {
+    val scaled = kotlin.math.round(value * 10f).toInt()
+    val intPart = scaled / 10
+    val decPart = (scaled % 10).let { if (it < 0) -it else it }
+    return "$intPart.$decPart"
 }

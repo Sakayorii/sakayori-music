@@ -373,9 +373,11 @@ import com.sakayori.music.generated.resources.youtube_account
 import com.sakayori.music.generated.resources.youtube_subtitle_language
 import com.sakayori.music.generated.resources.youtube_subtitle_language_message
 import com.sakayori.music.generated.resources.youtube_transcript
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -516,10 +518,7 @@ fun SettingScreen(
             } else {
                 val lastCheckLong = lastCheckUpdate?.toLongOrNull() ?: 0L
                 val timeString = if (lastCheckLong > 0L) {
-                    DateTimeFormatter
-                        .ofPattern("yyyy-MM-dd HH:mm:ss")
-                        .withZone(ZoneId.systemDefault())
-                        .format(Instant.ofEpochMilli(lastCheckLong))
+                    formatEpochMillis(lastCheckLong)
                 } else {
                     getStringBlocking(Res.string.never)
                 }
@@ -2095,10 +2094,7 @@ fun SettingScreen(
                                     if (autoBackupLastTime == 0L) {
                                         stringResource(Res.string.never)
                                     } else {
-                                        DateTimeFormatter
-                                            .ofPattern("yyyy-MM-dd HH:mm:ss")
-                                            .withZone(ZoneId.systemDefault())
-                                            .format(Instant.ofEpochMilli(autoBackupLastTime))
+                                        formatEpochMillis(autoBackupLastTime)
                                     },
                             )
                         }
@@ -2704,4 +2700,17 @@ fun SettingScreen(
                 containerColor = Color.Transparent,
             ),
     )
+}
+
+@OptIn(ExperimentalTime::class)
+private fun formatEpochMillis(millis: Long): String {
+    val dt = Instant.fromEpochMilliseconds(millis)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+    val year = dt.year.toString().padStart(4, '0')
+    val month = dt.month.number.toString().padStart(2, '0')
+    val day = dt.day.toString().padStart(2, '0')
+    val hour = dt.hour.toString().padStart(2, '0')
+    val minute = dt.minute.toString().padStart(2, '0')
+    val second = dt.second.toString().padStart(2, '0')
+    return "$year-$month-$day $hour:$minute:$second"
 }

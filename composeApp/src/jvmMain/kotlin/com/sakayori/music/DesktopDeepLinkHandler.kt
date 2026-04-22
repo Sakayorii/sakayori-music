@@ -91,9 +91,10 @@ object DesktopDeepLinkHandler {
 
     private fun parseToIntent(uri: String): GenericIntent? {
         val parsed = Uri.parse(uri)
+        val schemeLower = parsed.scheme?.lowercase()
 
         val actualUri = when {
-            parsed.scheme == "SakayoriMusic" && parsed.host == "open-app" -> {
+            schemeLower == "sakayorimusic" && parsed.host == "open-app" -> {
                 val urlParam = parsed.getQueryParameter("url")
                 if (urlParam != null) {
                     Logger.d(TAG, "Extracted URL from open-app: $urlParam")
@@ -104,14 +105,14 @@ object DesktopDeepLinkHandler {
                 }
             }
 
-            parsed.scheme == "SakayoriMusic" && parsed.host != null -> {
+            schemeLower == "sakayorimusic" && parsed.host != null -> {
                 val host = parsed.host ?: return null
                 val query = parsed.query?.let { "?$it" } ?: ""
                 val pathSuffix = parsed.pathSegments.joinToString("/").let {
                     if (it.isNotEmpty()) "/$it" else ""
                 }
                 val convertedUrl = "https://music.sakayori.dev/$host$pathSuffix$query"
-                Logger.d(TAG, "Converted SakayoriMusic:// to: $convertedUrl")
+                Logger.d(TAG, "Converted sakayorimusic:// to: $convertedUrl")
                 Uri.parse(convertedUrl)
             }
 

@@ -121,7 +121,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.asImageBitmap
+import com.sakayori.music.expect.ui.toImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -1022,9 +1022,7 @@ fun NowPlayingScreenContent(
                                         onSuccess = {
                                             @Suppress("DEPRECATION")
                                             sharedViewModel.setBitmap(
-                                                it.result.image
-                                                    .toBitmap()
-                                                    .asImageBitmap(),
+                                                it.result.image.toImageBitmap(),
                                             )
                                         },
                                         contentScale = ContentScale.Crop,
@@ -1994,7 +1992,7 @@ fun NowPlayingScreenContent(
                                         text =
                                             stringResource(
                                                 Res.string.view_count,
-                                                "%,d".format(screenDataState.songInfoData?.viewCount),
+                                                formatWithThousandsSeparator((screenDataState.songInfoData?.viewCount ?: 0).toLong()),
                                             ),
                                         style = typo().labelMedium,
                                         color = Color.White,
@@ -2202,4 +2200,17 @@ fun NowPlayingScreenContent(
             }
         }
     }
+}
+
+private fun formatWithThousandsSeparator(value: Long): String {
+    val s = value.toString()
+    val negative = s.startsWith('-')
+    val digits = if (negative) s.substring(1) else s
+    val builder = StringBuilder()
+    val len = digits.length
+    for (i in 0 until len) {
+        if (i > 0 && (len - i) % 3 == 0) builder.append(',')
+        builder.append(digits[i])
+    }
+    return if (negative) "-$builder" else builder.toString()
 }

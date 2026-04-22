@@ -26,6 +26,20 @@ object CrashDialog {
 
     fun install() {
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            if (throwable is OutOfMemoryError) {
+                try {
+                    System.err.println(
+                        "OutOfMemoryError in ${thread.name}: ${throwable.message}. Force-halting to prevent hang.",
+                    )
+                    val log = java.io.File(System.getProperty("user.home"), ".sakayori-music/oom.log")
+                    log.parentFile.mkdirs()
+                    log.appendText("[${java.time.LocalDateTime.now()}] OOM in ${thread.name}: ${throwable.message}\n")
+                } catch (_: Throwable) {
+                }
+                Runtime.getRuntime().halt(139)
+                return@setDefaultUncaughtExceptionHandler
+            }
+
             try {
                 val crashLog = java.io.File(System.getProperty("user.home"), ".sakayori-music/uncaught.log")
                 crashLog.parentFile.mkdirs()
@@ -61,6 +75,12 @@ object CrashDialog {
                 System.err.println("Non-fatal uncaught exception in ${thread.name}: ${throwable.message}")
                 return@setDefaultUncaughtExceptionHandler
             }
+
+            Thread {
+                try { Thread.sleep(10_000) } catch (_: Throwable) {}
+                System.err.println("Crash dialog hanging >10s, force-halting")
+                Runtime.getRuntime().halt(140)
+            }.apply { isDaemon = true; name = "CrashDialogWatchdog" }.start()
 
             try {
                 if (SwingUtilities.isEventDispatchThread()) {

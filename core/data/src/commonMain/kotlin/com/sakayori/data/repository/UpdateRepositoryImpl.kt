@@ -5,6 +5,7 @@ import com.sakayori.domain.repository.UpdateRepository
 import com.sakayori.domain.utils.Resource
 import com.sakayori.kotlinytmusicscraper.YouTube
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -35,7 +36,7 @@ internal class UpdateRepositoryImpl(
                         ),
                     )
                 }.onFailure {
-                    emit(Resource.Error<UpdateData>(it.localizedMessage ?: "Unknown error"))
+                    emit(Resource.Error<UpdateData>(it.message ?: "Unknown error"))
                 }
         }.flowOn(Dispatchers.IO)
 }
