@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.sakayori.music.ui.theme.typo
+import com.sakayori.music.utils.trackTextInputFocus
 import org.jetbrains.compose.resources.stringResource
 import com.sakayori.music.generated.resources.Res
 import com.sakayori.music.generated.resources.contributor_email
@@ -135,6 +136,7 @@ fun ShareSavedLyricsDialog(
                                 },
                                 placeholder = { Text(stringResource(Res.string.contributor_name), style = typo().bodySmall) },
                                 singleLine = true,
+                                modifier = Modifier.trackTextInputFocus(),
                             )
                             Spacer(Modifier.height(8.dp))
                             OutlinedTextField(
@@ -153,6 +155,7 @@ fun ShareSavedLyricsDialog(
                                 placeholder = { Text(stringResource(Res.string.contributor_email), style = typo().bodySmall) },
                                 singleLine = true,
                                 isError = contributorEmail.isNotEmpty() && !contributorEmail.contains("@"),
+                                modifier = Modifier.trackTextInputFocus(),
                             )
                             Spacer(Modifier.height(8.dp))
                         }

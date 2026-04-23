@@ -41,6 +41,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.sakayori.common.Config
+import com.sakayori.music.utils.trackTextInputFocus
 import com.sakayori.domain.data.entities.ArtistEntity
 import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.mediaservice.handler.PlaylistType
@@ -497,7 +498,8 @@ fun LibraryDynamicPlaylistScreen(
                     Modifier
                         .fillMaxWidth()
                         .height(45.dp)
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = 12.dp)
+                        .trackTextInputFocus(),
                 inputField = {
                     CompositionLocalProvider(LocalTextStyle provides typo().bodySmall) {
                         SearchBarDefaults.InputField(

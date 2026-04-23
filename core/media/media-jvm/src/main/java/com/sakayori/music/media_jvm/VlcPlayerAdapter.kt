@@ -273,43 +273,36 @@ class VlcPlayerAdapter(
 
     override fun pause() {
         Logger.d(TAG, "pause() called (current state: $internalState)")
+        internalPlayWhenReady = false
         coroutineScope.launch {
             if (isCrossfading) {
                 Logger.d(TAG, "Pause: Cancelling crossfade")
                 cancelCrossfadeAndCleanup(revertIndex = true)
             }
 
-            when (internalState) {
-                InternalState.PLAYING, InternalState.READY -> {
-                    currentPlayer?.let { player ->
-                        Logger.d(TAG, "Pause: calling VLC pause")
-                        player.pause()
-                        transitionToState(InternalState.PAUSED)
-                        internalPlayWhenReady = false
-                    }
-                }
+            try { secondaryPlayer?.pause() } catch (_: Throwable) {}
+            try { currentPlayer?.pause() } catch (t: Throwable) { Logger.w(TAG, "Pause: error on currentPlayer: ${t.message}") }
 
-                InternalState.PREPARING -> {
-                    internalPlayWhenReady = false
-                    Logger.d(TAG, "Pause: During PREPARING - will not auto-play")
-                }
-
-                else -> {
-                    Logger.w(TAG, "Pause: Called in invalid state: $internalState")
-                }
+            if (internalState == InternalState.PLAYING || internalState == InternalState.READY) {
+                transitionToState(InternalState.PAUSED)
             }
         }
     }
 
     override fun stop() {
+        Logger.d(TAG, "stop() called (current state: $internalState)")
+        internalPlayWhenReady = false
+        currentLoadJob?.cancel()
+        crossfadeJob?.cancel()
+        crossfadeJob = null
+        setCrossfading(false)
+        try { secondaryPlayer?.release() } catch (_: Throwable) {}
+        secondaryPlayer = null
+        try { currentPlayer?.stop() } catch (_: Throwable) {}
         coroutineScope.launch {
-            currentPlayer?.let { player ->
-                Logger.d(TAG, "Stop called")
-                player.stop()
-                transitionToState(InternalState.IDLE)
-                stopPositionUpdates()
-                notifyEqualizerIntent(false)
-            }
+            transitionToState(InternalState.IDLE)
+            stopPositionUpdates()
+            notifyEqualizerIntent(false)
         }
     }
 
@@ -413,8 +406,17 @@ class VlcPlayerAdapter(
     }
 
     override fun setMediaItem(mediaItem: GenericMediaItem) {
+        currentLoadJob?.cancel()
+        try { secondaryPlayer?.release() } catch (_: Throwable) {}
+        secondaryPlayer = null
+        crossfadeJob?.cancel()
+        crossfadeJob = null
+        setCrossfading(false)
+        try { currentPlayer?.release() } catch (_: Throwable) {}
+        currentPlayer = null
+        currentPlayerIsVideo = false
+        _currentVideoSurface.value = null
         coroutineScope.launch {
-            currentLoadJob?.cancel()
             cancelPrecaching()
 
             playlist.clear()
@@ -958,6 +960,7 @@ class VlcPlayerAdapter(
 
         currentLoadJob =
             coroutineScope.launch {
+                var orphanPlayer: VlcPlayer? = null
                 try {
                     transitionToState(InternalState.PREPARING)
 
@@ -975,7 +978,7 @@ class VlcPlayerAdapter(
                     var resolvedSource: PlayableSource? = null
                     val player =
                         if (cachedPrecache?.player != null) {
-                            cachedPrecache.player
+                            cachedPrecache.player.also { orphanPlayer = it }
                         } else {
                             var source = withContext(Dispatchers.IO) { extractPlayableUrl(mediaItem) }
                             if (source == null || source.url.isEmpty()) {
@@ -995,11 +998,12 @@ class VlcPlayerAdapter(
                             }
                             lastExtractionError = null
                             resolvedSource = source
-                            createMediaPlayerInternal(source)
+                            createMediaPlayerInternal(source).also { orphanPlayer = it }
                         }
 
                     cleanupCurrentPlayerInternal()
                     currentPlayer = player
+                    orphanPlayer = null
                     currentPlayerIsVideo = player.videoSurface != null
                     _currentVideoSurface.value = player.videoSurface
                     setupPlayerEventsInternal(player)
@@ -1053,6 +1057,11 @@ class VlcPlayerAdapter(
                     if (e !is CancellationException) {
                         Logger.e(TAG, "Load track error: ${e.message}", e)
                         transitionToState(InternalState.ERROR)
+                    }
+                } finally {
+                    orphanPlayer?.let {
+                        Logger.w(TAG, "Releasing orphan player (load cancelled before assignment)")
+                        try { it.release() } catch (_: Throwable) {}
                     }
                 }
             }
