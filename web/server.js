@@ -148,6 +148,64 @@ loadCookiePool();
     }
 })();
 
+// ---------------------------------------------------------------------------
+// Auto-fetch a community cookies pack when the local pool is empty.
+//   • Default URL is overrideable via env var YT_COOKIES_URL.
+//   • Refreshed every COOKIES_REFRESH_MIN minutes (default: 60).
+//   • The fetched file is dropped into web/cookies/ and the pool reloads.
+// ---------------------------------------------------------------------------
+const REMOTE_COOKIES_URL =
+    process.env.YT_COOKIES_URL ||
+    "https://vnc.namdev.qzz.io/youtube-cookies.txt";
+const REMOTE_COOKIES_REFRESH_MIN =
+    parseInt(process.env.YT_COOKIES_REFRESH_MIN || "60", 10);
+
+async function fetchRemoteCookies({ silent = false } = {}) {
+    if (!REMOTE_COOKIES_URL) return false;
+    try {
+        if (!silent) console.log(`[cookies] fetching ${REMOTE_COOKIES_URL} …`);
+        const r = await undiciFetch(REMOTE_COOKIES_URL, {
+            headers: { "User-Agent": UA },
+        });
+        if (!r.ok) {
+            if (!silent) console.warn(`[cookies] remote fetch failed: HTTP ${r.status}`);
+            return false;
+        }
+        const text = await r.text();
+        if (!text || !text.trim()) {
+            if (!silent) console.warn("[cookies] remote file is empty");
+            return false;
+        }
+        try { fs.mkdirSync(COOKIES_DIR, { recursive: true }); } catch { /* noop */ }
+        const dst = path.join(COOKIES_DIR, "_remote.txt");
+        fs.writeFileSync(dst, text);
+        loadCookiePool();
+        if (cookiePool.length) {
+            console.log(`[cookies] remote pool ready (${cookiePool.length} accounts)`);
+        }
+        return cookiePool.length > 0;
+    } catch (e) {
+        if (!silent) console.warn(`[cookies] remote fetch failed: ${e.message}`);
+        return false;
+    }
+}
+
+// On startup, if there's no local pool / env-var cookie / browser cookie,
+// pull the community pack so the very first request has cookies to use.
+(async function autoFetchOnBoot() {
+    if (cookiePool.length || process.env.YT_COOKIES || YT_COOKIES_BROWSER) return;
+    await fetchRemoteCookies();
+})();
+
+// Periodically refresh the remote pack so dead/expired accounts get rotated.
+if (REMOTE_COOKIES_REFRESH_MIN > 0) {
+    setInterval(
+        () => { fetchRemoteCookies({ silent: true }); },
+        REMOTE_COOKIES_REFRESH_MIN * 60 * 1000
+    ).unref();
+}
+
+
 function pickCookie() {
     for (const c of cookiePool) if (!deadCookies.has(c.id)) return c;
     return null;
@@ -500,9 +558,13 @@ app.get("/api/health", (_req, res) => {
     });
 });
 
-app.post("/api/cookies/refresh", (_req, res) => {
-    res.json({ ok: true, loaded: refreshCookies() });
+app.post("/api/cookies/refresh", async (req, res) => {
+    // ?remote=1 also pulls a fresh copy from YT_COOKIES_URL before reloading.
+    if (req.query.remote === "1") await fetchRemoteCookies();
+    else loadCookiePool();
+    res.json({ ok: true, loaded: cookiePool.map((c) => c.id) });
 });
+
 
 // ---------------------------------------------------------------------------
 // Search + suggest (cached)
