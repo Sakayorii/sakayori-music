@@ -12,6 +12,194 @@ const compression = require("compression");
 const { LRUCache } = require("lru-cache");
 const { Agent, fetch: undiciFetch } = require("undici");
 
+// ---------------------------------------------------------------------------
+// i18n bootstrap
+//
+// We mirror the Android Compose Multiplatform translations
+// (composeApp/src/commonMain/composeResources/values*/strings.xml) into
+// web-friendly JSON files at web/public/locales/<bcp47>.json.  The web app
+// reads them at runtime — so there's literally a single source of truth
+// across Android, Desktop and Web for every UI string.
+// ---------------------------------------------------------------------------
+const LOCALES_DIR = path.join(__dirname, "public", "locales");
+const COMPOSE_RES_DIR = path.resolve(
+  __dirname, "..",
+  "composeApp", "src", "commonMain", "composeResources"
+);
+
+// values-<android> → BCP-47 we expose to the browser
+const ANDROID_TO_BCP47 = {
+  "values": "en",
+  "values-ar": "ar",
+  "values-az": "az",
+  "values-bg": "bg",
+  "values-ca": "ca",
+  "values-cs": "cs",
+  "values-de": "de",
+  "values-el": "el",
+  "values-en-rGG": "en-GG",
+  "values-en-rIO": "en-IO",
+  "values-en-rLC": "en-LC",
+  "values-en-rMS": "en-MS",
+  "values-en-rPH": "en-PH",
+  "values-es": "es",
+  "values-fa": "fa",
+  "values-fi": "fi",
+  "values-fr": "fr",
+  "values-hi": "hi",
+  "values-hu": "hu",
+  "values-in": "id",   // Android legacy alias
+  "values-it": "it",
+  "values-iw": "he",   // Android legacy alias
+  "values-ja": "ja",
+  "values-ko": "ko",
+  "values-nl": "nl",
+  "values-pl": "pl",
+  "values-pt": "pt",
+  "values-ro": "ro",
+  "values-ru": "ru",
+  "values-sv": "sv",
+  "values-th": "th",
+  "values-tr": "tr",
+  "values-uk": "uk",
+  "values-vi": "vi",
+  "values-zh": "zh",
+  "values-zh-rTW": "zh-TW",
+};
+
+const LOCALE_NATIVE_NAMES = {
+  "en": "English",
+  "ar": "العربية",
+  "az": "Azərbaycan",
+  "bg": "Български",
+  "ca": "Català",
+  "cs": "Čeština",
+  "de": "Deutsch",
+  "el": "Ελληνικά",
+  "en-GG": "English (Guernsey)",
+  "en-IO": "English (BIOT)",
+  "en-LC": "English (Saint Lucia)",
+  "en-MS": "English (Montserrat)",
+  "en-PH": "English (Philippines)",
+  "es": "Español",
+  "fa": "فارسی",
+  "fi": "Suomi",
+  "fr": "Français",
+  "hi": "हिन्दी",
+  "hu": "Magyar",
+  "id": "Bahasa Indonesia",
+  "it": "Italiano",
+  "he": "עברית",
+  "ja": "日本語",
+  "ko": "한국어",
+  "nl": "Nederlands",
+  "pl": "Polski",
+  "pt": "Português",
+  "ro": "Română",
+  "ru": "Русский",
+  "sv": "Svenska",
+  "th": "ไทย",
+  "tr": "Türkçe",
+  "uk": "Українська",
+  "vi": "Tiếng Việt",
+  "zh": "中文",
+  "zh-TW": "繁體中文",
+};
+
+const RTL_LOCALES = new Set(["ar", "fa", "he"]);
+
+// Tiny standalone <string name="key">value</string> parser. Handles XML
+// entities, escaped apostrophes (\'), CDATA blocks, and translatable=false.
+function parseAndroidStringsXml(xml) {
+  const out = {};
+  const decode = (s) =>
+    s
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/\\'/g, "'")
+      .replace(/\\"/g, '"')
+      .replace(/\\n/g, "\n");
+
+  // Match each <string name="..."> ... </string>; .*? with /s flag.
+  const re = /<string\s+([^>]*?)>([\s\S]*?)<\/string>/g;
+  let m;
+  while ((m = re.exec(xml))) {
+    const attrs = m[1];
+    const inner = m[2];
+
+    const nameMatch = /name\s*=\s*"([^"]+)"/.exec(attrs);
+    if (!nameMatch) continue;
+
+    let body = inner;
+    const cdata = /<!\[CDATA\[([\s\S]*?)\]\]>/.exec(body);
+    if (cdata) body = cdata[1];
+    out[nameMatch[1]] = decode(body).trim();
+  }
+  return out;
+}
+
+const I18N_INDEX = { default: "en", locales: [] };
+
+function bootstrapLocales() {
+  try {
+    fs.mkdirSync(LOCALES_DIR, { recursive: true });
+  } catch { /* noop */ }
+
+  if (!fs.existsSync(COMPOSE_RES_DIR)) {
+    console.warn(
+      `[i18n] composeResources not found at ${COMPOSE_RES_DIR}; ` +
+      `falling back to whatever's already in web/public/locales/`
+    );
+    return;
+  }
+
+  let total = 0;
+  const exposed = [];
+  for (const [androidKey, bcp47] of Object.entries(ANDROID_TO_BCP47)) {
+    const xmlPath = path.join(COMPOSE_RES_DIR, androidKey, "strings.xml");
+    if (!fs.existsSync(xmlPath)) continue;
+    try {
+      const text = fs.readFileSync(xmlPath, "utf8");
+      const map = parseAndroidStringsXml(text);
+      const json = {
+        code: bcp47,
+        name: LOCALE_NATIVE_NAMES[bcp47] || bcp47,
+        rtl: RTL_LOCALES.has(bcp47),
+        strings: map,
+      };
+      fs.writeFileSync(
+        path.join(LOCALES_DIR, `${bcp47}.json`),
+        JSON.stringify(json, null, 0) + "\n"
+      );
+      exposed.push({
+        code: bcp47,
+        name: LOCALE_NATIVE_NAMES[bcp47] || bcp47,
+        rtl: RTL_LOCALES.has(bcp47),
+        strings: Object.keys(map).length,
+      });
+      total += Object.keys(map).length;
+    } catch (e) {
+      console.warn(`[i18n] failed ${androidKey}: ${e.message}`);
+    }
+  }
+
+  exposed.sort((a, b) => a.name.localeCompare(b.name));
+  I18N_INDEX.locales = exposed;
+  fs.writeFileSync(
+    path.join(LOCALES_DIR, "_index.json"),
+    JSON.stringify(I18N_INDEX, null, 0) + "\n"
+  );
+  console.log(
+    `[i18n] published ${exposed.length} locale(s) (${total} strings total) ` +
+    `→ web/public/locales/`
+  );
+}
+bootstrapLocales();
+
+
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
 let YT_DLP = process.env.YT_DLP || "yt-dlp";
@@ -464,6 +652,11 @@ function vttToLrc(vtt) {
   const out = [];
   let curStart = null;
   const seen = new Set();
+  // Lines we want to strip from auto-caption garbage:
+  //   [Music], [Applause], [Laughter], (music), ♪ ♪, "so", filler
+  // — these come from YouTube's auto-caption ML which spams them on
+  // instrumental sections.
+  const NOISE = /^(\[?(music|applause|laughter|chuckle|sigh|sound|noise|silence|inaudible)\]?|♪+|\(.*\))$/i;
   for (const raw of vtt.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || /^WEBVTT/i.test(line) || /^NOTE/i.test(line)) continue;
@@ -482,6 +675,8 @@ function vttToLrc(vtt) {
     if (curStart && !/^\d/.test(line)) {
       const clean = line.replace(/<[^>]+>/g, "").trim();
       if (!clean) continue;
+      if (NOISE.test(clean)) continue;          // drop [Music] / (noise) / etc.
+      if (clean.length < 2) continue;            // drop "so", "uh"
       const lrc = `${curStart}${clean}`;
       if (seen.has(lrc)) continue;
       seen.add(lrc);
@@ -490,6 +685,7 @@ function vttToLrc(vtt) {
   }
   return out.join("\n");
 }
+
 
 let YTMusicCtor = null;
 async function loadYTMusic() {
@@ -881,82 +1077,280 @@ app.post("/api/prefetch-video/:videoId", (req, res) => {
   res.json({ ok: true });
 });
 
+// ---------------------------------------------------------------------------
+// Multi-source lyrics chain
+//   1. LRCLIB             (best LRC quality, free)
+//   2. NetEase Cloud      (huge for CJK & K-pop, often LRC)
+//   3. Genius             (English-heavy, plain only — scraped)
+//   4. KuGou              (Chinese provider, returns LRC base64)
+//   5. YouTube subtitles  (yt-dlp auto-captions, last resort)
+//
+// Each provider returns either `null` (clean miss) or:
+//     { found: true, plain, synced, source }
+// Synced takes priority — first provider to deliver synced wins;
+// otherwise the first plain hit wins.  All HTTP failures are
+// swallowed per-provider so one rate-limited backend can't kill the chain.
+// ---------------------------------------------------------------------------
+const LYRICS_UA =
+  "SakayoriMusicWeb/2.1 (+https://github.com/Sakayorii/sakayori-music)";
+
+const LYRICS_PROVIDERS = ["lrclib", "netease", "genius", "kugou", "youtube"];
+
 async function lrclibLyrics({ title, artist, album, duration }) {
   const params = new URLSearchParams({
     track_name: String(title),
-    artist_name: String(artist)
+    artist_name: String(artist),
   });
   if (album) params.set("album_name", String(album));
   if (duration) params.set("duration", String(duration));
 
-  const r = await undiciFetch(`https://lrclib.net/api/get?${params}`, {
-    headers: { "User-Agent": "SakayoriMusicWeb/2.1 (+https://github.com/Sakayorii/sakayori-music)" }
+  let r = await undiciFetch(`https://lrclib.net/api/get?${params}`, {
+    headers: { "User-Agent": LYRICS_UA },
   });
+
   if (r.status === 404) {
     const sr = await undiciFetch(
       `https://lrclib.net/api/search?${new URLSearchParams({
         track_name: String(title),
-        artist_name: String(artist)
-      })}`
+        artist_name: String(artist),
+      })}`,
+      { headers: { "User-Agent": LYRICS_UA } }
     );
-    const list = await sr.json();
+    const list = await sr.json().catch(() => []);
     if (Array.isArray(list) && list.length) {
       return {
         found: true,
         plain: list[0].plainLyrics || "",
         synced: list[0].syncedLyrics || "",
-        source: "LRCLIB"
+        source: "LRCLIB",
       };
     }
-    return { found: false };
+    return null;
   }
-  const data = await r.json();
+  if (!r.ok) return null;
+  const data = await r.json().catch(() => null);
+  if (!data) return null;
+  if (!data.plainLyrics && !data.syncedLyrics) return null;
   return {
     found: true,
     plain: data.plainLyrics || "",
     synced: data.syncedLyrics || "",
-    source: "LRCLIB"
+    source: "LRCLIB",
   };
 }
 
+// NetEase Cloud Music — public unauthenticated endpoints (no app key needed
+// for search + lyric).  We use the legacy "music.163.com/api/" surface, which
+// is stable and CORS-clean from server side.
+async function neteaseLyrics({ title, artist }) {
+  const q = `${title} ${artist}`.trim();
+  const sUrl = `https://music.163.com/api/search/get?type=1&limit=5&s=${encodeURIComponent(q)}`;
+  const sr = await undiciFetch(sUrl, {
+    headers: {
+      "User-Agent": LYRICS_UA,
+      "Referer": "https://music.163.com",
+    },
+  });
+  if (!sr.ok) return null;
+  const sj = await sr.json().catch(() => null);
+  const songs = sj?.result?.songs;
+  if (!Array.isArray(songs) || !songs.length) return null;
+
+  // Try top 3 hits — first one to have any lyric content wins.
+  for (const song of songs.slice(0, 3)) {
+    const lr = await undiciFetch(
+      `https://music.163.com/api/song/lyric?id=${song.id}&lv=1&kv=1&tv=-1`,
+      {
+        headers: {
+          "User-Agent": LYRICS_UA,
+          "Referer": "https://music.163.com",
+        },
+      }
+    );
+    if (!lr.ok) continue;
+    const lj = await lr.json().catch(() => null);
+    const synced = lj?.lrc?.lyric || "";
+    const plain = (lj?.tlyric?.lyric || synced || "")
+      .replace(/\[[\d:.]+\]/g, "")
+      .trim();
+    if (synced || plain) {
+      return { found: true, plain, synced, source: "NetEase" };
+    }
+  }
+  return null;
+}
+
+// Genius — search via JSON API, scrape lyric div.  No API token needed for
+// the search endpoint.  Lyrics-only, no synced timing available.
+async function geniusLyrics({ title, artist }) {
+  const q = `${title} ${artist}`.trim();
+  const sr = await undiciFetch(
+    `https://genius.com/api/search/multi?per_page=5&q=${encodeURIComponent(q)}`,
+    { headers: { "User-Agent": LYRICS_UA, "Accept": "application/json" } }
+  );
+  if (!sr.ok) return null;
+  const sj = await sr.json().catch(() => null);
+  const sections = sj?.response?.sections || [];
+  let url = null;
+  for (const sec of sections) {
+    const hits = sec.hits || [];
+    for (const h of hits) {
+      if (h.type === "song" && h.result?.url) { url = h.result.url; break; }
+    }
+    if (url) break;
+  }
+  if (!url) return null;
+
+  const pr = await undiciFetch(url, { headers: { "User-Agent": LYRICS_UA } });
+  if (!pr.ok) return null;
+  const html = await pr.text();
+
+  // Genius wraps lyrics in <div data-lyrics-container="true">…</div> blocks.
+  const blocks = [];
+  const re = /<div[^>]+data-lyrics-container="true"[^>]*>([\s\S]*?)<\/div>/g;
+  let m;
+  while ((m = re.exec(html))) blocks.push(m[1]);
+  if (!blocks.length) return null;
+
+  const decode = (s) =>
+    s
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&apos;/g, "'");
+
+  const plain = blocks.map(decode).join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
+  if (!plain) return null;
+  return { found: true, plain, synced: "", source: "Genius" };
+}
+
+// KuGou — Chinese music site, exposes a lyrics API that returns
+// base64-encoded LRC content.  Two-step lookup: keyword → hash → krc.
+async function kugouLyrics({ title, artist, duration }) {
+  const q = `${title} ${artist}`.trim();
+  // Step 1: search returns candidate hashes
+  const sr = await undiciFetch(
+    `https://krcs.kugou.com/search?ver=1&man=yes&client=mobi&keyword=${encodeURIComponent(
+      q
+    )}${duration ? `&duration=${Math.round(Number(duration) * 1000)}` : ""}`,
+    { headers: { "User-Agent": LYRICS_UA } }
+  );
+  if (!sr.ok) return null;
+  const sj = await sr.json().catch(() => null);
+  const cand = sj?.candidates?.[0];
+  if (!cand) return null;
+
+  // Step 2: download the LRC (fmt=lrc returns LRC instead of KRC karaoke)
+  const dr = await undiciFetch(
+    `https://krcs.kugou.com/download?ver=1&man=yes&client=pc&fmt=lrc&charset=utf8&accesskey=${cand.accesskey}&id=${cand.id}`,
+    { headers: { "User-Agent": LYRICS_UA } }
+  );
+  if (!dr.ok) return null;
+  const dj = await dr.json().catch(() => null);
+  if (!dj?.content) return null;
+  let synced = "";
+  try { synced = Buffer.from(dj.content, "base64").toString("utf8"); }
+  catch { return null; }
+  if (!synced) return null;
+  const plain = synced.replace(/\[[\d:.]+\]/g, "").trim();
+  return { found: true, plain, synced, source: "KuGou" };
+}
+
+async function youtubeLyrics({ videoId }) {
+  if (!videoId) return null;
+  const vtt = await ytDlpFetchSubs(String(videoId), "en");
+  if (!vtt) return null;
+  const synced = vttToLrc(vtt);
+  if (!synced) return null;
+  return {
+    found: true,
+    plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
+    synced,
+    source: "YouTube subtitles",
+  };
+}
+
+const PROVIDER_FNS = {
+  lrclib: lrclibLyrics,
+  netease: neteaseLyrics,
+  genius: geniusLyrics,
+  kugou: kugouLyrics,
+  youtube: youtubeLyrics,
+};
+
+async function chainLyrics(args, requested) {
+  // requested === "auto" → walk the full chain.  Otherwise honour the
+  // single-source request strictly so users can A/B individual providers.
+  const providers =
+    requested && requested !== "auto"
+      ? [requested]
+      : LYRICS_PROVIDERS;
+
+  // First pass: try to land any synced result (best UX).
+  let bestPlain = null;
+  for (const p of providers) {
+    try {
+      const fn = PROVIDER_FNS[p];
+      if (!fn) continue;
+      const out = await fn(args);
+      if (!out || !out.found) continue;
+      if (out.synced && out.synced.trim()) {
+        return { ...out, source: out.source + (requested === "auto" ? "" : "") };
+      }
+      if (!bestPlain && out.plain) bestPlain = out;
+    } catch (e) {
+      // Swallow — one bad backend shouldn't sink the chain.
+      console.warn(`[lyrics] ${p} failed: ${e.message}`);
+    }
+  }
+  return bestPlain || { found: false };
+}
+
+
+// List the supported lyrics providers (used by Settings → "Lyrics source").
+app.get("/api/lyrics/sources", (_req, res) => {
+  res.json({
+    auto: { id: "auto", label: "Auto (full chain)" },
+    providers: LYRICS_PROVIDERS.map((id) => ({
+      id,
+      label: {
+        lrclib: "LRCLIB",
+        netease: "NetEase Cloud Music",
+        genius: "Genius",
+        kugou: "KuGou",
+        youtube: "YouTube subtitles",
+      }[id] || id,
+    })),
+  });
+});
+
 app.get("/api/lyrics", async (req, res) => {
   const { title, artist, album, duration, videoId, source } = req.query;
-  const cacheKey = `${source || "auto"}::${videoId || ""}::${title || ""}::${artist || ""}`;
+  const requested = (source || "auto").toString().toLowerCase();
+  const cacheKey =
+    `${requested}::${videoId || ""}::${(title || "").toString().toLowerCase()}` +
+    `::${(artist || "").toString().toLowerCase()}::${album || ""}`;
+
   try {
     const data = await memoize(LYRICS_CACHE, cacheKey, async () => {
-      if (source === "youtube" && videoId) {
-        const vtt = await ytDlpFetchSubs(String(videoId), "en");
-        if (vtt) {
-          const synced = vttToLrc(vtt);
-          return {
-            found: true,
-            plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
-            synced,
-            source: "YouTube subtitles"
-          };
-        }
-        return { found: false };
+      // YouTube-only short-circuit doesn't need title/artist.
+      if (requested === "youtube") {
+        return (await youtubeLyrics({ videoId })) || { found: false };
       }
-
       if (!title || !artist) {
-        throw Object.assign(new Error("title & artist required"), { status: 400 });
+        throw Object.assign(
+          new Error("title & artist required"),
+          { status: 400 }
+        );
       }
-      const lrc = await lrclibLyrics({ title, artist, album, duration });
-      if (lrc.found && (lrc.synced || lrc.plain)) return lrc;
-
-      if (videoId) {
-        const vtt = await ytDlpFetchSubs(String(videoId), "en");
-        if (vtt) {
-          const synced = vttToLrc(vtt);
-          return {
-            found: true,
-            plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
-            synced,
-            source: "YouTube subtitles (fallback)"
-          };
-        }
-      }
-      return { found: false };
+      return chainLyrics(
+        { title, artist, album, duration, videoId },
+        requested
+      );
     });
 
     res.setHeader("Cache-Control", "public, max-age=600");
@@ -968,6 +1362,7 @@ app.get("/api/lyrics", async (req, res) => {
     res.status(err.status || 500).json({ error: err.message });
   }
 });
+
 
 
 app.get(/.*/, (_req, res) => {

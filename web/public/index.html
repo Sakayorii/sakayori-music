@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0d10" />
     <title>SakayoriMusic — Web</title>
     <link rel="stylesheet" href="/styles.css" />
     <link rel="icon" type="image/svg+xml"
@@ -11,77 +12,385 @@
 </head>
 
 <body>
+    <!--
+      ─────────────────────────────────────────────────────────────────────
+      Inline SVG icon sprite. Every icon in the UI is a `<svg><use href="#ic-..."/></svg>`
+      reference into this <defs> block. Strokes/fills inherit `currentColor`
+      so theme tinting is automatic.  Zero emoji anywhere.
+      ─────────────────────────────────────────────────────────────────────
+    -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+        <defs>
+            <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11.5L12 4l9 7.5" />
+                <path d="M5 10v10h14V10" />
+                <path d="M10 20v-6h4v6" />
+            </symbol>
+            <symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.35-4.35" />
+            </symbol>
+            <symbol id="ic-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 21s-7.5-4.5-9.5-9A5.5 5.5 0 0 1 12 6.5 5.5 5.5 0 0 1 21.5 12c-2 4.5-9.5 9-9.5 9z" />
+            </symbol>
+            <symbol id="ic-heart-fill" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M12 21s-7.5-4.5-9.5-9A5.5 5.5 0 0 1 12 6.5 5.5 5.5 0 0 1 21.5 12c-2 4.5-9.5 9-9.5 9z" />
+            </symbol>
+            <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+            </symbol>
+            <symbol id="ic-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 6h12M8 12h12M8 18h12" />
+                <circle cx="4" cy="6" r="1.2" />
+                <circle cx="4" cy="12" r="1.2" />
+                <circle cx="4" cy="18" r="1.2" />
+            </symbol>
+            <symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 4v12" />
+                <path d="M7 11l5 5 5-5" />
+                <path d="M5 20h14" />
+            </symbol>
+            <symbol id="ic-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                    d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+            </symbol>
+            <symbol id="ic-keyboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6" />
+            </symbol>
+            <symbol id="ic-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 6l-6 6 6 6" />
+            </symbol>
+            <symbol id="ic-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 6l6 6-6 6" />
+            </symbol>
+            <symbol id="ic-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6" />
+            </symbol>
+            <symbol id="ic-play" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M7 5v14l12-7z" />
+            </symbol>
+            <symbol id="ic-pause" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+            </symbol>
+            <symbol id="ic-prev" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M6 5h2v14H6z" />
+                <path d="M20 5L9 12l11 7z" />
+            </symbol>
+            <symbol id="ic-next" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M16 5h2v14h-2z" />
+                <path d="M4 5l11 7-11 7z" />
+            </symbol>
+            <symbol id="ic-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h4l10 12h4" />
+                <path d="M17 4l4 2-4 2" />
+                <path d="M3 18h4l3-3.6" />
+                <path d="M14 9.6L17 6h4" />
+                <path d="M17 16l4 2-4 2" />
+            </symbol>
+            <symbol id="ic-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 2l4 4-4 4" />
+                <path d="M3 12V9a4 4 0 0 1 4-4h14" />
+                <path d="M7 22l-4-4 4-4" />
+                <path d="M21 12v3a4 4 0 0 1-4 4H3" />
+            </symbol>
+            <symbol id="ic-repeat-one" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 2l4 4-4 4" />
+                <path d="M3 12V9a4 4 0 0 1 4-4h14" />
+                <path d="M7 22l-4-4 4-4" />
+                <path d="M21 12v3a4 4 0 0 1-4 4H3" /><text x="11" y="16" font-size="9" fill="currentColor" stroke="none"
+                    font-family="Inter,system-ui,sans-serif" font-weight="700">1</text>
+            </symbol>
+            <symbol id="ic-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10v4h4l5 4V6L7 10z" />
+                <path d="M16 8a5 5 0 0 1 0 8" />
+                <path d="M19 5a9 9 0 0 1 0 14" />
+            </symbol>
+            <symbol id="ic-volume-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10v4h4l5 4V6L7 10z" />
+                <path d="M16 9l5 6" />
+                <path d="M21 9l-5 6" />
+            </symbol>
+            <symbol id="ic-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 9V4h5" />
+                <path d="M20 9V4h-5" />
+                <path d="M4 15v5h5" />
+                <path d="M20 15v5h-5" />
+            </symbol>
+            <symbol id="ic-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="6" width="13" height="12" rx="2" />
+                <path d="M16 10l5-3v10l-5-3z" />
+            </symbol>
+            <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="3" width="6" height="12" rx="3" />
+                <path d="M5 11a7 7 0 0 0 14 0" />
+                <path d="M12 18v3" />
+            </symbol>
+            <symbol id="ic-queue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 6h12M4 12h12M4 18h8" />
+                <path d="M18 14v8" />
+                <path d="M22 14l-4-4-4 4" />
+            </symbol>
+            <symbol id="ic-equalizer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 21V11" />
+                <path d="M12 21V3" />
+                <path d="M18 21v-7" />
+                <circle cx="6" cy="8" r="1.7" />
+                <circle cx="12" cy="14" r="1.7" fill="currentColor" />
+                <circle cx="18" cy="11" r="1.7" />
+            </symbol>
+            <symbol id="ic-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3a14 14 0 0 1 0 18" />
+                <path d="M12 3a14 14 0 0 0 0 18" />
+            </symbol>
+            <symbol id="ic-more" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <circle cx="6" cy="12" r="1.7" />
+                <circle cx="12" cy="12" r="1.7" />
+                <circle cx="18" cy="12" r="1.7" />
+            </symbol>
+            <symbol id="ic-more-vert" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <circle cx="12" cy="6" r="1.7" />
+                <circle cx="12" cy="12" r="1.7" />
+                <circle cx="12" cy="18" r="1.7" />
+            </symbol>
+            <symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M5 12h14" />
+            </symbol>
+            <symbol id="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+            </symbol>
+            <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12l5 5 9-11" />
+            </symbol>
+            <symbol id="ic-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 4l6 6" />
+                <path d="M3 21l3-1L20 6l-3-3L3 17z" />
+            </symbol>
+            <symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <path d="M5 6l1 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-14" />
+            </symbol>
+            <symbol id="ic-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round">
+                <path d="M12 3a9 9 0 1 0 9 9" opacity=".25" />
+                <path d="M12 3a9 9 0 0 1 9 9" />
+            </symbol>
+            <symbol id="ic-wifi-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 2l20 20" />
+                <path d="M5 12.5a11 11 0 0 1 4-2.6" />
+                <path d="M19 12.5a11 11 0 0 0-4-2.6" />
+                <path d="M9 16a5 5 0 0 1 6 0" />
+                <circle cx="12" cy="20" r="1" />
+            </symbol>
+            <symbol id="ic-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+            </symbol>
+            <symbol id="ic-pause-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M10 9v6M14 9v6" />
+            </symbol>
+        </defs>
+    </svg>
+
     <div id="app">
 
-        <aside class="sidebar">
+        <aside class="sidebar glass">
             <div class="brand">
-                <div class="brand-logo"></div>
+                <div class="brand-logo" aria-hidden="true"></div>
                 <div>
                     <div class="brand-title">SakayoriMusic</div>
                     <div class="brand-sub">Web · Node.js</div>
                 </div>
             </div>
 
-            <nav class="nav">
-                <a class="nav-item" href="#/home"><span class="ico">🏠</span> Home</a>
-                <a class="nav-item" href="#/search"><span class="ico">🔎</span> Search</a>
-                <a class="nav-item" href="#/library"><span class="ico">⭐</span> Liked</a>
-                <a class="nav-item" href="#/recent"><span class="ico">🕘</span> Recently Played</a>
-                <a class="nav-item" href="#/playlists"><span class="ico">📚</span> My Playlists</a>
+            <nav class="nav" aria-label="Primary">
+                <a class="nav-item" href="#/home" data-i18n="home">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-home" />
+                    </svg>
+                    <span>Home</span>
+                </a>
+                <a class="nav-item" href="#/search" data-i18n="search">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-search" />
+                    </svg>
+                    <span>Search</span>
+                </a>
+                <a class="nav-item" href="#/library" data-i18n="liked">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-heart" />
+                    </svg>
+                    <span>Liked</span>
+                </a>
+                <a class="nav-item" href="#/recent" data-i18n="recently">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-clock" />
+                    </svg>
+                    <span>Recently Played</span>
+                </a>
+                <a class="nav-item" href="#/playlists" data-i18n="your_playlists">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-list" />
+                    </svg>
+                    <span>My Playlists</span>
+                </a>
+                <a class="nav-item" href="#/downloads" data-i18n="downloaded">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-download" />
+                    </svg>
+                    <span>Downloads</span>
+                    <span id="dlBadge" class="nav-badge hidden">0</span>
+                </a>
             </nav>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Playlists</div>
+                <div class="sidebar-section-title" data-i18n="playlists">Playlists</div>
                 <div id="sidebarPlaylists" class="sidebar-playlists"></div>
-                <button id="newPlaylistBtn" class="link-btn">+ New playlist</button>
+                <button id="newPlaylistBtn" class="link-btn">
+                    <svg class="ic-sm" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <use href="#ic-plus" />
+                    </svg>
+                    <span data-i18n-fb="add">New playlist</span>
+                </button>
             </div>
 
             <div class="sidebar-footer">
-                <a href="#/settings" class="footer-link">⚙️ Settings</a>
-                <a href="#/shortcuts" class="footer-link">⌨️ Shortcuts</a>
+                <a href="#/settings" class="footer-link">
+                    <svg class="ic-sm" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <use href="#ic-settings" />
+                    </svg>
+                    <span data-i18n="settings">Settings</span>
+                </a>
+                <a href="#/shortcuts" class="footer-link">
+                    <svg class="ic-sm" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <use href="#ic-keyboard" />
+                    </svg>
+                    <span>Shortcuts</span>
+                </a>
             </div>
         </aside>
 
         <main class="main">
-            <header class="topbar">
+            <header class="topbar glass">
                 <div class="topbar-nav">
-                    <button id="backBtn" class="icon-btn" title="Back">‹</button>
-                    <button id="fwdBtn" class="icon-btn" title="Forward">›</button>
+                    <button id="backBtn" class="icon-btn" title="Back">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-chev-left" />
+                        </svg>
+                    </button>
+                    <button id="fwdBtn" class="icon-btn" title="Forward">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-chev-right" />
+                        </svg>
+                    </button>
                 </div>
                 <form id="searchForm" class="searchbar">
+                    <svg class="searchbar-ic" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <use href="#ic-search" />
+                    </svg>
                     <input id="searchInput" type="search" placeholder="Search songs, videos, albums, artists..."
+                        data-i18n-attr="placeholder|search_for_songs_artists_albums_playlists_and_more"
                         autocomplete="off" />
-                    <select id="searchType">
-                        <option value="songs">Songs</option>
-                        <option value="videos">Videos</option>
-                        <option value="albums">Albums</option>
-                        <option value="artists">Artists</option>
-                        <option value="playlists">Playlists</option>
+                    <select id="searchType" aria-label="Search type">
+                        <option value="songs" data-i18n="songs">Songs</option>
+                        <option value="videos" data-i18n="videos">Videos</option>
+                        <option value="albums" data-i18n="albums">Albums</option>
+                        <option value="artists" data-i18n="artists">Artists</option>
+                        <option value="playlists" data-i18n="playlists">Playlists</option>
                     </select>
                     <div id="suggestList" class="suggest hidden"></div>
                 </form>
+                <div class="topbar-right">
+                    <button id="langBtn" class="icon-btn" title="Language">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-globe" />
+                        </svg>
+                    </button>
+                    <div id="langMenu" class="lang-menu hidden glass-strong"></div>
+                </div>
             </header>
 
             <section class="view" id="view"></section>
         </main>
 
-        <footer class="player" id="miniPlayer">
+        <footer class="player glass" id="miniPlayer">
             <div class="np-info" id="npClickArea">
                 <img id="npArt" alt="" />
                 <div class="np-meta">
-                    <div id="npTitle">Nothing playing</div>
+                    <div id="npTitle" data-i18n="hello_blank_fragment">Nothing playing</div>
                     <div id="npArtist" class="muted"></div>
                 </div>
-                <button id="likeBtn" class="icon-btn" title="Like (L)">♡</button>
+                <button id="likeBtn" class="icon-btn" title="Like (L)">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-heart" />
+                    </svg>
+                </button>
             </div>
 
             <div class="np-controls">
                 <div class="ctrl-row">
-                    <button id="shuffleBtn" class="icon-btn" title="Shuffle (S)">🔀</button>
-                    <button id="prevBtn" class="icon-btn" title="Previous (←)">⏮</button>
-                    <button id="playBtn" class="icon-btn play" title="Play/Pause (Space)">▶</button>
-                    <button id="nextBtn" class="icon-btn" title="Next (→)">⏭</button>
-                    <button id="repeatBtn" class="icon-btn" title="Repeat (R)">🔁</button>
+                    <button id="shuffleBtn" class="icon-btn" title="Shuffle (S)">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-shuffle" />
+                        </svg>
+                    </button>
+                    <button id="prevBtn" class="icon-btn" title="Previous (←)">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-prev" />
+                        </svg>
+                    </button>
+                    <button id="playBtn" class="icon-btn play" title="Play/Pause (Space)">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-play" />
+                        </svg>
+                    </button>
+                    <button id="nextBtn" class="icon-btn" title="Next (→)">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-next" />
+                        </svg>
+                    </button>
+                    <button id="repeatBtn" class="icon-btn" title="Repeat (R)">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-repeat" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="seek-row">
                     <span id="curTime" class="time">0:00</span>
@@ -94,10 +403,22 @@
             </div>
 
             <div class="np-extras">
-                <button id="videoModeBtn" class="icon-btn" title="Video mode (V)">🎬</button>
-                <button id="muteBtn" class="icon-btn" title="Mute (M)">🔊</button>
+                <button id="videoModeBtn" class="icon-btn" title="Video mode (V)">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-video" />
+                    </svg>
+                </button>
+                <button id="muteBtn" class="icon-btn" title="Mute (M)">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-volume" />
+                    </svg>
+                </button>
                 <input id="vol" type="range" min="0" max="100" value="80" />
-                <button id="expandBtn" class="icon-btn" title="Open fullscreen (F)">⛶</button>
+                <button id="expandBtn" class="icon-btn" title="Open fullscreen (F)">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-expand" />
+                    </svg>
+                </button>
             </div>
 
             <audio id="audio" preload="auto" crossorigin="anonymous"></audio>
@@ -108,12 +429,20 @@
             <div class="fp-overlay"></div>
 
             <header class="fp-topbar">
-                <button class="fp-icon" id="fpClose" title="Minimize">▾</button>
+                <button class="fp-icon" id="fpClose" title="Minimize">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-chev-down" />
+                    </svg>
+                </button>
                 <div class="fp-topcenter">
-                    <div class="fp-source">PLAYING FROM</div>
+                    <div class="fp-source" data-i18n-fb="now_playing_upper">PLAYING FROM</div>
                     <div class="fp-source-name" id="fpSource">YouTube Music</div>
                 </div>
-                <button class="fp-icon" id="fpMore" title="More">⋮</button>
+                <button class="fp-icon" id="fpMore" title="More">
+                    <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <use href="#ic-more-vert" />
+                    </svg>
+                </button>
             </header>
 
             <div class="fp-body">
@@ -140,7 +469,7 @@
                 </div>
 
                 <div class="fp-meta">
-                    <div class="fp-title" id="fpTitle">Nothing playing</div>
+                    <div class="fp-title" id="fpTitle" data-i18n="hello_blank_fragment">Nothing playing</div>
                     <div class="fp-artist" id="fpArtist"></div>
                 </div>
 
@@ -153,53 +482,108 @@
                 </div>
 
                 <div class="fp-controls">
-                    <button class="fp-icon md" id="fpShuffle" title="Shuffle">🔀</button>
-                    <button class="fp-icon lg" id="fpPrev" title="Previous">⏮</button>
-                    <button class="fp-icon huge" id="fpPlay" title="Play / Pause">▶</button>
-                    <button class="fp-icon lg" id="fpNext" title="Next">⏭</button>
-                    <button class="fp-icon md" id="fpRepeat" title="Repeat">🔁</button>
+                    <button class="fp-icon md" id="fpShuffle" title="Shuffle">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-shuffle" />
+                        </svg>
+                    </button>
+                    <button class="fp-icon lg" id="fpPrev" title="Previous">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-prev" />
+                        </svg>
+                    </button>
+                    <button class="fp-icon huge" id="fpPlay" title="Play / Pause">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-play" />
+                        </svg>
+                    </button>
+                    <button class="fp-icon lg" id="fpNext" title="Next">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-next" />
+                        </svg>
+                    </button>
+                    <button class="fp-icon md" id="fpRepeat" title="Repeat">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-repeat" />
+                        </svg>
+                    </button>
                 </div>
 
                 <div class="fp-actions">
-                    <button class="fp-action" id="fpLike">♡ <span>Like</span></button>
-                    <button class="fp-action" id="fpLyricsToggle">🎤 <span>Lyrics</span></button>
-                    <button class="fp-action" id="fpQueue">📜 <span>Queue</span></button>
-                    <button class="fp-action" id="fpVideoToggle">🎬 <span>Video</span></button>
-                    <button class="fp-action" id="fpVizToggle">📊 <span>Visualizer</span></button>
+                    <button class="fp-action" id="fpLike">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-heart" />
+                        </svg>
+                        <span data-i18n="like">Like</span>
+                    </button>
+                    <button class="fp-action" id="fpLyricsToggle">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-mic" />
+                        </svg>
+                        <span data-i18n="lyrics">Lyrics</span>
+                    </button>
+                    <button class="fp-action" id="fpQueue">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-queue" />
+                        </svg>
+                        <span data-i18n="queue">Queue</span>
+                    </button>
+                    <button class="fp-action" id="fpDownload">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-download" />
+                        </svg>
+                        <span data-i18n="download">Download</span>
+                    </button>
+                    <button class="fp-action" id="fpVideoToggle">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-video" />
+                        </svg>
+                        <span data-i18n="videos">Video</span>
+                    </button>
+                    <button class="fp-action" id="fpVizToggle">
+                        <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <use href="#ic-equalizer" />
+                        </svg>
+                        <span>Visualizer</span>
+                    </button>
                 </div>
 
-                <div class="fp-panel hidden" id="fpLyrics">
+                <div class="fp-panel hidden glass-strong" id="fpLyrics">
                     <div class="fp-panel-header">
-                        <h3>Lyrics</h3>
-                        <select id="lyricsSourceSelect">
-                            <option value="auto">Auto (LRCLIB → YT)</option>
-                            <option value="lrclib">LRCLIB only</option>
-                            <option value="youtube">YouTube subtitles</option>
-                        </select>
-                        <button class="fp-icon" id="fpLyricsClose">✕</button>
+                        <h3 data-i18n="lyrics">Lyrics</h3>
+                        <select id="lyricsSourceSelect"></select>
+                        <button class="fp-icon" id="fpLyricsClose">
+                            <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                                <use href="#ic-close" />
+                            </svg>
+                        </button>
                     </div>
                     <div class="fp-panel-inner" id="fpLyricsInner">
                         <div class="empty">Select a song to load lyrics.</div>
                     </div>
                 </div>
 
-                <div class="fp-panel hidden" id="fpQueuePanel">
+                <div class="fp-panel hidden glass-strong" id="fpQueuePanel">
                     <div class="fp-panel-header">
-                        <h3>Up Next</h3>
-                        <button id="clearQueueBtn" class="link-btn">Clear</button>
-                        <button class="fp-icon" id="fpQueueClose">✕</button>
+                        <h3 data-i18n="queue">Up Next</h3>
+                        <button id="clearQueueBtn" class="link-btn" data-i18n="clear">Clear</button>
+                        <button class="fp-icon" id="fpQueueClose">
+                            <svg class="ic" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                                <use href="#ic-close" />
+                            </svg>
+                        </button>
                     </div>
                     <div class="fp-panel-inner" id="fpQueueList"></div>
                 </div>
             </div>
         </section>
 
-        <div id="ctxMenu" class="ctx-menu hidden"></div>
+        <div id="ctxMenu" class="ctx-menu hidden glass-strong"></div>
 
-        <div id="toast" class="toast hidden"></div>
+        <div id="toast" class="toast hidden glass-strong"></div>
 
         <div id="modal" class="modal hidden">
-            <div class="modal-card" id="modalCard"></div>
+            <div class="modal-card glass-strong" id="modalCard"></div>
         </div>
     </div>
 

@@ -3,7 +3,7 @@
 A Node.js + Express port of [SakayoriMusic](../README.md) — runs the same
 listening experience as the Kotlin/Compose desktop & Android app inside a
 browser. Single-page frontend (vanilla JS), streams YouTube Music via
-`yt-dlp`, lyrics via LRCLIB + YouTube auto-captions.
+`yt-dlp`.
 
 > **Web Player Lead:** [@giangnam0201](https://github.com/giangnam0201) — primary contributor and maintainer of this module.
 
@@ -17,7 +17,7 @@ npm install
 npm start
 ```
 
-Server binds to **`127.0.0.1:3000`** by default (localhost-only).
+Server binds to **`0.0.0.0:3000`** by default.
 
 Open [http://127.0.0.1:3000](http://127.0.0.1:3000)
 
@@ -29,74 +29,31 @@ All via environment variables — no config file.
 
 | Env Var             | Default       | Purpose                                                      |
 | ------------------- | ------------- | ------------------------------------------------------------ |
-| `HOST`              | `127.0.0.1`   | Bind address. Set `0.0.0.0` to expose on LAN / behind tunnel |
+| `HOST`              | `0.0.0.0`     | Bind address                                                 |
 | `PORT`              | `3000`        | TCP port                                                     |
-| `YT_DLP`            | `yt-dlp`      | Path to yt-dlp binary (`PATH` lookup by default)             |
+| `YT_DLP`            | `yt-dlp`      | Path to yt-dlp binary (auto-bootstrapped if missing)         |
 | `YT_COOKIES`        | *(unset)*     | Single Netscape cookies.txt file path                        |
 | `YT_COOKIES_BROWSER`| *(unset)*     | Pull cookies from browser (`chrome`/`firefox`/`edge`/…)      |
-
-### Common setups
-
-**Local dev (default):**
-```bash
-npm start
-# → http://127.0.0.1:3000 (loopback only)
-```
-
-**Expose on LAN for phone testing:**
-```bash
-# PowerShell
-$env:HOST="0.0.0.0"; npm start
-
-# Bash
-HOST=0.0.0.0 npm start
-```
-
-**Behind Cloudflare Tunnel** (stays on `127.0.0.1:3000`, tunnel handles rest):
-```bash
-npm start
-# + separate cloudflared process mapping your-domain.dev → 127.0.0.1:3000
-```
-
-**Dev mode (auto-reload on save):**
-```bash
-npm run dev
-```
+| `YT_COOKIES_URL`    | *(community)* | Remote Netscape cookies pack to auto-fetch                   |
 
 ---
 
 ## Requirements
 
 - **Node 20+** (uses global `fetch`, `undici` Agent)
-- **Python 3 + yt-dlp** on `PATH`
+- **`yt-dlp`** — auto-downloaded into `web/bin/` if not on PATH
   ```bash
-  pip install -U yt-dlp
+  pip install -U yt-dlp     # optional; the server will bootstrap if missing
   ```
 
 ### YouTube cookies (highly recommended)
 
 YouTube increasingly blocks server IPs with *"Sign in to confirm you're not a bot"*. Supply cookies in priority order:
 
-1. **Drop multiple files in `web/cookies/`** (recommended) — auto-rotation with dead-cookie detection.
-   ```
-   web/cookies/
-     acct1.txt
-     acct2.txt
-     burner.txt
-   ```
-   - Each file is auto-sanitized (strips prefix garbage, enforces Netscape header)
-   - Server marks a cookie dead when it returns bot-challenge; falls back to next
-   - Pool resets when all dead
-   - `GET /api/health` shows pool status
-   - `POST /api/cookies/refresh` reloads folder without restart
-
-2. **Single `cookies.txt`, `youtube-cookies.txt`, or `yt-cookies.txt`** next to `web/` — auto-detected.
-
+1. **Drop multiple files in `web/cookies/`** — auto-rotation with dead-cookie detection.
+2. **Single `cookies.txt`** next to `web/` — auto-detected.
 3. **`YT_COOKIES=/path/to/cookies.txt`** — explicit single file.
-
-4. **`YT_COOKIES_BROWSER=chrome`** — live-read from installed browser. Browser must be **closed** during read.
-
-Export via [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) — log into youtube.com, click extension, save to `web/cookies/`.
+4. **`YT_COOKIES_BROWSER=chrome`** — live-read from installed browser.
 
 ---
 
@@ -104,37 +61,72 @@ Export via [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/ge
 
 ```
 web/
-├── README.md           ← this file
-├── package.json        ← express, undici, lru-cache, ytmusic-api
-├── server.js           ← 900-line Express backend (API + streaming proxy)
-├── cookies/            ← (gitignored) multi-account cookie pool
+├── README.md
+├── package.json            ← express, undici, lru-cache, ytmusic-api
+├── server.js               ← monolithic Express backend (≈1.4k lines)
+├── cookies/                ← (gitignored) multi-account cookie pool
 └── public/
-    ├── index.html      ← single SPA entry (hash-based router)
-    ├── app.js          ← 1700-line SPA controller + Web Audio pipeline
-    └── styles.css      ← 1700-line stylesheet (dark, Material-inspired)
+    ├── index.html          ← inline-SVG icon sprite + Liquid Glass shell
+    ├── app.js              ← SPA controller (i18n, offline, lyrics chain, player)
+    ├── styles.css          ← Liquid Glass stylesheet
+    └── locales/            ← (auto-generated) JSON locale files
 ```
 
-The server is intentionally monolithic — one file, readable top-to-bottom, with section headers (`// === 0. Constants === //`, `// === 1. Cookie pool === //`, …). No bundler, no transpiler on the frontend — `app.js` is plain modern JS served as-is.
+The server is intentionally monolithic — one file, readable top-to-bottom,
+with section headers (`// === 0. Constants === //`, `// === 1. Cookie pool === //`, …).
+No bundler, no transpiler on the frontend — `app.js` is plain modern JS served as-is.
 
 ---
 
 ## Features
 
-### Player UX
-- Spinning vinyl disc with album art + swinging tonearm
-- Blurred album-art backdrop in fullscreen player
-- Video-mode toggle (watches MV via yt-dlp combined mp4)
-- Audio visualizer — bars / waveform / ring (AnalyserNode)
-- 3-band EQ (low / mid / high BiQuad shelves + peaking)
-- Crossfade 0–10s (Web Audio gain ramp)
-- Shuffle / repeat-all / repeat-one
+### Liquid Glass UI
+- Translucent layered chrome (sidebar, topbar, player, panels, menus, toasts)
+  with `backdrop-filter` blur + saturate, hairline borders, inset specular bevels
+- **Zero emoji**: every glyph is an inline-SVG `<use href="#ic-*">` reference,
+  inheriting `currentColor` so theme tinting cascades automatically
+- Adaptive accent color sampled from current album art (`art` theme)
+- 6 built-in themes (cyan / purple / rose / lime / amber / art-color)
+- Spinning vinyl with swinging tonearm; blurred album-art backdrop on fullscreen
+- Audio visualizer (bars / waveform / ring) via `AnalyserNode`
+- 3-band EQ + 0–10 s crossfade (Web Audio gain ramp)
+
+### Internationalization (31 locales)
+- Server reads `composeApp/src/commonMain/composeResources/values*/strings.xml`
+  on boot, parses each one, writes JSON to `web/public/locales/<bcp47>.json`
+  → **single source of truth** with the Android/Desktop apps
+- Browser auto-detects from `navigator.languages`; topbar globe button +
+  Settings page picker for explicit override
+- BCP-47 codes shipped: `en, ar, az, bg, ca, cs, de, el, en-GG, en-IO, en-LC,
+  en-MS, en-PH, es, fa, fi, fr, hi, hu, id, it, he, ja, ko, nl, pl, pt, ro,
+  ru, sv, th, tr, uk, vi, zh, zh-TW`
+- RTL-aware (Arabic, Persian, Hebrew flip via `dir="rtl"`)
+- HTML uses `data-i18n="key"` / `data-i18n-attr="placeholder|key"` /
+  `data-i18n-fb="key"` annotations; missing keys fall back to English then to
+  the literal markup
+
+### Offline downloads
+- IndexedDB-backed download manager with a dedicated **Downloads** page
+- Streams `/api/stream/:videoId` chunk-by-chunk via Fetch reader, throttles DB
+  writes to 10 Hz, persists final Blob keyed by `videoId`
+- Live progress bar + bytes/total counters, pause / resume / cancel,
+  paused-on-page-close auto-recovery
+- Player **transparently switches to `blob:` URL** when an offline copy exists
+  — true offline playback (works with the network tab disabled)
+- Sidebar nav-badge shows the count of in-flight downloads
+- Per-row offline indicator (download icon while pending, check icon when ready)
+- Hotkey: `D` = download current track
+
+### Multi-source lyrics chain
+Server walks `LRCLIB → NetEase Cloud → Genius → KuGou → YouTube subtitles`
+and returns the first synced result, otherwise the first plain-text result.
+Each provider is isolated — a rate-limited backend can't sink the chain.
+Pick a single source explicitly from the lyrics-panel dropdown or Settings.
+
+### Player UX (kept from previous build)
 - HTTP Range streaming — seek bar works mid-track
 - Queue panel with auto-radio extension, drag-to-reorder
-- Synced (LRC) lyrics — LRCLIB → YT auto-captions fallback
 - MediaSession API — OS media keys, lock-screen controls, notification artwork
-- Adaptive accent color sampled from current album art
-
-### Library
 - Liked songs (localStorage)
 - Local playlists (create / rename / delete / reorder / drag-add)
 - Recently played (auto-history, max 200)
@@ -156,6 +148,7 @@ The server is intentionally monolithic — one file, readable top-to-bottom, wit
 | `R`            | Repeat cycle          |
 | `F`            | Fullscreen player     |
 | `V`            | Toggle video mode     |
+| `D`            | Download current track|
 | `Esc`          | Close overlay         |
 | `?`            | Show shortcut help    |
 
@@ -176,22 +169,11 @@ The server is intentionally monolithic — one file, readable top-to-bottom, wit
 | GET    | `/api/playlist/:id`                                          | Playlist contents                          |
 | GET    | `/api/stream/:videoId`                                       | Audio stream (Range-aware)                 |
 | GET    | `/api/video/:videoId`                                        | Video+audio mp4 (yt-dlp combined)          |
-| GET    | `/api/lyrics?title&artist&album&duration&videoId&source`     | LRCLIB + YouTube subs (synced + plain)     |
+| GET    | `/api/lyrics?title&artist&album&duration&videoId&source`     | Multi-source lyrics chain                  |
+| GET    | `/api/lyrics/sources`                                        | List of supported lyrics providers         |
+| GET    | `/locales/_index.json`                                       | List of available BCP-47 locales           |
+| GET    | `/locales/<bcp47>.json`                                      | Strings for one locale                     |
 | POST   | `/api/cookies/refresh`                                       | Reload `cookies/` folder without restart   |
-
----
-
-## Performance Notes
-
-The server bundles several latency optimizations:
-
-1. **In-flight request coalescing** — concurrent calls for same `videoId` share one yt-dlp process
-2. **LRU caches** for resolved URLs, search, home shelves, lyrics, metadata
-3. **Keep-alive undici Agent** for upstream googlevideo (saves TCP+TLS handshake on every Range)
-4. **Prefetch hint** endpoint warms next track's URL while current plays
-5. **Cookie-pool rotation** with auto-sanitization and dead-cookie tracking
-6. **Static-asset cache headers** (immutable + ETag, gzip + brotli)
-7. **Graceful upstream cleanup** — aborted Range destroys upstream body → frees sockets
 
 ---
 
@@ -201,8 +183,8 @@ The server bundles several latency optimizations:
 | ------------------------------- | -------------------------------------------- |
 | `kotlinYtmusicScraper` service  | `ytmusic-api` npm package                    |
 | Media3 (Android) / VLC (JVM)    | `yt-dlp` URL resolver → `<audio>`/`<video>`  |
-| `lyricsService` LRCLIB path     | `/api/lyrics?source=lrclib`                  |
-| `lyricsService` YT transcript   | `/api/lyrics?source=youtube` (yt-dlp subs)   |
+| `lyricsService` (multi-source)  | `chainLyrics()` (LRCLIB+NetEase+Genius+KuGou+YT) |
+| `composeResources/values*/`     | `web/public/locales/*.json` (auto-generated) |
 | `FullscreenPlayer.kt`           | `index.html #fullPlayer` + styles            |
 | `MiniPlayer.kt`                 | `footer.player`                              |
 | `equalizer/` + `crossfade/`     | Web Audio EQ + gain ramps                    |
@@ -210,19 +192,7 @@ The server bundles several latency optimizations:
 | `RecentlySongsScreen.kt`        | `#/recent`                                   |
 | `EqualizerScreen.kt`            | Settings page                                |
 | Backup / restore                | Settings → Export / Import                   |
-
----
-
-## Not Ported
-
-Features present in native apps but intentionally out-of-scope here:
-- Discord Rich Presence
-- Spotify Canvas
-- Wear OS / Android Auto notifications
-- Offline download manager
-- OAuth sign-in / personalized feed
-- Multi-source lyrics chain beyond LRCLIB + YT
-- Full 31-language UI (web is English-only for now)
+| Offline download manager        | `Offline` IndexedDB module + `#/downloads`   |
 
 ---
 
