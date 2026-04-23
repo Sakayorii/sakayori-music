@@ -224,6 +224,7 @@ fun main(args: Array<String>) {
                 visible = isVisible,
                 onKeyEvent = { event ->
                     if (event.type != KeyEventType.KeyUp) return@Window false
+                    if (com.sakayori.music.utils.KeyboardShortcutGate.hasTextInputFocus) return@Window false
                     val vm = getKoin().get<com.sakayori.music.viewModel.SharedViewModel>()
                     when (event.key) {
                         Key.Spacebar -> {

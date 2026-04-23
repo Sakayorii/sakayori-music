@@ -70,6 +70,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.sakayori.common.LibraryChipType
+import com.sakayori.music.utils.trackTextInputFocus
 import com.sakayori.domain.utils.LocalResource
 import com.sakayori.logger.Logger
 import com.sakayori.music.extension.copy
@@ -439,7 +440,8 @@ fun LibraryScreen(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
+                                .padding(horizontal = 8.dp)
+                                .trackTextInputFocus(),
                     )
                     Spacer(modifier = Modifier.height(5.dp))
                     TextButton(
@@ -600,7 +602,8 @@ fun LibraryScreen(
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 15.dp, vertical = 4.dp),
+                    .padding(horizontal = 15.dp, vertical = 4.dp)
+                    .trackTextInputFocus(),
             )
         }
         Row(

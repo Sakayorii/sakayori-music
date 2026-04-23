@@ -108,6 +108,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.eygraber.uri.toKmpUri
 import com.sakayori.common.LIMIT_CACHE_SIZE
+import com.sakayori.music.utils.trackTextInputFocus
 import com.sakayori.common.QUALITY
 import com.sakayori.common.SUPPORTED_LANGUAGE
 import com.sakayori.common.SUPPORTED_LOCATION
@@ -599,7 +600,7 @@ fun SettingScreen(
                         singleLine = true,
                         textStyle = typo().bodyMedium.copy(color = white),
                         cursorBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF00BCD4)),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).trackTextInputFocus(),
                         decorationBox = { inner ->
                             if (settingsSearchQuery.isEmpty()) {
                                 Text(
@@ -2444,7 +2445,8 @@ fun SettingScreen(
                                         .fillMaxWidth()
                                         .padding(
                                             vertical = 6.dp,
-                                        ),
+                                        )
+                                        .trackTextInputFocus(),
                             )
                         }
                     }

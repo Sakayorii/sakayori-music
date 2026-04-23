@@ -1,5 +1,6 @@
 package com.sakayori.music.ui.component
 
+import com.sakayori.music.utils.trackTextInputFocus
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -436,7 +437,7 @@ fun QueueSearchBar(
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
         ),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().trackTextInputFocus(),
     )
 }
 

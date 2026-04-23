@@ -123,6 +123,7 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.sakayori.domain.data.entities.DownloadState
+import com.sakayori.music.utils.trackTextInputFocus
 import com.sakayori.domain.data.entities.LocalPlaylistEntity
 import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.data.model.download.DownloadProgress
@@ -2494,7 +2495,7 @@ fun SleepTimerBottomSheet(
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().trackTextInputFocus(),
                             shape = RoundedCornerShape(12.dp),
                         )
                     }
@@ -2875,7 +2876,7 @@ fun PlaylistBottomSheet(
                         value = newTitle,
                         onValueChange = { s -> newTitle = s },
                         label = { Text(text = stringResource(Res.string.title)) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).trackTextInputFocus(),
                     )
                     Spacer(modifier = Modifier.height(5.dp))
                     val playlistNameError = stringResource(Res.string.playlist_name_cannot_be_empty)
@@ -3038,7 +3039,7 @@ fun LocalPlaylistBottomSheet(
                         value = newTitle,
                         onValueChange = { s -> newTitle = s },
                         label = { Text(text = stringResource(Res.string.title)) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).trackTextInputFocus(),
                     )
                     Spacer(modifier = Modifier.height(5.dp))
                     val playlistNameError = stringResource(Res.string.playlist_name_cannot_be_empty)
@@ -3275,7 +3276,7 @@ fun DevLogInBottomSheet(
                 Spacer(modifier = Modifier.height(5.dp))
                 OutlinedTextField(
                     value = value,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).trackTextInputFocus(),
                     onValueChange = { value = it },
                     maxLines = 1,
                 )
@@ -3285,7 +3286,7 @@ fun DevLogInBottomSheet(
                     Spacer(modifier = Modifier.height(5.dp))
                     OutlinedTextField(
                         value = secondValue,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).trackTextInputFocus(),
                         onValueChange = { secondValue = it },
                         maxLines = 1,
                     )

@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import com.sakayori.music.expect.ui.toImageBitmap
+import com.sakayori.music.utils.trackTextInputFocus
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.Dp
@@ -643,7 +644,8 @@ fun PlaylistScreen(
                                             Modifier
                                                 .height(50.dp)
                                                 .padding(horizontal = 12.dp)
-                                                .weight(1f),
+                                                .weight(1f)
+                                                .trackTextInputFocus(),
                                         colors =
                                             SearchBarDefaults.colors().copy(
                                                 containerColor = Color.Transparent,

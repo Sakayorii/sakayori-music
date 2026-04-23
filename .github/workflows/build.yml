@@ -10,9 +10,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dkotlin.incremental=false
+
 jobs:
   linux-x86_64:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -22,27 +26,36 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
       - name: Install Linux deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils
+          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils wget
 
       - run: chmod +x ./gradlew
 
-      - run: ./gradlew vlcSetup
+      - name: VLC setup (with retry)
+        run: |
+          for i in 1 2 3; do
+            ./gradlew vlcSetup --stacktrace && break
+            echo "vlcSetup attempt $i failed, retrying..."
+            sleep 10
+          done
 
-      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createReleaseDistributable -PisFullBuild=true
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createDistributable -PisFullBuild=true --stacktrace
 
       - name: Build AppImage (x86_64)
         run: |
+          set -e
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
           chmod +x appimagetool
 
           APPDIR=composeApp/build/AppDir
           rm -rf "$APPDIR"
           mkdir -p "$APPDIR/usr"
-          cp -r composeApp/build/compose/binaries/main-release/app/SakayoriMusic/. "$APPDIR/usr/"
+          cp -r composeApp/build/compose/binaries/main/app/SakayoriMusic/. "$APPDIR/usr/"
 
           cat > "$APPDIR/AppRun" <<'EOF'
           #!/bin/sh
@@ -77,6 +90,7 @@ jobs:
 
   linux-aarch64:
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -86,27 +100,45 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
       - name: Install Linux deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils
+          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils wget libvlc-dev vlc-plugin-base libvlc5
 
       - run: chmod +x ./gradlew
 
-      - run: ./gradlew vlcSetup
+      - name: VLC setup (best-effort, fallback to system VLC)
+        run: |
+          mkdir -p vlc-natives/linux
+          SUCCESS=0
+          for i in 1 2 3; do
+            if ./gradlew vlcSetup --stacktrace; then
+              SUCCESS=1
+              break
+            fi
+            echo "vlcSetup attempt $i failed, retrying..."
+            sleep 10
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            echo "vlcSetup failed on aarch64 — falling back to apt-installed system VLC. Build will not bundle VLC natives."
+            mkdir -p vlc-natives/linux
+          fi
 
-      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createReleaseDistributable -PisFullBuild=true
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createDistributable -PisFullBuild=true --stacktrace
 
       - name: Build AppImage (aarch64)
         run: |
+          set -e
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage -O appimagetool
           chmod +x appimagetool
 
           APPDIR=composeApp/build/AppDir
           rm -rf "$APPDIR"
           mkdir -p "$APPDIR/usr"
-          cp -r composeApp/build/compose/binaries/main-release/app/SakayoriMusic/. "$APPDIR/usr/"
+          cp -r composeApp/build/compose/binaries/main/app/SakayoriMusic/. "$APPDIR/usr/"
 
           cat > "$APPDIR/AppRun" <<'EOF'
           #!/bin/sh
@@ -141,6 +173,7 @@ jobs:
 
   macos:
     runs-on: macos-14
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -150,12 +183,23 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
       - run: chmod +x ./gradlew
 
-      - run: ./gradlew vlcSetup
+      - name: Show active Xcode
+        run: xcode-select -p && xcodebuild -version
 
-      - run: ./gradlew composeApp:packageDmg composeApp:packagePkg -PisFullBuild=true
+      - name: VLC setup (with retry)
+        run: |
+          for i in 1 2 3; do
+            ./gradlew vlcSetup --stacktrace && break
+            echo "vlcSetup attempt $i failed, retrying..."
+            sleep 10
+          done
+
+      - run: ./gradlew composeApp:packageDmg composeApp:packagePkg -PisFullBuild=true --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
@@ -167,6 +211,7 @@ jobs:
 
   ios-ipa:
     runs-on: macos-14
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -176,11 +221,16 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
 
       - run: chmod +x ./gradlew
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+      - name: Show active Xcode
+        run: xcode-select -p && xcodebuild -version
+
+      - name: Prewarm Kotlin framework
+        run: ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --stacktrace
 
       - name: Build iOS archive (unsigned)
         working-directory: iosApp
@@ -193,19 +243,23 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath $PWD/build/SakayoriMusic.xcarchive \
+            -derivedDataPath $PWD/build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
-            DEVELOPMENT_TEAM=""
+            DEVELOPMENT_TEAM="" \
+            ONLY_ACTIVE_ARCH=NO
 
       - name: Package unsigned IPA
         working-directory: iosApp
         run: |
+          set -e
           mkdir -p build/Payload
           cp -R build/SakayoriMusic.xcarchive/Products/Applications/iosApp.app build/Payload/SakayoriMusic.app
           cd build
           zip -qry SakayoriMusic-2.1.5-unsigned.ipa Payload
+          ls -la SakayoriMusic-2.1.5-unsigned.ipa
 
       - uses: actions/upload-artifact@v4
         with:

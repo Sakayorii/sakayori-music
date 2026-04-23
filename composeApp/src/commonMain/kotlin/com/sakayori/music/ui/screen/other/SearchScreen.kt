@@ -74,6 +74,7 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.sakayori.common.Config
+import com.sakayori.music.utils.trackTextInputFocus
 import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.data.model.browse.album.Track
 import com.sakayori.domain.data.model.searchResult.albums.AlbumsResult
@@ -329,7 +330,9 @@ fun SearchScreen(
                     .focusRequester(focusRequester)
                     .onFocusChanged {
                         isFocused = it.isFocused
-                    }.padding(horizontal = 16.dp),
+                    }
+                    .trackTextInputFocus()
+                    .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(8.dp),
             content = {},
         )
