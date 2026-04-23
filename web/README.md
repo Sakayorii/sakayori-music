@@ -59,29 +59,47 @@ same keyboard shortcuts.
 
 YouTube increasingly throws **"Sign in to confirm you're not a bot"** at
 servers that aren't logged in.  To bypass that, give yt-dlp some cookies
-from a logged-in browser session.  You have three options (pick one):
+from a logged-in browser session.  Four options, in priority order:
 
-1. **Drop a cookies.txt file in `web/`** — the server auto-detects
-   `cookies.txt`, `youtube-cookies.txt`, or `yt-cookies.txt`.  No env vars
-   needed.  The repo's `.gitignore` already excludes these so you won't
-   accidentally commit your login.
+1. ⭐ **Drop a folder of cookies in `web/cookies/`** — the recommended
+   setup.  Throw in as many `.txt` files as you have, named whatever you
+   want (`account1.txt`, `burner.txt`, etc.).  The server **rotates**
+   through them automatically: when one starts getting "Sign in to
+   confirm" errors, it's marked dead and the next one is used for the rest
+   of the session.  When all of them die, the pool is reset.  Each file is
+   **auto-sanitized** — any prefix garbage (e.g. account-info headers from
+   "Simple Checker") is stripped and the proper Netscape header is
+   prepended, so you can paste raw cookie dumps without editing them.
 
-2. **Point at a file explicitly** with the env var:
-   ```bash
-   YT_COOKIES=/path/to/cookies.txt npm start
+   ```
+   web/
+     cookies/
+       acct1.txt
+       acct2.txt
+       acct3-throwaway.txt
+       ...
    ```
 
-3. **Pull cookies live from your installed browser** (no file needed):
-   ```bash
-   YT_COOKIES_BROWSER=chrome npm start
-   # or: firefox / edge / brave / vivaldi / safari / opera / chromium
-   ```
-   Note: most browsers must be **closed** while yt-dlp reads the cookie DB.
+   GET `/api/health` shows the current pool and which entries are
+   considered dead.  POST `/api/cookies/refresh` reloads the folder
+   without restarting the server (useful after dropping a new file in).
+
+2. **A single cookies.txt next to `web/`** — auto-detected if named
+   `cookies.txt`, `youtube-cookies.txt`, or `yt-cookies.txt`.
+
+3. **`YT_COOKIES=/full/path/to/cookies.txt`** env var (single file, no
+   rotation).
+
+4. **`YT_COOKIES_BROWSER=chrome`** env var pulls cookies live from your
+   installed browser (chrome / firefox / edge / brave / vivaldi / safari
+   / opera / chromium).  Most browsers must be **closed** while yt-dlp
+   reads the cookie DB.
 
 To export a cookies.txt: install the
 ["Get cookies.txt LOCALLY"](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
-extension (or any Netscape cookies exporter), open <https://www.youtube.com>
-while logged in, and save the result as `web/cookies.txt`.
+extension, open <https://www.youtube.com> while logged in, click the
+extension, save the file into `web/cookies/`.
+
 
 
 ## Run

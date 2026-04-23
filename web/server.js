@@ -29,27 +29,94 @@ async function loadYTMusic() {
 
 const YT_DLP = process.env.YT_DLP || "yt-dlp";
 
-// Optional auth — points yt-dlp at either a Netscape-format cookies.txt file
-// (`YT_COOKIES=/path/to/cookies.txt`) or at a browser to extract cookies live
-// (`YT_COOKIES_BROWSER=chrome` / firefox / edge / brave / vivaldi / safari).
+// ---------------------------------------------------------------------------
+// Cookies — multiple sources, with auto-rotation when one dies
+// ---------------------------------------------------------------------------
 //
-// Setting either lets us bypass YouTube's "Sign in to confirm you're not a
-// bot" anti-scrape challenge that triggers from server IPs.  See
-// https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp
+// Priority order:
+//   1. A `cookies/` folder under web/  — drop as many cookies.txt files as you
+//      like (any name) and the server will pick one, rotating to the next if
+//      YouTube rejects it.  This is the recommended setup.
+//   2. `YT_COOKIES=/path/to/file.txt`  — a single file, no rotation.
+//   3. `YT_COOKIES_BROWSER=chrome`     — pulls cookies live from a browser.
+//   4. Auto-detected `cookies.txt` / `youtube-cookies.txt` in web/.
+//
+// Each file in the pool is sanitized on load: any non-cookie header text
+// (e.g. "Simple Checker" account-info preambles) is stripped, and the strict
+// Netscape header is prepended so yt-dlp will accept it.
+//
 const YT_COOKIES = process.env.YT_COOKIES || "";
 const YT_COOKIES_BROWSER = process.env.YT_COOKIES_BROWSER || "";
+const COOKIES_DIR = path.join(__dirname, "cookies");
+const COOKIES_TMP = path.join(os.tmpdir(), "smweb-cookies");
 
-function authArgs() {
-    const args = [];
-    if (YT_COOKIES) args.push("--cookies", YT_COOKIES);
-    else if (YT_COOKIES_BROWSER) args.push("--cookies-from-browser", YT_COOKIES_BROWSER);
-    return args;
+let cookiePool = [];           // [{ id, normalizedPath }]
+let deadCookies = new Set();   // ids that produced auth errors recently
+
+function sanitizeCookieText(text) {
+    const lines = String(text || "").split(/\r?\n/);
+    const out = [];
+    for (const line of lines) {
+        const t = line.trim();
+        if (!t || t.startsWith("#")) continue;
+        // Netscape cookie line: 7 tab-separated fields.
+        const parts = line.split("\t");
+        if (parts.length < 7) continue;
+        // First field must look like a domain, second must be TRUE/FALSE.
+        if (!/^\.?[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(parts[0])) continue;
+        if (!/^(TRUE|FALSE)$/i.test(parts[1])) continue;
+        out.push(line);
+    }
+    if (!out.length) return null;
+    return (
+        "# Netscape HTTP Cookie File\n" +
+        "# Auto-normalized by SakayoriMusic Web\n\n" +
+        out.join("\n") + "\n"
+    );
 }
 
-// Auto-detect a cookies.txt file in the web/ folder so users can just drop
-// one there without setting env vars.
-(function autoDetectCookies() {
-    if (YT_COOKIES || YT_COOKIES_BROWSER) return;
+function loadCookiePool() {
+    cookiePool = [];
+    deadCookies.clear();
+    if (!fs.existsSync(COOKIES_DIR)) return;
+    try { fs.mkdirSync(COOKIES_TMP, { recursive: true }); } catch { /* noop */ }
+
+    let files = [];
+    try { files = fs.readdirSync(COOKIES_DIR); } catch { return; }
+
+    for (const f of files) {
+        const src = path.join(COOKIES_DIR, f);
+        try {
+            const stat = fs.statSync(src);
+            if (!stat.isFile()) continue;
+            const text = fs.readFileSync(src, "utf8");
+            const norm = sanitizeCookieText(text);
+            if (!norm) {
+                console.warn(`[cookies] skipped ${f}: no valid cookie lines`);
+                continue;
+            }
+            const dst = path.join(
+                COOKIES_TMP,
+                f.replace(/[^a-z0-9._-]/gi, "_") + ".cookies.txt"
+            );
+            fs.writeFileSync(dst, norm);
+            cookiePool.push({ id: f, normalizedPath: dst });
+        } catch (e) {
+            console.warn(`[cookies] skipped ${f}: ${e.message}`);
+        }
+    }
+    if (cookiePool.length) {
+        console.log(
+            `[cookies] loaded ${cookiePool.length} cookie file(s) from cookies/ ` +
+            `(rotation enabled)`
+        );
+    }
+}
+loadCookiePool();
+
+// Auto-detect a single cookies.txt next to web/ if neither pool nor env var.
+(function autoDetectSingleCookie() {
+    if (cookiePool.length || YT_COOKIES || YT_COOKIES_BROWSER) return;
     const candidates = [
         path.join(__dirname, "cookies.txt"),
         path.join(__dirname, "youtube-cookies.txt"),
@@ -59,114 +126,156 @@ function authArgs() {
         try {
             if (fs.existsSync(c)) {
                 process.env.YT_COOKIES = c;
-                console.log(`[cookies] using ${c}`);
+                console.log(`[cookies] using single file: ${c}`);
                 return;
             }
         } catch { /* noop */ }
     }
 })();
 
-function ytDlpResolveAudioUrl(videoId) {
+function pickCookie() {
+    for (const c of cookiePool) if (!deadCookies.has(c.id)) return c;
+    return null;
+}
+function markCookieDead(id) {
+    deadCookies.add(id);
+    const remain = cookiePool.length - deadCookies.size;
+    console.warn(`[cookies] '${id}' looks dead — ${remain} cookie(s) remaining`);
+    if (remain === 0 && cookiePool.length) {
+        console.warn(`[cookies] all cookies failed; resetting pool to retry from top`);
+        deadCookies.clear();
+    }
+}
+function isAuthError(msg) {
+    return /Sign in to confirm|cookies|HTTP Error 403|consent|requires.*authentication|Forbidden/i
+        .test(String(msg || ""));
+}
+
+function buildAuthArgs(cookieEntry) {
+    if (cookieEntry) return ["--cookies", cookieEntry.normalizedPath];
+    if (process.env.YT_COOKIES) return ["--cookies", process.env.YT_COOKIES];
+    if (YT_COOKIES_BROWSER) return ["--cookies-from-browser", YT_COOKIES_BROWSER];
+    return [];
+}
+
+// Run yt-dlp once with whichever cookie we currently prefer.  Returns stdout.
+function runYtDlp(baseArgs, cookieEntry) {
     return new Promise((resolve, reject) => {
-        const args = [
-            "-q",
-            "--no-warnings",
-            "-f", "bestaudio[ext=m4a]/bestaudio/best",
-            "-g",
-            "--no-playlist",
-            ...authArgs(),
-            `https://www.youtube.com/watch?v=${videoId}`,
-        ];
+        const args = [...baseArgs, ...buildAuthArgs(cookieEntry)];
         const p = spawn(YT_DLP, args, { windowsHide: true });
         let out = "", err = "";
         p.stdout.on("data", (b) => (out += b.toString("utf8")));
         p.stderr.on("data", (b) => (err += b.toString("utf8")));
         p.on("error", reject);
         p.on("close", (code) => {
-            if (code === 0 && out.trim()) {
-                resolve(out.split(/\r?\n/).filter(Boolean)[0]);
-            } else {
-                reject(new Error(err || `yt-dlp exited ${code}`));
-            }
+            if (code === 0 && out.trim()) resolve(out);
+            else reject(new Error(err || `yt-dlp exited ${code}`));
         });
     });
+}
+
+// Run yt-dlp with the cookie pool, rotating on auth-style errors.
+async function runYtDlpWithRotation(baseArgs) {
+    const tried = new Set();
+    let lastErr = null;
+
+    // First pass: try every available cookie in the pool.
+    while (true) {
+        const cookie = pickCookie();
+        if (cookie && tried.has(cookie.id)) break;
+        try {
+            return await runYtDlp(baseArgs, cookie);
+        } catch (e) {
+            lastErr = e;
+            if (!cookie) break; // No cookie pool — give up
+            tried.add(cookie.id);
+            if (isAuthError(e.message)) {
+                markCookieDead(cookie.id);
+                continue;
+            }
+            break; // Non-auth failure — don't waste rotation
+        }
+    }
+
+    // Last resort: env-var single cookie or browser extraction.
+    if (lastErr && (process.env.YT_COOKIES || YT_COOKIES_BROWSER) && !cookiePool.length) {
+        try { return await runYtDlp(baseArgs, null); } catch (e) { lastErr = e; }
+    }
+
+    throw lastErr || new Error("yt-dlp failed");
+}
+
+// Endpoint to manually refresh the pool (e.g. after dropping a new cookie file).
+function refreshCookies() {
+    loadCookiePool();
+    return cookiePool.map((c) => c.id);
+}
+
+function ytDlpResolveAudioUrl(videoId) {
+    return runYtDlpWithRotation([
+        "-q",
+        "--no-warnings",
+        "-f", "bestaudio[ext=m4a]/bestaudio/best",
+        "-g",
+        "--no-playlist",
+        `https://www.youtube.com/watch?v=${videoId}`,
+    ]).then((out) => out.split(/\r?\n/).filter(Boolean)[0]);
 }
 
 // Resolve a single combined-mp4 (video+audio) URL.  Browsers can only play
 // progressive mp4 with both tracks muxed together, which limits us to ≤ 720p
 // for most YouTube videos — that's what `best[ext=mp4]/best` gives us.
 function ytDlpResolveVideoUrl(videoId) {
-    return new Promise((resolve, reject) => {
-        const args = [
-            "-q",
-            "--no-warnings",
-            "-f", "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best",
-            "-g",
-            "--no-playlist",
-            ...authArgs(),
-            `https://www.youtube.com/watch?v=${videoId}`,
-        ];
-        const p = spawn(YT_DLP, args, { windowsHide: true });
-        let out = "", err = "";
-        p.stdout.on("data", (b) => (out += b.toString("utf8")));
-        p.stderr.on("data", (b) => (err += b.toString("utf8")));
-        p.on("error", reject);
-        p.on("close", (code) => {
-            if (code === 0 && out.trim()) {
-                resolve(out.split(/\r?\n/).filter(Boolean)[0]);
-            } else {
-                reject(new Error(err || `yt-dlp exited ${code}`));
-            }
-        });
-    });
+    return runYtDlpWithRotation([
+        "-q",
+        "--no-warnings",
+        "-f", "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best",
+        "-g",
+        "--no-playlist",
+        `https://www.youtube.com/watch?v=${videoId}`,
+    ]).then((out) => out.split(/\r?\n/).filter(Boolean)[0]);
 }
+
 
 
 
 // Fetch YouTube auto-generated captions in a chosen language as VTT text.
 // Returns null if no captions are available.
-function ytDlpFetchSubs(videoId, lang = "en") {
-    return new Promise((resolve) => {
-        const tmp = path.join(
-            os.tmpdir(),
-            `smweb-subs-${videoId}-${Date.now()}`
+async function ytDlpFetchSubs(videoId, lang = "en") {
+    const tmp = path.join(
+        os.tmpdir(),
+        `smweb-subs-${videoId}-${Date.now()}`
+    );
+    const outTmpl = `${tmp}.%(ext)s`;
+    const baseArgs = [
+        "--skip-download",
+        "--write-auto-subs",
+        "--write-subs",
+        "--sub-format", "vtt",
+        "--sub-langs", `${lang},${lang}.*`,
+        "-o", outTmpl,
+        "--no-warnings",
+        "--no-playlist",
+        "-q",
+        `https://www.youtube.com/watch?v=${videoId}`,
+    ];
+    try {
+        await runYtDlpWithRotation(baseArgs).catch(() => null);
+        const dir = path.dirname(tmp);
+        const base = path.basename(tmp);
+        const file = fs.readdirSync(dir).find(
+            (f) => f.startsWith(base) && f.endsWith(".vtt")
         );
-        const outTmpl = `${tmp}.%(ext)s`;
-        const args = [
-            "--skip-download",
-            "--write-auto-subs",
-            "--write-subs",
-            "--sub-format", "vtt",
-            "--sub-langs", `${lang},${lang}.*`,
-            "-o", outTmpl,
-            "--no-warnings",
-            "--no-playlist",
-            "-q",
-            ...authArgs(),
-            `https://www.youtube.com/watch?v=${videoId}`,
-        ];
-
-        const p = spawn(YT_DLP, args, { windowsHide: true });
-        p.on("error", () => resolve(null));
-        p.on("close", () => {
-            // yt-dlp writes "<tmp>.<lang>.vtt" or similar
-            const dir = path.dirname(tmp);
-            const base = path.basename(tmp);
-            try {
-                const file = fs.readdirSync(dir).find(
-                    (f) => f.startsWith(base) && f.endsWith(".vtt")
-                );
-                if (!file) return resolve(null);
-                const full = path.join(dir, file);
-                const text = fs.readFileSync(full, "utf8");
-                fs.unlink(full, () => { });
-                resolve(text);
-            } catch {
-                resolve(null);
-            }
-        });
-    });
+        if (!file) return null;
+        const full = path.join(dir, file);
+        const text = fs.readFileSync(full, "utf8");
+        fs.unlink(full, () => { });
+        return text;
+    } catch {
+        return null;
+    }
 }
+
 
 // Convert WebVTT (the format yt-dlp dumps) to LRC.
 function vttToLrc(vtt) {
@@ -277,8 +386,25 @@ function normalizeSong(s) {
 // Health
 // ---------------------------------------------------------------------------
 app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, name: "SakayoriMusic Web", version: "2.0.0" });
+    res.json({
+        ok: true,
+        name: "SakayoriMusic Web",
+        version: "2.0.0",
+        cookies: {
+            pool: cookiePool.map((c) => c.id),
+            dead: [...deadCookies],
+            envFile: process.env.YT_COOKIES || null,
+            envBrowser: YT_COOKIES_BROWSER || null,
+        },
+    });
 });
+
+// Reload the cookies/ folder without restarting the server.
+app.post("/api/cookies/refresh", (_req, res) => {
+    const ids = refreshCookies();
+    res.json({ ok: true, loaded: ids });
+});
+
 
 // ---------------------------------------------------------------------------
 // Search
