@@ -1,0 +1,9 @@
+node_modules/
+server.log
+.env
+package-lock.json
+# Never commit your YouTube cookies — they contain login tokens!
+cookies.txt
+youtube-cookies.txt
+yt-cookies.txt
+cookies/
