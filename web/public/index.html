@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SakayoriMusic — Web</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" type="image/svg+xml"
+        href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%2300BCD4"/><circle cx="16" cy="16" r="4" fill="%23000"/></svg>' />
+</head>
+
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo"></div>
+                <div>
+                    <div class="brand-title">SakayoriMusic</div>
+                    <div class="brand-sub">Web · Node.js</div>
+                </div>
+            </div>
+
+            <nav class="nav">
+                <button class="nav-item active" data-view="home">
+                    <span class="ico">🏠</span> Home
+                </button>
+                <button class="nav-item" data-view="search">
+                    <span class="ico">🔎</span> Search
+                </button>
+                <button class="nav-item" data-view="queue">
+                    <span class="ico">📜</span> Queue
+                </button>
+                <button class="nav-item" data-view="lyrics">
+                    <span class="ico">🎤</span> Lyrics
+                </button>
+                <button class="nav-item" data-view="library">
+                    <span class="ico">⭐</span> Liked
+                </button>
+                <button class="nav-item" data-view="shortcuts">
+                    <span class="ico">⌨️</span> Shortcuts
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <small>YouTube Music · LRCLIB Lyrics</small>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <header class="topbar">
+                <form id="searchForm" class="searchbar">
+                    <input id="searchInput" type="search" placeholder="Search songs, videos, albums, artists..."
+                        autocomplete="off" />
+                    <select id="searchType">
+                        <option value="songs">Songs</option>
+                        <option value="videos">Videos</option>
+                        <option value="albums">Albums</option>
+                        <option value="artists">Artists</option>
+                        <option value="playlists">Playlists</option>
+                    </select>
+                    <button type="submit">Search</button>
+                </form>
+            </header>
+
+            <section class="view" id="view"></section>
+        </main>
+
+        <!-- Now-playing bar -->
+        <footer class="player">
+            <div class="np-info">
+                <img id="npArt" alt="" />
+                <div class="np-meta">
+                    <div id="npTitle">Nothing playing</div>
+                    <div id="npArtist" class="muted"></div>
+                </div>
+                <button id="likeBtn" class="icon-btn" title="Like (L)">♡</button>
+            </div>
+
+            <div class="np-controls">
+                <div class="ctrl-row">
+                    <button id="shuffleBtn" class="icon-btn" title="Shuffle (S)">🔀</button>
+                    <button id="prevBtn" class="icon-btn" title="Previous (←)">⏮</button>
+                    <button id="playBtn" class="icon-btn play" title="Play/Pause (Space)">▶</button>
+                    <button id="nextBtn" class="icon-btn" title="Next (→)">⏭</button>
+                    <button id="repeatBtn" class="icon-btn" title="Repeat (R)">🔁</button>
+                </div>
+                <div class="seek-row">
+                    <span id="curTime" class="time">0:00</span>
+                    <input id="seek" type="range" min="0" max="1000" value="0" />
+                    <span id="durTime" class="time">0:00</span>
+                </div>
+            </div>
+
+            <div class="np-extras">
+                <button id="muteBtn" class="icon-btn" title="Mute (M)">🔊</button>
+                <input id="vol" type="range" min="0" max="100" value="80" />
+            </div>
+
+            <audio id="audio" preload="auto"></audio>
+        </footer>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- Shortcuts modal -->
+        <div id="shortcutsModal" class="modal hidden">
+            <div class="modal-card">
+                <h2>Keyboard Shortcuts</h2>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><kbd>Space</kbd></td>
+                            <td>Play / Pause</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>→</kbd></td>
+                            <td>Next track</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>←</kbd></td>
+                            <td>Previous track</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>↑</kbd></td>
+                            <td>Volume up</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>↓</kbd></td>
+                            <td>Volume down</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>M</kbd></td>
+                            <td>Mute / Unmute</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>L</kbd></td>
+                            <td>Like / Unlike</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>S</kbd></td>
+                            <td>Toggle shuffle</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>R</kbd></td>
+                            <td>Cycle repeat</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>?</kbd></td>
+                            <td>Show shortcuts</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button id="closeShortcuts" class="btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+</body>
+
+</html>

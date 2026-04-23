@@ -1,0 +1,27 @@
+{
+  "name": "sakayori-music-web",
+  "version": "1.0.0",
+  "description": "SakayoriMusic — Web port (Node.js). YouTube Music client with streaming, lyrics, queue, and keyboard shortcuts.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "youtube-music",
+    "music",
+    "streaming",
+    "lyrics",
+    "sakayori"
+  ],
+  "author": "Sakayori Studio",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.16",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "ytmusic-api": "^5.3.0"
+  }
+}
