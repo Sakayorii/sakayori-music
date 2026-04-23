@@ -1252,9 +1252,15 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .fp-panel.hidden {
-    transform: translateY(110%);
+    /* Use visibility to fully suppress events + paint while keeping the
+       slide-up animation. translateY(120%) on its own wasn't enough on
+       short viewports where the panel header was still bleeding through. */
+    transform: translateY(120%);
+    visibility: hidden;
+    opacity: 0;
     pointer-events: none;
 }
+
 
 .fp-panel-header {
     display: flex;

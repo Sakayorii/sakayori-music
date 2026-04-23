@@ -1152,10 +1152,15 @@ lyricsSourceSelect.addEventListener("change", (e) => {
 // =========================================================================
 function mediaEl() { return State.mode === "video" ? video : audio; }
 
-async function playQueue(queue, startIndex) {
+async function playQueue(queue, startIndex, opts = {}) {
     State.queue = queue.slice();
     State.queueIndex = startIndex;
     await playCurrent();
+
+    // Auto-open the fullscreen "Now Playing" screen when the user actively
+    // chose a song (the default).  Pass { openFullscreen: false } from
+    // background flows like queue-extension or shuffle-mid-playback.
+    if (opts.openFullscreen !== false) openFullPlayer();
 
     const cur = State.queue[State.queueIndex];
     if (cur?.videoId) {
@@ -1167,6 +1172,7 @@ async function playQueue(queue, startIndex) {
         }).catch(() => { });
     }
 }
+
 
 async function playCurrent() {
     ensureAudioGraph();
