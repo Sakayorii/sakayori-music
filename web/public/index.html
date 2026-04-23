@@ -12,7 +12,9 @@
 
 <body>
     <div id="app">
-        <!-- Sidebar -->
+        <!-- ============================================================== -->
+        <!-- Sidebar                                                       -->
+        <!-- ============================================================== -->
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-logo"></div>
@@ -23,31 +25,34 @@
             </div>
 
             <nav class="nav">
-                <button class="nav-item active" data-view="home">
-                    <span class="ico">🏠</span> Home
-                </button>
-                <button class="nav-item" data-view="search">
-                    <span class="ico">🔎</span> Search
-                </button>
-                <button class="nav-item" data-view="queue">
-                    <span class="ico">📜</span> Queue
-                </button>
-                <button class="nav-item" data-view="library">
-                    <span class="ico">⭐</span> Liked
-                </button>
-                <button class="nav-item" data-view="shortcuts">
-                    <span class="ico">⌨️</span> Shortcuts
-                </button>
+                <a class="nav-item" href="#/home"><span class="ico">🏠</span> Home</a>
+                <a class="nav-item" href="#/search"><span class="ico">🔎</span> Search</a>
+                <a class="nav-item" href="#/library"><span class="ico">⭐</span> Liked</a>
+                <a class="nav-item" href="#/recent"><span class="ico">🕘</span> Recently Played</a>
+                <a class="nav-item" href="#/playlists"><span class="ico">📚</span> My Playlists</a>
             </nav>
 
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Playlists</div>
+                <div id="sidebarPlaylists" class="sidebar-playlists"></div>
+                <button id="newPlaylistBtn" class="link-btn">+ New playlist</button>
+            </div>
+
             <div class="sidebar-footer">
-                <small>YouTube Music · LRCLIB Lyrics</small>
+                <a href="#/settings" class="footer-link">⚙️ Settings</a>
+                <a href="#/shortcuts" class="footer-link">⌨️ Shortcuts</a>
             </div>
         </aside>
 
-        <!-- Main -->
+        <!-- ============================================================== -->
+        <!-- Main                                                           -->
+        <!-- ============================================================== -->
         <main class="main">
             <header class="topbar">
+                <div class="topbar-nav">
+                    <button id="backBtn" class="icon-btn" title="Back">‹</button>
+                    <button id="fwdBtn" class="icon-btn" title="Forward">›</button>
+                </div>
                 <form id="searchForm" class="searchbar">
                     <input id="searchInput" type="search" placeholder="Search songs, videos, albums, artists..."
                         autocomplete="off" />
@@ -58,14 +63,16 @@
                         <option value="artists">Artists</option>
                         <option value="playlists">Playlists</option>
                     </select>
-                    <button type="submit">Search</button>
+                    <div id="suggestList" class="suggest hidden"></div>
                 </form>
             </header>
 
             <section class="view" id="view"></section>
         </main>
 
-        <!-- Mini-player bar (tap to expand) -->
+        <!-- ============================================================== -->
+        <!-- Mini-player                                                    -->
+        <!-- ============================================================== -->
         <footer class="player" id="miniPlayer">
             <div class="np-info" id="npClickArea">
                 <img id="npArt" alt="" />
@@ -86,23 +93,28 @@
                 </div>
                 <div class="seek-row">
                     <span id="curTime" class="time">0:00</span>
-                    <input id="seek" type="range" min="0" max="1000" value="0" />
+                    <div class="seek-wrap">
+                        <input id="seek" type="range" min="0" max="1000" value="0" />
+                        <div id="bufferBar" class="buffer-bar"></div>
+                    </div>
                     <span id="durTime" class="time">0:00</span>
                 </div>
             </div>
 
             <div class="np-extras">
+                <button id="videoModeBtn" class="icon-btn" title="Video mode (V)">🎬</button>
                 <button id="muteBtn" class="icon-btn" title="Mute (M)">🔊</button>
                 <input id="vol" type="range" min="0" max="100" value="80" />
-                <button id="expandBtn" class="icon-btn" title="Open fullscreen">⛶</button>
+                <button id="expandBtn" class="icon-btn" title="Open fullscreen (F)">⛶</button>
             </div>
 
+            <!-- These two stay live; only one is used at a time, the other is muted. -->
             <audio id="audio" preload="auto" crossorigin="anonymous"></audio>
         </footer>
 
-        <!-- =================================================================== -->
-        <!-- Fullscreen "Now Playing" — port of FullscreenPlayer.kt              -->
-        <!-- =================================================================== -->
+        <!-- ============================================================== -->
+        <!-- Fullscreen Now Playing                                         -->
+        <!-- ============================================================== -->
         <section id="fullPlayer" class="full-player hidden" aria-hidden="true">
             <div class="fp-backdrop" id="fpBackdrop"></div>
             <div class="fp-overlay"></div>
@@ -117,23 +129,32 @@
             </header>
 
             <div class="fp-body">
-                <!-- Vinyl disc with album-art center -->
-                <div class="vinyl-wrap">
-                    <div class="vinyl" id="vinyl">
-                        <div class="vinyl-grooves"></div>
-                        <img id="vinylArt" alt="" />
-                        <div class="vinyl-center"></div>
+                <!-- Stage: switches between vinyl / video / visualizer -->
+                <div class="fp-stage" id="fpStage">
+                    <!-- Vinyl disc -->
+                    <div class="vinyl-wrap" id="vinylWrap">
+                        <div class="vinyl" id="vinyl">
+                            <div class="vinyl-grooves"></div>
+                            <img id="vinylArt" alt="" />
+                            <div class="vinyl-center"></div>
+                        </div>
+                        <div class="tonearm" id="tonearm">
+                            <div class="tonearm-pivot"></div>
+                            <div class="tonearm-stick"></div>
+                            <div class="tonearm-head"></div>
+                        </div>
                     </div>
-                    <!-- Tonearm -->
-                    <div class="tonearm" id="tonearm">
-                        <div class="tonearm-pivot"></div>
-                        <div class="tonearm-stick"></div>
-                        <div class="tonearm-head"></div>
-                    </div>
+
+                    <!-- Video element (hidden by default) -->
+                    <video id="video" class="fp-video hidden" playsinline preload="metadata"
+                        crossorigin="anonymous"></video>
+
+                    <!-- Audio visualizer canvas (hidden by default) -->
+                    <canvas id="visualizer" class="fp-visualizer hidden"></canvas>
                 </div>
 
                 <div class="fp-meta">
-                    <div class="fp-title marquee" id="fpTitle">Nothing playing</div>
+                    <div class="fp-title" id="fpTitle">Nothing playing</div>
                     <div class="fp-artist" id="fpArtist"></div>
                 </div>
 
@@ -157,83 +178,53 @@
                     <button class="fp-action" id="fpLike">♡ <span>Like</span></button>
                     <button class="fp-action" id="fpLyricsToggle">🎤 <span>Lyrics</span></button>
                     <button class="fp-action" id="fpQueue">📜 <span>Queue</span></button>
+                    <button class="fp-action" id="fpVideoToggle">🎬 <span>Video</span></button>
+                    <button class="fp-action" id="fpVizToggle">📊 <span>Visualizer</span></button>
                 </div>
 
-                <!-- Slide-up lyrics panel -->
-                <div class="fp-lyrics hidden" id="fpLyrics">
-                    <div class="fp-lyrics-inner" id="fpLyricsInner">
-                        <div class="empty">Loading lyrics…</div>
+                <!-- Lyrics panel -->
+                <div class="fp-panel hidden" id="fpLyrics">
+                    <div class="fp-panel-header">
+                        <h3>Lyrics</h3>
+                        <select id="lyricsSourceSelect">
+                            <option value="auto">Auto (LRCLIB → YT)</option>
+                            <option value="lrclib">LRCLIB only</option>
+                            <option value="youtube">YouTube subtitles</option>
+                        </select>
+                        <button class="fp-icon" id="fpLyricsClose">✕</button>
+                    </div>
+                    <div class="fp-panel-inner" id="fpLyricsInner">
+                        <div class="empty">Select a song to load lyrics.</div>
                     </div>
                 </div>
 
-                <!-- Slide-up queue panel -->
-                <div class="fp-queue hidden" id="fpQueuePanel">
-                    <div class="fp-queue-header">
+                <!-- Queue panel -->
+                <div class="fp-panel hidden" id="fpQueuePanel">
+                    <div class="fp-panel-header">
                         <h3>Up Next</h3>
+                        <button id="clearQueueBtn" class="link-btn">Clear</button>
                         <button class="fp-icon" id="fpQueueClose">✕</button>
                     </div>
-                    <div class="fp-queue-list" id="fpQueueList"></div>
+                    <div class="fp-panel-inner" id="fpQueueList"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Toast -->
+        <!-- ============================================================== -->
+        <!-- Context Menu                                                   -->
+        <!-- ============================================================== -->
+        <div id="ctxMenu" class="ctx-menu hidden"></div>
+
+        <!-- ============================================================== -->
+        <!-- Toast                                                          -->
+        <!-- ============================================================== -->
         <div id="toast" class="toast hidden"></div>
 
-        <!-- Shortcuts modal -->
-        <div id="shortcutsModal" class="modal hidden">
-            <div class="modal-card">
-                <h2>Keyboard Shortcuts</h2>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td><kbd>Space</kbd></td>
-                            <td>Play / Pause</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>→</kbd></td>
-                            <td>Next track</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>←</kbd></td>
-                            <td>Previous track</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>↑</kbd></td>
-                            <td>Volume up</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>↓</kbd></td>
-                            <td>Volume down</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>M</kbd></td>
-                            <td>Mute / Unmute</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>L</kbd></td>
-                            <td>Like / Unlike</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>S</kbd></td>
-                            <td>Toggle shuffle</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>R</kbd></td>
-                            <td>Cycle repeat</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>F</kbd></td>
-                            <td>Toggle fullscreen player</td>
-                        </tr>
-                        <tr>
-                            <td><kbd>?</kbd></td>
-                            <td>Show shortcuts</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button id="closeShortcuts" class="btn">Close</button>
-            </div>
+        <!-- ============================================================== -->
+        <!-- Modal (generic)                                                -->
+        <!-- ============================================================== -->
+        <div id="modal" class="modal hidden">
+            <div class="modal-card" id="modalCard"></div>
         </div>
     </div>
 
