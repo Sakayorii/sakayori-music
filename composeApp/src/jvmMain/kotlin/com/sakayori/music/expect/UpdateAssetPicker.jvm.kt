@@ -7,7 +7,6 @@ import java.util.Locale
 actual fun pickUpdateAssetName(versionTag: String): List<String> {
     val version = versionTag.removePrefix("v")
     val os = System.getProperty("os.name", "").lowercase(Locale.ROOT)
-    val arch = System.getProperty("os.arch", "").lowercase(Locale.ROOT)
     return when {
         os.contains("win") -> listOf(
             "SakayoriMusic-$version.msi",
@@ -49,32 +48,49 @@ actual fun installUpdateAsset(filePath: String) {
                 when {
                     path.endsWith(".msi", ignoreCase = true) -> {
                         val logPath = File(file.parentFile, "install-${System.currentTimeMillis()}.log").absolutePath
+                        val updatesDir = file.parentFile.absolutePath
                         val cmd = buildString {
-                            append("Start-Sleep -Seconds 2; ")
-                            append("\$procs = Get-Process -Name 'SakayoriMusic' -ErrorAction SilentlyContinue; ")
-                            append("if (\$procs) { \$procs | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2 }; ")
-                            append("Start-Process msiexec -ArgumentList '/i','\"$path\"','/passive','/norestart','MSIINSTALLPERUSER=1','ALLUSERS=\"\"','/L*v','\"$logPath\"' -Wait; ")
-                            append("\$candidate = @(\"\$env:LOCALAPPDATA\\Programs\\SakayoriMusic\\SakayoriMusic.exe\",\"\$env:ProgramFiles\\SakayoriMusic\\SakayoriMusic.exe\") | Where-Object { Test-Path \$_ } | Select-Object -First 1; ")
+                            append("\$perUserKeys = Get-ChildItem 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall' -ErrorAction SilentlyContinue; ")
+                            append("foreach (\$k in \$perUserKeys) { ")
+                            append("\$pr = Get-ItemProperty \$k.PSPath -ErrorAction SilentlyContinue; ")
+                            append("if (\$pr.DisplayName -like '*SakayoriMusic*' -and \$pr.UninstallString -match '\\{[0-9A-Fa-f\\-]+\\}') { ")
+                            append("Start-Process msiexec -ArgumentList '/x',\$matches[0],'/qn','/norestart' -Wait -NoNewWindow -ErrorAction SilentlyContinue ")
+                            append("} }; ")
+                            append("if (Test-Path \"\$env:LOCALAPPDATA\\Programs\\SakayoriMusic\") { Remove-Item -Recurse -Force \"\$env:LOCALAPPDATA\\Programs\\SakayoriMusic\" -ErrorAction SilentlyContinue }; ")
+                            append("if (Test-Path \"\$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs\\SakayoriMusic\") { Remove-Item -Recurse -Force \"\$env:APPDATA\\Microsoft\\Windows\\Start Menu\\Programs\\SakayoriMusic\" -ErrorAction SilentlyContinue }; ")
+                            append("\$p = Start-Process msiexec -ArgumentList '/i','\"$path\"','/qn','/norestart','MSIRMSHUTDOWN=2','/L*v','\"$logPath\"' -Verb RunAs -PassThru; ")
+                            append("\$p.WaitForExit(240000) | Out-Null; ")
+                            append("Start-Sleep -Seconds 1; ")
+                            append("Get-Process -Name 'SakayoriMusic' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; ")
+                            append("Start-Sleep -Seconds 1; ")
+                            append("if (\$p.ExitCode -eq 0) { Remove-Item -Path '$path' -Force -ErrorAction SilentlyContinue; Remove-Item -Path '$logPath' -Force -ErrorAction SilentlyContinue; Get-ChildItem -Path '$updatesDir' -Filter 'install-*.log' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue }; ")
+                            append("\$candidate = @(\"\$env:ProgramFiles\\SakayoriMusic\\SakayoriMusic.exe\",\"\$env:LOCALAPPDATA\\Programs\\SakayoriMusic\\SakayoriMusic.exe\") | Where-Object { Test-Path \$_ } | Select-Object -First 1; ")
                             append("if (\$candidate) { Start-Process -FilePath \$candidate }")
                         }
                         ProcessBuilder(
                             "powershell",
                             "-WindowStyle", "Hidden",
                             "-NoProfile",
+                            "-ExecutionPolicy", "Bypass",
                             "-Command", cmd,
                         ).start()
                     }
                     path.endsWith(".exe", ignoreCase = true) -> {
                         val cmd = buildString {
-                            append("Start-Sleep -Seconds 2; ")
-                            append("\$procs = Get-Process -Name 'SakayoriMusic' -ErrorAction SilentlyContinue; ")
-                            append("if (\$procs) { \$procs | Stop-Process -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2 }; ")
-                            append("Start-Process -FilePath '$path'")
+                            append("\$p = Start-Process -FilePath '$path' -ArgumentList '/quiet','/norestart' -Verb RunAs -PassThru; ")
+                            append("\$p.WaitForExit(240000) | Out-Null; ")
+                            append("Start-Sleep -Seconds 1; ")
+                            append("Get-Process -Name 'SakayoriMusic' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; ")
+                            append("Start-Sleep -Seconds 1; ")
+                            append("if (\$p.ExitCode -eq 0) { Remove-Item -Path '$path' -Force -ErrorAction SilentlyContinue }; ")
+                            append("\$candidate = @(\"\$env:ProgramFiles\\SakayoriMusic\\SakayoriMusic.exe\",\"\$env:LOCALAPPDATA\\Programs\\SakayoriMusic\\SakayoriMusic.exe\") | Where-Object { Test-Path \$_ } | Select-Object -First 1; ")
+                            append("if (\$candidate) { Start-Process -FilePath \$candidate }")
                         }
                         ProcessBuilder(
                             "powershell",
                             "-WindowStyle", "Hidden",
                             "-NoProfile",
+                            "-ExecutionPolicy", "Bypass",
                             "-Command", cmd,
                         ).start()
                     }
@@ -89,9 +105,9 @@ actual fun installUpdateAsset(filePath: String) {
             os.contains("nux") || os.contains("nix") -> {
                 val cmd = when {
                     path.endsWith(".deb", ignoreCase = true) ->
-                        arrayOf("bash", "-lc", "pkexec apt-get install -y '$path' && sleep 1 && pkill -f 'SakayoriMusic'")
+                        arrayOf("bash", "-lc", "pkexec apt-get install -y '$path' && rm -f '$path' && sleep 1 && pkill -f 'SakayoriMusic'")
                     path.endsWith(".rpm", ignoreCase = true) ->
-                        arrayOf("bash", "-lc", "pkexec dnf install -y '$path' && sleep 1 && pkill -f 'SakayoriMusic'")
+                        arrayOf("bash", "-lc", "pkexec dnf install -y '$path' && rm -f '$path' && sleep 1 && pkill -f 'SakayoriMusic'")
                     else ->
                         arrayOf("xdg-open", path)
                 }
@@ -108,7 +124,7 @@ actual fun installUpdateAsset(filePath: String) {
         return
     }
     kotlin.concurrent.thread(name = "UpdateInstallLock-Timeout", isDaemon = true) {
-        Thread.sleep(90_000)
+        Thread.sleep(300_000)
         com.sakayori.music.update.UpdateInstallLock.end()
     }
 }
