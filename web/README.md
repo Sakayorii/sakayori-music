@@ -55,6 +55,35 @@ same keyboard shortcuts.
 
   If `yt-dlp` lives somewhere weird, set `YT_DLP=/path/to/yt-dlp` before running the server.
 
+### YouTube cookies (recommended)
+
+YouTube increasingly throws **"Sign in to confirm you're not a bot"** at
+servers that aren't logged in.  To bypass that, give yt-dlp some cookies
+from a logged-in browser session.  You have three options (pick one):
+
+1. **Drop a cookies.txt file in `web/`** — the server auto-detects
+   `cookies.txt`, `youtube-cookies.txt`, or `yt-cookies.txt`.  No env vars
+   needed.  The repo's `.gitignore` already excludes these so you won't
+   accidentally commit your login.
+
+2. **Point at a file explicitly** with the env var:
+   ```bash
+   YT_COOKIES=/path/to/cookies.txt npm start
+   ```
+
+3. **Pull cookies live from your installed browser** (no file needed):
+   ```bash
+   YT_COOKIES_BROWSER=chrome npm start
+   # or: firefox / edge / brave / vivaldi / safari / opera / chromium
+   ```
+   Note: most browsers must be **closed** while yt-dlp reads the cookie DB.
+
+To export a cookies.txt: install the
+["Get cookies.txt LOCALLY"](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
+extension (or any Netscape cookies exporter), open <https://www.youtube.com>
+while logged in, and save the result as `web/cookies.txt`.
+
+
 ## Run
 
 ```bash

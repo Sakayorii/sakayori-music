@@ -29,6 +29,43 @@ async function loadYTMusic() {
 
 const YT_DLP = process.env.YT_DLP || "yt-dlp";
 
+// Optional auth — points yt-dlp at either a Netscape-format cookies.txt file
+// (`YT_COOKIES=/path/to/cookies.txt`) or at a browser to extract cookies live
+// (`YT_COOKIES_BROWSER=chrome` / firefox / edge / brave / vivaldi / safari).
+//
+// Setting either lets us bypass YouTube's "Sign in to confirm you're not a
+// bot" anti-scrape challenge that triggers from server IPs.  See
+// https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp
+const YT_COOKIES = process.env.YT_COOKIES || "";
+const YT_COOKIES_BROWSER = process.env.YT_COOKIES_BROWSER || "";
+
+function authArgs() {
+    const args = [];
+    if (YT_COOKIES) args.push("--cookies", YT_COOKIES);
+    else if (YT_COOKIES_BROWSER) args.push("--cookies-from-browser", YT_COOKIES_BROWSER);
+    return args;
+}
+
+// Auto-detect a cookies.txt file in the web/ folder so users can just drop
+// one there without setting env vars.
+(function autoDetectCookies() {
+    if (YT_COOKIES || YT_COOKIES_BROWSER) return;
+    const candidates = [
+        path.join(__dirname, "cookies.txt"),
+        path.join(__dirname, "youtube-cookies.txt"),
+        path.join(__dirname, "yt-cookies.txt"),
+    ];
+    for (const c of candidates) {
+        try {
+            if (fs.existsSync(c)) {
+                process.env.YT_COOKIES = c;
+                console.log(`[cookies] using ${c}`);
+                return;
+            }
+        } catch { /* noop */ }
+    }
+})();
+
 function ytDlpResolveAudioUrl(videoId) {
     return new Promise((resolve, reject) => {
         const args = [
@@ -37,6 +74,7 @@ function ytDlpResolveAudioUrl(videoId) {
             "-f", "bestaudio[ext=m4a]/bestaudio/best",
             "-g",
             "--no-playlist",
+            ...authArgs(),
             `https://www.youtube.com/watch?v=${videoId}`,
         ];
         const p = spawn(YT_DLP, args, { windowsHide: true });
@@ -62,10 +100,10 @@ function ytDlpResolveVideoUrl(videoId) {
         const args = [
             "-q",
             "--no-warnings",
-            // Prefer pre-muxed mp4 with audio so we don't need ffmpeg in-browser.
             "-f", "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best",
             "-g",
             "--no-playlist",
+            ...authArgs(),
             `https://www.youtube.com/watch?v=${videoId}`,
         ];
         const p = spawn(YT_DLP, args, { windowsHide: true });
@@ -82,6 +120,7 @@ function ytDlpResolveVideoUrl(videoId) {
         });
     });
 }
+
 
 
 // Fetch YouTube auto-generated captions in a chosen language as VTT text.
@@ -103,8 +142,10 @@ function ytDlpFetchSubs(videoId, lang = "en") {
             "--no-warnings",
             "--no-playlist",
             "-q",
+            ...authArgs(),
             `https://www.youtube.com/watch?v=${videoId}`,
         ];
+
         const p = spawn(YT_DLP, args, { windowsHide: true });
         p.on("error", () => resolve(null));
         p.on("close", () => {
