@@ -64,5 +64,3 @@ sentry.properties
 .claude/
 bin/
 __pycache__/
-
-/node_modules/
