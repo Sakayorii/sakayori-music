@@ -4,6 +4,7 @@ package com.sakayori.data.mediaservice
 
 import com.sakayori.domain.data.player.GenericMediaItem
 import com.sakayori.domain.data.player.GenericPlaybackParameters
+import com.sakayori.domain.data.player.PlayerError
 import com.sakayori.domain.mediaservice.player.MediaPlayerInterface
 import com.sakayori.domain.mediaservice.player.MediaPlayerListener
 import platform.AVFAudio.AVAudioSession
@@ -12,6 +13,7 @@ import platform.AVFAudio.setActive
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
+import platform.AVFoundation.AVPlayerItemFailedToPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPaused
@@ -42,10 +44,51 @@ internal class AVPlayerMediaPlayerInterface : MediaPlayerInterface {
     private var playbackParametersValue: GenericPlaybackParameters = GenericPlaybackParameters.DEFAULT
     private var volumeValue: Float = 1.0f
     private var skipSilenceEnabledValue: Boolean = false
+    private val notificationTokens = mutableListOf<platform.darwin.NSObjectProtocol>()
 
     init {
         setupAudioSession()
         observeTrackEnd()
+        observeInterruptions()
+        observeRouteChanges()
+        observePlaybackFailures()
+    }
+
+    private fun observePlaybackFailures() {
+        val token = NSNotificationCenter.defaultCenter.addObserverForName(
+            name = AVPlayerItemFailedToPlayToEndTimeNotification,
+            `object` = null,
+            queue = NSOperationQueue.mainQueue,
+        ) { note ->
+            val info = note?.userInfo
+            val error = info?.get("AVPlayerItemFailedToPlayToEndTimeErrorKey")
+            val errorMessage = error?.toString() ?: "AVPlayer failed to play to end"
+            listeners.toList().forEach {
+                it.onPlayerError(
+                    PlayerError(
+                        errorCode = -1,
+                        errorCodeName = "IOS_PLAYBACK_FAILED",
+                        message = errorMessage,
+                    ),
+                )
+            }
+        }
+        notificationTokens.add(token)
+    }
+
+    private fun observeRouteChanges() {
+        val token = NSNotificationCenter.defaultCenter.addObserverForName(
+            name = platform.AVFAudio.AVAudioSessionRouteChangeNotification,
+            `object` = null,
+            queue = NSOperationQueue.mainQueue,
+        ) { note ->
+            val info = note?.userInfo ?: return@addObserverForName
+            val reasonRaw = (info[platform.AVFAudio.AVAudioSessionRouteChangeReasonKey] as? Number)?.toLong() ?: return@addObserverForName
+            if (reasonRaw == platform.AVFAudio.AVAudioSessionRouteChangeReasonOldDeviceUnavailable.toLong()) {
+                if (isPlaying) pause()
+            }
+        }
+        notificationTokens.add(token)
     }
 
     private fun setupAudioSession() {
@@ -58,7 +101,7 @@ internal class AVPlayerMediaPlayerInterface : MediaPlayerInterface {
     }
 
     private fun observeTrackEnd() {
-        NSNotificationCenter.defaultCenter.addObserverForName(
+        val token = NSNotificationCenter.defaultCenter.addObserverForName(
             name = AVPlayerItemDidPlayToEndTimeNotification,
             `object` = null,
             queue = NSOperationQueue.mainQueue,
@@ -66,11 +109,61 @@ internal class AVPlayerMediaPlayerInterface : MediaPlayerInterface {
             listeners.toList().forEach { listener ->
                 listener.onPlaybackStateChanged(STATE_ENDED)
             }
-            if (hasNextMediaItem()) {
-                seekToNext()
-                if (playWhenReadyValue) play()
+            when (repeatModeValue) {
+                REPEAT_MODE_ONE -> {
+                    seekTo(0L)
+                    if (playWhenReadyValue) play()
+                }
+                REPEAT_MODE_ALL -> {
+                    if (hasNextMediaItem()) {
+                        seekToNext()
+                    } else if (queue.isNotEmpty()) {
+                        currentIndex = 0
+                        loadItemAt(0)
+                    }
+                    if (playWhenReadyValue) play()
+                }
+                else -> {
+                    if (hasNextMediaItem()) {
+                        seekToNext()
+                        if (playWhenReadyValue) play()
+                    }
+                }
             }
         }
+        notificationTokens.add(token)
+    }
+
+    private var wasPlayingBeforeInterrupt: Boolean = false
+
+    private fun observeInterruptions() {
+        val token = NSNotificationCenter.defaultCenter.addObserverForName(
+            name = platform.AVFAudio.AVAudioSessionInterruptionNotification,
+            `object` = null,
+            queue = NSOperationQueue.mainQueue,
+        ) { note ->
+            val info = note?.userInfo ?: return@addObserverForName
+            val typeRaw = (info[platform.AVFAudio.AVAudioSessionInterruptionTypeKey] as? Number)?.toLong() ?: return@addObserverForName
+            when (typeRaw) {
+                platform.AVFAudio.AVAudioSessionInterruptionTypeBegan.toLong() -> {
+                    wasPlayingBeforeInterrupt = isPlaying
+                    if (isPlaying) pause()
+                }
+                platform.AVFAudio.AVAudioSessionInterruptionTypeEnded.toLong() -> {
+                    val optionsRaw = (info[platform.AVFAudio.AVAudioSessionInterruptionOptionKey] as? Number)?.toLong() ?: 0L
+                    val shouldResume = optionsRaw and platform.AVFAudio.AVAudioSessionInterruptionOptionShouldResume.toLong() != 0L
+                    if (wasPlayingBeforeInterrupt && shouldResume) {
+                        try {
+                            AVAudioSession.sharedInstance().setActive(true, null)
+                        } catch (_: Throwable) {
+                        }
+                        play()
+                    }
+                    wasPlayingBeforeInterrupt = false
+                }
+            }
+        }
+        notificationTokens.add(token)
     }
 
     private fun loadItemAt(index: Int) {
@@ -325,6 +418,8 @@ internal class AVPlayerMediaPlayerInterface : MediaPlayerInterface {
     override fun release() {
         player.pause()
         player.replaceCurrentItemWithPlayerItem(null)
+        notificationTokens.forEach { NSNotificationCenter.defaultCenter.removeObserver(it) }
+        notificationTokens.clear()
         listeners.clear()
         queue.clear()
     }
@@ -334,5 +429,7 @@ internal class AVPlayerMediaPlayerInterface : MediaPlayerInterface {
         private const val STATE_BUFFERING = 2
         private const val STATE_READY = 3
         private const val STATE_ENDED = 4
+        private const val REPEAT_MODE_ONE = 1
+        private const val REPEAT_MODE_ALL = 2
     }
 }

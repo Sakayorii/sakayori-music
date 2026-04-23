@@ -3,6 +3,7 @@
 package com.sakayori.data.mediaservice
 
 import com.sakayori.domain.data.entities.NewFormatEntity
+import com.sakayori.domain.data.entities.SongEntity
 import com.sakayori.domain.data.model.browse.album.Track
 import com.sakayori.domain.data.model.mediaService.SponsorSkipSegments
 import com.sakayori.domain.data.player.GenericCommandButton
@@ -33,6 +34,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.cinterop.useContents
+import platform.Foundation.NSData
+import platform.Foundation.dataWithContentsOfURL
 import platform.MediaPlayer.MPMediaItemPropertyArtist
 import platform.MediaPlayer.MPMediaItemPropertyPlaybackDuration
 import platform.MediaPlayer.MPMediaItemPropertyTitle
@@ -110,6 +114,7 @@ internal class IosMediaPlayerHandler(
                 isPreviousAvailable = player.hasPreviousMediaItem(),
             )
             updateNowPlayingInfoMetadata(mediaItem)
+            syncRemoteCommandEnabled()
         }
 
         override fun onTimelineChanged(list: List<GenericMediaItem>, reason: String) {
@@ -117,6 +122,7 @@ internal class IosMediaPlayerHandler(
                 isNextAvailable = player.hasNextMediaItem(),
                 isPreviousAvailable = player.hasPreviousMediaItem(),
             )
+            syncRemoteCommandEnabled()
         }
 
         override fun onTracksChanged(tracks: GenericTracks) {}
@@ -159,6 +165,13 @@ internal class IosMediaPlayerHandler(
         setupRemoteCommandCenter()
     }
 
+    private data class RegisteredCommand(
+        val command: platform.MediaPlayer.MPRemoteCommand,
+        val token: Any?,
+    )
+
+    private val registeredCommands = mutableListOf<RegisteredCommand>()
+
     private fun setupRemoteCommandCenter() {
         val center = MPRemoteCommandCenter.sharedCommandCenter()
         center.playCommand.setEnabled(true)
@@ -166,27 +179,61 @@ internal class IosMediaPlayerHandler(
         center.nextTrackCommand.setEnabled(true)
         center.previousTrackCommand.setEnabled(true)
         center.togglePlayPauseCommand.setEnabled(true)
+        center.changePlaybackPositionCommand.setEnabled(true)
+        center.skipForwardCommand.setEnabled(true)
+        center.skipBackwardCommand.setEnabled(true)
+        center.skipForwardCommand.preferredIntervals = listOf(10.0)
+        center.skipBackwardCommand.preferredIntervals = listOf(10.0)
 
-        center.playCommand.addTargetWithHandler { _ ->
+        registeredCommands.add(RegisteredCommand(center.playCommand, center.playCommand.addTargetWithHandler { _ ->
             player.play()
             MPRemoteCommandHandlerStatusSuccess
-        }
-        center.pauseCommand.addTargetWithHandler { _ ->
+        }))
+        registeredCommands.add(RegisteredCommand(center.pauseCommand, center.pauseCommand.addTargetWithHandler { _ ->
             player.pause()
             MPRemoteCommandHandlerStatusSuccess
-        }
-        center.togglePlayPauseCommand.addTargetWithHandler { _ ->
+        }))
+        registeredCommands.add(RegisteredCommand(center.togglePlayPauseCommand, center.togglePlayPauseCommand.addTargetWithHandler { _ ->
             if (player.isPlaying) player.pause() else player.play()
             MPRemoteCommandHandlerStatusSuccess
-        }
-        center.nextTrackCommand.addTargetWithHandler { _ ->
+        }))
+        registeredCommands.add(RegisteredCommand(center.nextTrackCommand, center.nextTrackCommand.addTargetWithHandler { _ ->
             if (player.hasNextMediaItem()) player.seekToNext()
             MPRemoteCommandHandlerStatusSuccess
-        }
-        center.previousTrackCommand.addTargetWithHandler { _ ->
+        }))
+        registeredCommands.add(RegisteredCommand(center.previousTrackCommand, center.previousTrackCommand.addTargetWithHandler { _ ->
             if (player.hasPreviousMediaItem()) player.seekToPrevious()
             MPRemoteCommandHandlerStatusSuccess
+        }))
+        registeredCommands.add(RegisteredCommand(center.changePlaybackPositionCommand, center.changePlaybackPositionCommand.addTargetWithHandler { event ->
+            val e = event as? platform.MediaPlayer.MPChangePlaybackPositionCommandEvent
+                ?: return@addTargetWithHandler MPRemoteCommandHandlerStatusSuccess
+            val positionMs = (e.positionTime * 1000.0).toLong()
+            player.seekTo(positionMs)
+            MPRemoteCommandHandlerStatusSuccess
+        }))
+        registeredCommands.add(RegisteredCommand(center.skipForwardCommand, center.skipForwardCommand.addTargetWithHandler { _ ->
+            player.seekForward()
+            MPRemoteCommandHandlerStatusSuccess
+        }))
+        registeredCommands.add(RegisteredCommand(center.skipBackwardCommand, center.skipBackwardCommand.addTargetWithHandler { _ ->
+            player.seekBack()
+            MPRemoteCommandHandlerStatusSuccess
+        }))
+    }
+
+    private fun teardownRemoteCommandCenter() {
+        registeredCommands.forEach { reg ->
+            val token = reg.token ?: return@forEach
+            reg.command.removeTarget(token)
         }
+        registeredCommands.clear()
+    }
+
+    private fun syncRemoteCommandEnabled() {
+        val center = MPRemoteCommandCenter.sharedCommandCenter()
+        center.nextTrackCommand.setEnabled(player.hasNextMediaItem())
+        center.previousTrackCommand.setEnabled(player.hasPreviousMediaItem())
     }
 
     private fun updateNowPlayingInfoMetadata(mediaItem: GenericMediaItem?) {
@@ -195,13 +242,36 @@ internal class IosMediaPlayerHandler(
             return
         }
         val info = mutableMapOf<Any?, Any?>(
-            MPMediaItemPropertyTitle to (mediaItem.metadata.title ?: ""),
-            MPMediaItemPropertyArtist to (mediaItem.metadata.artist ?: ""),
-            MPMediaItemPropertyPlaybackDuration to (player.duration / 1000.0),
+            platform.MediaPlayer.MPMediaItemPropertyTitle to (mediaItem.metadata.title ?: ""),
+            platform.MediaPlayer.MPMediaItemPropertyArtist to (mediaItem.metadata.artist ?: ""),
+            platform.MediaPlayer.MPMediaItemPropertyPlaybackDuration to (player.duration / 1000.0),
             MPNowPlayingInfoPropertyElapsedPlaybackTime to (player.currentPosition / 1000.0),
             MPNowPlayingInfoPropertyPlaybackRate to if (player.isPlaying) 1.0 else 0.0,
         )
         MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = info.toMap()
+        mediaItem.metadata.artworkUri?.let { artworkUrl ->
+            scope.launch {
+                loadArtworkIntoNowPlaying(artworkUrl)
+            }
+        }
+    }
+
+    private suspend fun loadArtworkIntoNowPlaying(artworkUrl: String) {
+        val image = try {
+            val nsUrl = platform.Foundation.NSURL.URLWithString(artworkUrl) ?: return
+            val data = NSData.dataWithContentsOfURL(nsUrl) ?: return
+            platform.UIKit.UIImage.imageWithData(data)
+        } catch (_: Throwable) {
+            null
+        } ?: return
+        val size = image.size
+        val artwork = size.useContents {
+            platform.MediaPlayer.MPMediaItemArtwork(boundsSize = platform.CoreGraphics.CGSizeMake(width, height)) { _ -> image }
+        }
+        val center = MPNowPlayingInfoCenter.defaultCenter()
+        val info = (center.nowPlayingInfo ?: return).toMutableMap()
+        info[platform.MediaPlayer.MPMediaItemPropertyArtwork] = artwork
+        center.nowPlayingInfo = info.toMap()
     }
 
     private fun updateNowPlayingInfoRate(isPlaying: Boolean) {
@@ -314,6 +384,15 @@ internal class IosMediaPlayerHandler(
 
     override fun shufflePlaylist(randomTrackIndex: Int) {
         player.shuffleModeEnabled = true
+        val items = player.getCurrentMediaTimeLine().toMutableList()
+        if (items.size <= 1) return
+        val pinIndex = randomTrackIndex.coerceIn(0, items.size - 1)
+        val pinned = items.removeAt(pinIndex)
+        items.shuffle()
+        items.add(0, pinned)
+        player.clearMediaItems()
+        items.forEach { player.addMediaItem(it) }
+        player.seekTo(0, 0L)
     }
 
     override fun loadMore() {}
@@ -351,6 +430,18 @@ internal class IosMediaPlayerHandler(
                 artist = artists?.joinToString(", ") { it.name },
                 albumTitle = album?.name,
                 artworkUri = thumbnails?.lastOrNull()?.url,
+            ),
+        )
+
+    private fun SongEntity.toGenericMediaItem(streamUrl: String): GenericMediaItem =
+        GenericMediaItem(
+            mediaId = videoId,
+            uri = streamUrl,
+            metadata = GenericMediaMetadata(
+                title = title,
+                artist = artistName?.joinToString(", "),
+                albumTitle = albumName,
+                artworkUri = thumbnails,
             ),
         )
 
@@ -418,12 +509,23 @@ internal class IosMediaPlayerHandler(
     }
 
     override suspend fun <T> loadMediaItem(anyTrack: T, type: String, index: Int?) {
-        val track = anyTrack as? Track ?: return
-        val streamUrl = resolveStreamUrl(track.videoId) ?: run {
-            showToast(ToastType.PlayerError("Could not resolve stream URL for ${track.title}"))
-            return
+        val mediaItem: GenericMediaItem = when (anyTrack) {
+            is Track -> {
+                val streamUrl = resolveStreamUrl(anyTrack.videoId) ?: run {
+                    showToast(ToastType.PlayerError("Could not resolve stream URL for ${anyTrack.title}"))
+                    return
+                }
+                anyTrack.toGenericMediaItem(streamUrl)
+            }
+            is SongEntity -> {
+                val streamUrl = resolveStreamUrl(anyTrack.videoId) ?: run {
+                    showToast(ToastType.PlayerError("Could not resolve stream URL for ${anyTrack.title}"))
+                    return
+                }
+                anyTrack.toGenericMediaItem(streamUrl)
+            }
+            else -> return
         }
-        val mediaItem = track.toGenericMediaItem(streamUrl)
         player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
@@ -449,9 +551,29 @@ internal class IosMediaPlayerHandler(
         progressJob = null
     }
 
-    override fun startBufferedUpdate() {}
+    private var bufferedJob: Job? = null
 
-    override fun stopBufferedUpdate() {}
+    override fun startBufferedUpdate() {
+        bufferedJob?.cancel()
+        bufferedJob = scope.launch {
+            while (true) {
+                val dur = player.duration
+                val pct = player.bufferedPercentage
+                if (dur > 0 && pct in 0..99) {
+                    _simpleMediaState.value = SimpleMediaState.Loading(
+                        bufferedPercentage = pct,
+                        duration = dur,
+                    )
+                }
+                delay(750L)
+            }
+        }
+    }
+
+    override fun stopBufferedUpdate() {
+        bufferedJob?.cancel()
+        bufferedJob = null
+    }
 
     override fun mayBeNormalizeVolume() {}
 
@@ -466,6 +588,8 @@ internal class IosMediaPlayerHandler(
     override fun release() {
         progressJob?.cancel()
         sleepJob?.cancel()
+        bufferedJob?.cancel()
+        teardownRemoteCommandCenter()
         player.removeListener(playerListener)
         player.release()
         MPNowPlayingInfoCenter.defaultCenter().nowPlayingInfo = null
