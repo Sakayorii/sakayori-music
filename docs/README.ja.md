@@ -153,6 +153,13 @@ English, Tiếng Việt, Italiano, Deutsch, Русский, Türkçe, Suomi, Pol
       </a>
       <br /><sub>Co-Maintainer</sub>
     </td>
+    <td align="center">
+      <a href="https://github.com/giangnam0201">
+        <img src="https://github.com/giangnam0201.png" width="80" height="80" style="border-radius: 50%" alt="giangnam0201"/>
+        <br /><sub><b>giangnam0201</b></sub>
+      </a>
+      <br /><sub>Web Player 担当</sub>
+    </td>
   </tr>
 </table>
 

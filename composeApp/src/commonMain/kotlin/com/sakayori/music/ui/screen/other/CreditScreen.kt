@@ -217,6 +217,34 @@ fun CreditScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        Text(
+            text = stringResource(Res.string.contributors).uppercase(),
+            style = typo().labelMedium.copy(
+                letterSpacing = androidx.compose.ui.unit.TextUnit(1.5f, androidx.compose.ui.unit.TextUnitType.Sp),
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            ),
+            color = Color(0xFF00BCD4),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 25.dp, vertical = 4.dp),
+            textAlign = TextAlign.Start,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 25.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+        ) {
+            TeamMember(
+                username = "giangnam0201",
+                role = stringResource(Res.string.role_web_player_lead),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
             TextButton(
                 onClick = {
