@@ -12,9 +12,7 @@
 
 <body>
     <div id="app">
-        <!-- ============================================================== -->
-        <!-- Sidebar                                                       -->
-        <!-- ============================================================== -->
+
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-logo"></div>
@@ -44,9 +42,6 @@
             </div>
         </aside>
 
-        <!-- ============================================================== -->
-        <!-- Main                                                           -->
-        <!-- ============================================================== -->
         <main class="main">
             <header class="topbar">
                 <div class="topbar-nav">
@@ -70,9 +65,6 @@
             <section class="view" id="view"></section>
         </main>
 
-        <!-- ============================================================== -->
-        <!-- Mini-player                                                    -->
-        <!-- ============================================================== -->
         <footer class="player" id="miniPlayer">
             <div class="np-info" id="npClickArea">
                 <img id="npArt" alt="" />
@@ -108,13 +100,9 @@
                 <button id="expandBtn" class="icon-btn" title="Open fullscreen (F)">⛶</button>
             </div>
 
-            <!-- These two stay live; only one is used at a time, the other is muted. -->
             <audio id="audio" preload="auto" crossorigin="anonymous"></audio>
         </footer>
 
-        <!-- ============================================================== -->
-        <!-- Fullscreen Now Playing                                         -->
-        <!-- ============================================================== -->
         <section id="fullPlayer" class="full-player hidden" aria-hidden="true">
             <div class="fp-backdrop" id="fpBackdrop"></div>
             <div class="fp-overlay"></div>
@@ -129,9 +117,9 @@
             </header>
 
             <div class="fp-body">
-                <!-- Stage: switches between vinyl / video / visualizer -->
+
                 <div class="fp-stage" id="fpStage">
-                    <!-- Vinyl disc -->
+
                     <div class="vinyl-wrap" id="vinylWrap">
                         <div class="vinyl" id="vinyl">
                             <div class="vinyl-grooves"></div>
@@ -145,11 +133,9 @@
                         </div>
                     </div>
 
-                    <!-- Video element (hidden by default) -->
                     <video id="video" class="fp-video hidden" playsinline preload="metadata"
                         crossorigin="anonymous"></video>
 
-                    <!-- Audio visualizer canvas (hidden by default) -->
                     <canvas id="visualizer" class="fp-visualizer hidden"></canvas>
                 </div>
 
@@ -182,7 +168,6 @@
                     <button class="fp-action" id="fpVizToggle">📊 <span>Visualizer</span></button>
                 </div>
 
-                <!-- Lyrics panel -->
                 <div class="fp-panel hidden" id="fpLyrics">
                     <div class="fp-panel-header">
                         <h3>Lyrics</h3>
@@ -198,7 +183,6 @@
                     </div>
                 </div>
 
-                <!-- Queue panel -->
                 <div class="fp-panel hidden" id="fpQueuePanel">
                     <div class="fp-panel-header">
                         <h3>Up Next</h3>
@@ -210,19 +194,10 @@
             </div>
         </section>
 
-        <!-- ============================================================== -->
-        <!-- Context Menu                                                   -->
-        <!-- ============================================================== -->
         <div id="ctxMenu" class="ctx-menu hidden"></div>
 
-        <!-- ============================================================== -->
-        <!-- Toast                                                          -->
-        <!-- ============================================================== -->
         <div id="toast" class="toast hidden"></div>
 
-        <!-- ============================================================== -->
-        <!-- Modal (generic)                                                -->
-        <!-- ============================================================== -->
         <div id="modal" class="modal hidden">
             <div class="modal-card" id="modalCard"></div>
         </div>

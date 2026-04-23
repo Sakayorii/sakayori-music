@@ -1,181 +1,231 @@
-# SakayoriMusic — Web (Node.js port)
+# SakayoriMusic — Web Player
 
-A web port of the [SakayoriMusic](../README.md) Kotlin Multiplatform / Compose
-desktop & Android app, rewritten as a Node.js + Express backend with a
-vanilla-JS single-page frontend.
+A Node.js + Express port of [SakayoriMusic](../README.md) — runs the same
+listening experience as the Kotlin/Compose desktop & Android app inside a
+browser. Single-page frontend (vanilla JS), streams YouTube Music via
+`yt-dlp`, lyrics via LRCLIB + YouTube auto-captions.
 
-It keeps the spirit of the original Android UI: home shelves, mini-player,
-fullscreen "Now Playing" with a **spinning vinyl disc** (or video), blurred
-album-art backdrop, slide-up lyrics + queue panels, hero-style detail pages
-for albums / artists / playlists, local playlists, EQ + visualizer, and the
-same keyboard shortcuts.
+> **Web Player Lead:** [@giangnam0201](https://github.com/giangnam0201) — primary contributor and maintainer of this module.
 
-## Feature list
+---
 
-### UI
-- 🏠 **Home feed** with multiple shelves (Trending, Lo-fi, Workout, Anime OST, Jazz, K-Pop)
-- 🔎 **Search** with autocomplete suggestions (songs/videos/albums/artists/playlists)
-- 🎤 **Artist** pages with top songs + albums + singles
-- 💿 **Album / playlist** detail pages with hero header and Play All / Shuffle
-- 📚 **Local playlists** — create, rename, delete, drag-to-reorder, add-to/remove-from
-- ⭐ **Liked songs** persisted in `localStorage`
-- 🕘 **Recently played** auto-history (up to 200 tracks)
-- ⚙️ **Settings**: theme picker (5 colors + "from album art"), 3-band EQ, crossfade, sleep timer, lyrics source, visualizer style, backup / restore
-- ⌨️ **Keyboard shortcuts** matching the desktop app (Space, ←/→, ↑/↓, M, L, S, R, F, V, Esc, ?)
-- 📱 **Responsive** layout collapses sidebar on mobile
-
-### Player
-- 💿 **Spinning vinyl record** with album art at the center + swinging tonearm
-- 🌫️ **Blurred album-art backdrop** behind the fullscreen player
-- 🎬 **Video mode** — toggle to watch the YouTube video instead of just the audio (`/api/video/:videoId` proxy via yt-dlp)
-- 📊 **Audio visualizer** (bars / waveform / ring) using Web Audio AnalyserNode
-- 🎚️ **3-band Equalizer** (low / mid / high shelf+peaking BiQuad filters)
-- 🌗 **Crossfade** between tracks (0-10 s, via Web Audio gain ramp)
-- 🔀 **Shuffle / repeat all / repeat one**
-- ▶️ **Streaming** of any YouTube / YouTube Music video with HTTP Range so the seek bar works
-- 📜 **Queue** (slide-up panel) with auto-radio extension via YT Music's "up next", drag-to-reorder, and "Clear" button
-- 🎤 **Synced (LRC) lyrics** with auto-scrolling highlight, multi-source: **LRCLIB → YouTube auto-captions** (via yt-dlp)
-- 📻 **MediaSession API** integration — OS media keys, lock-screen controls, notification artwork
-- 🔁 **Buffer indicator** under the seek bar
-- 🌈 **Adaptive accent color** sampled from the album art
-
-### Niceties
-- Right-click / "⋯" **context menu** on every song with: Play Now / Add to Queue / Play Next / Like / Add to Playlist (with submenu) / Go to Album / Go to Artist / Open on YouTube
-- **Hash-based router** — back/forward buttons in the topbar work, and links are bookmarkable
-
-## Requirements
-
-- **Node 18+** (we use the global `fetch`)
-- **Python 3 + [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)** in your `PATH`
-  — the only reliable way to get a working audio/video URL from YouTube in 2026.
-
-  ```bash
-  pip install -U yt-dlp
-  ```
-
-  If `yt-dlp` lives somewhere weird, set `YT_DLP=/path/to/yt-dlp` before running the server.
-
-### YouTube cookies (recommended)
-
-YouTube increasingly throws **"Sign in to confirm you're not a bot"** at
-servers that aren't logged in.  To bypass that, give yt-dlp some cookies
-from a logged-in browser session.  Four options, in priority order:
-
-1. ⭐ **Drop a folder of cookies in `web/cookies/`** — the recommended
-   setup.  Throw in as many `.txt` files as you have, named whatever you
-   want (`account1.txt`, `burner.txt`, etc.).  The server **rotates**
-   through them automatically: when one starts getting "Sign in to
-   confirm" errors, it's marked dead and the next one is used for the rest
-   of the session.  When all of them die, the pool is reset.  Each file is
-   **auto-sanitized** — any prefix garbage (e.g. account-info headers from
-   "Simple Checker") is stripped and the proper Netscape header is
-   prepended, so you can paste raw cookie dumps without editing them.
-
-   ```
-   web/
-     cookies/
-       acct1.txt
-       acct2.txt
-       acct3-throwaway.txt
-       ...
-   ```
-
-   GET `/api/health` shows the current pool and which entries are
-   considered dead.  POST `/api/cookies/refresh` reloads the folder
-   without restarting the server (useful after dropping a new file in).
-
-2. **A single cookies.txt next to `web/`** — auto-detected if named
-   `cookies.txt`, `youtube-cookies.txt`, or `yt-cookies.txt`.
-
-3. **`YT_COOKIES=/full/path/to/cookies.txt`** env var (single file, no
-   rotation).
-
-4. **`YT_COOKIES_BROWSER=chrome`** env var pulls cookies live from your
-   installed browser (chrome / firefox / edge / brave / vivaldi / safari
-   / opera / chromium).  Most browsers must be **closed** while yt-dlp
-   reads the cookie DB.
-
-To export a cookies.txt: install the
-["Get cookies.txt LOCALLY"](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
-extension, open <https://www.youtube.com> while logged in, click the
-extension, save the file into `web/cookies/`.
-
-
-
-## Run
+## Quick Start
 
 ```bash
 cd web
 npm install
-npm start         # production
-npm run dev       # auto-reload via node --watch
+npm start
 ```
 
-Then open <http://localhost:3000>.
+Server binds to **`127.0.0.1:3000`** by default (localhost-only).
 
-## Architecture
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000)
+
+---
+
+## Configuration
+
+All via environment variables — no config file.
+
+| Env Var             | Default       | Purpose                                                      |
+| ------------------- | ------------- | ------------------------------------------------------------ |
+| `HOST`              | `127.0.0.1`   | Bind address. Set `0.0.0.0` to expose on LAN / behind tunnel |
+| `PORT`              | `3000`        | TCP port                                                     |
+| `YT_DLP`            | `yt-dlp`      | Path to yt-dlp binary (`PATH` lookup by default)             |
+| `YT_COOKIES`        | *(unset)*     | Single Netscape cookies.txt file path                        |
+| `YT_COOKIES_BROWSER`| *(unset)*     | Pull cookies from browser (`chrome`/`firefox`/`edge`/…)      |
+
+### Common setups
+
+**Local dev (default):**
+```bash
+npm start
+# → http://127.0.0.1:3000 (loopback only)
+```
+
+**Expose on LAN for phone testing:**
+```bash
+# PowerShell
+$env:HOST="0.0.0.0"; npm start
+
+# Bash
+HOST=0.0.0.0 npm start
+```
+
+**Behind Cloudflare Tunnel** (stays on `127.0.0.1:3000`, tunnel handles rest):
+```bash
+npm start
+# + separate cloudflared process mapping your-domain.dev → 127.0.0.1:3000
+```
+
+**Dev mode (auto-reload on save):**
+```bash
+npm run dev
+```
+
+---
+
+## Requirements
+
+- **Node 20+** (uses global `fetch`, `undici` Agent)
+- **Python 3 + yt-dlp** on `PATH`
+  ```bash
+  pip install -U yt-dlp
+  ```
+
+### YouTube cookies (highly recommended)
+
+YouTube increasingly blocks server IPs with *"Sign in to confirm you're not a bot"*. Supply cookies in priority order:
+
+1. **Drop multiple files in `web/cookies/`** (recommended) — auto-rotation with dead-cookie detection.
+   ```
+   web/cookies/
+     acct1.txt
+     acct2.txt
+     burner.txt
+   ```
+   - Each file is auto-sanitized (strips prefix garbage, enforces Netscape header)
+   - Server marks a cookie dead when it returns bot-challenge; falls back to next
+   - Pool resets when all dead
+   - `GET /api/health` shows pool status
+   - `POST /api/cookies/refresh` reloads folder without restart
+
+2. **Single `cookies.txt`, `youtube-cookies.txt`, or `yt-cookies.txt`** next to `web/` — auto-detected.
+
+3. **`YT_COOKIES=/path/to/cookies.txt`** — explicit single file.
+
+4. **`YT_COOKIES_BROWSER=chrome`** — live-read from installed browser. Browser must be **closed** during read.
+
+Export via [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) — log into youtube.com, click extension, save to `web/cookies/`.
+
+---
+
+## Project Structure
 
 ```
-              ┌────────────────────────────────────────┐
-   Browser →  │  /api/stream/:videoId  (audio mp4)    │
-              │  /api/video/:videoId   (video+audio mp4)
-              │      ↳ yt-dlp -g  → real URL          │   (cached 5 min)
-              │      ↳ fetch(url, Range:…)            │
-              │      ↳ pipe to <audio> / <video>      │
-              └────────────────────────────────────────┘
-
-              ┌────────────────────────────────────────┐
-   Browser →  │  /api/search /api/home /api/artist…   │  ← ytmusic-api
-              │  /api/lyrics  (LRCLIB + YT subs)      │  ← LRCLIB + yt-dlp
-              └────────────────────────────────────────┘
-
-      Browser-side audio chain:
-          <audio>/<video> → MediaElementSource
-              → BiQuad (low) → BiQuad (mid) → BiQuad (high)
-              → Gain (crossfade) → Analyser (viz) → Destination
+web/
+├── README.md           ← this file
+├── package.json        ← express, undici, lru-cache, ytmusic-api
+├── server.js           ← 900-line Express backend (API + streaming proxy)
+├── cookies/            ← (gitignored) multi-account cookie pool
+└── public/
+    ├── index.html      ← single SPA entry (hash-based router)
+    ├── app.js          ← 1700-line SPA controller + Web Audio pipeline
+    └── styles.css      ← 1700-line stylesheet (dark, Material-inspired)
 ```
 
-### Endpoints exposed by `server.js`
+The server is intentionally monolithic — one file, readable top-to-bottom, with section headers (`// === 0. Constants === //`, `// === 1. Cookie pool === //`, …). No bundler, no transpiler on the frontend — `app.js` is plain modern JS served as-is.
 
-| Method | Path                                       | Description                              |
-| ------ | ------------------------------------------ | ---------------------------------------- |
-| GET    | `/api/health`                              | Liveness probe                           |
-| GET    | `/api/home`                                | Curated home shelves                     |
-| GET    | `/api/search?q&type`                       | Search (`songs`/`videos`/`albums`/...)   |
-| GET    | `/api/suggest?q`                           | Autocomplete suggestions                 |
-| GET    | `/api/song/:videoId`                       | Track metadata                           |
-| GET    | `/api/up-next/:videoId`                    | Auto-generated radio queue               |
-| GET    | `/api/artist/:id`                          | Artist + top songs + albums + singles    |
-| GET    | `/api/album/:id`                           | Album contents                           |
-| GET    | `/api/playlist/:id`                        | Playlist contents                        |
-| GET    | `/api/stream/:videoId`                     | **Audio stream** (Range-aware proxy)     |
-| GET    | `/api/video/:videoId`                      | **Video stream** (combined-mp4)          |
-| GET    | `/api/lyrics?title&artist&album&duration&videoId&source` | LRCLIB + YouTube subs (synced + plain) |
+---
 
-## Mapping vs. the original KMP project
+## Features
 
-| SakayoriMusic (KMP)              | This web port                                |
-| -------------------------------- | -------------------------------------------- |
-| `kotlinYtmusicScraper` service   | `ytmusic-api` (search/album/artist/playlist) |
-| Media3 / VLC playback            | `yt-dlp` URL resolver → `<audio>`/`<video>`  |
-| `lyricsService` (LRCLIB)         | `/api/lyrics?source=lrclib`                  |
-| `lyricsService` (YT transcript)  | `/api/lyrics?source=youtube` (yt-dlp subs)   |
-| `FullscreenPlayer.kt`            | `index.html#fullPlayer` + `styles.css`       |
-| `MiniPlayer.kt`                  | `footer.player`                              |
-| `equalizer/` + `crossfade/`      | Web Audio EQ + gain                          |
-| `library/`                       | localStorage liked + recents + playlists     |
-| `RecentlySongsScreen.kt`         | `#/recent`                                   |
-| `EqualizerScreen.kt`             | Settings page                                |
-| Backup / restore                 | Settings → Export / Import                   |
+### Player UX
+- Spinning vinyl disc with album art + swinging tonearm
+- Blurred album-art backdrop in fullscreen player
+- Video-mode toggle (watches MV via yt-dlp combined mp4)
+- Audio visualizer — bars / waveform / ring (AnalyserNode)
+- 3-band EQ (low / mid / high BiQuad shelves + peaking)
+- Crossfade 0–10s (Web Audio gain ramp)
+- Shuffle / repeat-all / repeat-one
+- HTTP Range streaming — seek bar works mid-track
+- Queue panel with auto-radio extension, drag-to-reorder
+- Synced (LRC) lyrics — LRCLIB → YT auto-captions fallback
+- MediaSession API — OS media keys, lock-screen controls, notification artwork
+- Adaptive accent color sampled from current album art
 
-## Limitations vs. the native apps
+### Library
+- Liked songs (localStorage)
+- Local playlists (create / rename / delete / reorder / drag-add)
+- Recently played (auto-history, max 200)
+- Home feed with shelves: Trending, Lo-fi, Workout, Anime OST, Jazz, K-Pop
+- Right-click context menu on every song
+- Hash-based router — bookmarkable, back/forward work
+- Backup / restore (JSON export / import)
 
-The original KMP project still has features that aren't ported here (Discord
-RPC, Spotify Canvas, Wear OS notifications, downloads, multi-source lyrics
-chain beyond LRCLIB+YT, 31 languages, OAuth sign-in / personalized feed).
-This port focuses on the **listening experience** in a self-contained Node
-project so it runs anywhere with Node 18+ and Python+yt-dlp.
+### Keyboard Shortcuts
+
+| Key            | Action                |
+| -------------- | --------------------- |
+| `Space`        | Play / Pause          |
+| `←` / `→`      | Previous / Next       |
+| `↑` / `↓`      | Volume                |
+| `M`            | Mute                  |
+| `L`            | Like                  |
+| `S`            | Shuffle               |
+| `R`            | Repeat cycle          |
+| `F`            | Fullscreen player     |
+| `V`            | Toggle video mode     |
+| `Esc`          | Close overlay         |
+| `?`            | Show shortcut help    |
+
+---
+
+## API Endpoints
+
+| Method | Path                                                         | Description                                |
+| ------ | ------------------------------------------------------------ | ------------------------------------------ |
+| GET    | `/api/health`                                                | Liveness + cookie pool status              |
+| GET    | `/api/home`                                                  | Curated home shelves                       |
+| GET    | `/api/search?q&type`                                         | Search (`songs`/`videos`/`albums`/…)       |
+| GET    | `/api/suggest?q`                                             | Autocomplete                               |
+| GET    | `/api/song/:videoId`                                         | Track metadata                             |
+| GET    | `/api/up-next/:videoId`                                      | Auto-radio queue                           |
+| GET    | `/api/artist/:id`                                            | Artist + top songs + albums + singles      |
+| GET    | `/api/album/:id`                                             | Album contents                             |
+| GET    | `/api/playlist/:id`                                          | Playlist contents                          |
+| GET    | `/api/stream/:videoId`                                       | Audio stream (Range-aware)                 |
+| GET    | `/api/video/:videoId`                                        | Video+audio mp4 (yt-dlp combined)          |
+| GET    | `/api/lyrics?title&artist&album&duration&videoId&source`     | LRCLIB + YouTube subs (synced + plain)     |
+| POST   | `/api/cookies/refresh`                                       | Reload `cookies/` folder without restart   |
+
+---
+
+## Performance Notes
+
+The server bundles several latency optimizations:
+
+1. **In-flight request coalescing** — concurrent calls for same `videoId` share one yt-dlp process
+2. **LRU caches** for resolved URLs, search, home shelves, lyrics, metadata
+3. **Keep-alive undici Agent** for upstream googlevideo (saves TCP+TLS handshake on every Range)
+4. **Prefetch hint** endpoint warms next track's URL while current plays
+5. **Cookie-pool rotation** with auto-sanitization and dead-cookie tracking
+6. **Static-asset cache headers** (immutable + ETag, gzip + brotli)
+7. **Graceful upstream cleanup** — aborted Range destroys upstream body → frees sockets
+
+---
+
+## Mapping to Parent KMP Project
+
+| SakayoriMusic (KMP)             | This web port                                |
+| ------------------------------- | -------------------------------------------- |
+| `kotlinYtmusicScraper` service  | `ytmusic-api` npm package                    |
+| Media3 (Android) / VLC (JVM)    | `yt-dlp` URL resolver → `<audio>`/`<video>`  |
+| `lyricsService` LRCLIB path     | `/api/lyrics?source=lrclib`                  |
+| `lyricsService` YT transcript   | `/api/lyrics?source=youtube` (yt-dlp subs)   |
+| `FullscreenPlayer.kt`           | `index.html #fullPlayer` + styles            |
+| `MiniPlayer.kt`                 | `footer.player`                              |
+| `equalizer/` + `crossfade/`     | Web Audio EQ + gain ramps                    |
+| `library/`                      | localStorage liked + recents + playlists     |
+| `RecentlySongsScreen.kt`        | `#/recent`                                   |
+| `EqualizerScreen.kt`            | Settings page                                |
+| Backup / restore                | Settings → Export / Import                   |
+
+---
+
+## Not Ported
+
+Features present in native apps but intentionally out-of-scope here:
+- Discord Rich Presence
+- Spotify Canvas
+- Wear OS / Android Auto notifications
+- Offline download manager
+- OAuth sign-in / personalized feed
+- Multi-source lyrics chain beyond LRCLIB + YT
+- Full 31-language UI (web is English-only for now)
+
+---
 
 ## License
 
-MIT — same as the parent project.
+MIT — same as parent [SakayoriMusic](../README.md) project.
