@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SakayoriMusic — Web</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" type="image/svg+xml"
+        href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%2300BCD4"/><circle cx="16" cy="16" r="4" fill="%23000"/></svg>' />
+</head>
+
+<body>
+    <div id="app">
+        <!-- ============================================================== -->
+        <!-- Sidebar                                                       -->
+        <!-- ============================================================== -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo"></div>
+                <div>
+                    <div class="brand-title">SakayoriMusic</div>
+                    <div class="brand-sub">Web · Node.js</div>
+                </div>
+            </div>
+
+            <nav class="nav">
+                <a class="nav-item" href="#/home"><span class="ico">🏠</span> Home</a>
+                <a class="nav-item" href="#/search"><span class="ico">🔎</span> Search</a>
+                <a class="nav-item" href="#/library"><span class="ico">⭐</span> Liked</a>
+                <a class="nav-item" href="#/recent"><span class="ico">🕘</span> Recently Played</a>
+                <a class="nav-item" href="#/playlists"><span class="ico">📚</span> My Playlists</a>
+            </nav>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Playlists</div>
+                <div id="sidebarPlaylists" class="sidebar-playlists"></div>
+                <button id="newPlaylistBtn" class="link-btn">+ New playlist</button>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="#/settings" class="footer-link">⚙️ Settings</a>
+                <a href="#/shortcuts" class="footer-link">⌨️ Shortcuts</a>
+            </div>
+        </aside>
+
+        <!-- ============================================================== -->
+        <!-- Main                                                           -->
+        <!-- ============================================================== -->
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar-nav">
+                    <button id="backBtn" class="icon-btn" title="Back">‹</button>
+                    <button id="fwdBtn" class="icon-btn" title="Forward">›</button>
+                </div>
+                <form id="searchForm" class="searchbar">
+                    <input id="searchInput" type="search" placeholder="Search songs, videos, albums, artists..."
+                        autocomplete="off" />
+                    <select id="searchType">
+                        <option value="songs">Songs</option>
+                        <option value="videos">Videos</option>
+                        <option value="albums">Albums</option>
+                        <option value="artists">Artists</option>
+                        <option value="playlists">Playlists</option>
+                    </select>
+                    <div id="suggestList" class="suggest hidden"></div>
+                </form>
+            </header>
+
+            <section class="view" id="view"></section>
+        </main>
+
+        <!-- ============================================================== -->
+        <!-- Mini-player                                                    -->
+        <!-- ============================================================== -->
+        <footer class="player" id="miniPlayer">
+            <div class="np-info" id="npClickArea">
+                <img id="npArt" alt="" />
+                <div class="np-meta">
+                    <div id="npTitle">Nothing playing</div>
+                    <div id="npArtist" class="muted"></div>
+                </div>
+                <button id="likeBtn" class="icon-btn" title="Like (L)">♡</button>
+            </div>
+
+            <div class="np-controls">
+                <div class="ctrl-row">
+                    <button id="shuffleBtn" class="icon-btn" title="Shuffle (S)">🔀</button>
+                    <button id="prevBtn" class="icon-btn" title="Previous (←)">⏮</button>
+                    <button id="playBtn" class="icon-btn play" title="Play/Pause (Space)">▶</button>
+                    <button id="nextBtn" class="icon-btn" title="Next (→)">⏭</button>
+                    <button id="repeatBtn" class="icon-btn" title="Repeat (R)">🔁</button>
+                </div>
+                <div class="seek-row">
+                    <span id="curTime" class="time">0:00</span>
+                    <div class="seek-wrap">
+                        <input id="seek" type="range" min="0" max="1000" value="0" />
+                        <div id="bufferBar" class="buffer-bar"></div>
+                    </div>
+                    <span id="durTime" class="time">0:00</span>
+                </div>
+            </div>
+
+            <div class="np-extras">
+                <button id="videoModeBtn" class="icon-btn" title="Video mode (V)">🎬</button>
+                <button id="muteBtn" class="icon-btn" title="Mute (M)">🔊</button>
+                <input id="vol" type="range" min="0" max="100" value="80" />
+                <button id="expandBtn" class="icon-btn" title="Open fullscreen (F)">⛶</button>
+            </div>
+
+            <!-- These two stay live; only one is used at a time, the other is muted. -->
+            <audio id="audio" preload="auto" crossorigin="anonymous"></audio>
+        </footer>
+
+        <!-- ============================================================== -->
+        <!-- Fullscreen Now Playing                                         -->
+        <!-- ============================================================== -->
+        <section id="fullPlayer" class="full-player hidden" aria-hidden="true">
+            <div class="fp-backdrop" id="fpBackdrop"></div>
+            <div class="fp-overlay"></div>
+
+            <header class="fp-topbar">
+                <button class="fp-icon" id="fpClose" title="Minimize">▾</button>
+                <div class="fp-topcenter">
+                    <div class="fp-source">PLAYING FROM</div>
+                    <div class="fp-source-name" id="fpSource">YouTube Music</div>
+                </div>
+                <button class="fp-icon" id="fpMore" title="More">⋮</button>
+            </header>
+
+            <div class="fp-body">
+                <!-- Stage: switches between vinyl / video / visualizer -->
+                <div class="fp-stage" id="fpStage">
+                    <!-- Vinyl disc -->
+                    <div class="vinyl-wrap" id="vinylWrap">
+                        <div class="vinyl" id="vinyl">
+                            <div class="vinyl-grooves"></div>
+                            <img id="vinylArt" alt="" />
+                            <div class="vinyl-center"></div>
+                        </div>
+                        <div class="tonearm" id="tonearm">
+                            <div class="tonearm-pivot"></div>
+                            <div class="tonearm-stick"></div>
+                            <div class="tonearm-head"></div>
+                        </div>
+                    </div>
+
+                    <!-- Video element (hidden by default) -->
+                    <video id="video" class="fp-video hidden" playsinline preload="metadata"
+                        crossorigin="anonymous"></video>
+
+                    <!-- Audio visualizer canvas (hidden by default) -->
+                    <canvas id="visualizer" class="fp-visualizer hidden"></canvas>
+                </div>
+
+                <div class="fp-meta">
+                    <div class="fp-title" id="fpTitle">Nothing playing</div>
+                    <div class="fp-artist" id="fpArtist"></div>
+                </div>
+
+                <div class="fp-seek">
+                    <input id="fpSeek" type="range" min="0" max="1000" value="0" />
+                    <div class="fp-seek-times">
+                        <span id="fpCurTime">0:00</span>
+                        <span id="fpDurTime">0:00</span>
+                    </div>
+                </div>
+
+                <div class="fp-controls">
+                    <button class="fp-icon md" id="fpShuffle" title="Shuffle">🔀</button>
+                    <button class="fp-icon lg" id="fpPrev" title="Previous">⏮</button>
+                    <button class="fp-icon huge" id="fpPlay" title="Play / Pause">▶</button>
+                    <button class="fp-icon lg" id="fpNext" title="Next">⏭</button>
+                    <button class="fp-icon md" id="fpRepeat" title="Repeat">🔁</button>
+                </div>
+
+                <div class="fp-actions">
+                    <button class="fp-action" id="fpLike">♡ <span>Like</span></button>
+                    <button class="fp-action" id="fpLyricsToggle">🎤 <span>Lyrics</span></button>
+                    <button class="fp-action" id="fpQueue">📜 <span>Queue</span></button>
+                    <button class="fp-action" id="fpVideoToggle">🎬 <span>Video</span></button>
+                    <button class="fp-action" id="fpVizToggle">📊 <span>Visualizer</span></button>
+                </div>
+
+                <!-- Lyrics panel -->
+                <div class="fp-panel hidden" id="fpLyrics">
+                    <div class="fp-panel-header">
+                        <h3>Lyrics</h3>
+                        <select id="lyricsSourceSelect">
+                            <option value="auto">Auto (LRCLIB → YT)</option>
+                            <option value="lrclib">LRCLIB only</option>
+                            <option value="youtube">YouTube subtitles</option>
+                        </select>
+                        <button class="fp-icon" id="fpLyricsClose">✕</button>
+                    </div>
+                    <div class="fp-panel-inner" id="fpLyricsInner">
+                        <div class="empty">Select a song to load lyrics.</div>
+                    </div>
+                </div>
+
+                <!-- Queue panel -->
+                <div class="fp-panel hidden" id="fpQueuePanel">
+                    <div class="fp-panel-header">
+                        <h3>Up Next</h3>
+                        <button id="clearQueueBtn" class="link-btn">Clear</button>
+                        <button class="fp-icon" id="fpQueueClose">✕</button>
+                    </div>
+                    <div class="fp-panel-inner" id="fpQueueList"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- Context Menu                                                   -->
+        <!-- ============================================================== -->
+        <div id="ctxMenu" class="ctx-menu hidden"></div>
+
+        <!-- ============================================================== -->
+        <!-- Toast                                                          -->
+        <!-- ============================================================== -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- ============================================================== -->
+        <!-- Modal (generic)                                                -->
+        <!-- ============================================================== -->
+        <div id="modal" class="modal hidden">
+            <div class="modal-card" id="modalCard"></div>
+        </div>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+</body>
+
+</html>
