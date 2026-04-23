@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "@distube/ytdl-core": "^4.16.12",
-    "compression": "^1.8.1",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "ytmusic-api": "^5.3.1"
-  }
-}

@@ -32,9 +32,6 @@
                 <button class="nav-item" data-view="queue">
                     <span class="ico">📜</span> Queue
                 </button>
-                <button class="nav-item" data-view="lyrics">
-                    <span class="ico">🎤</span> Lyrics
-                </button>
                 <button class="nav-item" data-view="library">
                     <span class="ico">⭐</span> Liked
                 </button>
@@ -68,9 +65,9 @@
             <section class="view" id="view"></section>
         </main>
 
-        <!-- Now-playing bar -->
-        <footer class="player">
-            <div class="np-info">
+        <!-- Mini-player bar (tap to expand) -->
+        <footer class="player" id="miniPlayer">
+            <div class="np-info" id="npClickArea">
                 <img id="npArt" alt="" />
                 <div class="np-meta">
                     <div id="npTitle">Nothing playing</div>
@@ -97,10 +94,88 @@
             <div class="np-extras">
                 <button id="muteBtn" class="icon-btn" title="Mute (M)">🔊</button>
                 <input id="vol" type="range" min="0" max="100" value="80" />
+                <button id="expandBtn" class="icon-btn" title="Open fullscreen">⛶</button>
             </div>
 
-            <audio id="audio" preload="auto"></audio>
+            <audio id="audio" preload="auto" crossorigin="anonymous"></audio>
         </footer>
+
+        <!-- =================================================================== -->
+        <!-- Fullscreen "Now Playing" — port of FullscreenPlayer.kt              -->
+        <!-- =================================================================== -->
+        <section id="fullPlayer" class="full-player hidden" aria-hidden="true">
+            <div class="fp-backdrop" id="fpBackdrop"></div>
+            <div class="fp-overlay"></div>
+
+            <header class="fp-topbar">
+                <button class="fp-icon" id="fpClose" title="Minimize">▾</button>
+                <div class="fp-topcenter">
+                    <div class="fp-source">PLAYING FROM</div>
+                    <div class="fp-source-name" id="fpSource">YouTube Music</div>
+                </div>
+                <button class="fp-icon" id="fpMore" title="More">⋮</button>
+            </header>
+
+            <div class="fp-body">
+                <!-- Vinyl disc with album-art center -->
+                <div class="vinyl-wrap">
+                    <div class="vinyl" id="vinyl">
+                        <div class="vinyl-grooves"></div>
+                        <img id="vinylArt" alt="" />
+                        <div class="vinyl-center"></div>
+                    </div>
+                    <!-- Tonearm -->
+                    <div class="tonearm" id="tonearm">
+                        <div class="tonearm-pivot"></div>
+                        <div class="tonearm-stick"></div>
+                        <div class="tonearm-head"></div>
+                    </div>
+                </div>
+
+                <div class="fp-meta">
+                    <div class="fp-title marquee" id="fpTitle">Nothing playing</div>
+                    <div class="fp-artist" id="fpArtist"></div>
+                </div>
+
+                <div class="fp-seek">
+                    <input id="fpSeek" type="range" min="0" max="1000" value="0" />
+                    <div class="fp-seek-times">
+                        <span id="fpCurTime">0:00</span>
+                        <span id="fpDurTime">0:00</span>
+                    </div>
+                </div>
+
+                <div class="fp-controls">
+                    <button class="fp-icon md" id="fpShuffle" title="Shuffle">🔀</button>
+                    <button class="fp-icon lg" id="fpPrev" title="Previous">⏮</button>
+                    <button class="fp-icon huge" id="fpPlay" title="Play / Pause">▶</button>
+                    <button class="fp-icon lg" id="fpNext" title="Next">⏭</button>
+                    <button class="fp-icon md" id="fpRepeat" title="Repeat">🔁</button>
+                </div>
+
+                <div class="fp-actions">
+                    <button class="fp-action" id="fpLike">♡ <span>Like</span></button>
+                    <button class="fp-action" id="fpLyricsToggle">🎤 <span>Lyrics</span></button>
+                    <button class="fp-action" id="fpQueue">📜 <span>Queue</span></button>
+                </div>
+
+                <!-- Slide-up lyrics panel -->
+                <div class="fp-lyrics hidden" id="fpLyrics">
+                    <div class="fp-lyrics-inner" id="fpLyricsInner">
+                        <div class="empty">Loading lyrics…</div>
+                    </div>
+                </div>
+
+                <!-- Slide-up queue panel -->
+                <div class="fp-queue hidden" id="fpQueuePanel">
+                    <div class="fp-queue-header">
+                        <h3>Up Next</h3>
+                        <button class="fp-icon" id="fpQueueClose">✕</button>
+                    </div>
+                    <div class="fp-queue-list" id="fpQueueList"></div>
+                </div>
+            </div>
+        </section>
 
         <!-- Toast -->
         <div id="toast" class="toast hidden"></div>
@@ -146,6 +221,10 @@
                         <tr>
                             <td><kbd>R</kbd></td>
                             <td>Cycle repeat</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>F</kbd></td>
+                            <td>Toggle fullscreen player</td>
                         </tr>
                         <tr>
                             <td><kbd>?</kbd></td>

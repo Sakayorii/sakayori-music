@@ -15,10 +15,10 @@
  */
 
 const path = require("path");
+const { spawn } = require("child_process");
 const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
-const ytdl = require("@distube/ytdl-core");
 
 // ytmusic-api is an ESM module published as default-export class.
 let YTMusicCtor = null;
@@ -28,6 +28,43 @@ async function loadYTMusic() {
     YTMusicCtor = mod.default || mod.YTMusic || mod;
     return YTMusicCtor;
 }
+
+// ---------------------------------------------------------------------------
+// yt-dlp (Python) — resolves real, working googlevideo URLs.  We shell out
+// instead of using youtubei.js because YouTube's SABR / UMP / PoToken
+// requirements changed in early 2026 and pure-JS scrapers no longer get
+// `url` fields back from the WEB / ANDROID players.
+// ---------------------------------------------------------------------------
+const YT_DLP = process.env.YT_DLP || "yt-dlp";
+
+function ytDlpResolveUrl(videoId) {
+    return new Promise((resolve, reject) => {
+        const args = [
+            "-q",
+            "--no-warnings",
+            "-f", "bestaudio[ext=m4a]/bestaudio/best",
+            "-g", // print URL only
+            "--no-playlist",
+            `https://www.youtube.com/watch?v=${videoId}`,
+        ];
+        const p = spawn(YT_DLP, args, { windowsHide: true });
+        let out = "", err = "";
+        p.stdout.on("data", (b) => (out += b.toString("utf8")));
+        p.stderr.on("data", (b) => (err += b.toString("utf8")));
+        p.on("error", reject);
+        p.on("close", (code) => {
+            if (code === 0 && out.trim()) {
+                // The first non-empty line is the audio URL.
+                resolve(out.split(/\r?\n/).filter(Boolean)[0]);
+            } else {
+                reject(new Error(err || `yt-dlp exited ${code}`));
+            }
+        });
+    });
+}
+
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -261,59 +298,76 @@ app.get("/api/album/:id", async (req, res) => {
 
 // ---------------------------------------------------------------------------
 // Streaming proxy
-//   /api/stream/:videoId  -> pipes the best audio-only stream
-// Uses HTTP Range so <audio> can seek.
+//   /api/stream/:videoId  -> resolves a real googlevideo URL via yt-dlp,
+//   then proxies the bytes through (forwarding the Range header so the
+//   <audio> element can seek).
+//
+// We cache the resolved URL for ~5 minutes per video to avoid spawning yt-dlp
+// for every Range request the browser makes while playing one song.
 // ---------------------------------------------------------------------------
+const URL_CACHE = new Map(); // videoId -> { url, mime, exp }
+const URL_TTL_MS = 5 * 60 * 1000;
+
+async function getStreamUrl(videoId) {
+    const cached = URL_CACHE.get(videoId);
+    if (cached && cached.exp > Date.now()) return cached;
+
+    const url = await ytDlpResolveUrl(videoId);
+    // The audio container is m4a/mp4 in 99% of cases yt-dlp picks first.
+    const mime = /mime=audio%2Fwebm/i.test(url) ? "audio/webm" : "audio/mp4";
+    const entry = { url, mime, exp: Date.now() + URL_TTL_MS };
+    URL_CACHE.set(videoId, entry);
+    return entry;
+}
+
 app.get("/api/stream/:videoId", async (req, res) => {
     const videoId = req.params.videoId;
-    const url = `https://www.youtube.com/watch?v=${videoId}`;
     try {
-        const info = await ytdl.getInfo(url);
-        const format = ytdl.chooseFormat(info.formats, {
-            quality: "highestaudio",
-            filter: "audioonly",
-        });
-        if (!format) return res.status(404).json({ error: "No audio format" });
+        const { url, mime } = await getStreamUrl(videoId);
 
-        res.setHeader("Content-Type", format.mimeType?.split(";")[0] || "audio/mp4");
+        // Forward Range header so the browser can seek.
+        const headers = {
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        };
+        if (req.headers.range) headers["Range"] = req.headers.range;
+
+        let upstream = await fetch(url, { headers });
+
+        // If the cached URL expired (HTTP 403) re-resolve once.
+        if (upstream.status === 403) {
+            URL_CACHE.delete(videoId);
+            const fresh = await getStreamUrl(videoId);
+            upstream = await fetch(fresh.url, { headers });
+        }
+
+        res.status(upstream.status);
+        res.setHeader("Content-Type", mime);
         res.setHeader("Accept-Ranges", "bytes");
-        if (format.contentLength) {
-            res.setHeader("Content-Length", format.contentLength);
-        }
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cache-Control", "no-store");
 
-        const range = req.headers.range;
-        const stream = ytdl.downloadFromInfo(info, {
-            format,
-            range: range
-                ? (() => {
-                    const m = /bytes=(\d+)-(\d*)/.exec(range);
-                    if (!m) return undefined;
-                    const start = parseInt(m[1], 10);
-                    const end = m[2] ? parseInt(m[2], 10) : undefined;
-                    return { start, end };
-                })()
-                : undefined,
+        const cl = upstream.headers.get("content-length");
+        if (cl) res.setHeader("Content-Length", cl);
+        const cr = upstream.headers.get("content-range");
+        if (cr) res.setHeader("Content-Range", cr);
+
+        if (!upstream.body) return res.end();
+
+        const { Readable } = require("stream");
+        const nodeStream = Readable.fromWeb(upstream.body);
+        nodeStream.on("error", (e) => {
+            console.error("[stream pipe]", e.message);
+            try { res.end(); } catch { }
         });
-
-        if (range && format.contentLength) {
-            const m = /bytes=(\d+)-(\d*)/.exec(range);
-            const start = m ? parseInt(m[1], 10) : 0;
-            const total = parseInt(format.contentLength, 10);
-            const end = m && m[2] ? parseInt(m[2], 10) : total - 1;
-            res.status(206);
-            res.setHeader("Content-Range", `bytes ${start}-${end}/${total}`);
-            res.setHeader("Content-Length", end - start + 1);
-        }
-
-        stream.on("error", (err) => {
-            console.error("[stream]", err.message);
-            if (!res.headersSent) res.status(500).end();
-            else res.end();
+        req.on("close", () => {
+            try { nodeStream.destroy(); } catch { }
         });
-        stream.pipe(res);
+        nodeStream.pipe(res);
     } catch (err) {
-        console.error("[/api/stream]", err);
-        res.status(500).json({ error: err.message });
+        console.error("[/api/stream]", err.message);
+        if (!res.headersSent) res.status(500).json({ error: err.message });
     }
 });
 
