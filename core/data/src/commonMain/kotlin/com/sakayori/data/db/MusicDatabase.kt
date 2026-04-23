@@ -2,8 +2,10 @@ package com.sakayori.data.db
 
 import DatabaseDao
 import androidx.room.AutoMigration
+import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.sakayori.domain.data.entities.AlbumEntity
 import com.sakayori.domain.data.entities.ArtistEntity
@@ -72,9 +74,15 @@ import com.sakayori.domain.data.entities.analytics.PlaybackEventEntity
         AutoMigration(19, 22),
     ],
 )
+@ConstructedBy(MusicDatabaseConstructor::class)
 @TypeConverters(Converters::class)
 abstract class MusicDatabase : RoomDatabase() {
     abstract fun getDatabaseDao(): DatabaseDao
+}
+
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object MusicDatabaseConstructor : RoomDatabaseConstructor<MusicDatabase> {
+    override fun initialize(): MusicDatabase
 }
 
 expect fun getDatabaseBuilder(converters: Converters): RoomDatabase.Builder<MusicDatabase>
