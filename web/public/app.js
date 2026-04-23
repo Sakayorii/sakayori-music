@@ -1193,6 +1193,16 @@ async function playCurrent() {
     const s = State.queue[State.queueIndex];
     if (!s) return;
 
+    // Prefetch the *next* track's URL on the server so when we switch
+    // to it the resolve is already cached.  Fire-and-forget; the server
+    // returns 200 immediately and warms the cache in the background.
+    const next = State.queue[State.queueIndex + 1];
+    if (next?.videoId) {
+        const path = State.mode === "video" ? "prefetch-video" : "prefetch";
+        fetch(`/api/${path}/${next.videoId}`, { method: "POST" }).catch(() => { });
+    }
+
+
     // Track recents
     const item = { song: s, when: Date.now() };
     State.recents = [item, ...State.recents.filter((r) => r.song.videoId !== s.videoId)].slice(0, 200);

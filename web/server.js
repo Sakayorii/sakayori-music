@@ -1,57 +1,74 @@
 /**
- * SakayoriMusic — Web (Node.js port)
+ * SakayoriMusic — Web (Node.js port)  ·  Optimized
  *
- * Express server.  Mirrors what the Kotlin Multiplatform app does:
- *   • search YouTube Music (songs / videos / albums / playlists / artists)
- *   • resolve song details + suggested "watch next" radio queue
- *   • resolve artist / album / playlist details
- *   • stream the audio of a video (proxied googlevideo URL via yt-dlp)
- *   • lyrics from LRCLIB (synced) with YouTube auto-captions fallback (via yt-dlp)
- *   • home / explore feeds
+ * What this server does:
+ *   • Search YouTube Music (songs / videos / albums / playlists / artists)
+ *   • Resolve song details + suggested "watch next" radio queue
+ *   • Resolve artist / album / playlist details
+ *   • Stream audio / video of a YouTube video (via yt-dlp)
+ *   • Lyrics from LRCLIB with YouTube auto-captions fallback
+ *   • Home / explore feeds
+ *
+ * Optimizations layered on top:
+ *   1. **In-flight request coalescing** — concurrent calls for the same
+ *      videoId share a single yt-dlp process.
+ *   2. **LRU caches** for resolved URLs, search results, home shelves,
+ *      lyrics, song metadata, artist/album/playlist payloads.
+ *   3. **Keep-alive undici Agent** for upstream googlevideo fetches —
+ *      saves the TCP+TLS handshake on every Range request.
+ *   4. **Prefetch hint** endpoint that warms the next track's URL while
+ *      the current one is still playing.
+ *   5. **Cookie-pool rotation** with auto-sanitization (drop cookies into
+ *      `web/cookies/` — bad ones are skipped at load time, dead ones at
+ *      runtime).
+ *   6. **Static-asset cache headers** (immutable + ETag) and gzip+brotli.
+ *   7. **Graceful upstream cleanup** — when the browser aborts a Range
+ *      request mid-flight, we destroy the upstream body to free sockets.
  */
 
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
+const { Readable } = require("stream");
+
 const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
+const { LRUCache } = require("lru-cache");
+const { Agent, fetch: undiciFetch } = require("undici");
 
-// ytmusic-api is ESM
-let YTMusicCtor = null;
-async function loadYTMusic() {
-    if (YTMusicCtor) return YTMusicCtor;
-    const mod = await import("ytmusic-api");
-    YTMusicCtor = mod.default || mod.YTMusic || mod;
-    return YTMusicCtor;
-}
-
+// ===========================================================================
+// 0. Constants & shared infra
+// ===========================================================================
+const PORT = process.env.PORT || 3000;
 const YT_DLP = process.env.YT_DLP || "yt-dlp";
 
-// ---------------------------------------------------------------------------
-// Cookies — multiple sources, with auto-rotation when one dies
-// ---------------------------------------------------------------------------
-//
-// Priority order:
-//   1. A `cookies/` folder under web/  — drop as many cookies.txt files as you
-//      like (any name) and the server will pick one, rotating to the next if
-//      YouTube rejects it.  This is the recommended setup.
-//   2. `YT_COOKIES=/path/to/file.txt`  — a single file, no rotation.
-//   3. `YT_COOKIES_BROWSER=chrome`     — pulls cookies live from a browser.
-//   4. Auto-detected `cookies.txt` / `youtube-cookies.txt` in web/.
-//
-// Each file in the pool is sanitized on load: any non-cookie header text
-// (e.g. "Simple Checker" account-info preambles) is stripped, and the strict
-// Netscape header is prepended so yt-dlp will accept it.
-//
+// Keep-alive HTTP agent so upstream googlevideo connections are reused.
+// HTTP Range requests are extremely chatty (many short reads), so reusing
+// sockets is a huge win.
+const upstreamAgent = new Agent({
+    keepAliveTimeout: 60_000,
+    keepAliveMaxTimeout: 600_000,
+    connections: 64,
+    pipelining: 1,
+});
+
+// Browser-y UA for googlevideo
+const UA =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+// ===========================================================================
+// 1. Cookie pool (multi-account) with auto-rotation + sanitization
+// ===========================================================================
 const YT_COOKIES = process.env.YT_COOKIES || "";
 const YT_COOKIES_BROWSER = process.env.YT_COOKIES_BROWSER || "";
 const COOKIES_DIR = path.join(__dirname, "cookies");
 const COOKIES_TMP = path.join(os.tmpdir(), "smweb-cookies");
 
-let cookiePool = [];           // [{ id, normalizedPath }]
-let deadCookies = new Set();   // ids that produced auth errors recently
+let cookiePool = [];
+let deadCookies = new Set();
 
 function sanitizeCookieText(text) {
     const lines = String(text || "").split(/\r?\n/);
@@ -59,10 +76,8 @@ function sanitizeCookieText(text) {
     for (const line of lines) {
         const t = line.trim();
         if (!t || t.startsWith("#")) continue;
-        // Netscape cookie line: 7 tab-separated fields.
         const parts = line.split("\t");
         if (parts.length < 7) continue;
-        // First field must look like a domain, second must be TRUE/FALSE.
         if (!/^\.?[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(parts[0])) continue;
         if (!/^(TRUE|FALSE)$/i.test(parts[1])) continue;
         out.push(line);
@@ -71,7 +86,8 @@ function sanitizeCookieText(text) {
     return (
         "# Netscape HTTP Cookie File\n" +
         "# Auto-normalized by SakayoriMusic Web\n\n" +
-        out.join("\n") + "\n"
+        out.join("\n") +
+        "\n"
     );
 }
 
@@ -114,7 +130,6 @@ function loadCookiePool() {
 }
 loadCookiePool();
 
-// Auto-detect a single cookies.txt next to web/ if neither pool nor env var.
 (function autoDetectSingleCookie() {
     if (cookiePool.length || YT_COOKIES || YT_COOKIES_BROWSER) return;
     const candidates = [
@@ -150,7 +165,6 @@ function isAuthError(msg) {
     return /Sign in to confirm|cookies|HTTP Error 403|consent|requires.*authentication|Forbidden/i
         .test(String(msg || ""));
 }
-
 function buildAuthArgs(cookieEntry) {
     if (cookieEntry) return ["--cookies", cookieEntry.normalizedPath];
     if (process.env.YT_COOKIES) return ["--cookies", process.env.YT_COOKIES];
@@ -158,12 +172,15 @@ function buildAuthArgs(cookieEntry) {
     return [];
 }
 
-// Run yt-dlp once with whichever cookie we currently prefer.  Returns stdout.
+// ===========================================================================
+// 2. yt-dlp wrapper with cookie rotation
+// ===========================================================================
 function runYtDlp(baseArgs, cookieEntry) {
     return new Promise((resolve, reject) => {
         const args = [...baseArgs, ...buildAuthArgs(cookieEntry)];
         const p = spawn(YT_DLP, args, { windowsHide: true });
-        let out = "", err = "";
+        let out = "";
+        let err = "";
         p.stdout.on("data", (b) => (out += b.toString("utf8")));
         p.stderr.on("data", (b) => (err += b.toString("utf8")));
         p.on("error", reject);
@@ -174,12 +191,9 @@ function runYtDlp(baseArgs, cookieEntry) {
     });
 }
 
-// Run yt-dlp with the cookie pool, rotating on auth-style errors.
 async function runYtDlpWithRotation(baseArgs) {
     const tried = new Set();
     let lastErr = null;
-
-    // First pass: try every available cookie in the pool.
     while (true) {
         const cookie = pickCookie();
         if (cookie && tried.has(cookie.id)) break;
@@ -187,29 +201,44 @@ async function runYtDlpWithRotation(baseArgs) {
             return await runYtDlp(baseArgs, cookie);
         } catch (e) {
             lastErr = e;
-            if (!cookie) break; // No cookie pool — give up
+            if (!cookie) break;
             tried.add(cookie.id);
             if (isAuthError(e.message)) {
                 markCookieDead(cookie.id);
                 continue;
             }
-            break; // Non-auth failure — don't waste rotation
+            break;
         }
     }
-
-    // Last resort: env-var single cookie or browser extraction.
     if (lastErr && (process.env.YT_COOKIES || YT_COOKIES_BROWSER) && !cookiePool.length) {
         try { return await runYtDlp(baseArgs, null); } catch (e) { lastErr = e; }
     }
-
     throw lastErr || new Error("yt-dlp failed");
 }
 
-// Endpoint to manually refresh the pool (e.g. after dropping a new cookie file).
 function refreshCookies() {
     loadCookiePool();
     return cookiePool.map((c) => c.id);
 }
+
+// ===========================================================================
+// 3. URL resolvers (audio + video) with caching + in-flight coalescing
+// ===========================================================================
+//
+// Coalescing means that if two HTTP requests arrive for /api/stream/X at the
+// same time and the URL isn't cached yet, we only spawn ONE yt-dlp process
+// and both requests await the same promise.  This prevents a thundering
+// herd when the browser does multiple Range requests in parallel.
+//
+const URL_CACHE = new LRUCache({
+    max: 200,
+    ttl: 5 * 60 * 1000, // 5 min — googlevideo URLs expire after ~6h but we
+    // refresh aggressively so 403s become rare.
+});
+const VIDEO_URL_CACHE = new LRUCache({ max: 200, ttl: 5 * 60 * 1000 });
+
+const inflightAudio = new Map();
+const inflightVideo = new Map();
 
 function ytDlpResolveAudioUrl(videoId) {
     return runYtDlpWithRotation([
@@ -222,9 +251,6 @@ function ytDlpResolveAudioUrl(videoId) {
     ]).then((out) => out.split(/\r?\n/).filter(Boolean)[0]);
 }
 
-// Resolve a single combined-mp4 (video+audio) URL.  Browsers can only play
-// progressive mp4 with both tracks muxed together, which limits us to ≤ 720p
-// for most YouTube videos — that's what `best[ext=mp4]/best` gives us.
 function ytDlpResolveVideoUrl(videoId) {
     return runYtDlpWithRotation([
         "-q",
@@ -236,16 +262,49 @@ function ytDlpResolveVideoUrl(videoId) {
     ]).then((out) => out.split(/\r?\n/).filter(Boolean)[0]);
 }
 
+async function resolveAudio(videoId) {
+    const cached = URL_CACHE.get(videoId);
+    if (cached) return cached;
+    if (inflightAudio.has(videoId)) return inflightAudio.get(videoId);
+    const p = (async () => {
+        try {
+            const url = await ytDlpResolveAudioUrl(videoId);
+            const mime = /mime=audio%2Fwebm/i.test(url) ? "audio/webm" : "audio/mp4";
+            const entry = { url, mime };
+            URL_CACHE.set(videoId, entry);
+            return entry;
+        } finally {
+            inflightAudio.delete(videoId);
+        }
+    })();
+    inflightAudio.set(videoId, p);
+    return p;
+}
 
+async function resolveVideo(videoId) {
+    const cached = VIDEO_URL_CACHE.get(videoId);
+    if (cached) return cached;
+    if (inflightVideo.has(videoId)) return inflightVideo.get(videoId);
+    const p = (async () => {
+        try {
+            const url = await ytDlpResolveVideoUrl(videoId);
+            const mime = /mime=video%2Fwebm/i.test(url) ? "video/webm" : "video/mp4";
+            const entry = { url, mime };
+            VIDEO_URL_CACHE.set(videoId, entry);
+            return entry;
+        } finally {
+            inflightVideo.delete(videoId);
+        }
+    })();
+    inflightVideo.set(videoId, p);
+    return p;
+}
 
-
-// Fetch YouTube auto-generated captions in a chosen language as VTT text.
-// Returns null if no captions are available.
+// ===========================================================================
+// 4. YouTube auto-captions  →  LRC
+// ===========================================================================
 async function ytDlpFetchSubs(videoId, lang = "en") {
-    const tmp = path.join(
-        os.tmpdir(),
-        `smweb-subs-${videoId}-${Date.now()}`
-    );
+    const tmp = path.join(os.tmpdir(), `smweb-subs-${videoId}-${Date.now()}`);
     const outTmpl = `${tmp}.%(ext)s`;
     const baseArgs = [
         "--skip-download",
@@ -276,54 +335,48 @@ async function ytDlpFetchSubs(videoId, lang = "en") {
     }
 }
 
-
-// Convert WebVTT (the format yt-dlp dumps) to LRC.
 function vttToLrc(vtt) {
-    const lines = vtt.split(/\r?\n/);
     const out = [];
     let curStart = null;
     const seen = new Set();
-    for (const raw of lines) {
+    for (const raw of vtt.split(/\r?\n/)) {
         const line = raw.trim();
         if (!line || /^WEBVTT/i.test(line) || /^NOTE/i.test(line)) continue;
         const m = /^(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s*-->/.exec(line);
         if (m) {
-            const h = parseInt(m[1], 10);
-            const mn = parseInt(m[2], 10);
-            const s = parseInt(m[3], 10);
-            const ms = parseInt(m[4], 10);
-            const total = h * 3600 + mn * 60 + s + ms / 1000;
+            const total =
+                parseInt(m[1], 10) * 3600 +
+                parseInt(m[2], 10) * 60 +
+                parseInt(m[3], 10) +
+                parseInt(m[4], 10) / 1000;
             const lm = Math.floor(total / 60);
             const ls = (total - lm * 60).toFixed(2).padStart(5, "0");
             curStart = `[${String(lm).padStart(2, "0")}:${ls}]`;
             continue;
         }
         if (curStart && !/^\d/.test(line)) {
-            // Strip VTT inline tags like <c>, <00:00:01.000>
             const clean = line.replace(/<[^>]+>/g, "").trim();
-            if (clean) {
-                const lrc = `${curStart}${clean}`;
-                if (!seen.has(lrc)) {
-                    seen.add(lrc);
-                    out.push(lrc);
-                }
-            }
+            if (!clean) continue;
+            const lrc = `${curStart}${clean}`;
+            if (seen.has(lrc)) continue;
+            seen.add(lrc);
+            out.push(lrc);
         }
     }
     return out.join("\n");
 }
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// ===========================================================================
+// 5. ytmusic-api (lazy single instance) + helpers
+// ===========================================================================
+let YTMusicCtor = null;
+async function loadYTMusic() {
+    if (YTMusicCtor) return YTMusicCtor;
+    const mod = await import("ytmusic-api");
+    YTMusicCtor = mod.default || mod.YTMusic || mod;
+    return YTMusicCtor;
+}
 
-app.use(cors());
-app.use(compression());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-// ---------------------------------------------------------------------------
-// YT Music client (lazy, single shared instance)
-// ---------------------------------------------------------------------------
 let ytmusicPromise = null;
 function getYTMusic() {
     if (!ytmusicPromise) {
@@ -340,15 +393,11 @@ function getYTMusic() {
     return ytmusicPromise;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 function pickThumb(thumbnails) {
     if (!Array.isArray(thumbnails) || thumbnails.length === 0) return null;
-    return thumbnails.reduce((best, t) => {
-        if (!best) return t;
-        return (t.width || 0) > (best.width || 0) ? t : best;
-    }, null);
+    return thumbnails.reduce((best, t) =>
+        !best ? t : (t.width || 0) > (best.width || 0) ? t : best, null
+    );
 }
 
 function normalizeArtist(a) {
@@ -374,13 +423,54 @@ function normalizeSong(s) {
         videoId: s.videoId || s.id || null,
         name: s.name || s.title || "",
         artists,
-        album: s.album
-            ? { name: s.album.name, albumId: s.album.albumId }
-            : null,
+        album: s.album ? { name: s.album.name, albumId: s.album.albumId } : null,
         duration: s.duration ?? null,
         thumbnail: pickThumb(s.thumbnails) || s.thumbnail || null,
     };
 }
+
+// ===========================================================================
+// 6. Memoization caches for the YT Music endpoints
+// ===========================================================================
+const SEARCH_CACHE = new LRUCache({ max: 500, ttl: 5 * 60 * 1000 });
+const SUGGEST_CACHE = new LRUCache({ max: 1000, ttl: 30 * 60 * 1000 });
+const SONG_CACHE = new LRUCache({ max: 500, ttl: 30 * 60 * 1000 });
+const UPNEXT_CACHE = new LRUCache({ max: 200, ttl: 30 * 60 * 1000 });
+const ARTIST_CACHE = new LRUCache({ max: 200, ttl: 60 * 60 * 1000 });
+const ALBUM_CACHE = new LRUCache({ max: 500, ttl: 60 * 60 * 1000 });
+const PLAYLIST_CACHE = new LRUCache({ max: 200, ttl: 30 * 60 * 1000 });
+const HOME_CACHE = new LRUCache({ max: 1, ttl: 10 * 60 * 1000 });
+const LYRICS_CACHE = new LRUCache({ max: 500, ttl: 6 * 60 * 60 * 1000 });
+
+async function memoize(cache, key, fn) {
+    const hit = cache.get(key);
+    if (hit) return hit;
+    const v = await fn();
+    cache.set(key, v);
+    return v;
+}
+
+// ===========================================================================
+// 7. Express app
+// ===========================================================================
+const app = express();
+app.disable("x-powered-by");
+app.use(cors());
+app.use(compression());
+app.use(express.json());
+
+// Static — long cache + ETag.  index.html stays no-cache so the SPA shell
+// always reflects the latest deploy.
+app.use(express.static(path.join(__dirname, "public"), {
+    etag: true,
+    lastModified: true,
+    maxAge: "1d",
+    setHeaders(res, filePath) {
+        if (filePath.endsWith(".html")) {
+            res.setHeader("Cache-Control", "no-cache");
+        }
+    },
+}));
 
 // ---------------------------------------------------------------------------
 // Health
@@ -389,25 +479,33 @@ app.get("/api/health", (_req, res) => {
     res.json({
         ok: true,
         name: "SakayoriMusic Web",
-        version: "2.0.0",
+        version: "2.1.0-optimized",
         cookies: {
             pool: cookiePool.map((c) => c.id),
             dead: [...deadCookies],
             envFile: process.env.YT_COOKIES || null,
             envBrowser: YT_COOKIES_BROWSER || null,
         },
+        cache: {
+            urls: URL_CACHE.size,
+            videoUrls: VIDEO_URL_CACHE.size,
+            search: SEARCH_CACHE.size,
+            songs: SONG_CACHE.size,
+            artists: ARTIST_CACHE.size,
+            albums: ALBUM_CACHE.size,
+            playlists: PLAYLIST_CACHE.size,
+            lyrics: LYRICS_CACHE.size,
+            home: HOME_CACHE.size,
+        },
     });
 });
 
-// Reload the cookies/ folder without restarting the server.
 app.post("/api/cookies/refresh", (_req, res) => {
-    const ids = refreshCookies();
-    res.json({ ok: true, loaded: ids });
+    res.json({ ok: true, loaded: refreshCookies() });
 });
 
-
 // ---------------------------------------------------------------------------
-// Search
+// Search + suggest (cached)
 // ---------------------------------------------------------------------------
 app.get("/api/search", async (req, res) => {
     const q = (req.query.q || "").toString().trim();
@@ -415,59 +513,65 @@ app.get("/api/search", async (req, res) => {
     if (!q) return res.status(400).json({ error: "Missing q" });
 
     try {
-        const ytm = await getYTMusic();
-        let results;
-        switch (type) {
-            case "videos": results = await ytm.searchVideos(q); break;
-            case "albums": results = await ytm.searchAlbums(q); break;
-            case "artists": results = await ytm.searchArtists(q); break;
-            case "playlists": results = await ytm.searchPlaylists(q); break;
-            case "all": results = await ytm.search(q); break;
-            case "songs":
-            default: results = await ytm.searchSongs(q); break;
-        }
-        const normalized = (results || []).map((r) => {
-            if (r.type === "SONG" || r.type === "VIDEO" || r.videoId) {
-                return normalizeSong(r);
+        const data = await memoize(SEARCH_CACHE, `${type}:${q.toLowerCase()}`, async () => {
+            const ytm = await getYTMusic();
+            let results;
+            switch (type) {
+                case "videos": results = await ytm.searchVideos(q); break;
+                case "albums": results = await ytm.searchAlbums(q); break;
+                case "artists": results = await ytm.searchArtists(q); break;
+                case "playlists": results = await ytm.searchPlaylists(q); break;
+                case "all": results = await ytm.search(q); break;
+                case "songs":
+                default: results = await ytm.searchSongs(q); break;
             }
-            return {
-                type: r.type,
-                id: r.albumId || r.playlistId || r.artistId || r.id,
-                name: r.name || r.title,
-                artist: r.artist?.name || r.artists?.[0]?.name || null,
-                thumbnail: pickThumb(r.thumbnails),
-            };
+            const normalized = (results || []).map((r) => {
+                if (r.type === "SONG" || r.type === "VIDEO" || r.videoId) return normalizeSong(r);
+                return {
+                    type: r.type,
+                    id: r.albumId || r.playlistId || r.artistId || r.id,
+                    name: r.name || r.title,
+                    artist: r.artist?.name || r.artists?.[0]?.name || null,
+                    thumbnail: pickThumb(r.thumbnails),
+                };
+            });
+            return { query: q, type, results: normalized };
         });
-        res.json({ query: q, type, results: normalized });
+        res.setHeader("Cache-Control", "public, max-age=60");
+        res.json(data);
     } catch (err) {
         console.error("[/api/search]", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ---------------------------------------------------------------------------
-// Suggestions (for autocomplete)
-// ---------------------------------------------------------------------------
 app.get("/api/suggest", async (req, res) => {
     const q = (req.query.q || "").toString().trim();
     if (!q) return res.json({ suggestions: [] });
     try {
-        const ytm = await getYTMusic();
-        const list = await ytm.getSearchSuggestions(q).catch(() => []);
-        res.json({ suggestions: list || [] });
-    } catch (err) {
+        const data = await memoize(SUGGEST_CACHE, q.toLowerCase(), async () => {
+            const ytm = await getYTMusic();
+            const list = await ytm.getSearchSuggestions(q).catch(() => []);
+            return { suggestions: list || [] };
+        });
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.json(data);
+    } catch {
         res.json({ suggestions: [] });
     }
 });
 
 // ---------------------------------------------------------------------------
-// Song details + radio
+// Song / radio / artist / album / playlist (cached)
 // ---------------------------------------------------------------------------
 app.get("/api/song/:videoId", async (req, res) => {
     try {
-        const ytm = await getYTMusic();
-        const song = await ytm.getSong(req.params.videoId);
-        res.json(normalizeSong(song));
+        const data = await memoize(SONG_CACHE, req.params.videoId, async () => {
+            const ytm = await getYTMusic();
+            const song = await ytm.getSong(req.params.videoId);
+            return normalizeSong(song);
+        });
+        res.json(data);
     } catch (err) {
         console.error("[/api/song]", err);
         res.status(500).json({ error: err.message });
@@ -476,43 +580,48 @@ app.get("/api/song/:videoId", async (req, res) => {
 
 app.get("/api/up-next/:videoId", async (req, res) => {
     try {
-        const ytm = await getYTMusic();
-        const upNext = await ytm.getUpNexts(req.params.videoId);
-        const songs = (upNext || []).map(normalizeSong).filter(Boolean);
-        res.json({ videoId: req.params.videoId, songs });
+        const data = await memoize(UPNEXT_CACHE, req.params.videoId, async () => {
+            const ytm = await getYTMusic();
+            const upNext = await ytm.getUpNexts(req.params.videoId);
+            return {
+                videoId: req.params.videoId,
+                songs: (upNext || []).map(normalizeSong).filter(Boolean),
+            };
+        });
+        res.json(data);
     } catch (err) {
         console.error("[/api/up-next]", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ---------------------------------------------------------------------------
-// Artist / Album / Playlist
-// ---------------------------------------------------------------------------
 app.get("/api/artist/:id", async (req, res) => {
     try {
-        const ytm = await getYTMusic();
-        const a = await ytm.getArtist(req.params.id);
-        res.json({
-            id: req.params.id,
-            name: a?.name || "",
-            description: a?.description || "",
-            thumbnail: pickThumb(a?.thumbnails),
-            subscribers: a?.subscribers || null,
-            topSongs: (a?.songs?.results || a?.songs || []).map(normalizeSong),
-            albums: (a?.albums?.results || a?.albums || []).map((al) => ({
-                id: al.albumId || al.id,
-                name: al.name || al.title,
-                year: al.year || null,
-                thumbnail: pickThumb(al.thumbnails),
-            })),
-            singles: (a?.singles?.results || a?.singles || []).map((al) => ({
-                id: al.albumId || al.id,
-                name: al.name || al.title,
-                year: al.year || null,
-                thumbnail: pickThumb(al.thumbnails),
-            })),
+        const data = await memoize(ARTIST_CACHE, req.params.id, async () => {
+            const ytm = await getYTMusic();
+            const a = await ytm.getArtist(req.params.id);
+            return {
+                id: req.params.id,
+                name: a?.name || "",
+                description: a?.description || "",
+                thumbnail: pickThumb(a?.thumbnails),
+                subscribers: a?.subscribers || null,
+                topSongs: (a?.songs?.results || a?.songs || []).map(normalizeSong),
+                albums: (a?.albums?.results || a?.albums || []).map((al) => ({
+                    id: al.albumId || al.id,
+                    name: al.name || al.title,
+                    year: al.year || null,
+                    thumbnail: pickThumb(al.thumbnails),
+                })),
+                singles: (a?.singles?.results || a?.singles || []).map((al) => ({
+                    id: al.albumId || al.id,
+                    name: al.name || al.title,
+                    year: al.year || null,
+                    thumbnail: pickThumb(al.thumbnails),
+                })),
+            };
         });
+        res.json(data);
     } catch (err) {
         console.error("[/api/artist]", err);
         res.status(500).json({ error: err.message });
@@ -521,16 +630,19 @@ app.get("/api/artist/:id", async (req, res) => {
 
 app.get("/api/playlist/:id", async (req, res) => {
     try {
-        const ytm = await getYTMusic();
-        const pl = await ytm.getPlaylist(req.params.id);
-        const videos = await ytm.getPlaylistVideos(req.params.id).catch(() => []);
-        res.json({
-            id: req.params.id,
-            name: pl?.name || "",
-            description: pl?.description || "",
-            thumbnail: pickThumb(pl?.thumbnails),
-            songs: (videos || []).map(normalizeSong),
+        const data = await memoize(PLAYLIST_CACHE, req.params.id, async () => {
+            const ytm = await getYTMusic();
+            const pl = await ytm.getPlaylist(req.params.id);
+            const videos = await ytm.getPlaylistVideos(req.params.id).catch(() => []);
+            return {
+                id: req.params.id,
+                name: pl?.name || "",
+                description: pl?.description || "",
+                thumbnail: pickThumb(pl?.thumbnails),
+                songs: (videos || []).map(normalizeSong),
+            };
         });
+        res.json(data);
     } catch (err) {
         console.error("[/api/playlist]", err);
         res.status(500).json({ error: err.message });
@@ -539,16 +651,19 @@ app.get("/api/playlist/:id", async (req, res) => {
 
 app.get("/api/album/:id", async (req, res) => {
     try {
-        const ytm = await getYTMusic();
-        const album = await ytm.getAlbum(req.params.id);
-        res.json({
-            id: req.params.id,
-            name: album?.name || "",
-            artist: album?.artist?.name || "",
-            year: album?.year ?? null,
-            thumbnail: pickThumb(album?.thumbnails),
-            songs: (album?.songs || []).map(normalizeSong),
+        const data = await memoize(ALBUM_CACHE, req.params.id, async () => {
+            const ytm = await getYTMusic();
+            const album = await ytm.getAlbum(req.params.id);
+            return {
+                id: req.params.id,
+                name: album?.name || "",
+                artist: album?.artist?.name || "",
+                year: album?.year ?? null,
+                thumbnail: pickThumb(album?.thumbnails),
+                songs: (album?.songs || []).map(normalizeSong),
+            };
         });
+        res.json(data);
     } catch (err) {
         console.error("[/api/album]", err);
         res.status(500).json({ error: err.message });
@@ -556,33 +671,38 @@ app.get("/api/album/:id", async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Home
+// Home  (cached for 10 min, parallelized per shelf)
 // ---------------------------------------------------------------------------
+const HOME_QUERIES = [
+    { title: "Trending Now", q: "top hits 2025" },
+    { title: "Lo-fi & Chill", q: "lofi hip hop" },
+    { title: "Workout Energy", q: "workout playlist" },
+    { title: "Anime OST", q: "anime opening" },
+    { title: "Jazz Café", q: "jazz cafe" },
+    { title: "K-Pop Stars", q: "kpop hits" },
+];
+
 app.get("/api/home", async (_req, res) => {
     try {
-        const ytm = await getYTMusic();
-        const queries = [
-            { title: "Trending Now", q: "top hits 2025" },
-            { title: "Lo-fi & Chill", q: "lofi hip hop" },
-            { title: "Workout Energy", q: "workout playlist" },
-            { title: "Anime OST", q: "anime opening" },
-            { title: "Jazz Café", q: "jazz cafe" },
-            { title: "K-Pop Stars", q: "kpop hits" },
-        ];
-        const shelves = await Promise.all(
-            queries.map(async ({ title, q }) => {
-                try {
-                    const songs = await ytm.searchSongs(q);
-                    return {
-                        title,
-                        items: (songs || []).slice(0, 12).map(normalizeSong),
-                    };
-                } catch {
-                    return { title, items: [] };
-                }
-            })
-        );
-        res.json({ shelves });
+        const data = await memoize(HOME_CACHE, "default", async () => {
+            const ytm = await getYTMusic();
+            const shelves = await Promise.all(
+                HOME_QUERIES.map(async ({ title, q }) => {
+                    try {
+                        const songs = await ytm.searchSongs(q);
+                        return {
+                            title,
+                            items: (songs || []).slice(0, 12).map(normalizeSong),
+                        };
+                    } catch {
+                        return { title, items: [] };
+                    }
+                })
+            );
+            return { shelves };
+        });
+        res.setHeader("Cache-Control", "public, max-age=300");
+        res.json(data);
     } catch (err) {
         console.error("[/api/home]", err);
         res.status(500).json({ error: err.message });
@@ -590,49 +710,31 @@ app.get("/api/home", async (_req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Streaming proxy via yt-dlp (cached 5 min, separate caches for audio/video)
+// Stream proxy (audio + video) with keep-alive, coalescing, and abort cleanup
 // ---------------------------------------------------------------------------
-const URL_CACHE = new Map();        // audio cache
-const VIDEO_URL_CACHE = new Map();  // video cache
-const URL_TTL_MS = 5 * 60 * 1000;
-
-async function getStreamUrl(videoId) {
-    const cached = URL_CACHE.get(videoId);
-    if (cached && cached.exp > Date.now()) return cached;
-    const url = await ytDlpResolveAudioUrl(videoId);
-    const mime = /mime=audio%2Fwebm/i.test(url) ? "audio/webm" : "audio/mp4";
-    const entry = { url, mime, exp: Date.now() + URL_TTL_MS };
-    URL_CACHE.set(videoId, entry);
-    return entry;
-}
-
-async function getVideoStreamUrl(videoId) {
-    const cached = VIDEO_URL_CACHE.get(videoId);
-    if (cached && cached.exp > Date.now()) return cached;
-    const url = await ytDlpResolveVideoUrl(videoId);
-    const mime = /mime=video%2Fwebm/i.test(url) ? "video/webm" : "video/mp4";
-    const entry = { url, mime, exp: Date.now() + URL_TTL_MS };
-    VIDEO_URL_CACHE.set(videoId, entry);
-    return entry;
-}
-
-// Generic upstream proxy
-async function proxyStream(req, res, getUrl, cacheMap, fallbackMime) {
+async function proxyStream(req, res, getEntry, fallbackMime) {
     const videoId = req.params.videoId;
+    let nodeStream = null;
+    let aborted = false;
+    req.on("close", () => { aborted = true; if (nodeStream) try { nodeStream.destroy(); } catch { /**/ } });
+
     try {
-        const { url, mime } = await getUrl(videoId);
-        const headers = {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        };
+        let { url, mime } = await getEntry(videoId);
+        if (aborted) return;
+
+        const headers = { "User-Agent": UA };
         if (req.headers.range) headers["Range"] = req.headers.range;
 
-        let upstream = await fetch(url, { headers });
-        if (upstream.status === 403) {
-            cacheMap.delete(videoId);
-            const fresh = await getUrl(videoId);
-            upstream = await fetch(fresh.url, { headers });
+        let upstream = await undiciFetch(url, { headers, dispatcher: upstreamAgent });
+
+        // googlevideo URLs expire — if we hit 403 or 410, force-refresh.
+        if ((upstream.status === 403 || upstream.status === 410)) {
+            URL_CACHE.delete(videoId);
+            VIDEO_URL_CACHE.delete(videoId);
+            const fresh = await getEntry(videoId);
+            if (aborted) return;
+            upstream = await undiciFetch(fresh.url, { headers, dispatcher: upstreamAgent });
+            mime = fresh.mime || mime;
         }
 
         res.status(upstream.status);
@@ -648,34 +750,41 @@ async function proxyStream(req, res, getUrl, cacheMap, fallbackMime) {
 
         if (!upstream.body) return res.end();
 
-        const { Readable } = require("stream");
-        const nodeStream = Readable.fromWeb(upstream.body);
+        nodeStream = Readable.fromWeb(upstream.body);
         nodeStream.on("error", (e) => {
-            console.error("[stream pipe]", e.message);
+            if (!aborted) console.error("[stream pipe]", e.message);
             try { res.end(); } catch { /* noop */ }
-        });
-        req.on("close", () => {
-            try { nodeStream.destroy(); } catch { /* noop */ }
         });
         nodeStream.pipe(res);
     } catch (err) {
+        if (aborted) return;
         console.error("[stream]", err.message);
         if (!res.headersSent) res.status(500).json({ error: err.message });
     }
 }
 
-app.get("/api/stream/:videoId", (req, res) =>
-    proxyStream(req, res, getStreamUrl, URL_CACHE, "audio/mp4")
-);
+app.get("/api/stream/:videoId", (req, res) => proxyStream(req, res, resolveAudio, "audio/mp4"));
+app.get("/api/video/:videoId", (req, res) => proxyStream(req, res, resolveVideo, "video/mp4"));
 
-// Browsers can play this with <video> directly (combined mp4).
-app.get("/api/video/:videoId", (req, res) =>
-    proxyStream(req, res, getVideoStreamUrl, VIDEO_URL_CACHE, "video/mp4")
-);
+// Prefetch hint — the SPA can call this to warm up the URL for the next track
+// while the current one is still playing.  Returns immediately.
+app.post("/api/prefetch/:videoId", (req, res) => {
+    const { videoId } = req.params;
+    if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+    // Fire & forget
+    resolveAudio(videoId).catch(() => { /* noop */ });
+    res.json({ ok: true });
+});
 
+app.post("/api/prefetch-video/:videoId", (req, res) => {
+    const { videoId } = req.params;
+    if (!videoId) return res.status(400).json({ error: "Missing videoId" });
+    resolveVideo(videoId).catch(() => { /* noop */ });
+    res.json({ ok: true });
+});
 
 // ---------------------------------------------------------------------------
-// Lyrics — multi-source (LRCLIB + YouTube auto-captions fallback)
+// Lyrics — LRCLIB → YouTube subtitles fallback (cached)
 // ---------------------------------------------------------------------------
 async function lrclibLyrics({ title, artist, album, duration }) {
     const params = new URLSearchParams({
@@ -685,15 +794,11 @@ async function lrclibLyrics({ title, artist, album, duration }) {
     if (album) params.set("album_name", String(album));
     if (duration) params.set("duration", String(duration));
 
-    const url = `https://lrclib.net/api/get?${params}`;
-    const r = await fetch(url, {
-        headers: {
-            "User-Agent":
-                "SakayoriMusicWeb/2.0 (https://github.com/Sakayorii/sakayori-music)",
-        },
+    const r = await undiciFetch(`https://lrclib.net/api/get?${params}`, {
+        headers: { "User-Agent": "SakayoriMusicWeb/2.1 (+https://github.com/Sakayorii/sakayori-music)" },
     });
     if (r.status === 404) {
-        const sr = await fetch(
+        const sr = await undiciFetch(
             `https://lrclib.net/api/search?${new URLSearchParams({
                 track_name: String(title),
                 artist_name: String(artist),
@@ -721,56 +826,73 @@ async function lrclibLyrics({ title, artist, album, duration }) {
 
 app.get("/api/lyrics", async (req, res) => {
     const { title, artist, album, duration, videoId, source } = req.query;
-
+    const cacheKey = `${source || "auto"}::${videoId || ""}::${title || ""}::${artist || ""}`;
     try {
-        if (source === "youtube" && videoId) {
-            const vtt = await ytDlpFetchSubs(String(videoId), "en");
-            if (vtt) {
-                const synced = vttToLrc(vtt);
-                return res.json({
-                    found: true,
-                    plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
-                    synced,
-                    source: "YouTube subtitles",
-                });
+        const data = await memoize(LYRICS_CACHE, cacheKey, async () => {
+            if (source === "youtube" && videoId) {
+                const vtt = await ytDlpFetchSubs(String(videoId), "en");
+                if (vtt) {
+                    const synced = vttToLrc(vtt);
+                    return {
+                        found: true,
+                        plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
+                        synced,
+                        source: "YouTube subtitles",
+                    };
+                }
+                return { found: false };
             }
-            return res.json({ found: false });
-        }
 
-        if (!title || !artist) {
-            return res.status(400).json({ error: "title & artist required" });
-        }
-
-        // Try LRCLIB first, fall back to YouTube auto-captions if available.
-        const lrc = await lrclibLyrics({ title, artist, album, duration });
-        if (lrc.found && (lrc.synced || lrc.plain)) return res.json(lrc);
-
-        if (videoId) {
-            const vtt = await ytDlpFetchSubs(String(videoId), "en");
-            if (vtt) {
-                const synced = vttToLrc(vtt);
-                return res.json({
-                    found: true,
-                    plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
-                    synced,
-                    source: "YouTube subtitles (fallback)",
-                });
+            if (!title || !artist) {
+                throw Object.assign(new Error("title & artist required"), { status: 400 });
             }
-        }
-        res.json({ found: false });
+            const lrc = await lrclibLyrics({ title, artist, album, duration });
+            if (lrc.found && (lrc.synced || lrc.plain)) return lrc;
+
+            if (videoId) {
+                const vtt = await ytDlpFetchSubs(String(videoId), "en");
+                if (vtt) {
+                    const synced = vttToLrc(vtt);
+                    return {
+                        found: true,
+                        plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
+                        synced,
+                        source: "YouTube subtitles (fallback)",
+                    };
+                }
+            }
+            return { found: false };
+        });
+
+        res.setHeader("Cache-Control", "public, max-age=600");
+        res.json(data);
     } catch (err) {
         console.error("[/api/lyrics]", err);
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message });
     }
 });
 
 // ---------------------------------------------------------------------------
-// Fallback to SPA
+// SPA fallback
 // ---------------------------------------------------------------------------
 app.get(/.*/, (_req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.listen(PORT, () => {
-    console.log(`\n🎵 SakayoriMusic Web running on http://localhost:${PORT}\n`);
+// ===========================================================================
+// 8. Listen
+// ===========================================================================
+const server = app.listen(PORT, () => {
+    console.log(`\n🎵 SakayoriMusic Web (optimized) on http://localhost:${PORT}\n`);
 });
+server.keepAliveTimeout = 65_000;
+server.headersTimeout = 70_000;
+
+// Graceful shutdown — stop accepting new connections, give in-flight 5 s.
+function shutdown(sig) {
+    console.log(`\n[server] ${sig} received, shutting down…`);
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 5000).unref();
+}
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
