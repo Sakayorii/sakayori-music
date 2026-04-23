@@ -1232,36 +1232,81 @@ input[type="range"]::-moz-range-thumb {
     background: rgba(77, 208, 225, 0.18);
 }
 
-/* Slide-up panels — they take the FULL height of the player so nothing
-   behind them (vinyl / video / controls) bleeds through. */
+/* Side-panels (lyrics / queue): on wide screens they slide in from the
+   right and sit next to the vinyl/video.  On narrow screens they fall back
+   to a slide-up sheet that fills the player. */
 .fp-panel {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    background: rgba(10, 10, 14, 0.96);
+    top: 18%;
+    right: 16px;
+    bottom: 130px;
+    width: clamp(320px, 38vw, 520px);
+    background: rgba(10, 10, 14, 0.92);
     backdrop-filter: blur(30px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     z-index: 5;
-    transform: translateY(0);
+    transform: translateX(0);
     transition: transform .35s cubic-bezier(.16, 1, .3, 1), opacity .25s ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
-
 .fp-panel.hidden {
-    /* Use visibility to fully suppress events + paint while keeping the
-       slide-up animation. translateY(120%) on its own wasn't enough on
-       short viewports where the panel header was still bleeding through. */
-    transform: translateY(120%);
+    transform: translateX(110%);
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
 }
+
+/* When ANY side panel is open, the stage shifts left so the vinyl/video
+   doesn't sit underneath the panel. */
+.full-player.has-panel .fp-stage,
+.full-player.has-panel .fp-meta,
+.full-player.has-panel .fp-seek,
+.full-player.has-panel .fp-controls,
+.full-player.has-panel .fp-actions {
+    transform: translateX(min(-19vw, -180px));
+    transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+}
+
+.fp-stage,
+.fp-meta,
+.fp-seek,
+.fp-controls,
+.fp-actions {
+    transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+}
+
+/* On narrow screens revert to the old full-width slide-up sheet so we don't
+   crush the vinyl. */
+@media (max-width: 900px) {
+    .fp-panel {
+        top: auto;
+        right: 0;
+        left: 0;
+        bottom: 0;
+        height: 65%;
+        width: 100%;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(0);
+    }
+
+    .fp-panel.hidden {
+        transform: translateY(110%);
+    }
+
+    .full-player.has-panel .fp-stage,
+    .full-player.has-panel .fp-meta,
+    .full-player.has-panel .fp-seek,
+    .full-player.has-panel .fp-controls,
+    .full-player.has-panel .fp-actions {
+        transform: none;
+    }
+}
+
 
 
 .fp-panel-header {

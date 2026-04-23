@@ -1577,17 +1577,28 @@ const toggleVideoMode = () => {
 videoModeBtn.addEventListener("click", toggleVideoMode);
 fpVideoToggle.addEventListener("click", toggleVideoMode);
 
-// Lyrics + queue + visualizer panels
+// Update the parent class so the stage shifts left when any side panel
+// is open (CSS handles the transition).
+function updatePanelLayout() {
+    const open =
+        !fpLyricsPanel.classList.contains("hidden") ||
+        !fpQueuePanel.classList.contains("hidden");
+    fullPlayer.classList.toggle("has-panel", open);
+}
+
+// Lyrics + queue panels — only one open at a time.
 fpLyricsToggle.addEventListener("click", () => {
     const wasHidden = fpLyricsPanel.classList.contains("hidden");
     fpQueuePanel.classList.add("hidden"); fpQueueBtn.classList.remove("active");
     fpLyricsPanel.classList.toggle("hidden");
     fpLyricsToggle.classList.toggle("active", wasHidden);
     if (wasHidden) loadLyricsForCurrent();
+    updatePanelLayout();
 });
 fpLyricsClose.addEventListener("click", () => {
     fpLyricsPanel.classList.add("hidden");
     fpLyricsToggle.classList.remove("active");
+    updatePanelLayout();
 });
 fpQueueBtn.addEventListener("click", () => {
     const wasHidden = fpQueuePanel.classList.contains("hidden");
@@ -1595,10 +1606,13 @@ fpQueueBtn.addEventListener("click", () => {
     fpQueuePanel.classList.toggle("hidden");
     fpQueueBtn.classList.toggle("active", wasHidden);
     if (wasHidden) renderFpQueue();
+    updatePanelLayout();
 });
 fpQueueClose.addEventListener("click", () => {
     fpQueuePanel.classList.add("hidden"); fpQueueBtn.classList.remove("active");
+    updatePanelLayout();
 });
+
 fpVizToggle.addEventListener("click", () => {
     const willShow = visualizerCanvas.classList.contains("hidden");
     visualizerCanvas.classList.toggle("hidden");
