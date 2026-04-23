@@ -229,14 +229,35 @@ jobs:
       - name: Show active Xcode
         run: xcode-select -p && xcodebuild -version
 
-      - name: Prewarm Kotlin framework
-        run: ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --stacktrace
+      - name: Cache Konan
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Build Kotlin framework
+        env:
+          GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dkotlin.incremental=false -Dkotlin.native.ignoreIncorrectDependencies=true
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 \
+            -Pkotlin.native.cacheKind.iosArm64=none \
+            --stacktrace --info 2>&1 | tee /tmp/kotlin-native-link.log
+          EXIT=$?
+          if [ $EXIT -ne 0 ]; then
+            echo "=== last 300 lines of log ==="
+            tail -300 /tmp/kotlin-native-link.log
+            exit $EXIT
+          fi
 
       - name: Build iOS archive (unsigned)
         working-directory: iosApp
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
+        shell: bash
         run: |
+          set -o pipefail
           xcodebuild archive \
             -project iosApp.xcodeproj \
             -scheme iosApp \
@@ -249,7 +270,14 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
             DEVELOPMENT_TEAM="" \
-            ONLY_ACTIVE_ARCH=NO
+            ONLY_ACTIVE_ARCH=NO 2>&1 | tee /tmp/xcodebuild.log
+          EXIT=$?
+          if [ $EXIT -ne 0 ]; then
+            echo "=== last 300 lines of xcodebuild log ==="
+            tail -300 /tmp/xcodebuild.log
+            exit $EXIT
+          fi
+          test -d build/SakayoriMusic.xcarchive
 
       - name: Package unsigned IPA
         working-directory: iosApp
@@ -266,3 +294,50 @@ jobs:
           name: SakayoriMusic-ios-ipa-unsigned
           path: iosApp/build/SakayoriMusic-2.1.5-unsigned.ipa
           if-no-files-found: error
+
+      - name: Upload iOS debug logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            /tmp/kotlin-native-link.log
+            /tmp/xcodebuild.log
+          if-no-files-found: ignore
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux-x86_64, linux-aarch64, macos, ios-ipa]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten + rename
+        run: |
+          set -e
+          mkdir -p release-assets
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          for f in $(find artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.ipa" \)); do
+            base=$(basename "$f")
+            cp "$f" "release-assets/$base"
+          done
+          ls -la release-assets/
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: SakayoriMusic ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: release-assets/*
+          fail_on_unmatched_files: true
