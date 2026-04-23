@@ -133,6 +133,7 @@ android {
     }
     packaging {
         jniLibs.useLegacyPackaging = true
+        jniLibs.keepDebugSymbols += "**/*.so"
         jniLibs.excludes +=
             listOf(
                 "META-INF/META-INF/DEPENDENCIES",

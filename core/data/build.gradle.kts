@@ -17,6 +17,7 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xmulti-dollar-interpolation")
         freeCompilerArgs.add("-Xwhen-guards")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
     jvmToolchain(21)
     // Target declarations - add or remove as needed below. These define
