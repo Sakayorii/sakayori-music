@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux:
+  linux-x86_64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,20 +26,117 @@ jobs:
       - name: Install Linux deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 fakeroot rpm
+          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils
 
       - run: chmod +x ./gradlew
 
       - run: ./gradlew vlcSetup
 
-      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm -PisFullBuild=true
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createReleaseDistributable -PisFullBuild=true
+
+      - name: Build AppImage (x86_64)
+        run: |
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+
+          APPDIR=composeApp/build/AppDir
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR/usr"
+          cp -r composeApp/build/compose/binaries/main-release/app/SakayoriMusic/. "$APPDIR/usr/"
+
+          cat > "$APPDIR/AppRun" <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/usr/bin/SakayoriMusic" "$@"
+          EOF
+          chmod +x "$APPDIR/AppRun"
+
+          cat > "$APPDIR/sakayori-music.desktop" <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=SakayoriMusic
+          Comment=SakayoriMusic - Music Player
+          Exec=SakayoriMusic
+          Icon=sakayori-music
+          Categories=AudioVideo;Audio;Player;
+          Terminal=false
+          EOF
+
+          cp composeApp/icon/circle_app_icon.png "$APPDIR/sakayori-music.png"
+
+          ARCH=x86_64 ./appimagetool "$APPDIR" composeApp/build/SakayoriMusic-x86_64.AppImage
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SakayoriMusic-linux
+          name: SakayoriMusic-linux-x86_64
           path: |
             composeApp/build/compose/binaries/main/deb/*.deb
             composeApp/build/compose/binaries/main/rpm/*.rpm
+            composeApp/build/SakayoriMusic-x86_64.AppImage
+          if-no-files-found: error
+
+  linux-aarch64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils
+
+      - run: chmod +x ./gradlew
+
+      - run: ./gradlew vlcSetup
+
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createReleaseDistributable -PisFullBuild=true
+
+      - name: Build AppImage (aarch64)
+        run: |
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage -O appimagetool
+          chmod +x appimagetool
+
+          APPDIR=composeApp/build/AppDir
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR/usr"
+          cp -r composeApp/build/compose/binaries/main-release/app/SakayoriMusic/. "$APPDIR/usr/"
+
+          cat > "$APPDIR/AppRun" <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/usr/bin/SakayoriMusic" "$@"
+          EOF
+          chmod +x "$APPDIR/AppRun"
+
+          cat > "$APPDIR/sakayori-music.desktop" <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=SakayoriMusic
+          Comment=SakayoriMusic - Music Player
+          Exec=SakayoriMusic
+          Icon=sakayori-music
+          Categories=AudioVideo;Audio;Player;
+          Terminal=false
+          EOF
+
+          cp composeApp/icon/circle_app_icon.png "$APPDIR/sakayori-music.png"
+
+          ARCH=aarch64 ./appimagetool "$APPDIR" composeApp/build/SakayoriMusic-aarch64.AppImage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-linux-aarch64
+          path: |
+            composeApp/build/compose/binaries/main/deb/*.deb
+            composeApp/build/compose/binaries/main/rpm/*.rpm
+            composeApp/build/SakayoriMusic-aarch64.AppImage
           if-no-files-found: error
 
   macos:
@@ -87,6 +184,8 @@ jobs:
 
       - name: Build iOS archive (unsigned)
         working-directory: iosApp
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
         run: |
           xcodebuild archive \
             -project iosApp.xcodeproj \
