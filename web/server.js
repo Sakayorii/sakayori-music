@@ -156,7 +156,8 @@ loadCookiePool();
 // ---------------------------------------------------------------------------
 const REMOTE_COOKIES_URL =
     process.env.YT_COOKIES_URL ||
-    "https://vnc.namdev.qzz.io/youtube-cookies.txt";
+    "https://gist.githubusercontent.com/giangnam0201/1354209f7de870423e24b5e597b15e02/raw/95062eeaf75a95ff3f2cb0b299b7004e390645ae/gistfile1.txt";
+
 const REMOTE_COOKIES_REFRESH_MIN =
     parseInt(process.env.YT_COOKIES_REFRESH_MIN || "60", 10);
 
