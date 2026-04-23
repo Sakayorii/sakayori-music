@@ -1132,15 +1132,27 @@ function tickLyrics() {
     for (let i = 0; i < lines.length; i++) {
         if (lines[i].t <= t) activeIdx = i; else break;
     }
+    let activeEl = null;
     fpLyricsInner.querySelectorAll(".lyric-line").forEach((el, i) => {
         if (i === activeIdx) {
-            if (!el.classList.contains("active")) {
-                el.classList.add("active");
-                el.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
+            activeEl = el;
+            if (!el.classList.contains("active")) el.classList.add("active");
         } else el.classList.remove("active");
     });
+
+    // IMPORTANT: do NOT use el.scrollIntoView() — it walks up every
+    // scrollable ancestor (including the main view / window), which
+    // shoves the rest of the page out of view.  Scroll just the panel
+    // container manually so only the lyrics list moves.
+    if (activeEl && !tickLyrics._lastActive !== activeEl) {
+        tickLyrics._lastActive = activeEl;
+        const container = fpLyricsInner;
+        const target =
+            activeEl.offsetTop - container.clientHeight / 2 + activeEl.clientHeight / 2;
+        container.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+    }
 }
+
 lyricsSourceSelect.addEventListener("change", (e) => {
     State.settings.lyricsSource = e.target.value;
     saveSettings();
