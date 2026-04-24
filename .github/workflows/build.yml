@@ -242,20 +242,22 @@ jobs:
       - name: Show runner memory
         run: sysctl hw.memsize hw.ncpu && vm_stat | head -5
 
+      - name: Stop pre-existing Gradle daemons
+        run: ./gradlew --stop || true
+
       - name: Build Kotlin framework
-        env:
-          GRADLE_OPTS: -Xmx5g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC -Dfile.encoding=UTF-8
         shell: bash
         run: |
           set -o pipefail
           ./gradlew :composeApp:linkReleaseFrameworkIosArm64 \
             -Pkotlin.compiler.execution.strategy=in-process \
             -Pkotlin.native.ignoreIncorrectDependencies=true \
+            -Pkotlin.native.cacheKind.iosArm64=static \
             -Dorg.gradle.parallel=false \
             -Dorg.gradle.workers.max=1 \
             -Dorg.gradle.configureondemand=true \
+            -Dorg.gradle.caching=true \
             -Dkotlin.incremental=false \
-            --no-daemon \
             --stacktrace --info 2>&1 | tee /tmp/kotlin-native-link.log
           EXIT=$?
           if [ $EXIT -ne 0 ]; then
