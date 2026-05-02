@@ -176,8 +176,10 @@ kotlin {
 
 vlcSetup {
     vlcVersion = libs.versions.vlc.get()
-    shouldCompressVlcFiles = false
-    shouldIncludeAllVlcFiles = true
+    // Music player only needs audio/demuxer plugins. Compressing + filtering
+    // drops the bundled VLC payload from ~80 MB to ~25 MB per platform.
+    shouldCompressVlcFiles = true
+    shouldIncludeAllVlcFiles = false
     pathToCopyVlcLinuxFilesTo = rootDir.resolve("vlc-natives/linux/")
     pathToCopyVlcMacosFilesTo = rootDir.resolve("vlc-natives/macos/")
     pathToCopyVlcWindowsFilesTo = rootDir.resolve("vlc-natives/windows/")
@@ -236,7 +238,19 @@ compose.desktop {
                 }
             }
             targetFormats(*listTarget.toTypedArray())
-            modules("jdk.unsupported")
+            // Explicit JDK modules — replaces the per-OS `includeAllModules = true`
+            // which was bundling the full ~150 MB JDK. jlink trims this list down.
+            modules(
+                "java.naming",          // LDAP / network providers used by Ktor + JDK
+                "java.management",      // Sentry, JMX agents
+                "java.sql",             // some transitive deps (datastore, etc.)
+                "java.security.jgss",   // Kerberos/SPNEGO for HTTPS
+                "jdk.crypto.ec",        // EC curves for TLS
+                "jdk.unsupported",      // sun.misc.Unsafe (JNA, kotlinx-coroutines)
+                "java.instrument",      // Sentry self-instrumentation
+                "jdk.localedata",       // i18n locales
+                "jdk.accessibility",    // a11y APIs used by Compose
+            )
             packageName = "SakayoriMusic"
             description = "SakayoriMusic - Music Player"
             vendor = "Sakayorii"
@@ -249,7 +263,6 @@ compose.desktop {
                             .format(it)
                     }
                 bundleID = "com.sakayori.music"
-                includeAllModules = true
                 packageVersion = formatedDate
                 iconFile.set(project.file("icon/circle_app_icon.icns"))
                 val macExtraPlistKeys =
@@ -281,7 +294,6 @@ compose.desktop {
                 }
             }
             windows {
-                includeAllModules = true
                 packageVersion =
                     libs.versions.version.name
                         .get()
@@ -301,7 +313,6 @@ compose.desktop {
             }
             licenseFile.set(rootProject.file("EULA.rtf"))
             linux {
-                includeAllModules = true
                 packageVersion =
                     libs.versions.version.name
                         .get()

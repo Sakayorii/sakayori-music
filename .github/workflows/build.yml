@@ -341,6 +341,11 @@ jobs:
 
       - name: Build Kotlin framework
         shell: bash
+        env:
+          # K/N runs in-process inside the Gradle daemon. macos-14 arm64 runners
+          # have ~7 GB RAM. Devirtualization analysis OOMs with the default heap,
+          # so bump the daemon to 5 GB and override workflow-level GRADLE_OPTS.
+          GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=512m -Dorg.gradle.parallel=false -Dorg.gradle.configureondemand=true -Dkotlin.incremental=false"
         run: |
           set -o pipefail
           ./gradlew :composeApp:linkReleaseFrameworkIosArm64 \
@@ -415,7 +420,8 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Run on tag pushes even if some platform builds failed — partial release is allowed.
+    if: always() && startsWith(github.ref, 'refs/tags/v')
     needs: [linux-x86_64, linux-aarch64, windows, android, macos, ios-ipa]
     runs-on: ubuntu-latest
     permissions:
