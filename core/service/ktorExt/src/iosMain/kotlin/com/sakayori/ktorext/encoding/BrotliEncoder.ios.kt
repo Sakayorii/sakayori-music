@@ -6,33 +6,22 @@ import io.ktor.utils.io.ByteWriteChannel
 import kotlin.coroutines.CoroutineContext
 
 object BrotliEncoder : ContentEncoder {
-    override val name: String
-        get() = "br"
-
-    override fun encode(
-        source: ByteReadChannel,
-        coroutineContext: CoroutineContext,
-    ): ByteReadChannel {
-        // Stub: fallback to uncompressed stream
-        return source
-    }
-
-    override fun encode(
-        source: ByteReadChannel,
-        coroutineContext: CoroutineContext,
-    ): ByteReadChannel {
-        // Stub: fallback to uncompressed stream
-        return source
-    }
+    override val name: String = "br"
 
     override fun decode(
         source: ByteReadChannel,
         coroutineContext: CoroutineContext,
-    ): ByteReadChannel {
-        TODO("Not yet implemented")
-    }
+    ): ByteReadChannel = source
+
+    override fun encode(
+        source: ByteReadChannel,
+        coroutineContext: CoroutineContext,
+    ): ByteReadChannel = source
+
+    override fun encode(
+        source: ByteWriteChannel,
+        coroutineContext: CoroutineContext,
+    ): ByteWriteChannel = source
 }
 
-actual fun createBrotliEncoder(): ContentEncoder {
-    TODO("Not yet implemented")
-}
+actual fun createBrotliEncoder(): ContentEncoder = BrotliEncoder
