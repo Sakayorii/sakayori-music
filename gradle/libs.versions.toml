@@ -1,5 +1,5 @@
 [versions]
-version-name = "2.1.5"
+version-name = "2.1.6"
 version-code = "61"
 
 android = "8.13.2"
