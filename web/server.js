@@ -285,7 +285,12 @@ function loadCookiePool() {
   try {fs.mkdirSync(COOKIES_TMP, { recursive: true });} catch {}
 
   let files = [];
-  try {files = fs.readdirSync(COOKIES_DIR);} catch {return;}
+  try {
+    files = fs.readdirSync(COOKIES_DIR);
+  } catch (e) {
+    console.error(`[cookies] failed to read ${COOKIES_DIR}: ${e.message}`);
+    return;
+  }
 
   for (const f of files) {
     const src = path.join(COOKIES_DIR, f);
@@ -427,12 +432,23 @@ function runYtDlp(baseArgs, cookieEntry) {
   return new Promise((resolve, reject) => {
     const args = [...baseArgs, ...buildAuthArgs(cookieEntry)];
     const p = spawn(YT_DLP, args, { windowsHide: true });
+    
+    // Set a 10s timeout to prevent hanging promises
+    const timeout = setTimeout(() => {
+      p.kill("SIGKILL");
+      reject(new Error("yt-dlp process timed out after 10s"));
+    }, 10000);
+
     let out = "";
     let err = "";
     p.stdout.on("data", (b) => out += b.toString("utf8"));
     p.stderr.on("data", (b) => err += b.toString("utf8"));
-    p.on("error", reject);
+    p.on("error", (e) => {
+      clearTimeout(timeout);
+      reject(e);
+    });
     p.on("close", (code) => {
+      clearTimeout(timeout);
       if (code === 0 && out.trim()) resolve(out);else
       reject(new Error(err || `yt-dlp exited ${code}`));
     });
@@ -527,6 +543,9 @@ async function resolveAudio(videoId) {
       const entry = { url, mime };
       URL_CACHE.set(videoId, entry);
       return entry;
+    } catch (e) {
+      inflightAudio.delete(videoId);
+      throw e;
     } finally {
       inflightAudio.delete(videoId);
     }
@@ -546,6 +565,9 @@ async function resolveVideo(videoId) {
       const entry = { url, mime };
       VIDEO_URL_CACHE.set(videoId, entry);
       return entry;
+    } catch (e) {
+      inflightVideo.delete(videoId);
+      throw e;
     } finally {
       inflightVideo.delete(videoId);
     }

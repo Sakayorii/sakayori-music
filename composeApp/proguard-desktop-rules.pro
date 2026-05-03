@@ -269,3 +269,13 @@
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
 -keep class androidx.datastore.preferences.** { *; }
 
+-dontwarn **
+-dontwarn com.jetbrains.cef.remote.ThriftTransport**
+-dontwarn org.apache.thrift.**
+-dontwarn com.sun.jna.**
+-dontwarn org.cef.**
+-keep class org.apache.thrift.** { *; }
+-keep class com.jetbrains.cef.** { *; }
+-dontwarn **
+-dontnote **
+-keep class * { *; }

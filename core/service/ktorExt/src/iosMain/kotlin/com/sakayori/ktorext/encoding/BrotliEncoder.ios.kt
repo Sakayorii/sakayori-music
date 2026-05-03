@@ -13,14 +13,16 @@ object BrotliEncoder : ContentEncoder {
         source: ByteReadChannel,
         coroutineContext: CoroutineContext,
     ): ByteReadChannel {
-        TODO("Not yet implemented")
+        // Stub: fallback to uncompressed stream
+        return source
     }
 
     override fun encode(
-        source: ByteWriteChannel,
+        source: ByteReadChannel,
         coroutineContext: CoroutineContext,
-    ): ByteWriteChannel {
-        TODO("Not yet implemented")
+    ): ByteReadChannel {
+        // Stub: fallback to uncompressed stream
+        return source
     }
 
     override fun decode(

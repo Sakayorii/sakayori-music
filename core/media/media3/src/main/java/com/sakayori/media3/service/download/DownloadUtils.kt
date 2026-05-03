@@ -161,7 +161,7 @@ internal class DownloadUtils(
         get() = _downloads
     private val _downloadTask = MutableStateFlow<Map<String, Int>>(emptyMap())
     override val downloadTask: StateFlow<Map<String, Int>> get() = _downloadTask
-    val downloadingVideoIds = MutableStateFlow<MutableSet<String>>(mutableSetOf())
+    val downloadingVideoIds = MutableStateFlow<Set<String>>(emptySet())
 
     override suspend fun downloadTrack(
         videoId: String,
@@ -227,7 +227,7 @@ internal class DownloadUtils(
     override fun removeAllDownloads() {
         _downloads.value = emptyMap()
         _downloadTask.value = emptyMap()
-        downloadingVideoIds.value = mutableSetOf()
+        downloadingVideoIds.value = emptySet()
         downloadManager.removeAllDownloads()
     }
 
@@ -258,22 +258,14 @@ internal class DownloadUtils(
                     }
                     when (combineState) {
                         DownloadState.STATE_DOWNLOADED -> {
-                            downloadingVideoIds.update {
-                                it.apply {
-                                    remove(videoId)
-                                }
-                            }
+                            downloadingVideoIds.update { it - videoId }
                             songRepository.updateDownloadState(videoId, DownloadState.STATE_DOWNLOADED)
                         }
                         DownloadState.STATE_DOWNLOADING -> {
                             songRepository.updateDownloadState(videoId, DownloadState.STATE_DOWNLOADING)
                         }
                         DownloadState.STATE_NOT_DOWNLOADED -> {
-                            downloadingVideoIds.update {
-                                it.apply {
-                                    remove(videoId)
-                                }
-                            }
+                            downloadingVideoIds.update { it - videoId }
                             songRepository.updateDownloadState(videoId, DownloadState.STATE_NOT_DOWNLOADED)
                         }
                         DownloadState.STATE_PREPARING -> {
@@ -347,11 +339,7 @@ internal class DownloadUtils(
 
                             Download.STATE_DOWNLOADING -> {
                                 coroutineScope.launch {
-                                    downloadingVideoIds.update {
-                                        it.apply {
-                                            add(songId)
-                                        }
-                                    }
+                                    downloadingVideoIds.update { it + songId }
                                     songRepository.updateDownloadState(songId, DownloadState.STATE_DOWNLOADING)
                                 }
                             }

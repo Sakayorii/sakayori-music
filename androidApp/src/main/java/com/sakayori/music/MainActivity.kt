@@ -127,43 +127,47 @@ class MainActivity : AppCompatActivity() {
         Logger.d("Italy", "Key: ${Locale.ITALY.toLanguageTag()}")
 
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            if (getString(FIRST_TIME_MIGRATION) != STATUS_DONE) {
-                Logger.d("Locale Key", "onCreate: ${Locale.getDefault().toLanguageTag()}")
-                if (SUPPORTED_LANGUAGE.codes.contains(Locale.getDefault().toLanguageTag())) {
-                    Logger.d(
-                        "Contains",
-                        "onCreate: ${
-                            SUPPORTED_LANGUAGE.codes.contains(
-                                Locale.getDefault().toLanguageTag(),
-                            )
-                        }",
-                    )
-                    putString(SELECTED_LANGUAGE, Locale.getDefault().toLanguageTag())
-                    if (SUPPORTED_LOCATION.items.contains(Locale.getDefault().country)) {
-                        putString("location", Locale.getDefault().country)
+            try {
+                if (getString(FIRST_TIME_MIGRATION) != STATUS_DONE) {
+                    Logger.d("Locale Key", "onCreate: ${Locale.getDefault().toLanguageTag()}")
+                    if (SUPPORTED_LANGUAGE.codes.contains(Locale.getDefault().toLanguageTag())) {
+                        Logger.d(
+                            "Contains",
+                            "onCreate: ${
+                                SUPPORTED_LANGUAGE.codes.contains(
+                                    Locale.getDefault().toLanguageTag(),
+                                )
+                            }",
+                        )
+                        putString(SELECTED_LANGUAGE, Locale.getDefault().toLanguageTag())
+                        if (SUPPORTED_LOCATION.items.contains(Locale.getDefault().country)) {
+                            putString("location", Locale.getDefault().country)
+                        } else {
+                            putString("location", "US")
+                        }
                     } else {
-                        putString("location", "US")
+                        putString(SELECTED_LANGUAGE, "en-US")
                     }
-                } else {
-                    putString(SELECTED_LANGUAGE, "en-US")
+                    getString(SELECTED_LANGUAGE)?.let {
+                        Logger.d("Locale Key", "getString: $it")
+                        val localeList = LocaleListCompat.forLanguageTags(it)
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            AppCompatDelegate.setApplicationLocales(localeList)
+                        }
+                        putString(FIRST_TIME_MIGRATION, STATUS_DONE)
+                    }
                 }
-                getString(SELECTED_LANGUAGE)?.let {
-                    Logger.d("Locale Key", "getString: $it")
-                    val localeList = LocaleListCompat.forLanguageTags(it)
+                val savedLanguage = getString(SELECTED_LANGUAGE)
+                if (savedLanguage != null && savedLanguage.isNotEmpty() &&
+                    AppCompatDelegate.getApplicationLocales().toLanguageTags() != savedLanguage
+                ) {
+                    val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         AppCompatDelegate.setApplicationLocales(localeList)
                     }
-                    putString(FIRST_TIME_MIGRATION, STATUS_DONE)
                 }
-            }
-            val savedLanguage = getString(SELECTED_LANGUAGE)
-            if (savedLanguage != null && savedLanguage.isNotEmpty() &&
-                AppCompatDelegate.getApplicationLocales().toLanguageTags() != savedLanguage
-            ) {
-                val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    AppCompatDelegate.setApplicationLocales(localeList)
-                }
+            } catch (e: Exception) {
+                Logger.e("MainActivity", "Locale processing failed: ${e.message}")
             }
         }
 
@@ -213,7 +217,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            viewModel.getLocation()
+            try {
+                viewModel.getLocation()
+            } catch (e: Exception) {
+                Logger.e("MainActivity", "Failed to get location: \${e.message}")
+            }
         }
     }
 

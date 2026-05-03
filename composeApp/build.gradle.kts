@@ -235,6 +235,7 @@ compose.desktop {
                 currentOs.isLinux -> {
                     listTarget.add(TargetFormat.Deb)
                     listTarget.add(TargetFormat.Rpm)
+                    listTarget.add(TargetFormat.AppImage)
                 }
             }
             targetFormats(*listTarget.toTypedArray())
@@ -426,16 +427,20 @@ afterEvaluate {
             return
         }
 
+        val osArch = System.getProperty("os.arch")
+        val isArm64 = osArch == "aarch64" || osArch == "arm64"
+        val archString = if (isArm64) "aarch64" else "x86_64"
+
         val appimagetool =
             layout.buildDirectory
                 .dir("tmp")
                 .get()
                 .asFile
-                .resolve("appimagetool-x86_64.AppImage")
+                .resolve("appimagetool-$archString.AppImage")
 
         if (!appimagetool.exists()) {
             downloadFile(
-                "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage",
+                "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$archString.AppImage",
                 appimagetool,
             )
         }
@@ -475,7 +480,7 @@ afterEvaluate {
             |Name=SakayoriMusic
             |Comment=SakayoriMusic v$versionName - FOSS YouTube Music Client
             |Exec=bin/SakayoriMusic %u
-            |Icon=SakayoriMusic
+            |Icon=sakayorimusic
             |Terminal=false
             |Categories=Audio;AudioVideo;
             |StartupWMClass=com.sakayori.music.MainKt
@@ -524,9 +529,9 @@ afterEvaluate {
             ProcessBuilder(
                 appimagetool.canonicalPath,
                 "$appName.AppDir",
-                "$appName-x86_64.AppImage",
+                "$appName-$archString.AppImage",
             ).directory(appDir.parentFile)
-                .apply { environment()["ARCH"] = "x86_64" } // TODO: 支持arm64
+                .apply { environment()["ARCH"] = archString }
                 .inheritIO()
                 .start()
 

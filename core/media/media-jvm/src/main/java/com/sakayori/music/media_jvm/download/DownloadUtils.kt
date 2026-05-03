@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.lastOrNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -33,7 +34,7 @@ internal class DownloadUtils(
     private val _downloadTask = MutableStateFlow<Map<String, Int>>(emptyMap())
     override val downloadTask: StateFlow<Map<String, Int>> get() = _downloadTask
 
-    val downloadingVideoIds = MutableStateFlow<MutableSet<String>>(mutableSetOf())
+    val downloadingVideoIds = MutableStateFlow<Set<String>>(emptySet())
 
     init {
     }
