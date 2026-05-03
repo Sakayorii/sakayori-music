@@ -171,7 +171,7 @@
     <string name="eq_bands">Bands</string>
     <string name="open_system_equalizer">Open System Equalizer</string>
     <string name="use_your_system_equalizer">Use your system equalizer</string>
-    <string name="version_format" translatable="false">v%1$s</string>
+    <string name="version_format" translatable="false">v%1$s (Pre-release)</string>
     <string name="streaming_data_provider_piped">Streaming data provider (Piped)</string>
     <string name="itag">Itag</string>
     <string name="mime_type">Mime Type</string>
