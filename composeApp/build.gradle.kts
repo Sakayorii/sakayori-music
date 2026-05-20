@@ -161,9 +161,6 @@ kotlin {
             implementation(libs.jna.platform)
             implementation(libs.kermit.logging)
         }
-        iosMain.dependencies {
-            implementation(libs.sentry.kmp)
-        }
     }
 }
 
@@ -352,16 +349,8 @@ buildkonfig {
         } catch (_: Exception) {
             defaultDsnDesktop
         }
-        val dsnIos = try {
-            val properties = Properties()
-            properties.load(rootProject.file("local.properties").inputStream())
-            properties.getProperty("SENTRY_DSN_IOS") ?: properties.getProperty("SENTRY_DSN") ?: defaultDsnDesktop
-        } catch (_: Exception) {
-            defaultDsnDesktop
-        }
         buildConfigField(STRING, "sentryDsnAndroid", dsnAndroid)
         buildConfigField(STRING, "sentryDsnDesktop", dsnDesktop)
-        buildConfigField(STRING, "sentryDsnIos", dsnIos)
         buildConfigField(STRING, "sentryDsn", "")
     }
 }

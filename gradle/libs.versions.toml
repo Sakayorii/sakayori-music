@@ -49,7 +49,6 @@ slf4j = "1.7.36"
 sentry-android = "8.34.1"
 sentry-gradle-android = "6.1.0"
 sentry-jvm = "8.34.1"
-sentry-kmp = "0.13.0"
 newpipe = "v0.26.0"
 webkit = "1.15.0"
 kermit = "2.1.0"
@@ -224,7 +223,6 @@ koin-android = { module = "io.insert-koin:koin-android"}
 #Sentry
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android"}
 sentry-jvm = { module = "io.sentry:sentry", version.ref = "sentry-jvm"}
-sentry-kmp = { module = "io.sentry:sentry-kotlin-multiplatform", version.ref = "sentry-kmp" }
 
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 

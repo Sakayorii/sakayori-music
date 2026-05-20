@@ -4,9 +4,6 @@ package com.sakayori.music.utils
 
 import com.sakayori.logger.LogLevel
 import com.sakayori.logger.LogReporter
-import io.sentry.kotlin.multiplatform.Sentry
-import io.sentry.kotlin.multiplatform.SentryLevel
-import io.sentry.kotlin.multiplatform.protocol.Breadcrumb
 import kotlinx.cinterop.BetaInteropApi
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -21,38 +18,6 @@ import platform.Foundation.writeToFile
 class IosLogReporter : LogReporter {
     @OptIn(BetaInteropApi::class)
     override fun onLog(level: LogLevel, tag: String, message: String, throwable: Throwable?) {
-        appendLocal(level, tag, message, throwable)
-        if (!IosCrashReporting.isEnabled()) return
-        when (level) {
-            LogLevel.ERROR -> {
-                if (throwable != null) {
-                    Sentry.captureException(throwable) { scope ->
-                        scope.setTag("logger.tag", tag)
-                        scope.setExtra("logger.message", message)
-                    }
-                } else {
-                    Sentry.captureMessage(message) { scope ->
-                        scope.level = SentryLevel.ERROR
-                        scope.setTag("logger.tag", tag)
-                    }
-                }
-            }
-            LogLevel.WARN -> {
-                Sentry.addBreadcrumb(
-                    Breadcrumb().apply {
-                        category = tag
-                        this.message = message
-                        this.level = SentryLevel.WARNING
-                    },
-                )
-            }
-            LogLevel.INFO, LogLevel.DEBUG -> {
-            }
-        }
-    }
-
-    @OptIn(BetaInteropApi::class)
-    private fun appendLocal(level: LogLevel, tag: String, message: String, throwable: Throwable?) {
         if (level != LogLevel.ERROR && level != LogLevel.WARN) return
         try {
             val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
@@ -85,29 +50,4 @@ class IosLogReporter : LogReporter {
         } catch (_: Throwable) {
         }
     }
-}
-
-object IosCrashReporting {
-    @kotlin.concurrent.Volatile
-    private var enabled: Boolean = false
-
-    fun init(dsn: String, version: String) {
-        if (dsn.isBlank()) return
-        try {
-            Sentry.init { options ->
-                options.dsn = dsn
-                options.release = "sakayorimusic-ios@$version"
-                options.beforeSend = { event ->
-                    if (enabled) event else null
-                }
-            }
-        } catch (_: Throwable) {
-        }
-    }
-
-    fun setEnabled(value: Boolean) {
-        enabled = value
-    }
-
-    fun isEnabled(): Boolean = enabled
 }
