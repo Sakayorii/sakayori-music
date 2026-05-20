@@ -17,7 +17,7 @@ actual object SetupPlatform {
     actual fun systemLanguageTag(): String {
         return try {
             val locale = NSLocale.currentLocale
-            val lang = (locale.languageCode ?: "en").takeIf { it.isNotBlank() } ?: "en"
+            val lang = locale.languageCode.takeIf { it.isNotBlank() } ?: "en"
             val region = locale.countryCode
             if (region.isNullOrBlank()) lang else "$lang-$region"
         } catch (_: Throwable) {

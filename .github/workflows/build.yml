@@ -187,6 +187,9 @@ jobs:
             -Pkotlin.compiler.execution.strategy=in-process \
             -Pkotlin.native.ignoreIncorrectDependencies=true \
             -Pkotlin.native.cacheKind.iosArm64=static \
+            -Pkotlin.native.disableCompilerDaemon=false \
+            -Pkotlin.daemon.jvmargs="-Xmx5g -XX:MaxMetaspaceSize=512m" \
+            -Dkotlin.daemon.jvm.options="-Xmx5g -XX:MaxMetaspaceSize=512m" \
             -Dorg.gradle.parallel=false \
             -Dorg.gradle.workers.max=1 \
             -Dorg.gradle.configureondemand=true \
