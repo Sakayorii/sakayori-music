@@ -97,7 +97,7 @@ object IosCrashReporting {
             Sentry.init { options ->
                 options.dsn = dsn
                 options.release = "sakayorimusic-ios@$version"
-                options.beforeSend = { event, _ ->
+                options.beforeSend = { event ->
                     if (enabled) event else null
                 }
             }
