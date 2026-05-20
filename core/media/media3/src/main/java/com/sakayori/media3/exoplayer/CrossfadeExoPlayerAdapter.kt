@@ -257,11 +257,11 @@ internal class CrossfadeExoPlayerAdapter(
                     DefaultLoadControl
                         .Builder()
                         .setBufferDurationsMs(
-                            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS * 4,
-                            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS * 4,
+                            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+                            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS * 2,
                             DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
                             DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-                        ).setPrioritizeTimeOverSizeThresholds(true)
+                        ).setPrioritizeTimeOverSizeThresholds(false)
                         .build(),
                 ).setWakeMode(C.WAKE_MODE_NETWORK)
                 .setHandleAudioBecomingNoisy(handleAudioFocus)

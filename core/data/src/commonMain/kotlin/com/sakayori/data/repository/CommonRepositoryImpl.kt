@@ -27,8 +27,8 @@ import okio.IOException
 import okio.Path.Companion.toPath
 import okio.buffer
 import okio.use
-import org.SakayoriMusic.aiservice.AIHost
-import org.SakayoriMusic.aiservice.AiClient
+import com.sakayori.aiservice.AIHost
+import com.sakayori.aiservice.AiClient
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

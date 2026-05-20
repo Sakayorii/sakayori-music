@@ -13,3 +13,6 @@ fun reportCrash(throwable: Throwable) {
 
 fun pushPlayerError(e: Any?) {
 }
+
+fun installLogReporter() {
+}

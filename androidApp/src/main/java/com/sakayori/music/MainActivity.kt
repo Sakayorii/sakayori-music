@@ -39,9 +39,8 @@ import com.sakayori.music.service.test.notification.NotifyWork
 import com.sakayori.music.utils.ComposeResUtils
 import com.sakayori.music.utils.VersionManager
 import com.sakayori.music.viewModel.SharedViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.android.inject
 import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
@@ -77,13 +76,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        startMusicService()
+        if (!mBound) {
+            startMusicService()
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        if (shouldUnbind) {
-            unbindService(serviceConnection)
+        if (shouldUnbind && mBound) {
+            try {
+                unbindService(serviceConnection)
+            } catch (_: Throwable) {
+            }
+            mBound = false
+            shouldUnbind = false
         }
     }
 
@@ -127,43 +133,47 @@ class MainActivity : AppCompatActivity() {
         Logger.d("Italy", "Key: ${Locale.ITALY.toLanguageTag()}")
 
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            if (getString(FIRST_TIME_MIGRATION) != STATUS_DONE) {
-                Logger.d("Locale Key", "onCreate: ${Locale.getDefault().toLanguageTag()}")
-                if (SUPPORTED_LANGUAGE.codes.contains(Locale.getDefault().toLanguageTag())) {
-                    Logger.d(
-                        "Contains",
-                        "onCreate: ${
-                            SUPPORTED_LANGUAGE.codes.contains(
-                                Locale.getDefault().toLanguageTag(),
-                            )
-                        }",
-                    )
-                    putString(SELECTED_LANGUAGE, Locale.getDefault().toLanguageTag())
-                    if (SUPPORTED_LOCATION.items.contains(Locale.getDefault().country)) {
-                        putString("location", Locale.getDefault().country)
+            try {
+                if (getString(FIRST_TIME_MIGRATION) != STATUS_DONE) {
+                    val systemTag = Locale.getDefault().toLanguageTag()
+                    Logger.d("Locale Key", "onCreate: $systemTag")
+                    val isSupportedNonMeme = SUPPORTED_LANGUAGE.codes.contains(systemTag) &&
+                        systemTag !in SUPPORTED_LANGUAGE.memeCodes
+                    if (isSupportedNonMeme) {
+                        putString(SELECTED_LANGUAGE, systemTag)
+                        if (SUPPORTED_LOCATION.items.contains(Locale.getDefault().country)) {
+                            putString("location", Locale.getDefault().country)
+                        } else {
+                            putString("location", "US")
+                        }
                     } else {
-                        putString("location", "US")
+                        putString(SELECTED_LANGUAGE, "en-US")
+                        if (SUPPORTED_LOCATION.items.contains(Locale.getDefault().country)) {
+                            putString("location", Locale.getDefault().country)
+                        } else {
+                            putString("location", "US")
+                        }
                     }
-                } else {
-                    putString(SELECTED_LANGUAGE, "en-US")
+                    getString(SELECTED_LANGUAGE)?.let {
+                        Logger.d("Locale Key", "getString: $it")
+                        val localeList = LocaleListCompat.forLanguageTags(it)
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            AppCompatDelegate.setApplicationLocales(localeList)
+                        }
+                        putString(FIRST_TIME_MIGRATION, STATUS_DONE)
+                    }
                 }
-                getString(SELECTED_LANGUAGE)?.let {
-                    Logger.d("Locale Key", "getString: $it")
-                    val localeList = LocaleListCompat.forLanguageTags(it)
+                val savedLanguage = getString(SELECTED_LANGUAGE)
+                if (savedLanguage != null && savedLanguage.isNotEmpty() &&
+                    AppCompatDelegate.getApplicationLocales().toLanguageTags() != savedLanguage
+                ) {
+                    val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         AppCompatDelegate.setApplicationLocales(localeList)
                     }
-                    putString(FIRST_TIME_MIGRATION, STATUS_DONE)
                 }
-            }
-            val savedLanguage = getString(SELECTED_LANGUAGE)
-            if (savedLanguage != null && savedLanguage.isNotEmpty() &&
-                AppCompatDelegate.getApplicationLocales().toLanguageTags() != savedLanguage
-            ) {
-                val localeList = LocaleListCompat.forLanguageTags(savedLanguage)
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    AppCompatDelegate.setApplicationLocales(localeList)
-                }
+            } catch (e: Exception) {
+                Logger.e("MainActivity", "Locale processing failed: ${e.message}")
             }
         }
 
@@ -213,7 +223,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            viewModel.getLocation()
+            try {
+                viewModel.getLocation()
+            } catch (e: Exception) {
+                Logger.e("MainActivity", "Failed to get location: \${e.message}")
+            }
         }
     }
 

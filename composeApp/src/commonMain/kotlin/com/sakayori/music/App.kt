@@ -137,6 +137,25 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalFoundationApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun App(viewModel: SharedViewModel = koinInject()) {
+    val dataStoreManager: DataStoreManager = koinInject()
+    val initialSetupDone = androidx.compose.runtime.produceState<String?>(initialValue = null) {
+        dataStoreManager.initialSetupDone.collect { value = it }
+    }.value
+    if (initialSetupDone == null) {
+        androidx.compose.material3.Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = androidx.compose.ui.graphics.Color.Black,
+        ) {}
+        return
+    }
+    if (initialSetupDone != DataStoreManager.TRUE) {
+        com.sakayori.music.ui.theme.AppTheme {
+            com.sakayori.music.ui.screen.setup.SetupScreen(
+                onSetupComplete = {},
+            )
+        }
+        return
+    }
     val windowSize = currentWindowAdaptiveInfo().windowSizeClass
     val navController = rememberNavController()
     val currentBackStack by navController.currentBackStackEntryAsState()
@@ -155,9 +174,15 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     val isLiquidGlassEnabled by viewModel.getEnableLiquidGlass().collectAsStateWithLifecycle(DataStoreManager.FALSE)
     val isLowResourceMode by viewModel.getLowResourceMode().collectAsStateWithLifecycle(DataStoreManager.FALSE)
     val isLowEndDevice = remember { com.sakayori.music.utils.DeviceCapability.isLowEndDevice() }
+    LaunchedEffect(isLowEndDevice) {
+        if (isLowEndDevice && isLowResourceMode != DataStoreManager.TRUE) {
+            viewModel.setLowResourceMode(true)
+        }
+    }
+    val effectiveLowResourceMode = isLowEndDevice || isLowResourceMode == DataStoreManager.TRUE
     val blurEnabledGlobal = isLiquidGlassEnabled == DataStoreManager.TRUE &&
         !isLowEndDevice &&
-        isLowResourceMode != DataStoreManager.TRUE
+        !effectiveLowResourceMode
     var isShowMiniPlayer by rememberSaveable {
         mutableStateOf(true)
     }
@@ -208,6 +233,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     LaunchedEffect(updateData, autoUpdateEnabled) {
         val data = updateData ?: return@LaunchedEffect
         if (autoUpdateEnabled != TRUE) return@LaunchedEffect
+        if (!VersionManager.isRemoteNewerThan(data.tagName, VersionManager.getVersionName())) return@LaunchedEffect
         val picked = data.pickAssetFor(pickUpdateAssetName(data.tagName)) ?: return@LaunchedEffect
         val currentState = updateDownloadManager.state.value
         if (currentState is UpdateDownloadState.Ready && currentState.tag == data.tagName) return@LaunchedEffect
@@ -224,45 +250,49 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     }
 
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(30_000)
-        try {
-            withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
+            kotlinx.coroutines.delay(45_000)
+            try {
                 com.sakayori.music.utils.CacheCleaner.cleanupOldFiles()
+            } catch (_: Throwable) {
             }
-        } catch (_: Throwable) {
         }
     }
 
     val coilPlatformContext = LocalPlatformContext.current
     LaunchedEffect(Unit) {
-        var idleMinutes = 0
-        var lastTrackId = ""
-        while (true) {
-            kotlinx.coroutines.delay(30_000)
-            val isPlaying = viewModel.controllerState.value.isPlaying
-            val currentTrackId = viewModel.nowPlayingState.value?.mediaItem?.mediaId ?: ""
-            if (currentTrackId.isNotEmpty() && currentTrackId != lastTrackId) {
-                lastTrackId = currentTrackId
-                try {
-                    SingletonImageLoader.get(coilPlatformContext).memoryCache?.let { cache ->
-                        val target = (cache.maxSize * 0.5).toLong()
-                        cache.trimToSize(target)
-                    }
-                } catch (_: Throwable) {
-                }
-                com.sakayori.music.expect.platformRequestGc()
-            }
-            if (!isPlaying) {
-                idleMinutes++
-                if (idleMinutes >= 3) {
+        withContext(Dispatchers.IO) {
+            var idleTicks = 0
+            var lastTrackId = ""
+            while (true) {
+                kotlinx.coroutines.delay(60_000)
+                val isPlaying = viewModel.controllerState.value.isPlaying
+                val currentTrackId = viewModel.nowPlayingState.value?.mediaItem?.mediaId ?: ""
+                if (currentTrackId.isNotEmpty() && currentTrackId != lastTrackId) {
+                    lastTrackId = currentTrackId
                     try {
-                        com.sakayori.music.expect.platformRequestGc()
+                        SingletonImageLoader.get(coilPlatformContext).memoryCache?.let { cache ->
+                            val target = (cache.maxSize * 0.6).toLong()
+                            cache.trimToSize(target)
+                        }
                     } catch (_: Throwable) {
                     }
-                    idleMinutes = 0
                 }
-            } else {
-                idleMinutes = 0
+                if (!isPlaying) {
+                    idleTicks++
+                    if (idleTicks >= 5) {
+                        try {
+                            SingletonImageLoader.get(coilPlatformContext).memoryCache?.let { cache ->
+                                val target = (cache.maxSize * 0.5).toLong()
+                                cache.trimToSize(target)
+                            }
+                        } catch (_: Throwable) {
+                        }
+                        idleTicks = 0
+                    }
+                } else {
+                    idleTicks = 0
+                }
             }
         }
     }
@@ -420,7 +450,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
     LaunchedEffect(updateData) {
         val response = updateData ?: return@LaunchedEffect
         if (viewModel.showedUpdateDialog &&
-            response.tagName != getString(Res.string.version_format, VersionManager.getVersionName())
+            VersionManager.isRemoteNewerThan(response.tagName, VersionManager.getVersionName())
         ) {
             shouldShowUpdateDialog = true
         }
@@ -446,7 +476,7 @@ fun App(viewModel: SharedViewModel = koinInject()) {
 
     CompositionLocalProvider(
         com.sakayori.music.extension.LocalBlurEnabled provides blurEnabledGlobal,
-        com.sakayori.music.extension.LocalLowResourceMode provides (isLowResourceMode == DataStoreManager.TRUE),
+        com.sakayori.music.extension.LocalLowResourceMode provides effectiveLowResourceMode,
     ) {
     AppTheme {
         Scaffold(

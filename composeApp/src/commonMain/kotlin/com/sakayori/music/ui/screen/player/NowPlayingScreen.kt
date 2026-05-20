@@ -170,6 +170,8 @@ import com.sakayori.music.ui.component.HeartCheckBox
 import com.sakayori.music.ui.component.InfoPlayerBottomSheet
 import com.sakayori.music.ui.component.LyricsView
 import com.sakayori.music.ui.component.NowPlayingBottomSheet
+import com.sakayori.music.ui.component.AnimatedPlaybackControls
+import com.sakayori.music.ui.component.MorphingPlayPauseButton
 import com.sakayori.music.ui.component.PlayPauseButton
 import com.sakayori.music.ui.component.PlayerControlLayout
 import com.sakayori.music.ui.component.QueueBottomSheet
@@ -963,15 +965,14 @@ fun NowPlayingScreenContent(
                                 if (isBlurEnabled && !screenDataState.isVideo) {
                                     Box(
                                         modifier = Modifier
-                                            .fillMaxWidth(0.95f)
+                                            .fillMaxWidth(1.05f)
                                             .aspectRatio(1f)
-                                            .blur(40.dp)
                                             .background(
                                                 Brush.radialGradient(
-                                                    colors = listOf(
-                                                        spotShadowColor.copy(alpha = 0.6f),
-                                                        Color.Transparent,
-                                                    ),
+                                                    0.0f to spotShadowColor.copy(alpha = 0.55f),
+                                                    0.35f to spotShadowColor.copy(alpha = 0.3f),
+                                                    0.65f to spotShadowColor.copy(alpha = 0.1f),
+                                                    1.0f to Color.Transparent,
                                                 ),
                                                 shape = CircleShape,
                                             ),
@@ -994,8 +995,8 @@ fun NowPlayingScreenContent(
                                             ),
                                 ) {
                                     val vinylRotation = remember { Animatable(0f) }
-                                    LaunchedEffect(controllerState.isPlaying, screenDataState.isVideo) {
-                                        if (controllerState.isPlaying && !screenDataState.isVideo) {
+                                    LaunchedEffect(controllerState.isPlaying, screenDataState.isVideo, lowResourceMode) {
+                                        if (controllerState.isPlaying && !screenDataState.isVideo && !lowResourceMode) {
                                             while (true) {
                                                 vinylRotation.animateTo(
                                                     targetValue = vinylRotation.value + 360f,
@@ -2168,9 +2169,12 @@ fun NowPlayingScreenContent(
                                     )
                                 }
                             } else {
-                                PlayPauseButton(isPlaying = controllerState.isPlaying, modifier = Modifier.size(48.dp)) {
-                                    sharedViewModel.onUIEvent(UIEvent.PlayPause)
-                                }
+                                MorphingPlayPauseButton(
+                                    isPlaying = controllerState.isPlaying,
+                                    onClick = { sharedViewModel.onUIEvent(UIEvent.PlayPause) },
+                                    modifier = Modifier.size(48.dp),
+                                    iconSize = 24.dp,
+                                )
                             }
                         }
                     }

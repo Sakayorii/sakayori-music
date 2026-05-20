@@ -32,8 +32,9 @@ fun WaveformProgressBar(
 ) {
     val wavePhase = remember { Animatable(0f) }
 
-    LaunchedEffect(isPlaying) {
-        if (isPlaying) {
+    val lowResourceMode = com.sakayori.music.extension.LocalLowResourceMode.current
+    LaunchedEffect(isPlaying, lowResourceMode) {
+        if (isPlaying && !lowResourceMode) {
             wavePhase.animateTo(
                 targetValue = wavePhase.value + 1000f,
                 animationSpec = infiniteRepeatable(

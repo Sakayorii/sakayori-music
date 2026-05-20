@@ -32,7 +32,7 @@ jobs:
       - name: Install Linux deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils wget
+          sudo apt-get install -y fakeroot rpm file desktop-file-utils
 
       - run: chmod +x ./gradlew
 
@@ -44,40 +44,7 @@ jobs:
             sleep 10
           done
 
-      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createDistributable -PisFullBuild=true --stacktrace
-
-      - name: Build AppImage (x86_64)
-        run: |
-          set -e
-          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x appimagetool
-
-          APPDIR=composeApp/build/AppDir
-          rm -rf "$APPDIR"
-          mkdir -p "$APPDIR/usr"
-          cp -r composeApp/build/compose/binaries/main/app/SakayoriMusic/. "$APPDIR/usr/"
-
-          cat > "$APPDIR/AppRun" <<'EOF'
-          #!/bin/sh
-          HERE="$(dirname "$(readlink -f "$0")")"
-          exec "$HERE/usr/bin/SakayoriMusic" "$@"
-          EOF
-          chmod +x "$APPDIR/AppRun"
-
-          cat > "$APPDIR/sakayori-music.desktop" <<'EOF'
-          [Desktop Entry]
-          Type=Application
-          Name=SakayoriMusic
-          Comment=SakayoriMusic - Music Player
-          Exec=SakayoriMusic
-          Icon=sakayori-music
-          Categories=AudioVideo;Audio;Player;
-          Terminal=false
-          EOF
-
-          cp composeApp/icon/circle_app_icon.png "$APPDIR/sakayori-music.png"
-
-          ARCH=x86_64 ./appimagetool "$APPDIR" composeApp/build/SakayoriMusic-x86_64.AppImage
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm -PisFullBuild=true --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
@@ -85,7 +52,6 @@ jobs:
           path: |
             composeApp/build/compose/binaries/main/deb/*.deb
             composeApp/build/compose/binaries/main/rpm/*.rpm
-            composeApp/build/SakayoriMusic-x86_64.AppImage
           if-no-files-found: error
 
   linux-aarch64:
@@ -106,7 +72,7 @@ jobs:
       - name: Install Linux deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 fakeroot rpm file desktop-file-utils wget libvlc-dev vlc-plugin-base libvlc5
+          sudo apt-get install -y fakeroot rpm file desktop-file-utils libvlc-dev vlc-plugin-base libvlc5
 
       - run: chmod +x ./gradlew
 
@@ -127,40 +93,7 @@ jobs:
             mkdir -p vlc-natives/linux
           fi
 
-      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm composeApp:createDistributable -PisFullBuild=true --stacktrace
-
-      - name: Build AppImage (aarch64)
-        run: |
-          set -e
-          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage -O appimagetool
-          chmod +x appimagetool
-
-          APPDIR=composeApp/build/AppDir
-          rm -rf "$APPDIR"
-          mkdir -p "$APPDIR/usr"
-          cp -r composeApp/build/compose/binaries/main/app/SakayoriMusic/. "$APPDIR/usr/"
-
-          cat > "$APPDIR/AppRun" <<'EOF'
-          #!/bin/sh
-          HERE="$(dirname "$(readlink -f "$0")")"
-          exec "$HERE/usr/bin/SakayoriMusic" "$@"
-          EOF
-          chmod +x "$APPDIR/AppRun"
-
-          cat > "$APPDIR/sakayori-music.desktop" <<'EOF'
-          [Desktop Entry]
-          Type=Application
-          Name=SakayoriMusic
-          Comment=SakayoriMusic - Music Player
-          Exec=SakayoriMusic
-          Icon=sakayori-music
-          Categories=AudioVideo;Audio;Player;
-          Terminal=false
-          EOF
-
-          cp composeApp/icon/circle_app_icon.png "$APPDIR/sakayori-music.png"
-
-          ARCH=aarch64 ./appimagetool "$APPDIR" composeApp/build/SakayoriMusic-aarch64.AppImage
+      - run: ./gradlew composeApp:packageDeb composeApp:packageRpm -PisFullBuild=true --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
@@ -168,7 +101,194 @@ jobs:
           path: |
             composeApp/build/compose/binaries/main/deb/*.deb
             composeApp/build/compose/binaries/main/rpm/*.rpm
-            composeApp/build/SakayoriMusic-aarch64.AppImage
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: VLC setup (with retry)
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            ./gradlew.bat vlcSetup --stacktrace && break
+            echo "vlcSetup attempt $i failed, retrying..."
+            sleep 10
+          done
+
+      - name: Package Exe + Msi
+        shell: bash
+        run: ./gradlew.bat composeApp:packageExe composeApp:packageMsi -PisFullBuild=true --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-windows-x86_64
+          path: |
+            composeApp/build/compose/binaries/main/exe/*.exe
+            composeApp/build/compose/binaries/main/msi/*.msi
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - run: chmod +x ./gradlew
+
+      # If ANDROID_KEYSTORE_BASE64 secret is configured, build a signed release APK + AAB.
+      # Otherwise fall back to a debug APK so the workflow still produces an artifact.
+      - name: Configure signing (if secrets present)
+        id: signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEY_STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/release.keystore"
+            {
+              echo "KEY_STORE_FILE=$GITHUB_WORKSPACE/release.keystore"
+              echo "KEY_STORE_PASSWORD=$KEY_STORE_PASSWORD"
+              echo "KEY_ALIAS=$KEY_ALIAS"
+              echo "KEY_PASSWORD=$KEY_PASSWORD"
+            } >> local.properties
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Android signing secrets configured — building debug APK."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release APK + AAB
+        if: steps.signing.outputs.signed == 'true'
+        run: ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease --stacktrace
+
+      - name: Build debug APK
+        if: steps.signing.outputs.signed != 'true'
+        run: ./gradlew :androidApp:assembleDebug --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-android
+          path: |
+            androidApp/build/outputs/apk/release/*.apk
+            androidApp/build/outputs/bundle/release/*.aab
+            androidApp/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: VLC setup (with retry)
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            ./gradlew.bat vlcSetup --stacktrace && break
+            echo "vlcSetup attempt $i failed, retrying..."
+            sleep 10
+          done
+
+      - name: Package Exe + Msi
+        shell: bash
+        run: ./gradlew.bat composeApp:packageExe composeApp:packageMsi -PisFullBuild=true --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-windows-x86_64
+          path: |
+            composeApp/build/compose/binaries/main/exe/*.exe
+            composeApp/build/compose/binaries/main/msi/*.msi
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - run: chmod +x ./gradlew
+
+      # If ANDROID_KEYSTORE_BASE64 secret is configured, build a signed release APK + AAB.
+      # Otherwise fall back to a debug APK so the workflow still produces an artifact.
+      - name: Configure signing (if secrets present)
+        id: signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEY_STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/release.keystore"
+            {
+              echo "KEY_STORE_FILE=$GITHUB_WORKSPACE/release.keystore"
+              echo "KEY_STORE_PASSWORD=$KEY_STORE_PASSWORD"
+              echo "KEY_ALIAS=$KEY_ALIAS"
+              echo "KEY_PASSWORD=$KEY_PASSWORD"
+            } >> local.properties
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Android signing secrets configured — building debug APK."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release APK + AAB
+        if: steps.signing.outputs.signed == 'true'
+        run: ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease --stacktrace
+
+      - name: Build debug APK
+        if: steps.signing.outputs.signed != 'true'
+        run: ./gradlew :androidApp:assembleDebug --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SakayoriMusic-android
+          path: |
+            androidApp/build/outputs/apk/release/*.apk
+            androidApp/build/outputs/bundle/release/*.aab
+            androidApp/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
   macos:
@@ -232,22 +352,42 @@ jobs:
       - name: Cache Konan
         uses: actions/cache@v4
         with:
-          path: ~/.konan
+          path: |
+            ~/.konan
+            ~/.gradle/caches/kotlin-native
           key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: |
+            konan-${{ runner.os }}-
+
+      - name: Show runner memory
+        run: sysctl hw.memsize hw.ncpu && vm_stat | head -5
+
+      - name: Stop pre-existing Gradle daemons
+        run: ./gradlew --stop || true
 
       - name: Build Kotlin framework
-        env:
-          GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dkotlin.incremental=false -Dkotlin.native.ignoreIncorrectDependencies=true
         shell: bash
+        env:
+          # K/N runs in-process inside the Gradle daemon. macos-14 arm64 runners
+          # have ~7 GB RAM. Devirtualization analysis OOMs with the default heap,
+          # so bump the daemon to 5 GB and override workflow-level GRADLE_OPTS.
+          GRADLE_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=512m -Dorg.gradle.parallel=false -Dorg.gradle.configureondemand=true -Dkotlin.incremental=false"
         run: |
           set -o pipefail
           ./gradlew :composeApp:linkReleaseFrameworkIosArm64 \
-            -Pkotlin.native.cacheKind.iosArm64=none \
+            -Pkotlin.compiler.execution.strategy=in-process \
+            -Pkotlin.native.ignoreIncorrectDependencies=true \
+            -Pkotlin.native.cacheKind.iosArm64=static \
+            -Dorg.gradle.parallel=false \
+            -Dorg.gradle.workers.max=1 \
+            -Dorg.gradle.configureondemand=true \
+            -Dorg.gradle.caching=true \
+            -Dkotlin.incremental=false \
             --stacktrace --info 2>&1 | tee /tmp/kotlin-native-link.log
           EXIT=$?
           if [ $EXIT -ne 0 ]; then
-            echo "=== last 300 lines of log ==="
-            tail -300 /tmp/kotlin-native-link.log
+            echo "=== last 500 lines of log ==="
+            tail -500 /tmp/kotlin-native-link.log
             exit $EXIT
           fi
 
@@ -286,13 +426,13 @@ jobs:
           mkdir -p build/Payload
           cp -R build/SakayoriMusic.xcarchive/Products/Applications/iosApp.app build/Payload/SakayoriMusic.app
           cd build
-          zip -qry SakayoriMusic-2.1.5-unsigned.ipa Payload
-          ls -la SakayoriMusic-2.1.5-unsigned.ipa
+          zip -qry SakayoriMusic-${VERSION:-2.1.6}-unsigned.ipa Payload
+          ls -la SakayoriMusic-${VERSION:-2.1.6}-unsigned.ipa
 
       - uses: actions/upload-artifact@v4
         with:
           name: SakayoriMusic-ios-ipa-unsigned
-          path: iosApp/build/SakayoriMusic-2.1.5-unsigned.ipa
+          path: iosApp/build/SakayoriMusic-*-unsigned.ipa
           if-no-files-found: error
 
       - name: Upload iOS debug logs on failure
@@ -306,8 +446,9 @@ jobs:
           if-no-files-found: ignore
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-x86_64, linux-aarch64, macos, ios-ipa]
+    # Run on tag pushes even if some platform builds failed — partial release is allowed.
+    if: always() && startsWith(github.ref, 'refs/tags/v')
+    needs: [linux-x86_64, linux-aarch64, windows, android, macos, ios-ipa]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -325,9 +466,27 @@ jobs:
           mkdir -p release-assets
           TAG="${GITHUB_REF#refs/tags/}"
           VERSION="${TAG#v}"
-          for f in $(find artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.ipa" \)); do
+          for f in $(find artifacts -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.ipa" -o -name "*.exe" -o -name "*.msi" -o -name "*.apk" -o -name "*.aab" \)); do
             base=$(basename "$f")
-            cp "$f" "release-assets/$base"
+            ext="${base##*.}"
+            parent=$(basename "$(dirname "$f")")
+            suffix="${parent#SakayoriMusic-}"
+
+            if [ "$ext" = "apk" ]; then
+              abi=$(echo "$base" | sed -E 's/^app-//; s/-(release|debug)\.apk$//')
+              [ -z "$abi" ] && abi="universal"
+              if echo "$base" | grep -q "debug"; then
+                cp "$f" "release-assets/SakayoriMusic-${VERSION}-android-debug-${abi}.apk"
+              else
+                cp "$f" "release-assets/SakayoriMusic-${VERSION}-android-${abi}.apk"
+              fi
+            elif [ "$ext" = "aab" ]; then
+              cp "$f" "release-assets/SakayoriMusic-${VERSION}-android.aab"
+            elif [ "$ext" = "ipa" ]; then
+              cp "$f" "release-assets/SakayoriMusic-${VERSION}-ios-unsigned.ipa"
+            else
+              cp "$f" "release-assets/SakayoriMusic-${VERSION}-${suffix}.${ext}"
+            fi
           done
           ls -la release-assets/
 

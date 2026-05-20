@@ -1,5 +1,3 @@
-
-
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -12,9 +10,233 @@ const compression = require("compression");
 const { LRUCache } = require("lru-cache");
 const { Agent, fetch: undiciFetch } = require("undici");
 
-const HOST = process.env.HOST || "127.0.0.1";
+const LOCALES_DIR = path.join(__dirname, "public", "locales");
+const COMPOSE_RES_DIR = path.resolve(
+  __dirname, "..",
+  "composeApp", "src", "commonMain", "composeResources"
+);
+
+const ANDROID_TO_BCP47 = {
+  "values": "en",
+  "values-ar": "ar",
+  "values-az": "az",
+  "values-bg": "bg",
+  "values-ca": "ca",
+  "values-cs": "cs",
+  "values-de": "de",
+  "values-el": "el",
+  "values-en-rGG": "en-GG",
+  "values-en-rIO": "en-IO",
+  "values-en-rLC": "en-LC",
+  "values-en-rMS": "en-MS",
+  "values-en-rPH": "en-PH",
+  "values-es": "es",
+  "values-fa": "fa",
+  "values-fi": "fi",
+  "values-fr": "fr",
+  "values-hi": "hi",
+  "values-hu": "hu",
+  "values-in": "id",
+  "values-it": "it",
+  "values-iw": "he",
+  "values-ja": "ja",
+  "values-ko": "ko",
+  "values-nl": "nl",
+  "values-pl": "pl",
+  "values-pt": "pt",
+  "values-ro": "ro",
+  "values-ru": "ru",
+  "values-sv": "sv",
+  "values-th": "th",
+  "values-tr": "tr",
+  "values-uk": "uk",
+  "values-vi": "vi",
+  "values-zh": "zh",
+  "values-zh-rTW": "zh-TW"
+};
+
+const LOCALE_NATIVE_NAMES = {
+  "en": "English",
+  "ar": "العربية",
+  "az": "Azərbaycan",
+  "bg": "Български",
+  "ca": "Català",
+  "cs": "Čeština",
+  "de": "Deutsch",
+  "el": "Ελληνικά",
+  "en-GG": "English (Guernsey)",
+  "en-IO": "English (BIOT)",
+  "en-LC": "English (Saint Lucia)",
+  "en-MS": "English (Montserrat)",
+  "en-PH": "English (Philippines)",
+  "es": "Español",
+  "fa": "فارسی",
+  "fi": "Suomi",
+  "fr": "Français",
+  "hi": "हिन्दी",
+  "hu": "Magyar",
+  "id": "Bahasa Indonesia",
+  "it": "Italiano",
+  "he": "עברית",
+  "ja": "日本語",
+  "ko": "한국어",
+  "nl": "Nederlands",
+  "pl": "Polski",
+  "pt": "Português",
+  "ro": "Română",
+  "ru": "Русский",
+  "sv": "Svenska",
+  "th": "ไทย",
+  "tr": "Türkçe",
+  "uk": "Українська",
+  "vi": "Tiếng Việt",
+  "zh": "中文",
+  "zh-TW": "繁體中文"
+};
+
+const RTL_LOCALES = new Set(["ar", "fa", "he"]);
+
+function parseAndroidStringsXml(xml) {
+  const out = {};
+  const decode = (s) =>
+  s.
+  replace(/&lt;/g, "<").
+  replace(/&gt;/g, ">").
+  replace(/&amp;/g, "&").
+  replace(/&quot;/g, '"').
+  replace(/&apos;/g, "'").
+  replace(/\\'/g, "'").
+  replace(/\\"/g, '"').
+  replace(/\\n/g, "\n");
+
+  const re = /<string\s+([^>]*?)>([\s\S]*?)<\/string>/g;
+  let m;
+  while (m = re.exec(xml)) {
+    const attrs = m[1];
+    const inner = m[2];
+
+    const nameMatch = /name\s*=\s*"([^"]+)"/.exec(attrs);
+    if (!nameMatch) continue;
+
+    let body = inner;
+    const cdata = /<!\[CDATA\[([\s\S]*?)\]\]>/.exec(body);
+    if (cdata) body = cdata[1];
+    out[nameMatch[1]] = decode(body).trim();
+  }
+  return out;
+}
+
+const I18N_INDEX = { default: "en", locales: [] };
+
+function bootstrapLocales() {
+  try {
+    fs.mkdirSync(LOCALES_DIR, { recursive: true });
+  } catch {}
+
+  if (!fs.existsSync(COMPOSE_RES_DIR)) {
+    console.warn(
+      `[i18n] composeResources not found at ${COMPOSE_RES_DIR}; ` +
+      `falling back to whatever's already in web/public/locales/`
+    );
+    return;
+  }
+
+  let total = 0;
+  const exposed = [];
+  for (const [androidKey, bcp47] of Object.entries(ANDROID_TO_BCP47)) {
+    const xmlPath = path.join(COMPOSE_RES_DIR, androidKey, "strings.xml");
+    if (!fs.existsSync(xmlPath)) continue;
+    try {
+      const text = fs.readFileSync(xmlPath, "utf8");
+      const map = parseAndroidStringsXml(text);
+      const json = {
+        code: bcp47,
+        name: LOCALE_NATIVE_NAMES[bcp47] || bcp47,
+        rtl: RTL_LOCALES.has(bcp47),
+        strings: map
+      };
+      fs.writeFileSync(
+        path.join(LOCALES_DIR, `${bcp47}.json`),
+        JSON.stringify(json, null, 0) + "\n"
+      );
+      exposed.push({
+        code: bcp47,
+        name: LOCALE_NATIVE_NAMES[bcp47] || bcp47,
+        rtl: RTL_LOCALES.has(bcp47),
+        strings: Object.keys(map).length
+      });
+      total += Object.keys(map).length;
+    } catch (e) {
+      console.warn(`[i18n] failed ${androidKey}: ${e.message}`);
+    }
+  }
+
+  exposed.sort((a, b) => a.name.localeCompare(b.name));
+  I18N_INDEX.locales = exposed;
+  fs.writeFileSync(
+    path.join(LOCALES_DIR, "_index.json"),
+    JSON.stringify(I18N_INDEX, null, 0) + "\n"
+  );
+  console.log(
+    `[i18n] published ${exposed.length} locale(s) (${total} strings total) ` +
+    `→ web/public/locales/`
+  );
+}
+bootstrapLocales();
+
+const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
-const YT_DLP = process.env.YT_DLP || "yt-dlp";
+let YT_DLP = process.env.YT_DLP || "yt-dlp";
+
+const BIN_DIR = path.join(__dirname, "bin");
+function ytDlpAssetName() {
+  if (process.platform === "win32") return "yt-dlp.exe";
+  if (process.platform === "darwin") return "yt-dlp_macos";
+  return "yt-dlp";
+}
+function checkYtDlp(cmd) {
+  return new Promise((resolve) => {
+    try {
+      const p = spawn(cmd, ["--version"], { windowsHide: true });
+      p.on("error", () => resolve(false));
+      p.on("close", (code) => resolve(code === 0));
+    } catch {resolve(false);}
+  });
+}
+async function ensureYtDlp() {
+  if (await checkYtDlp(YT_DLP)) return true;
+  console.warn(`[yt-dlp] '${YT_DLP}' not found on PATH — bootstrapping…`);
+  try {fs.mkdirSync(BIN_DIR, { recursive: true });} catch {}
+  const dst = path.join(BIN_DIR, ytDlpAssetName());
+  if (fs.existsSync(dst) && (await checkYtDlp(dst))) {
+    YT_DLP = dst;
+    console.log(`[yt-dlp] using cached binary at ${dst}`);
+    return true;
+  }
+  const url = `https://github.com/yt-dlp/yt-dlp/releases/latest/download/${ytDlpAssetName()}`;
+  console.log(`[yt-dlp] downloading ${url}`);
+  try {
+    const r = await undiciFetch(url, {
+      headers: { "User-Agent": "SakayoriMusicWeb/2.1" }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const ab = await r.arrayBuffer();
+    fs.writeFileSync(dst, Buffer.from(ab));
+    if (process.platform !== "win32") {
+      try {fs.chmodSync(dst, 0o755);} catch {}
+    }
+    if (await checkYtDlp(dst)) {
+      YT_DLP = dst;
+      console.log(`[yt-dlp] ready at ${dst}`);
+      return true;
+    }
+    console.error("[yt-dlp] downloaded binary failed to run");
+  } catch (e) {
+    console.error(`[yt-dlp] download failed: ${e.message}`);
+    console.error('[yt-dlp]   → install manually:  pip install -U yt-dlp');
+  }
+  return false;
+}
 
 const upstreamAgent = new Agent({
   keepAliveTimeout: 60_000,
@@ -63,7 +285,12 @@ function loadCookiePool() {
   try {fs.mkdirSync(COOKIES_TMP, { recursive: true });} catch {}
 
   let files = [];
-  try {files = fs.readdirSync(COOKIES_DIR);} catch {return;}
+  try {
+    files = fs.readdirSync(COOKIES_DIR);
+  } catch (e) {
+    console.error(`[cookies] failed to read ${COOKIES_DIR}: ${e.message}`);
+    return;
+  }
 
   for (const f of files) {
     const src = path.join(COOKIES_DIR, f);
@@ -113,82 +340,87 @@ loadCookiePool();
   }
 })();
 
-// ---------------------------------------------------------------------------
-// Auto-fetch a community cookies pack when the local pool is empty.
-//   • Default URL is overrideable via env var YT_COOKIES_URL.
-//   • Refreshed every COOKIES_REFRESH_MIN minutes (default: 60).
-//   • The fetched file is dropped into web/cookies/ and the pool reloads.
-// ---------------------------------------------------------------------------
 const REMOTE_COOKIES_URL =
-    process.env.YT_COOKIES_URL ||
-    "https://gist.githubusercontent.com/giangnam0201/1354209f7de870423e24b5e597b15e02/raw/95062eeaf75a95ff3f2cb0b299b7004e390645ae/gistfile1.txt";
+process.env.YT_COOKIES_URL ||
+"https://gist.githubusercontent.com/giangnam0201/1354209f7de870423e24b5e597b15e02/raw/95062eeaf75a95ff3f2cb0b299b7004e390645ae/gistfile1.txt";
 
 const REMOTE_COOKIES_REFRESH_MIN =
-    parseInt(process.env.YT_COOKIES_REFRESH_MIN || "60", 10);
+parseInt(process.env.YT_COOKIES_REFRESH_MIN || "60", 10);
 
 async function fetchRemoteCookies({ silent = false } = {}) {
-    if (!REMOTE_COOKIES_URL) return false;
-    try {
-        if (!silent) console.log(`[cookies] fetching ${REMOTE_COOKIES_URL} …`);
-        const r = await undiciFetch(REMOTE_COOKIES_URL, {
-            headers: { "User-Agent": UA },
-        });
-        if (!r.ok) {
-            if (!silent) console.warn(`[cookies] remote fetch failed: HTTP ${r.status}`);
-            return false;
-        }
-        const text = await r.text();
-        if (!text || !text.trim()) {
-            if (!silent) console.warn("[cookies] remote file is empty");
-            return false;
-        }
-        try { fs.mkdirSync(COOKIES_DIR, { recursive: true }); } catch { /* noop */ }
-        const dst = path.join(COOKIES_DIR, "_remote.txt");
-        fs.writeFileSync(dst, text);
-        loadCookiePool();
-        if (cookiePool.length) {
-            console.log(`[cookies] remote pool ready (${cookiePool.length} accounts)`);
-        }
-        return cookiePool.length > 0;
-    } catch (e) {
-        if (!silent) console.warn(`[cookies] remote fetch failed: ${e.message}`);
-        return false;
+  if (!REMOTE_COOKIES_URL) return false;
+  try {
+    if (!silent) console.log(`[cookies] fetching ${REMOTE_COOKIES_URL} …`);
+    const r = await fetchWithTimeout(REMOTE_COOKIES_URL, {
+      headers: { "User-Agent": UA }
+    }, 15000);
+    if (!r.ok) {
+      if (!silent) console.warn(`[cookies] remote fetch failed: HTTP ${r.status}`);
+      return false;
     }
+    const text = await r.text();
+    if (!text || !text.trim()) {
+      if (!silent) console.warn("[cookies] remote file is empty");
+      return false;
+    }
+    try {fs.mkdirSync(COOKIES_DIR, { recursive: true });} catch {}
+    const dst = path.join(COOKIES_DIR, "_remote.txt");
+    fs.writeFileSync(dst, text);
+    loadCookiePool();
+    if (cookiePool.length) {
+      console.log(`[cookies] remote pool ready (${cookiePool.length} accounts)`);
+    }
+    return cookiePool.length > 0;
+  } catch (e) {
+    if (!silent) console.warn(`[cookies] remote fetch failed: ${e.message}`);
+    return false;
+  }
 }
 
-// On startup, if there's no local pool / env-var cookie / browser cookie,
-// pull the community pack so the very first request has cookies to use.
 (async function autoFetchOnBoot() {
-    if (cookiePool.length || process.env.YT_COOKIES || YT_COOKIES_BROWSER) return;
-    await fetchRemoteCookies();
+  if (cookiePool.length || process.env.YT_COOKIES || YT_COOKIES_BROWSER) return;
+  await fetchRemoteCookies();
 })();
 
-// Periodically refresh the remote pack so dead/expired accounts get rotated.
 if (REMOTE_COOKIES_REFRESH_MIN > 0) {
-    setInterval(
-        () => { fetchRemoteCookies({ silent: true }); },
-        REMOTE_COOKIES_REFRESH_MIN * 60 * 1000
-    ).unref();
+  setInterval(
+    () => {fetchRemoteCookies({ silent: true });},
+    REMOTE_COOKIES_REFRESH_MIN * 60 * 1000
+  ).unref();
 }
-
 
 function pickCookie() {
   for (const c of cookiePool) if (!deadCookies.has(c.id)) return c;
   return null;
 }
+
+const DEAD_COOKIE_TTL_MS = 5 * 60 * 1000;
 function markCookieDead(id) {
   deadCookies.add(id);
   const remain = cookiePool.length - deadCookies.size;
   console.warn(`[cookies] '${id}' looks dead — ${remain} cookie(s) remaining`);
+
+  setTimeout(() => {
+    if (deadCookies.delete(id)) {
+      console.log(`[cookies] '${id}' revived after ${DEAD_COOKIE_TTL_MS / 60000}min cooldown`);
+    }
+  }, DEAD_COOKIE_TTL_MS).unref();
   if (remain === 0 && cookiePool.length) {
     console.warn(`[cookies] all cookies failed; resetting pool to retry from top`);
     deadCookies.clear();
   }
 }
+
 function isAuthError(msg) {
-  return /Sign in to confirm|cookies|HTTP Error 403|consent|requires.*authentication|Forbidden/i.
-  test(String(msg || ""));
+
+  const s = String(msg || "");
+  if (/HTTP Error 401|HTTP Error 403/i.test(s)) return true;
+  if (/Sign in to confirm/i.test(s)) return true;
+  if (/account.*?(suspended|terminated|disabled)/i.test(s)) return true;
+  if (/cookies are no longer valid|invalid.*cookies/i.test(s)) return true;
+  return false;
 }
+
 function buildAuthArgs(cookieEntry) {
   if (cookieEntry) return ["--cookies", cookieEntry.normalizedPath];
   if (process.env.YT_COOKIES) return ["--cookies", process.env.YT_COOKIES];
@@ -200,12 +432,23 @@ function runYtDlp(baseArgs, cookieEntry) {
   return new Promise((resolve, reject) => {
     const args = [...baseArgs, ...buildAuthArgs(cookieEntry)];
     const p = spawn(YT_DLP, args, { windowsHide: true });
+    
+    // Set a 10s timeout to prevent hanging promises
+    const timeout = setTimeout(() => {
+      p.kill("SIGKILL");
+      reject(new Error("yt-dlp process timed out after 10s"));
+    }, 10000);
+
     let out = "";
     let err = "";
     p.stdout.on("data", (b) => out += b.toString("utf8"));
     p.stderr.on("data", (b) => err += b.toString("utf8"));
-    p.on("error", reject);
+    p.on("error", (e) => {
+      clearTimeout(timeout);
+      reject(e);
+    });
     p.on("close", (code) => {
+      clearTimeout(timeout);
       if (code === 0 && out.trim()) resolve(out);else
       reject(new Error(err || `yt-dlp exited ${code}`));
     });
@@ -252,26 +495,41 @@ const VIDEO_URL_CACHE = new LRUCache({ max: 200, ttl: 5 * 60 * 1000 });
 const inflightAudio = new Map();
 const inflightVideo = new Map();
 
+const PLAYER_CLIENT_FALLBACKS = ["tv", "ios", "android", "web"];
+
+async function tryClients(videoId, formatSelector) {
+  let lastErr = null;
+  for (const client of PLAYER_CLIENT_FALLBACKS) {
+    try {
+      const out = await runYtDlpWithRotation([
+      "-q",
+      "--no-warnings",
+      "-f", formatSelector,
+      "-g",
+      "--no-playlist",
+      "--extractor-args", `youtube:player_client=${client}`,
+      `https://www.youtube.com/watch?v=${videoId}`]
+      );
+      const url = out.split(/\r?\n/).filter(Boolean)[0];
+      if (url) return url;
+    } catch (e) {
+      lastErr = e;
+
+      if (/Sign in to confirm|HTTP Error 403|Requested format is not available/i.test(e.message)) continue;
+
+      throw e;
+    }
+  }
+  throw lastErr || new Error("yt-dlp: no client could resolve");
+}
+
 function ytDlpResolveAudioUrl(videoId) {
-  return runYtDlpWithRotation([
-  "-q",
-  "--no-warnings",
-  "-f", "bestaudio[ext=m4a]/bestaudio/best",
-  "-g",
-  "--no-playlist",
-  `https://www.youtube.com/watch?v=${videoId}`]
-  ).then((out) => out.split(/\r?\n/).filter(Boolean)[0]);
+
+  return tryClients(videoId, "bestaudio[ext=m4a]/bestaudio/best[acodec!=none]/best");
 }
 
 function ytDlpResolveVideoUrl(videoId) {
-  return runYtDlpWithRotation([
-  "-q",
-  "--no-warnings",
-  "-f", "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best",
-  "-g",
-  "--no-playlist",
-  `https://www.youtube.com/watch?v=${videoId}`]
-  ).then((out) => out.split(/\r?\n/).filter(Boolean)[0]);
+  return tryClients(videoId, "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best");
 }
 
 async function resolveAudio(videoId) {
@@ -285,6 +543,9 @@ async function resolveAudio(videoId) {
       const entry = { url, mime };
       URL_CACHE.set(videoId, entry);
       return entry;
+    } catch (e) {
+      inflightAudio.delete(videoId);
+      throw e;
     } finally {
       inflightAudio.delete(videoId);
     }
@@ -304,6 +565,9 @@ async function resolveVideo(videoId) {
       const entry = { url, mime };
       VIDEO_URL_CACHE.set(videoId, entry);
       return entry;
+    } catch (e) {
+      inflightVideo.delete(videoId);
+      throw e;
     } finally {
       inflightVideo.delete(videoId);
     }
@@ -348,6 +612,8 @@ function vttToLrc(vtt) {
   const out = [];
   let curStart = null;
   const seen = new Set();
+
+  const NOISE = /^(\[?(music|applause|laughter|chuckle|sigh|sound|noise|silence|inaudible)\]?|♪+|\(.*\))$/i;
   for (const raw of vtt.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || /^WEBVTT/i.test(line) || /^NOTE/i.test(line)) continue;
@@ -366,6 +632,8 @@ function vttToLrc(vtt) {
     if (curStart && !/^\d/.test(line)) {
       const clean = line.replace(/<[^>]+>/g, "").trim();
       if (!clean) continue;
+      if (NOISE.test(clean)) continue;
+      if (clean.length < 2) continue;
       const lrc = `${curStart}${clean}`;
       if (seen.has(lrc)) continue;
       seen.add(lrc);
@@ -435,15 +703,25 @@ function normalizeSong(s) {
   };
 }
 
-const SEARCH_CACHE = new LRUCache({ max: 500, ttl: 5 * 60 * 1000 });
-const SUGGEST_CACHE = new LRUCache({ max: 1000, ttl: 30 * 60 * 1000 });
-const SONG_CACHE = new LRUCache({ max: 500, ttl: 30 * 60 * 1000 });
-const UPNEXT_CACHE = new LRUCache({ max: 200, ttl: 30 * 60 * 1000 });
-const ARTIST_CACHE = new LRUCache({ max: 200, ttl: 60 * 60 * 1000 });
-const ALBUM_CACHE = new LRUCache({ max: 500, ttl: 60 * 60 * 1000 });
-const PLAYLIST_CACHE = new LRUCache({ max: 200, ttl: 30 * 60 * 1000 });
-const HOME_CACHE = new LRUCache({ max: 1, ttl: 10 * 60 * 1000 });
-const LYRICS_CACHE = new LRUCache({ max: 500, ttl: 6 * 60 * 60 * 1000 });
+function normalizeAlbumRef(al) {
+  return {
+    id: al.albumId || al.id,
+    name: al.name || al.title,
+    year: al.year || null,
+    thumbnail: pickThumb(al.thumbnails)
+  };
+}
+
+const cacheOpts = (max, ttl) => ({ max, ttl, ttlAutopurge: true });
+const SEARCH_CACHE = new LRUCache(cacheOpts(500, 5 * 60 * 1000));
+const SUGGEST_CACHE = new LRUCache(cacheOpts(1000, 30 * 60 * 1000));
+const SONG_CACHE = new LRUCache(cacheOpts(500, 30 * 60 * 1000));
+const UPNEXT_CACHE = new LRUCache(cacheOpts(200, 30 * 60 * 1000));
+const ARTIST_CACHE = new LRUCache(cacheOpts(200, 60 * 60 * 1000));
+const ALBUM_CACHE = new LRUCache(cacheOpts(500, 60 * 60 * 1000));
+const PLAYLIST_CACHE = new LRUCache(cacheOpts(200, 30 * 60 * 1000));
+const HOME_CACHE = new LRUCache(cacheOpts(1, 10 * 60 * 1000));
+const LYRICS_CACHE = new LRUCache(cacheOpts(500, 6 * 60 * 60 * 1000));
 
 async function memoize(cache, key, fn) {
   const hit = cache.get(key);
@@ -453,11 +731,37 @@ async function memoize(cache, key, fn) {
   return v;
 }
 
+function fetchWithTimeout(url, opts = {}, timeoutMs = 8000) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  return undiciFetch(url, { ...opts, signal: ac.signal }).finally(() => clearTimeout(timer));
+}
+
+function apiHandler(label, handler) {
+  return async (req, res) => {
+    try {
+      const data = await handler(req, res);
+      if (data !== undefined && !res.headersSent) res.json(data);
+    } catch (err) {
+      const status = err.status || 500;
+      if (status >= 500) console.error(`[${label}]`, err.message || err);
+      if (!res.headersSent) res.status(status).json({ error: err.message || "Internal error" });
+    }
+  };
+}
+
 const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", true);
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  next();
+});
 app.use(cors());
 app.use(compression());
-app.use(express.json());
+app.use(express.json({ limit: "256kb" }));
 
 app.use(express.static(path.join(__dirname, "public"), {
   etag: true,
@@ -496,53 +800,51 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.post("/api/cookies/refresh", async (req, res) => {
-  if (req.query.remote === "1") await fetchRemoteCookies();
-  else loadCookiePool();
+  if (req.query.remote === "1") await fetchRemoteCookies();else
+  loadCookiePool();
   res.json({ ok: true, loaded: cookiePool.map((c) => c.id) });
 });
 
+function badRequest(msg) {
+  return Object.assign(new Error(msg), { status: 400 });
+}
 
-app.get("/api/search", async (req, res) => {
+app.get("/api/search", apiHandler("/api/search", async (req, res) => {
   const q = (req.query.q || "").toString().trim();
   const type = (req.query.type || "songs").toString();
-  if (!q) return res.status(400).json({ error: "Missing q" });
+  if (!q) throw badRequest("Missing q");
 
-  try {
-    const data = await memoize(SEARCH_CACHE, `${type}:${q.toLowerCase()}`, async () => {
-      const ytm = await getYTMusic();
-      let results;
-      switch (type) {
-        case "videos":results = await ytm.searchVideos(q);break;
-        case "albums":results = await ytm.searchAlbums(q);break;
-        case "artists":results = await ytm.searchArtists(q);break;
-        case "playlists":results = await ytm.searchPlaylists(q);break;
-        case "all":results = await ytm.search(q);break;
-        case "songs":
-        default:results = await ytm.searchSongs(q);break;
-      }
-      const normalized = (results || []).map((r) => {
-        if (r.type === "SONG" || r.type === "VIDEO" || r.videoId) return normalizeSong(r);
-        return {
-          type: r.type,
-          id: r.albumId || r.playlistId || r.artistId || r.id,
-          name: r.name || r.title,
-          artist: r.artist?.name || r.artists?.[0]?.name || null,
-          thumbnail: pickThumb(r.thumbnails)
-        };
-      });
-      return { query: q, type, results: normalized };
+  const data = await memoize(SEARCH_CACHE, `${type}:${q.toLowerCase()}`, async () => {
+    const ytm = await getYTMusic();
+    let results;
+    switch (type) {
+      case "videos": results = await ytm.searchVideos(q); break;
+      case "albums": results = await ytm.searchAlbums(q); break;
+      case "artists": results = await ytm.searchArtists(q); break;
+      case "playlists": results = await ytm.searchPlaylists(q); break;
+      case "all": results = await ytm.search(q); break;
+      case "songs":
+      default: results = await ytm.searchSongs(q); break;
+    }
+    const normalized = (results || []).map((r) => {
+      if (r.type === "SONG" || r.type === "VIDEO" || r.videoId) return normalizeSong(r);
+      return {
+        type: r.type,
+        id: r.albumId || r.playlistId || r.artistId || r.id,
+        name: r.name || r.title,
+        artist: r.artist?.name || r.artists?.[0]?.name || null,
+        thumbnail: pickThumb(r.thumbnails)
+      };
     });
-    res.setHeader("Cache-Control", "public, max-age=60");
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/search]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+    return { query: q, type, results: normalized };
+  });
+  res.setHeader("Cache-Control", "public, max-age=60");
+  return data;
+}));
 
-app.get("/api/suggest", async (req, res) => {
+app.get("/api/suggest", apiHandler("/api/suggest", async (req, res) => {
   const q = (req.query.q || "").toString().trim();
-  if (!q) return res.json({ suggestions: [] });
+  if (!q) return { suggestions: [] };
   try {
     const data = await memoize(SUGGEST_CACHE, q.toLowerCase(), async () => {
       const ytm = await getYTMusic();
@@ -550,117 +852,77 @@ app.get("/api/suggest", async (req, res) => {
       return { suggestions: list || [] };
     });
     res.setHeader("Cache-Control", "public, max-age=300");
-    res.json(data);
+    return data;
   } catch {
-    res.json({ suggestions: [] });
+    return { suggestions: [] };
   }
-});
+}));
 
-app.get("/api/song/:videoId", async (req, res) => {
-  try {
-    const data = await memoize(SONG_CACHE, req.params.videoId, async () => {
-      const ytm = await getYTMusic();
-      const song = await ytm.getSong(req.params.videoId);
-      return normalizeSong(song);
-    });
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/song]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get("/api/song/:videoId", apiHandler("/api/song", async (req) =>
+  memoize(SONG_CACHE, req.params.videoId, async () => {
+    const ytm = await getYTMusic();
+    const song = await ytm.getSong(req.params.videoId);
+    return normalizeSong(song);
+  })
+));
 
-app.get("/api/up-next/:videoId", async (req, res) => {
-  try {
-    const data = await memoize(UPNEXT_CACHE, req.params.videoId, async () => {
-      const ytm = await getYTMusic();
-      const upNext = await ytm.getUpNexts(req.params.videoId);
-      return {
-        videoId: req.params.videoId,
-        songs: (upNext || []).map(normalizeSong).filter(Boolean)
-      };
-    });
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/up-next]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get("/api/up-next/:videoId", apiHandler("/api/up-next", async (req) =>
+  memoize(UPNEXT_CACHE, req.params.videoId, async () => {
+    const ytm = await getYTMusic();
+    const upNext = await ytm.getUpNexts(req.params.videoId);
+    return {
+      videoId: req.params.videoId,
+      songs: (upNext || []).map(normalizeSong).filter(Boolean)
+    };
+  })
+));
 
-app.get("/api/artist/:id", async (req, res) => {
-  try {
-    const data = await memoize(ARTIST_CACHE, req.params.id, async () => {
-      const ytm = await getYTMusic();
-      const a = await ytm.getArtist(req.params.id);
-      return {
-        id: req.params.id,
-        name: a?.name || "",
-        description: a?.description || "",
-        thumbnail: pickThumb(a?.thumbnails),
-        subscribers: a?.subscribers || null,
-        topSongs: (a?.songs?.results || a?.songs || []).map(normalizeSong),
-        albums: (a?.albums?.results || a?.albums || []).map((al) => ({
-          id: al.albumId || al.id,
-          name: al.name || al.title,
-          year: al.year || null,
-          thumbnail: pickThumb(al.thumbnails)
-        })),
-        singles: (a?.singles?.results || a?.singles || []).map((al) => ({
-          id: al.albumId || al.id,
-          name: al.name || al.title,
-          year: al.year || null,
-          thumbnail: pickThumb(al.thumbnails)
-        }))
-      };
-    });
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/artist]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get("/api/artist/:id", apiHandler("/api/artist", async (req) =>
+  memoize(ARTIST_CACHE, req.params.id, async () => {
+    const ytm = await getYTMusic();
+    const a = await ytm.getArtist(req.params.id);
+    return {
+      id: req.params.id,
+      name: a?.name || "",
+      description: a?.description || "",
+      thumbnail: pickThumb(a?.thumbnails),
+      subscribers: a?.subscribers || null,
+      topSongs: (a?.songs?.results || a?.songs || []).map(normalizeSong),
+      albums: (a?.albums?.results || a?.albums || []).map(normalizeAlbumRef),
+      singles: (a?.singles?.results || a?.singles || []).map(normalizeAlbumRef)
+    };
+  })
+));
 
-app.get("/api/playlist/:id", async (req, res) => {
-  try {
-    const data = await memoize(PLAYLIST_CACHE, req.params.id, async () => {
-      const ytm = await getYTMusic();
-      const pl = await ytm.getPlaylist(req.params.id);
-      const videos = await ytm.getPlaylistVideos(req.params.id).catch(() => []);
-      return {
-        id: req.params.id,
-        name: pl?.name || "",
-        description: pl?.description || "",
-        thumbnail: pickThumb(pl?.thumbnails),
-        songs: (videos || []).map(normalizeSong)
-      };
-    });
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/playlist]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get("/api/playlist/:id", apiHandler("/api/playlist", async (req) =>
+  memoize(PLAYLIST_CACHE, req.params.id, async () => {
+    const ytm = await getYTMusic();
+    const pl = await ytm.getPlaylist(req.params.id);
+    const videos = await ytm.getPlaylistVideos(req.params.id).catch(() => []);
+    return {
+      id: req.params.id,
+      name: pl?.name || "",
+      description: pl?.description || "",
+      thumbnail: pickThumb(pl?.thumbnails),
+      songs: (videos || []).map(normalizeSong)
+    };
+  })
+));
 
-app.get("/api/album/:id", async (req, res) => {
-  try {
-    const data = await memoize(ALBUM_CACHE, req.params.id, async () => {
-      const ytm = await getYTMusic();
-      const album = await ytm.getAlbum(req.params.id);
-      return {
-        id: req.params.id,
-        name: album?.name || "",
-        artist: album?.artist?.name || "",
-        year: album?.year ?? null,
-        thumbnail: pickThumb(album?.thumbnails),
-        songs: (album?.songs || []).map(normalizeSong)
-      };
-    });
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/album]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get("/api/album/:id", apiHandler("/api/album", async (req) =>
+  memoize(ALBUM_CACHE, req.params.id, async () => {
+    const ytm = await getYTMusic();
+    const album = await ytm.getAlbum(req.params.id);
+    return {
+      id: req.params.id,
+      name: album?.name || "",
+      artist: album?.artist?.name || "",
+      year: album?.year ?? null,
+      thumbnail: pickThumb(album?.thumbnails),
+      songs: (album?.songs || []).map(normalizeSong)
+    };
+  })
+));
 
 const HOME_QUERIES = [
 { title: "Trending Now", q: "top hits 2025" },
@@ -670,32 +932,24 @@ const HOME_QUERIES = [
 { title: "Jazz Café", q: "jazz cafe" },
 { title: "K-Pop Stars", q: "kpop hits" }];
 
-app.get("/api/home", async (_req, res) => {
-  try {
-    const data = await memoize(HOME_CACHE, "default", async () => {
-      const ytm = await getYTMusic();
-      const shelves = await Promise.all(
-        HOME_QUERIES.map(async ({ title, q }) => {
-          try {
-            const songs = await ytm.searchSongs(q);
-            return {
-              title,
-              items: (songs || []).slice(0, 12).map(normalizeSong)
-            };
-          } catch {
-            return { title, items: [] };
-          }
-        })
-      );
-      return { shelves };
-    });
-    res.setHeader("Cache-Control", "public, max-age=300");
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/home]", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.get("/api/home", apiHandler("/api/home", async (_req, res) => {
+  const data = await memoize(HOME_CACHE, "default", async () => {
+    const ytm = await getYTMusic();
+    const shelves = await Promise.all(
+      HOME_QUERIES.map(async ({ title, q }) => {
+        try {
+          const songs = await ytm.searchSongs(q);
+          return { title, items: (songs || []).slice(0, 12).map(normalizeSong) };
+        } catch {
+          return { title, items: [] };
+        }
+      })
+    );
+    return { shelves };
+  });
+  res.setHeader("Cache-Control", "public, max-age=300");
+  return data;
+}));
 
 async function proxyStream(req, res, getEntry, fallbackMime) {
   const videoId = req.params.videoId;
@@ -765,6 +1019,11 @@ app.post("/api/prefetch-video/:videoId", (req, res) => {
   res.json({ ok: true });
 });
 
+const LYRICS_UA =
+"SakayoriMusicWeb/2.1 (+https://github.com/Sakayorii/sakayori-music)";
+
+const LYRICS_PROVIDERS = ["lrclib", "netease", "genius", "kugou", "youtube"];
+
 async function lrclibLyrics({ title, artist, album, duration }) {
   const params = new URLSearchParams({
     track_name: String(title),
@@ -773,17 +1032,19 @@ async function lrclibLyrics({ title, artist, album, duration }) {
   if (album) params.set("album_name", String(album));
   if (duration) params.set("duration", String(duration));
 
-  const r = await undiciFetch(`https://lrclib.net/api/get?${params}`, {
-    headers: { "User-Agent": "SakayoriMusicWeb/2.1 (+https://github.com/Sakayorii/sakayori-music)" }
+  let r = await fetchWithTimeout(`https://lrclib.net/api/get?${params}`, {
+    headers: { "User-Agent": LYRICS_UA }
   });
+
   if (r.status === 404) {
-    const sr = await undiciFetch(
+    const sr = await fetchWithTimeout(
       `https://lrclib.net/api/search?${new URLSearchParams({
         track_name: String(title),
         artist_name: String(artist)
-      })}`
+      })}`,
+      { headers: { "User-Agent": LYRICS_UA } }
     );
-    const list = await sr.json();
+    const list = await sr.json().catch(() => []);
     if (Array.isArray(list) && list.length) {
       return {
         found: true,
@@ -792,9 +1053,12 @@ async function lrclibLyrics({ title, artist, album, duration }) {
         source: "LRCLIB"
       };
     }
-    return { found: false };
+    return null;
   }
-  const data = await r.json();
+  if (!r.ok) return null;
+  const data = await r.json().catch(() => null);
+  if (!data) return null;
+  if (!data.plainLyrics && !data.syncedLyrics) return null;
   return {
     found: true,
     plain: data.plainLyrics || "",
@@ -803,68 +1067,229 @@ async function lrclibLyrics({ title, artist, album, duration }) {
   };
 }
 
-app.get("/api/lyrics", async (req, res) => {
-  const { title, artist, album, duration, videoId, source } = req.query;
-  const cacheKey = `${source || "auto"}::${videoId || ""}::${title || ""}::${artist || ""}`;
-  try {
-    const data = await memoize(LYRICS_CACHE, cacheKey, async () => {
-      if (source === "youtube" && videoId) {
-        const vtt = await ytDlpFetchSubs(String(videoId), "en");
-        if (vtt) {
-          const synced = vttToLrc(vtt);
-          return {
-            found: true,
-            plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
-            synced,
-            source: "YouTube subtitles"
-          };
-        }
-        return { found: false };
-      }
+async function neteaseLyrics({ title, artist }) {
+  const q = `${title} ${artist}`.trim();
+  const sUrl = `https://music.163.com/api/search/get?type=1&limit=5&s=${encodeURIComponent(q)}`;
+  const sr = await fetchWithTimeout(sUrl, {
+    headers: {
+      "User-Agent": LYRICS_UA,
+      "Referer": "https://music.163.com"
+    }
+  });
+  if (!sr.ok) return null;
+  const sj = await sr.json().catch(() => null);
+  const songs = sj?.result?.songs;
+  if (!Array.isArray(songs) || !songs.length) return null;
 
-      if (!title || !artist) {
-        throw Object.assign(new Error("title & artist required"), { status: 400 });
-      }
-      const lrc = await lrclibLyrics({ title, artist, album, duration });
-      if (lrc.found && (lrc.synced || lrc.plain)) return lrc;
-
-      if (videoId) {
-        const vtt = await ytDlpFetchSubs(String(videoId), "en");
-        if (vtt) {
-          const synced = vttToLrc(vtt);
-          return {
-            found: true,
-            plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
-            synced,
-            source: "YouTube subtitles (fallback)"
-          };
+  for (const song of songs.slice(0, 3)) {
+    const lr = await fetchWithTimeout(
+      `https://music.163.com/api/song/lyric?id=${song.id}&lv=1&kv=1&tv=-1`,
+      {
+        headers: {
+          "User-Agent": LYRICS_UA,
+          "Referer": "https://music.163.com"
         }
       }
-      return { found: false };
-    });
-
-    res.setHeader("Cache-Control", "public, max-age=600");
-    res.json(data);
-  } catch (err) {
-    console.error("[/api/lyrics]", err);
-    res.status(err.status || 500).json({ error: err.message });
+    );
+    if (!lr.ok) continue;
+    const lj = await lr.json().catch(() => null);
+    const synced = lj?.lrc?.lyric || "";
+    const plain = (lj?.tlyric?.lyric || synced || "").
+    replace(/\[[\d:.]+\]/g, "").
+    trim();
+    if (synced || plain) {
+      return { found: true, plain, synced, source: "NetEase" };
+    }
   }
+  return null;
+}
+
+async function geniusLyrics({ title, artist }) {
+  const q = `${title} ${artist}`.trim();
+  const sr = await fetchWithTimeout(
+    `https://genius.com/api/search/multi?per_page=5&q=${encodeURIComponent(q)}`,
+    { headers: { "User-Agent": LYRICS_UA, "Accept": "application/json" } }
+  );
+  if (!sr.ok) return null;
+  const sj = await sr.json().catch(() => null);
+  const sections = sj?.response?.sections || [];
+  let url = null;
+  for (const sec of sections) {
+    const hits = sec.hits || [];
+    for (const h of hits) {
+      if (h.type === "song" && h.result?.url) {url = h.result.url;break;}
+    }
+    if (url) break;
+  }
+  if (!url) return null;
+
+  const pr = await fetchWithTimeout(url, { headers: { "User-Agent": LYRICS_UA } });
+  if (!pr.ok) return null;
+  const html = await pr.text();
+
+  const blocks = [];
+  const re = /<div[^>]+data-lyrics-container="true"[^>]*>([\s\S]*?)<\/div>/g;
+  let m;
+  while (m = re.exec(html)) blocks.push(m[1]);
+  if (!blocks.length) return null;
+
+  const decode = (s) =>
+  s.
+  replace(/<br\s*\/?>/gi, "\n").
+  replace(/<[^>]+>/g, "").
+  replace(/&amp;/g, "&").
+  replace(/&lt;/g, "<").
+  replace(/&gt;/g, ">").
+  replace(/&quot;/g, '"').
+  replace(/&#x27;/g, "'").
+  replace(/&apos;/g, "'");
+
+  const plain = blocks.map(decode).join("\n\n").replace(/\n{3,}/g, "\n\n").trim();
+  if (!plain) return null;
+  return { found: true, plain, synced: "", source: "Genius" };
+}
+
+async function kugouLyrics({ title, artist, duration }) {
+  const q = `${title} ${artist}`.trim();
+
+  const sr = await fetchWithTimeout(
+    `https://krcs.kugou.com/search?ver=1&man=yes&client=mobi&keyword=${encodeURIComponent(
+      q
+    )}${duration ? `&duration=${Math.round(Number(duration) * 1000)}` : ""}`,
+    { headers: { "User-Agent": LYRICS_UA } }
+  );
+  if (!sr.ok) return null;
+  const sj = await sr.json().catch(() => null);
+  const cand = sj?.candidates?.[0];
+  if (!cand) return null;
+
+  const dr = await fetchWithTimeout(
+    `https://krcs.kugou.com/download?ver=1&man=yes&client=pc&fmt=lrc&charset=utf8&accesskey=${cand.accesskey}&id=${cand.id}`,
+    { headers: { "User-Agent": LYRICS_UA } }
+  );
+  if (!dr.ok) return null;
+  const dj = await dr.json().catch(() => null);
+  if (!dj?.content) return null;
+  let synced = "";
+  try {synced = Buffer.from(dj.content, "base64").toString("utf8");}
+  catch {return null;}
+  if (!synced) return null;
+  const plain = synced.replace(/\[[\d:.]+\]/g, "").trim();
+  return { found: true, plain, synced, source: "KuGou" };
+}
+
+async function youtubeLyrics({ videoId }) {
+  if (!videoId) return null;
+  const vtt = await ytDlpFetchSubs(String(videoId), "en");
+  if (!vtt) return null;
+  const synced = vttToLrc(vtt);
+  if (!synced) return null;
+  return {
+    found: true,
+    plain: synced.replace(/\[[\d:.]+\]/g, "").trim(),
+    synced,
+    source: "YouTube subtitles"
+  };
+}
+
+const PROVIDER_FNS = {
+  lrclib: lrclibLyrics,
+  netease: neteaseLyrics,
+  genius: geniusLyrics,
+  kugou: kugouLyrics,
+  youtube: youtubeLyrics
+};
+
+async function chainLyrics(args, requested) {
+
+  const providers =
+  requested && requested !== "auto" ?
+  [requested] :
+  LYRICS_PROVIDERS;
+
+  let bestPlain = null;
+  for (const p of providers) {
+    try {
+      const fn = PROVIDER_FNS[p];
+      if (!fn) continue;
+      const out = await fn(args);
+      if (!out || !out.found) continue;
+      if (out.synced && out.synced.trim()) {
+        return { ...out, source: out.source + (requested === "auto" ? "" : "") };
+      }
+      if (!bestPlain && out.plain) bestPlain = out;
+    } catch (e) {
+
+      console.warn(`[lyrics] ${p} failed: ${e.message}`);
+    }
+  }
+  return bestPlain || { found: false };
+}
+
+app.get("/api/lyrics/sources", (_req, res) => {
+  res.json({
+    auto: { id: "auto", label: "Auto (full chain)" },
+    providers: LYRICS_PROVIDERS.map((id) => ({
+      id,
+      label: {
+        lrclib: "LRCLIB",
+        netease: "NetEase Cloud Music",
+        genius: "Genius",
+        kugou: "KuGou",
+        youtube: "YouTube subtitles"
+      }[id] || id
+    }))
+  });
 });
+
+app.get("/api/lyrics", apiHandler("/api/lyrics", async (req, res) => {
+  const { title, artist, album, duration, videoId, source } = req.query;
+  const requested = (source || "auto").toString().toLowerCase();
+  const cacheKey =
+    `${requested}::${videoId || ""}::${(title || "").toString().toLowerCase()}` +
+    `::${(artist || "").toString().toLowerCase()}::${album || ""}`;
+
+  const data = await memoize(LYRICS_CACHE, cacheKey, async () => {
+    if (requested === "youtube") {
+      return (await youtubeLyrics({ videoId })) || { found: false };
+    }
+    if (!title || !artist) throw badRequest("title & artist required");
+    return chainLyrics({ title, artist, album, duration, videoId }, requested);
+  });
+  res.setHeader("Cache-Control", "public, max-age=600");
+  return data;
+}));
 
 app.get(/.*/, (_req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-const server = app.listen(PORT, HOST, () => {
-  console.log(`\n[SakayoriMusic Web] Listening on http://${HOST}:${PORT}\n`);
-});
-server.keepAliveTimeout = 65_000;
-server.headersTimeout = 70_000;
+let server;
+(async function start() {
+
+  await ensureYtDlp();
+
+  server = app.listen(PORT, HOST, () => {
+    console.log(`\n[SakayoriMusic Web] Listening on http://${HOST}:${PORT}\n`);
+  });
+  server.keepAliveTimeout = 65_000;
+  server.headersTimeout = 70_000;
+})();
 
 function shutdown(sig) {
   console.log(`\n[server] ${sig} received, shutting down…`);
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 5000).unref();
+  const force = setTimeout(() => process.exit(1), 5000);
+  force.unref();
+  if (!server) {
+    clearTimeout(force);
+    process.exit(0);
+    return;
+  }
+  server.close(() => {
+    clearTimeout(force);
+    process.exit(0);
+  });
 }
+
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));

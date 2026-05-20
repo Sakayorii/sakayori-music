@@ -42,7 +42,7 @@
 
     <application
         android:name=".SakayoriMusicApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:appCategory="audio"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
@@ -53,7 +53,7 @@
         android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
         android:enableOnBackInvokedCallback="true"
         android:requestLegacyExternalStorage="true"
-        tools:replace="android:name"
+        tools:replace="android:name,android:allowBackup"
         tools:targetApi="tiramisu">
 
         <activity
@@ -75,7 +75,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- Youtube filter -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
@@ -90,15 +89,12 @@
                 <data android:host="m.youtube.com" />
                 <data android:host="www.youtube.com" />
                 <data android:host="music.youtube.com" />
-                <!-- video prefix -->
                 <data android:pathPrefix="/v/" />
                 <data android:pathPrefix="/embed/" />
                 <data android:pathPrefix="/watch" />
-                <!-- channel prefix -->
                 <data android:pathPrefix="/channel/" />
                 <data android:pathPrefix="/user/" />
                 <data android:pathPrefix="/c/" />
-                <!-- playlist prefix -->
                 <data android:pathPrefix="/playlist" />
             </intent-filter>
             <intent-filter android:autoVerify="true">
@@ -126,7 +122,6 @@
                 <data android:scheme="vnd.youtube.launch" />
             </intent-filter>
 
-            <!-- SakayoriMusic deep link filter (https) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
@@ -138,7 +133,6 @@
                 <data android:pathPrefix="/app/" />
             </intent-filter>
 
-            <!-- SakayoriMusic deep link filter (custom scheme) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -148,7 +142,6 @@
                 <data android:scheme="sakayorimusic" />
             </intent-filter>
 
-            <!-- Share filter -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 

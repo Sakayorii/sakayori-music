@@ -11,7 +11,7 @@
 [![Stars](https://img.shields.io/github/stars/Sakayorii/sakayori-music?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/stargazers)
 [![Issues](https://img.shields.io/github/issues/Sakayorii/sakayori-music?color=00BCD4)](https://github.com/Sakayorii/sakayori-music/issues)
 [![License](https://img.shields.io/badge/license-MIT-00BCD4.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20iOS-lightgrey.svg)
 ![Kotlin](https://img.shields.io/badge/kotlin-2.0+-7F52FF.svg?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/compose-multiplatform-4285F4.svg)
 ![Last Commit](https://img.shields.io/github/last-commit/Sakayorii/sakayori-music?color=00BCD4)
@@ -37,10 +37,10 @@ SakayoriMusic is a free and open-source music streaming client that brings the Y
 ## Features
 
 - **Stream music** from YouTube Music with full library access
-- **Cross-platform** support for Android and Windows desktop
+- **Cross-platform** support for Android, iOS, Windows, Linux, and macOS
 - **Liquid Glass UI** with native macOS-style design on desktop
 - **Built-in lyrics** with synced rich-sync support
-- **Discord Rich Presence** integration
+- **Discord Rich Presence** integration (desktop only — uses local IPC)
 - **Spotify Canvas** background videos
 - **Local playlists** and offline downloads
 - **Sleep timer** and crossfade
@@ -84,6 +84,7 @@ Download the latest release from the [Releases page](https://github.com/Sakayori
 | Platform | Format | Description |
 |----------|--------|-------------|
 | **Android** | `.apk` | Universal APK for all devices |
+| **iOS** | `.ipa` | Unsigned IPA for sideloading / Xcode |
 | **Windows** | `.msi` / `.exe` | Installer with GUI setup wizard |
 | **Linux** | `.deb` / `.rpm` | Debian/Ubuntu and Fedora/RHEL packages |
 | **macOS** | `.dmg` | Apple Silicon and Intel builds |
@@ -99,7 +100,10 @@ This is normal for unsigned open-source applications.
 
 ## Supported Platforms
 
+SakayoriMusic runs natively on **5 operating systems**:
+
 - **Android** 8.0 (API 26) and above
+- **iOS** 15.0 and above (iPhone + iPad)
 - **Windows** 10 / 11 (x64)
 - **Linux** Ubuntu 20.04+, Fedora 34+, or equivalent (x64)
 - **macOS** 11.0 Big Sur and above (Intel + Apple Silicon)
@@ -216,6 +220,7 @@ Contributors welcome to improve translations or add more languages — see [CONT
 ## Credits
 
 - **Original project:** [SimpMusic](https://github.com/maxrave-dev/SimpMusic) by maxrave-dev
+- **Setup flow and UI motion concepts inspired by:** [PixelPlayer](https://github.com/theovilardo/PixelPlayer) by Theo Vilardo
 
 <table>
   <tr>

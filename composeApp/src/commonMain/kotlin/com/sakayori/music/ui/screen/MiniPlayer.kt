@@ -83,7 +83,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
@@ -114,6 +116,7 @@ import com.sakayori.music.extension.toResizedBitmap
 import com.sakayori.music.getPlatform
 import com.sakayori.music.ui.component.ExplicitBadge
 import com.sakayori.music.ui.component.HeartCheckBox
+import com.sakayori.music.ui.component.MorphingPlayPauseButton
 import com.sakayori.music.ui.component.PlayPauseButton
 import com.sakayori.music.ui.component.WaveformProgressBar
 import com.sakayori.music.ui.component.PlayerControlLayout
@@ -351,20 +354,28 @@ fun MiniPlayer(
         ) {
             Box(modifier = Modifier.fillMaxHeight()) {
                 if (isBlurEnabled && songEntity?.thumbnails != null) {
-                    AsyncImage(
-                        model = ImageRequest
-                            .Builder(LocalPlatformContext.current)
-                            .data(songEntity.thumbnails)
-                            .size(200)
-                            .crossfade(550)
-                            .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .blur(30.dp)
-                            .alpha(0.35f),
-                    )
+                            .graphicsLayer {
+                                compositingStrategy = CompositingStrategy.Offscreen
+                                alpha = 0.35f
+                            },
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest
+                                .Builder(LocalPlatformContext.current)
+                                .data(songEntity.thumbnails)
+                                .size(120)
+                                .crossfade(550)
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .blur(18.dp),
+                        )
+                    }
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -568,10 +579,15 @@ fun MiniPlayer(
                                 )
                             }
                         } else {
-                            PlayPauseButton(isPlaying = isPlaying, modifier = Modifier.size(48.dp)) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                sharedViewModel.onUIEvent(UIEvent.PlayPause)
-                            }
+                            MorphingPlayPauseButton(
+                                isPlaying = isPlaying,
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    sharedViewModel.onUIEvent(UIEvent.PlayPause)
+                                },
+                                modifier = Modifier.size(48.dp),
+                                iconSize = 24.dp,
+                            )
                         }
                     }
 

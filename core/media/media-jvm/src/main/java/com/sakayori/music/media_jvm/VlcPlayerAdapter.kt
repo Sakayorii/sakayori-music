@@ -71,51 +71,98 @@ class VlcPlayerAdapter(
 
     private fun InternalState.isInReadyState(): Boolean = this == InternalState.READY || this == InternalState.PLAYING || this == InternalState.PAUSED
 
-    private val mediaPlayerFactory: MediaPlayerFactory
+    @Volatile
+    private var mediaPlayerFactory: MediaPlayerFactory? = null
 
     init {
-        try {
-            val foundPath = DefaultVlcDiscoverer.findBundledVlcPath()
-            if (foundPath != null) {
-                Logger.i(TAG, "Setting jna.library.path to $foundPath")
-                System.setProperty("jna.library.path", foundPath)
-            } else {
-                System.getProperty("compose.application.resources.dir")?.let {
-                    System.setProperty("jna.library.path", it)
+        coroutineScope.launch(Dispatchers.IO) {
+            val resourcesDirProp = System.getProperty("compose.application.resources.dir")
+            Logger.i(TAG, "compose.application.resources.dir = $resourcesDirProp")
+
+            val foundPath = try {
+                DefaultVlcDiscoverer.findBundledVlcPath()
+            } catch (e: Throwable) {
+                Logger.e(TAG, "findBundledVlcPath threw: ${e.message}")
+                null
+            }
+            Logger.i(TAG, "DefaultVlcDiscoverer.findBundledVlcPath() = $foundPath")
+
+            val libDir = foundPath ?: resourcesDirProp?.let { File(it, osSubDir()).absolutePath }
+            if (libDir != null) {
+                System.setProperty("jna.library.path", libDir)
+                Logger.i(TAG, "jna.library.path set to: $libDir")
+                val pluginsDir = File(libDir, "plugins")
+                if (pluginsDir.exists() && pluginsDir.isDirectory) {
+                    System.setProperty("VLC_PLUGIN_PATH", pluginsDir.absolutePath)
+                    System.setProperty("vlc.plugin.path", pluginsDir.absolutePath)
+                    Logger.i(TAG, "Plugins dir exists: ${pluginsDir.absolutePath}")
+                    try {
+                        val pluginCount = pluginsDir.walkTopDown()
+                            .filter { it.isFile && (it.name.endsWith(".dll") || it.name.endsWith(".so") || it.name.endsWith(".dylib")) }
+                            .count()
+                        Logger.i(TAG, "Plugin file count: $pluginCount")
+                    } catch (_: Throwable) {
+                    }
+                    try {
+                        nativeSetEnv("VLC_PLUGIN_PATH", pluginsDir.absolutePath)
+                    } catch (e: Throwable) {
+                        Logger.w(TAG, "nativeSetEnv failed: ${e.message}")
+                    }
+                } else {
+                    Logger.e(TAG, "Plugins dir MISSING at: ${pluginsDir.absolutePath}")
                 }
+                val libvlcDll = File(libDir, "libvlc.dll")
+                val libvlcCoreDll = File(libDir, "libvlccore.dll")
+                Logger.i(TAG, "libvlc.dll exists: ${libvlcDll.exists()}, libvlccore.dll exists: ${libvlcCoreDll.exists()}")
+            } else {
+                Logger.e(TAG, "No VLC bundle path resolved. Falling back to system VLC search.")
             }
-        } catch (e: Exception) {
-            Logger.e(TAG, "Error setting up VLC paths: ${e.message}")
-        }
 
-        val discovery = NativeDiscovery(DefaultVlcDiscoverer(), MacOsVlcDiscoverer())
-        try {
-            val found = discovery.discover()
-            if (!found) {
-                Logger.e(TAG, "VLC native libraries not found! Please install VLC media player.")
+            val discovery = NativeDiscovery(DefaultVlcDiscoverer(), MacOsVlcDiscoverer())
+            try {
+                val found = discovery.discover()
+                Logger.i(TAG, "vlcj discovery.discover() = $found")
+            } catch (e: Throwable) {
+                Logger.e(TAG, "vlcj discovery threw: ${e.message}")
             }
-        } catch (e: Exception) {
-            Logger.e(TAG, "VLC discovery failed: ${e.message}")
-        }
 
-        val factoryArgs =
-            mutableListOf(
-                "--no-video-title-show",
+            val minimalArgs = arrayOf("--quiet", "--no-interact", "--no-osd")
+            val richArgs = arrayOf(
                 "--quiet",
-                "--no-metadata-network-access",
-                "--network-caching=10000",
-                "--ipv4-timeout=8000",
-                "--http-reconnect",
-                "--http-continuous",
+                "--no-video-title-show",
+                "--no-interact",
+                "--no-osd",
                 "--no-snapshot-preview",
                 "--no-stats",
-                "--no-osd",
-                "--no-plugins-cache",
-                "--no-lua",
-                "--no-interact",
+                "--network-caching=10000",
             )
 
-        mediaPlayerFactory = MediaPlayerFactory(discovery, *factoryArgs.toTypedArray())
+            val factory: MediaPlayerFactory? = run {
+                try {
+                    val f = MediaPlayerFactory(discovery, *richArgs)
+                    Logger.i(TAG, "MediaPlayerFactory ready (rich args).")
+                    f
+                } catch (e1: Throwable) {
+                    Logger.w(TAG, "MediaPlayerFactory rich-args init failed: ${e1.message}. Retrying minimal.")
+                    try {
+                        val f = MediaPlayerFactory(discovery, *minimalArgs)
+                        Logger.i(TAG, "MediaPlayerFactory ready (minimal args).")
+                        f
+                    } catch (e2: Throwable) {
+                        Logger.w(TAG, "MediaPlayerFactory minimal-args init failed: ${e2.message}. Retrying no-args.")
+                        try {
+                            val f = MediaPlayerFactory(discovery)
+                            Logger.i(TAG, "MediaPlayerFactory ready (no args).")
+                            f
+                        } catch (e3: Throwable) {
+                            Logger.e(TAG, "MediaPlayerFactory init failed completely: ${e3.message}. Playback disabled.")
+                            null
+                        }
+                    }
+                }
+            }
+            mediaPlayerFactory = factory
+        }
 
         coroutineScope.launch {
             dataStoreManager.crossfadeEnabled.collect { enabled ->
@@ -129,6 +176,35 @@ class VlcPlayerAdapter(
                 crossfadeDurationMs = duration
                 Logger.d(TAG, "Crossfade duration: $crossfadeDurationMs ms")
             }
+        }
+    }
+
+    private fun osSubDir(): String {
+        val os = System.getProperty("os.name", "").lowercase()
+        return when {
+            os.contains("win") -> "windows"
+            os.contains("mac") -> "macos"
+            else -> "linux"
+        }
+    }
+
+    private fun nativeSetEnv(name: String, value: String) {
+        try {
+            val theEnvField = Class.forName("java.lang.ProcessEnvironment").getDeclaredField("theEnvironment")
+            theEnvField.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            val env = theEnvField.get(null) as MutableMap<String, String>
+            env[name] = value
+        } catch (_: Throwable) {
+        }
+        try {
+            val caseInsensitiveField = Class.forName("java.lang.ProcessEnvironment")
+                .getDeclaredField("theCaseInsensitiveEnvironment")
+            caseInsensitiveField.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            val env = caseInsensitiveField.get(null) as MutableMap<String, String>
+            env[name] = value
+        } catch (_: Throwable) {
         }
     }
 
@@ -837,7 +913,7 @@ class VlcPlayerAdapter(
         listeners.clear()
 
         try {
-            mediaPlayerFactory.release()
+            mediaPlayerFactory?.release()
         } catch (e: Exception) {
             Logger.w(TAG, "Error releasing VLC factory: ${e.message}")
         }
@@ -1098,13 +1174,15 @@ class VlcPlayerAdapter(
     }
 
     private fun createMediaPlayerInternal(source: PlayableSource): VlcPlayer {
+        val factory = mediaPlayerFactory
+            ?: throw IllegalStateException("VLC native library failed to initialize. Playback unavailable on this install — please reinstall the app.")
         if (source.isVideo) {
             Logger.d(TAG, "Creating video player with callback surface")
             val videoPanel = VlcVideoSurfacePanel()
 
-            val embeddedPlayer = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer()
+            val embeddedPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer()
             try {
-                val surface = videoPanel.createVideoSurface(mediaPlayerFactory)
+                val surface = videoPanel.createVideoSurface(factory)
                 embeddedPlayer.videoSurface().set(surface)
             } catch (e: Exception) {
                 Logger.e(TAG, "Failed to set video surface: ${e.message}")
@@ -1117,7 +1195,7 @@ class VlcPlayerAdapter(
         }
 
         Logger.d(TAG, "Creating audio-only player")
-        val player = mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer()
+        val player = factory.mediaPlayers().newEmbeddedMediaPlayer()
         return VlcPlayer(
             mediaPlayer = player,
             videoSurface = null,

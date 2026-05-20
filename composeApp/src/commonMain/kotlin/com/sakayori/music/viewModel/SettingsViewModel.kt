@@ -62,6 +62,10 @@ class SettingsViewModel(
     val location: StateFlow<String?> = _location
     private val _language: MutableStateFlow<String?> = MutableStateFlow(null)
     val language: StateFlow<String?> = _language
+    private val _systemLanguageFollow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val systemLanguageFollow: StateFlow<Boolean> = _systemLanguageFollow
+    private val _themeMode: MutableStateFlow<String> = MutableStateFlow(DataStoreManager.THEME_MODE_SYSTEM)
+    val themeMode: StateFlow<String> = _themeMode
     private val _loggedIn: MutableStateFlow<String?> = MutableStateFlow(null)
     val loggedIn: StateFlow<String?> = _loggedIn
     private val _normalizeVolume: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -1621,6 +1625,29 @@ class SettingsViewModel(
         viewModelScope.launch {
             dataStoreManager.setHelpBuildLyricsDatabase(help)
             getHelpBuildLyricsDatabase()
+        }
+    }
+
+    fun getSystemLanguageFollow() {
+        viewModelScope.launch {
+            dataStoreManager.systemLanguageFollow.collect { value ->
+                _systemLanguageFollow.emit(value == DataStoreManager.TRUE)
+            }
+        }
+    }
+
+    fun getThemeMode() {
+        viewModelScope.launch {
+            dataStoreManager.themeMode.collect { value ->
+                _themeMode.emit(value)
+            }
+        }
+    }
+
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch {
+            dataStoreManager.setThemeMode(mode)
+            dataStoreManager.setSystemThemeFollow(mode == DataStoreManager.THEME_MODE_SYSTEM)
         }
     }
 }

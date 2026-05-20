@@ -1430,6 +1430,84 @@ internal class DataStoreManagerImpl(
         }
     }
 
+    override val initialSetupDone: Flow<String> =
+        settingsDataStore.data.map { preferences ->
+            preferences[INITIAL_SETUP_DONE] ?: DataStoreManager.FALSE
+        }
+
+    override suspend fun setInitialSetupDone(done: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[INITIAL_SETUP_DONE] = if (done) DataStoreManager.TRUE else DataStoreManager.FALSE
+            }
+        }
+    }
+
+    override val userName: Flow<String> =
+        settingsDataStore.data.map { preferences ->
+            preferences[USER_NAME] ?: ""
+        }
+
+    override suspend fun setUserName(name: String) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[USER_NAME] = name
+            }
+        }
+    }
+
+    override val userDisplayId: Flow<String> =
+        settingsDataStore.data.map { preferences ->
+            preferences[USER_DISPLAY_ID] ?: ""
+        }
+
+    override suspend fun setUserDisplayId(displayId: String) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[USER_DISPLAY_ID] = displayId
+            }
+        }
+    }
+
+    override val systemThemeFollow: Flow<String> =
+        settingsDataStore.data.map { preferences ->
+            preferences[SYSTEM_THEME_FOLLOW] ?: DataStoreManager.TRUE
+        }
+
+    override suspend fun setSystemThemeFollow(follow: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[SYSTEM_THEME_FOLLOW] = if (follow) DataStoreManager.TRUE else DataStoreManager.FALSE
+            }
+        }
+    }
+
+    override val themeMode: Flow<String> =
+        settingsDataStore.data.map { preferences ->
+            preferences[THEME_MODE] ?: DataStoreManager.THEME_MODE_SYSTEM
+        }
+
+    override suspend fun setThemeMode(mode: String) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[THEME_MODE] = mode
+            }
+        }
+    }
+
+    override val systemLanguageFollow: Flow<String> =
+        settingsDataStore.data.map { preferences ->
+            preferences[SYSTEM_LANGUAGE_FOLLOW] ?: DataStoreManager.TRUE
+        }
+
+    override suspend fun setSystemLanguageFollow(follow: Boolean) {
+        withContext(Dispatchers.IO) {
+            settingsDataStore.edit { settings ->
+                settings[SYSTEM_LANGUAGE_FOLLOW] = if (follow) DataStoreManager.TRUE else DataStoreManager.FALSE
+            }
+        }
+    }
+
     companion object Settings {
         val APP_VERSION = stringPreferencesKey("app_version")
         val COOKIE = stringPreferencesKey("cookie")
@@ -1534,6 +1612,13 @@ internal class DataStoreManagerImpl(
         val AUTO_BACKUP_FREQUENCY = stringPreferencesKey("auto_backup_frequency")
         val AUTO_BACKUP_MAX_FILES = intPreferencesKey("auto_backup_max_files")
         val AUTO_BACKUP_LAST_TIME = longPreferencesKey("auto_backup_last_time")
+
+        val INITIAL_SETUP_DONE = stringPreferencesKey("initial_setup_done")
+        val USER_NAME = stringPreferencesKey("user_name")
+        val USER_DISPLAY_ID = stringPreferencesKey("user_display_id")
+        val SYSTEM_THEME_FOLLOW = stringPreferencesKey("system_theme_follow")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val SYSTEM_LANGUAGE_FOLLOW = stringPreferencesKey("system_language_follow")
     }
 }
 

@@ -7,7 +7,7 @@ plugins {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
@@ -39,6 +39,7 @@ android {
 
 dependencies {
     implementation(projects.domain)
+    implementation(projects.common)
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)

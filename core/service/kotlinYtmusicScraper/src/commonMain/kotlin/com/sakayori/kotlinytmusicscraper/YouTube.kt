@@ -1098,16 +1098,19 @@ class YouTube {
         var sigResponse: PlayerResponse?
         Logger.d(TAG, "YouTube TempRes ${tempRes.playabilityStatus}")
         if (tempRes.playabilityStatus.status != "OK") {
-            Logger.w(TAG, "Playability status not OK: ${tempRes.playabilityStatus.status} — ${tempRes.playabilityStatus.reason}")
-            return null
+            val reason = tempRes.playabilityStatus.reason ?: "no reason"
+            Logger.w(TAG, "Playability status not OK: ${tempRes.playabilityStatus.status} — $reason")
+            throw RuntimeException("playability=${tempRes.playabilityStatus.status} reason=$reason")
         } else {
             sigResponse = tempRes
         }
+        var newPipeFailure: String? = null
         val streamsList =
             try {
                 ytMusic.getNewPipePlayer(videoId)
             } catch (e: Throwable) {
-                Logger.e(TAG, "NewPipe extraction threw: ${e::class.simpleName}: ${e.message}")
+                newPipeFailure = "${e::class.simpleName}: ${e.message ?: "no message"}"
+                Logger.e(TAG, "NewPipe extraction threw: $newPipeFailure")
                 emptyList()
             }
 
@@ -1120,7 +1123,10 @@ class YouTube {
                 return sigResponse
             }
             Logger.e(TAG, "NewPipe empty and YouTube response has no URLs — extraction failed")
-            return null
+            throw RuntimeException(
+                if (newPipeFailure != null) "NewPipe failed: $newPipeFailure (and YouTube response had no direct URLs)"
+                else "NewPipe returned empty and YouTube response had no direct URLs",
+            )
         }
 
         decodedSigResponse =
@@ -1199,7 +1205,7 @@ class YouTube {
         }
         if (listUrlSig.isEmpty()) {
             Logger.w(TAG, "YouTube NewPipe No URL Found")
-            return null
+            throw RuntimeException("NewPipe extraction yielded no URLs after merge")
         }
         val probeUrl = listUrlSig.firstOrNull { !is403Url(it) } ?: listUrlSig.first()
         if (!is403Url(probeUrl)) {
@@ -1207,7 +1213,7 @@ class YouTube {
             return decodedSigResponse
         }
         Logger.w(TAG, "All ${listUrlSig.size} NewPipe URLs returned 403")
-        return null
+        throw RuntimeException("All ${listUrlSig.size} extracted URLs returned HTTP 403 (likely IP blocked or PoToken required)")
     }
 
     fun isManifestUrl(url: String): Boolean = url.contains(".m3u8") || url.contains(".mpd") || url.contains("manifest")
@@ -1231,7 +1237,7 @@ class YouTube {
                     }.joinToString("")
 
             val signatureTimestamp =
-                run {
+                ytMusic.getNewPipeSignatureTimestamp(videoId) ?: run {
                     val today = Clock.System.todayIn(TimeZone.UTC)
                     val epoch =
                         Instant
@@ -1240,6 +1246,7 @@ class YouTube {
                             .date
                     epoch.daysUntil(today)
                 }
+            Logger.d(TAG, "signatureTimestamp resolved to $signatureTimestamp for $videoId")
 
             val clientFallbackOrder = listOf(WEB_REMIX, TVHTML5_SIMPLY, IOS, ANDROID_MUSIC)
             var lastFailureDetail = "No clients attempted"

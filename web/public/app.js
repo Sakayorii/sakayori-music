@@ -1,4 +1,35 @@
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
+const fmt = (s) => {
+  if (!Number.isFinite(s)) return "0:00";
+  s = Math.max(0, Math.floor(s));
+  const m = Math.floor(s / 60);
+  const sec = String(s % 60).padStart(2, "0");
+  return `${m}:${sec}`;
+};
+const escapeHtml = (s) =>
+String(s ?? "").replace(/[&<>"]/g, (c) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
+})[c]);
+const artistsText = (a) =>
+Array.isArray(a) ? a.map((x) => x.name).filter(Boolean).join(", ") : "";
+const fmtBytes = (n) => {
+  if (!Number.isFinite(n) || n <= 0) return "0 B";
+  const u = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  while (n >= 1024 && i < u.length - 1) {n /= 1024;i++;}
+  return `${n.toFixed(n < 10 && i ? 1 : 0)} ${u[i]}`;
+};
+
+function icon(name, cls = "ic") {
+  const sz = cls.includes("ic-sm") ? 16 : cls.includes("ic-lg") ? 28 : cls.includes("ic-xl") ? 40 : 20;
+  return `<svg class="${cls}" viewBox="0 0 24 24" width="${sz}" height="${sz}" aria-hidden="true"><use href="#ic-${name}"/></svg>`;
+}
+function setBtnIcon(el, name, cls = "ic") {
+  if (!el) return;
+  el.innerHTML = icon(name, cls);
+}
 
 const State = {
   queue: [],
@@ -25,7 +56,8 @@ const DEFAULTS = {
   visualizer: "bars",
   autoLyrics: true,
   sleepMin: 0,
-  lyricsSource: "auto"
+  lyricsSource: "auto",
+  locale: null
 };
 for (const k in DEFAULTS) {
   if (!(k in State.settings)) State.settings[k] = DEFAULTS[k];
@@ -34,8 +66,345 @@ function saveSettings() {
   localStorage.setItem("settings", JSON.stringify(State.settings));
 }
 
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+function persistLiked() {
+  localStorage.setItem("liked", JSON.stringify([...State.liked]));
+  localStorage.setItem("likedMeta", JSON.stringify(State.likedMeta));
+}
+function persistPlaylists() {
+  localStorage.setItem("playlists", JSON.stringify(State.playlists));
+}
+function persistRecents() {
+  localStorage.setItem("recents", JSON.stringify(State.recents));
+}
+
+const I18N = {
+  code: "en",
+  fallback: "en",
+  rtl: false,
+  map: Object.create(null),
+  fallbackMap: Object.create(null),
+  available: [],
+
+  t(key, fb = key) {
+    if (!key) return fb;
+    return this.map[key] || this.fallbackMap[key] || fb;
+  },
+
+  async loadIndex() {
+    try {
+      const r = await fetch("/locales/_index.json");
+      if (r.ok) {
+        const j = await r.json();
+        this.available = j.locales || [];
+        this.fallback = j.default || "en";
+      }
+    } catch {}
+  },
+
+  pickInitialLocale() {
+
+    const saved = State.settings.locale;
+    if (saved && this.available.some((l) => l.code === saved)) return saved;
+
+    const candidates = (navigator.languages || [navigator.language || "en"]).
+    filter(Boolean);
+    for (const c of candidates) {
+
+      if (this.available.some((l) => l.code.toLowerCase() === c.toLowerCase())) {
+        return this.available.find((l) => l.code.toLowerCase() === c.toLowerCase()).code;
+      }
+
+      const lang = c.split("-")[0].toLowerCase();
+      const hit = this.available.find((l) => l.code.toLowerCase() === lang);
+      if (hit) return hit.code;
+    }
+    return this.fallback;
+  },
+
+  async load(code) {
+
+    if (!Object.keys(this.fallbackMap).length) {
+      try {
+        const r = await fetch(`/locales/${this.fallback}.json`);
+        if (r.ok) this.fallbackMap = (await r.json()).strings || {};
+      } catch {}
+    }
+    try {
+      const r = await fetch(`/locales/${code}.json`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      this.code = j.code;
+      this.rtl = !!j.rtl;
+      this.map = j.strings || {};
+    } catch (e) {
+      console.warn(`[i18n] failed to load ${code}, falling back: ${e.message}`);
+      this.code = this.fallback;
+      this.rtl = false;
+      this.map = this.fallbackMap;
+    }
+    document.documentElement.setAttribute("lang", this.code);
+    document.documentElement.setAttribute("dir", this.rtl ? "rtl" : "ltr");
+  },
+
+  apply(root = document) {
+
+    $$("[data-i18n]", root).forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+
+      if (el.children.length === 0) {
+        const fb = el.textContent.trim() || key;
+        el.textContent = this.t(key, fb);
+        return;
+      }
+
+      let labelEl = el.querySelector(":scope > span") ||
+      el.querySelector(":scope > div") ||
+      el.querySelector(":scope > p");
+      if (labelEl) {
+        const fb = labelEl.textContent.trim() || key;
+        labelEl.textContent = this.t(key, fb);
+        return;
+      }
+
+      for (const node of el.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+          node.textContent = this.t(key, node.textContent.trim());
+          return;
+        }
+      }
+    });
+
+    $$("[data-i18n-fb]", root).forEach((el) => {
+      const key = el.getAttribute("data-i18n-fb");
+      el.textContent = this.t(key, el.textContent.trim());
+    });
+
+    $$("[data-i18n-attr]", root).forEach((el) => {
+      const spec = el.getAttribute("data-i18n-attr");
+      for (const pair of spec.split(",")) {
+        const [attr, key] = pair.split("|").map((s) => s.trim());
+        if (attr && key) el.setAttribute(attr, this.t(key, el.getAttribute(attr) || ""));
+      }
+    });
+  },
+
+  async setLocale(code) {
+    State.settings.locale = code;
+    saveSettings();
+    await this.load(code);
+    this.apply();
+
+    try {router(false);} catch {}
+  }
+};
+
+const T = (k, fb) => I18N.t(k, fb);
+
+const Offline = {
+  DB: null,
+  DB_NAME: "sakayori-offline",
+  DB_VER: 1,
+  STORE: "tracks",
+  listeners: new Set(),
+  activeDownloads: new Map(),
+
+  async init() {
+    if (!("indexedDB" in window)) {
+      console.warn("[offline] IndexedDB unavailable");
+      return;
+    }
+    this.DB = await new Promise((resolve, reject) => {
+      const r = indexedDB.open(this.DB_NAME, this.DB_VER);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        if (!db.objectStoreNames.contains(this.STORE)) {
+          const os = db.createObjectStore(this.STORE, { keyPath: "videoId" });
+          os.createIndex("status", "status", { unique: false });
+          os.createIndex("addedAt", "addedAt", { unique: false });
+        }
+      };
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    }).catch((e) => {
+      console.warn("[offline] init failed:", e);
+      return null;
+    });
+    if (this.DB) {
+
+      const all = await this.list();
+      for (const t of all) {
+        if (t.status === "downloading") await this.put({ ...t, status: "paused" });
+      }
+      this.notify();
+    }
+  },
+
+  on(fn) {this.listeners.add(fn);},
+  off(fn) {this.listeners.delete(fn);},
+  notify() {for (const fn of this.listeners) try {fn();} catch {}},
+
+  txStore(mode = "readonly") {
+    if (!this.DB) return null;
+    return this.DB.transaction(this.STORE, mode).objectStore(this.STORE);
+  },
+
+  get(videoId) {
+    const os = this.txStore();
+    if (!os) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const r = os.get(videoId);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => resolve(null);
+    });
+  },
+
+  list() {
+    const os = this.txStore();
+    if (!os) return Promise.resolve([]);
+    return new Promise((resolve) => {
+      const r = os.getAll();
+      r.onsuccess = () => resolve(r.result || []);
+      r.onerror = () => resolve([]);
+    });
+  },
+
+  put(rec) {
+    const os = this.txStore("readwrite");
+    if (!os) return Promise.resolve();
+    return new Promise((resolve) => {
+      const r = os.put(rec);
+      r.onsuccess = () => {this.notify();resolve();};
+      r.onerror = () => resolve();
+    });
+  },
+
+  remove(videoId) {
+
+    const ac = this.activeDownloads.get(videoId);
+    if (ac) {try {ac.abort();} catch {}this.activeDownloads.delete(videoId);}
+    const os = this.txStore("readwrite");
+    if (!os) return Promise.resolve();
+    return new Promise((resolve) => {
+      const r = os.delete(videoId);
+      r.onsuccess = () => {this.notify();resolve();};
+      r.onerror = () => resolve();
+    });
+  },
+
+  isReady(videoId) {
+    return this.get(videoId).then((r) => r && r.status === "complete" ? r : null);
+  },
+
+  async toBlobUrl(videoId) {
+    const rec = await this.isReady(videoId);
+    if (!rec || !rec.blob) return null;
+    return URL.createObjectURL(rec.blob);
+  },
+
+  async download(song) {
+    if (!this.DB) {
+      showToast(T("error", "Error") + ": IndexedDB unavailable");
+      return;
+    }
+    const videoId = song.videoId;
+    if (!videoId) return;
+    if (this.activeDownloads.has(videoId)) {
+      showToast(T("downloading", "Downloading") + "…");
+      return;
+    }
+    const existing = await this.get(videoId);
+    if (existing?.status === "complete") {
+      showToast(T("downloaded", "Downloaded"));
+      return;
+    }
+
+    const ac = new AbortController();
+    this.activeDownloads.set(videoId, ac);
+
+    await this.put({
+      videoId,
+      song,
+      status: "downloading",
+      received: 0,
+      total: existing?.total || 0,
+      addedAt: existing?.addedAt || Date.now(),
+      error: null
+    });
+
+    try {
+      const res = await fetch(`/api/stream/${videoId}`, { signal: ac.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const total = parseInt(res.headers.get("content-length") || "0", 10);
+      const mime = res.headers.get("content-type") || "audio/mp4";
+
+      const reader = res.body.getReader();
+      const chunks = [];
+      let received = 0;
+      let lastTick = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+
+        const now = performance.now();
+        if (now - lastTick > 100) {
+          lastTick = now;
+          await this.put({
+            videoId,
+            song,
+            status: "downloading",
+            received,
+            total,
+            addedAt: existing?.addedAt || Date.now(),
+            error: null
+          });
+        }
+      }
+
+      const blob = new Blob(chunks, { type: mime });
+      await this.put({
+        videoId,
+        song,
+        status: "complete",
+        received: blob.size,
+        total: blob.size,
+        blob,
+        mime,
+        addedAt: existing?.addedAt || Date.now(),
+        completedAt: Date.now(),
+        error: null
+      });
+      showToast(`${T("downloaded", "Downloaded")}: ${song.name || videoId}`);
+    } catch (e) {
+      if (e.name === "AbortError") {
+        await this.put({
+          ...((await this.get(videoId)) || { videoId, song }),
+          status: "paused"
+        });
+      } else {
+        console.warn("[offline] download failed:", e);
+        await this.put({
+          ...((await this.get(videoId)) || { videoId, song }),
+          status: "error",
+          error: e.message || String(e)
+        });
+        showToast(`${T("error", "Error")}: ${e.message || e}`);
+      }
+    } finally {
+      this.activeDownloads.delete(videoId);
+      this.notify();
+    }
+  },
+
+  async cancel(videoId) {
+    const ac = this.activeDownloads.get(videoId);
+    if (ac) {try {ac.abort();} catch {}this.activeDownloads.delete(videoId);}
+    await this.remove(videoId);
+  }
+};
 
 const audio = $("#audio");
 const video = $("#video");
@@ -77,6 +446,7 @@ const fpLyricsToggle = $("#fpLyricsToggle");
 const fpQueueBtn = $("#fpQueue");
 const fpVideoToggle = $("#fpVideoToggle");
 const fpVizToggle = $("#fpVizToggle");
+const fpDownload = $("#fpDownload");
 const fpLyricsPanel = $("#fpLyrics");
 const fpLyricsInner = $("#fpLyricsInner");
 const fpLyricsClose = $("#fpLyricsClose");
@@ -98,41 +468,21 @@ const modal = $("#modal");
 const modalCard = $("#modalCard");
 const sidebarPlaylists = $("#sidebarPlaylists");
 const newPlaylistBtn = $("#newPlaylistBtn");
+const dlBadge = $("#dlBadge");
 const suggestList = $("#suggestList");
 const searchInput = $("#searchInput");
 const searchTypeSel = $("#searchType");
 const searchForm = $("#searchForm");
 const backBtn = $("#backBtn");
 const fwdBtn = $("#fwdBtn");
+const langBtn = $("#langBtn");
+const langMenu = $("#langMenu");
 
-const fmt = (s) => {
-  if (!Number.isFinite(s)) return "0:00";
-  s = Math.max(0, Math.floor(s));
-  const m = Math.floor(s / 60);
-  const sec = String(s % 60).padStart(2, "0");
-  return `${m}:${sec}`;
-};
-const escapeHtml = (s) =>
-String(s ?? "").replace(/[&<>"]/g, (c) => ({
-  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"
-})[c]);
-const artistsText = (a) =>
-Array.isArray(a) ? a.map((x) => x.name).filter(Boolean).join(", ") : "";
-const showToast = (msg) => {
+function showToast(msg) {
   toast.textContent = msg;
   toast.classList.remove("hidden");
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => toast.classList.add("hidden"), 1800);
-};
-function persistLiked() {
-  localStorage.setItem("liked", JSON.stringify([...State.liked]));
-  localStorage.setItem("likedMeta", JSON.stringify(State.likedMeta));
-}
-function persistPlaylists() {
-  localStorage.setItem("playlists", JSON.stringify(State.playlists));
-}
-function persistRecents() {
-  localStorage.setItem("recents", JSON.stringify(State.recents));
 }
 
 function extractAccentFromImage(url) {
@@ -168,7 +518,8 @@ const api = {
   artist: (id) => fetch(`/api/artist/${id}`).then((r) => r.json()),
   album: (id) => fetch(`/api/album/${id}`).then((r) => r.json()),
   playlist: (id) => fetch(`/api/playlist/${id}`).then((r) => r.json()),
-  lyrics: (q) => fetch(`/api/lyrics?${new URLSearchParams(q)}`).then((r) => r.json())
+  lyrics: (q) => fetch(`/api/lyrics?${new URLSearchParams(q)}`).then((r) => r.json()),
+  lyricsSources: () => fetch(`/api/lyrics/sources`).then((r) => r.json())
 };
 
 let audioCtx = null;
@@ -180,12 +531,9 @@ function ensureAudioGraph() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  eqLow = audioCtx.createBiquadFilter();
-  eqLow.type = "lowshelf";eqLow.frequency.value = 320;
-  eqMid = audioCtx.createBiquadFilter();
-  eqMid.type = "peaking";eqMid.frequency.value = 1000;eqMid.Q.value = 1;
-  eqHigh = audioCtx.createBiquadFilter();
-  eqHigh.type = "highshelf";eqHigh.frequency.value = 3200;
+  eqLow = audioCtx.createBiquadFilter();eqLow.type = "lowshelf";eqLow.frequency.value = 320;
+  eqMid = audioCtx.createBiquadFilter();eqMid.type = "peaking";eqMid.frequency.value = 1000;eqMid.Q.value = 1;
+  eqHigh = audioCtx.createBiquadFilter();eqHigh.type = "highshelf";eqHigh.frequency.value = 3200;
 
   masterGain = audioCtx.createGain();
   analyser = audioCtx.createAnalyser();
@@ -194,9 +542,7 @@ function ensureAudioGraph() {
   audioSrcNode = audioCtx.createMediaElementSource(audio);
   videoSrcNode = audioCtx.createMediaElementSource(video);
 
-  [audioSrcNode, videoSrcNode].forEach((src) => {
-    src.connect(eqLow);
-  });
+  [audioSrcNode, videoSrcNode].forEach((src) => src.connect(eqLow));
   eqLow.connect(eqMid);
   eqMid.connect(eqHigh);
   eqHigh.connect(masterGain);
@@ -225,9 +571,9 @@ function navigate(path, push = true) {
 backBtn.addEventListener("click", () => history.back());
 fwdBtn.addEventListener("click", () => history.forward());
 
-async function router(initial = true) {
+async function router(_initial = true) {
   const hash = location.hash || "#/home";
-  const [_, route, ...rest] = hash.slice(1).split("/");
+  const [, route, ...rest] = hash.slice(1).split("/");
   setActiveSidebar(`/${route}`);
   view.scrollTop = 0;
 
@@ -242,12 +588,13 @@ async function router(initial = true) {
       case "ytplaylist":return renderRemotePlaylist(rest.join("/"));
       case "album":return renderAlbum(rest.join("/"));
       case "artist":return renderArtist(rest.join("/"));
+      case "downloads":return renderDownloads();
       case "settings":return renderSettings();
       case "shortcuts":return renderShortcuts();
       default:return renderHome();
     }
   } catch (e) {
-    view.innerHTML = `<div class="empty">Error: ${escapeHtml(e.message)}</div>`;
+    view.innerHTML = `<div class="empty">${T("error", "Error")}: ${escapeHtml(e.message)}</div>`;
   }
 }
 
@@ -261,14 +608,14 @@ function setActiveSidebar(path) {
 function skeletonRow(n = 8) {
   return Array.from({ length: n }, () =>
   `<div class="card"><div class="skeleton skel-card"></div>
-        <div class="t skeleton" style="height:14px;margin-top:10px"></div>
-        <div class="a skeleton" style="height:11px;margin-top:6px"></div></div>`
+            <div class="t skeleton" style="height:14px;margin-top:10px"></div>
+            <div class="a skeleton" style="height:11px;margin-top:6px"></div></div>`
   ).join("");
 }
 
 async function renderHome() {
   view.innerHTML = `
-        <h1 class="section-title">Welcome back</h1>
+        <h1 class="section-title">${T("good_evening", "Welcome back")}</h1>
         <div id="shelves">
             ${[1, 2, 3].map(() => `
                 <section class="shelf">
@@ -295,7 +642,7 @@ function songCard(s) {
   return `
         <div class="card" data-vid="${s.videoId}">
             <img loading="lazy" src="${s.thumbnail?.url || ""}" alt=""/>
-            <button class="card-play" title="Play">▶</button>
+            <button class="card-play" title="${T("now_playing", "Play")}">${icon("play")}</button>
             <div class="t">${escapeHtml(s.name)}</div>
             <div class="a">${escapeHtml(artistsText(s.artists))}</div>
         </div>`;
@@ -307,7 +654,7 @@ function wireCards(metaMap) {
     const meta = metaMap.get(vid);
     const playBtn = el.querySelector(".card-play");
     el.addEventListener("click", (e) => {
-      if (e.target === playBtn) return;
+      if (e.target === playBtn || e.target.closest(".card-play")) return;
       const shelf = el.closest(".shelf, .grid");
       if (!shelf) {playQueue([meta], 0);return;}
       const cards = $$(".card[data-vid]", shelf);
@@ -327,12 +674,13 @@ function wireCards(metaMap) {
 
 async function renderSearch(q) {
   if (!q) {
-    view.innerHTML = `<h1 class="section-title">Search</h1>
-            <div class="empty">Type something in the search bar above.</div>`;
+    view.innerHTML = `<h1 class="section-title">${T("search", "Search")}</h1>
+            <div class="empty">${T("search_for_songs_artists_albums_playlists_and_more",
+    "Type something in the search bar above.")}</div>`;
     return;
   }
   searchInput.value = q;
-  view.innerHTML = `<h1 class="section-title">Searching “${escapeHtml(q)}”…</h1>
+  view.innerHTML = `<h1 class="section-title">${T("search", "Searching")} “${escapeHtml(q)}”…</h1>
         <div class="list">${Array.from({ length: 6 }, () => `
             <div class="row"><div class="num skeleton" style="height:14px"></div>
             <div class="skeleton" style="width:48px;height:48px;border-radius:6px"></div>
@@ -343,11 +691,11 @@ async function renderSearch(q) {
 
   const type = searchTypeSel.value;
   const { results } = await api.search(q, type);
-  if (!results.length) {view.innerHTML = `<div class="empty">No results.</div>`;return;}
+  if (!results.length) {view.innerHTML = `<div class="empty">${T("error", "No results.")}</div>`;return;}
   const songish = results.filter((r) => r.videoId);
   const cardish = results.filter((r) => !r.videoId);
 
-  let html = `<h1 class="section-title">Results for “${escapeHtml(q)}”</h1>`;
+  let html = `<h1 class="section-title">${T("search", "Results")}: “${escapeHtml(q)}”</h1>`;
 
   if (cardish.length) {
     html += `<div class="grid">${cardish.map((r) => `
@@ -358,7 +706,7 @@ async function renderSearch(q) {
             </div>`).join("")}</div>`;
   }
   if (songish.length) {
-    html += `<h2 class="section-title" style="font-size:18px;margin-top:24px">Songs</h2>
+    html += `<h2 class="section-title" style="font-size:18px;margin-top:24px">${T("songs", "Songs")}</h2>
             <div class="list" id="searchList"></div>`;
   }
 
@@ -398,13 +746,23 @@ function songRow(s, idx, queue, opts = {}) {
         <div class="album-col">${escapeHtml(s.album?.name || "")}</div>
         <div class="dur">${s.duration ? fmt(s.duration) : ""}</div>
         <div class="row-actions">
-            <button class="icon-btn" title="More" data-action="more">⋯</button>
-        </div>
-    `;
+            <button class="icon-btn" title="${T("more", "More")}" data-action="more">${icon("more", "ic-sm")}</button>
+        </div>`;
+
+  Offline.get(s.videoId).then((rec) => {
+    if (!rec) return;
+    const dur = div.querySelector(".dur");
+    if (!dur) return;
+    if (rec.status === "complete") {
+      dur.innerHTML = `${icon("check", "ic-sm")} ${dur.textContent}`;
+    } else if (rec.status === "downloading" || rec.status === "paused") {
+      dur.innerHTML = `${icon("download", "ic-sm")} ${dur.textContent}`;
+    }
+  });
+
   div.addEventListener("click", (e) => {
     if (e.target.closest("button")) return;
-    if (opts.onPlay) opts.onPlay(idx);else
-    playQueue(queue, idx);
+    if (opts.onPlay) opts.onPlay(idx);else playQueue(queue, idx);
   });
   div.querySelector('[data-action="more"]').addEventListener("click", (e) => {
     e.stopPropagation();
@@ -420,7 +778,7 @@ function songRow(s, idx, queue, opts = {}) {
   return div;
 }
 
-function renderHero({ kind, name, subtitle, image, songs, isArtist, onPlayAll }) {
+function renderHero({ kind, name, subtitle, image, songs, isArtist }) {
   return `
         <div class="hero">
             <div class="hero-bg" style="background-image:url('${image || ''}')"></div>
@@ -430,21 +788,21 @@ function renderHero({ kind, name, subtitle, image, songs, isArtist, onPlayAll })
                 <h1>${escapeHtml(name)}</h1>
                 <div class="meta">${escapeHtml(subtitle)}</div>
                 <div class="actions">
-                    <button class="btn-pill" id="heroPlay">▶ Play All</button>
-                    <button class="btn-ghost" id="heroShuffle">🔀 Shuffle</button>
-                    ${songs.length ? `<button class="btn-ghost" id="heroAddQueue">＋ Add to queue</button>` : ""}
+                    <button class="btn-pill" id="heroPlay">${icon("play")}<span>${T("now_playing", "Play All")}</span></button>
+                    <button class="btn-ghost" id="heroShuffle">${icon("shuffle")}<span>${T("shuffle", "Shuffle")}</span></button>
+                    ${songs.length ? `<button class="btn-ghost" id="heroAddQueue">${icon("plus")}<span>${T("queue", "Add to queue")}</span></button>` : ""}
                 </div>
             </div>
         </div>`;
 }
 
 async function renderAlbum(id) {
-  view.innerHTML = `<div class="empty">Loading…</div>`;
+  view.innerHTML = `<div class="empty">${T("loading", "Loading…")}</div>`;
   const a = await api.album(id);
   view.innerHTML = renderHero({
-    kind: `Album · ${a.year ?? ""}`.trim(),
+    kind: `${T("album", "Album")} · ${a.year ?? ""}`.trim(),
     name: a.name,
-    subtitle: `${a.artist} · ${a.songs.length} tracks`,
+    subtitle: `${a.artist} · ${a.songs.length} ${T("songs", "tracks")}`,
     image: a.thumbnail?.url,
     songs: a.songs
   }) + `<div class="list" id="songList"></div>`;
@@ -454,12 +812,12 @@ async function renderAlbum(id) {
 }
 
 async function renderRemotePlaylist(id) {
-  view.innerHTML = `<div class="empty">Loading…</div>`;
+  view.innerHTML = `<div class="empty">${T("loading", "Loading…")}</div>`;
   const p = await api.playlist(id);
   view.innerHTML = renderHero({
-    kind: "Playlist",
+    kind: T("playlist", "Playlist"),
     name: p.name,
-    subtitle: `${p.songs.length} tracks`,
+    subtitle: `${p.songs.length} ${T("songs", "tracks")}`,
     image: p.thumbnail?.url,
     songs: p.songs
   }) + `<div class="list" id="songList"></div>`;
@@ -469,23 +827,23 @@ async function renderRemotePlaylist(id) {
 }
 
 async function renderArtist(id) {
-  view.innerHTML = `<div class="empty">Loading…</div>`;
+  view.innerHTML = `<div class="empty">${T("loading", "Loading…")}</div>`;
   const a = await api.artist(id);
   let html = renderHero({
-    kind: "Artist",
+    kind: T("artists", "Artist"),
     name: a.name,
-    subtitle: a.subscribers ? `${a.subscribers} subscribers` : "",
+    subtitle: a.subscribers ? T("subscribers", `${a.subscribers} subscribers`).replace("%1$s", a.subscribers) : "",
     image: a.thumbnail?.url,
     songs: a.topSongs,
     isArtist: true
   });
 
   if (a.topSongs?.length) {
-    html += `<h2 class="section-title" style="font-size:18px;margin-top:8px">Top Songs</h2>
+    html += `<h2 class="section-title" style="font-size:18px;margin-top:8px">${T("top_tracks", "Top Songs")}</h2>
             <div class="list" id="topSongs"></div>`;
   }
   if (a.albums?.length) {
-    html += `<h2 class="section-title" style="font-size:18px;margin-top:24px">Albums</h2>
+    html += `<h2 class="section-title" style="font-size:18px;margin-top:24px">${T("albums", "Albums")}</h2>
             <div class="grid">${a.albums.map((al) => `
                 <div class="card" data-album-id="${al.id}">
                     <img loading="lazy" src="${al.thumbnail?.url || ""}" alt=""/>
@@ -494,7 +852,7 @@ async function renderArtist(id) {
                 </div>`).join("")}</div>`;
   }
   if (a.singles?.length) {
-    html += `<h2 class="section-title" style="font-size:18px;margin-top:24px">Singles</h2>
+    html += `<h2 class="section-title" style="font-size:18px;margin-top:24px">${T("singles", "Singles")}</h2>
             <div class="grid">${a.singles.map((al) => `
                 <div class="card" data-album-id="${al.id}">
                     <img loading="lazy" src="${al.thumbnail?.url || ""}" alt=""/>
@@ -509,8 +867,7 @@ async function renderArtist(id) {
     a.topSongs.forEach((s, i) => list.appendChild(songRow(s, i, a.topSongs)));
   }
   $$(".card[data-album-id]").forEach((c) =>
-  c.addEventListener("click", () => navigate(`/album/${c.dataset.albumId}`))
-  );
+  c.addEventListener("click", () => navigate(`/album/${c.dataset.albumId}`)));
   wireHero(a.topSongs || []);
 }
 
@@ -522,7 +879,7 @@ function wireHero(songs) {
   });
   $("#heroAddQueue")?.addEventListener("click", () => {
     State.queue = [...State.queue, ...songs];
-    showToast(`Added ${songs.length} tracks to queue`);
+    showToast(`${songs.length} ${T("added_to_playlist", "added to queue")}`);
     renderFpQueue();
   });
 }
@@ -532,14 +889,14 @@ function renderLibrary() {
     (vid) => State.likedMeta[vid] || { videoId: vid, name: vid, artists: [] }
   );
   if (!items.length) {
-    view.innerHTML = `<h1 class="section-title">Liked Songs</h1>
+    view.innerHTML = `<h1 class="section-title">${T("liked", "Liked Songs")}</h1>
             <div class="empty">You haven't liked anything yet. Press <kbd>L</kbd> while a song plays.</div>`;
     return;
   }
-  view.innerHTML = `<h1 class="section-title">Liked Songs <span class="muted">· ${items.length}</span></h1>
+  view.innerHTML = `<h1 class="section-title">${T("liked", "Liked Songs")} <span class="muted">· ${items.length}</span></h1>
         <div class="actions" style="margin-bottom:12px">
-            <button class="btn-pill" id="heroPlay">▶ Play All</button>
-            <button class="btn-ghost" id="heroShuffle">🔀 Shuffle</button>
+            <button class="btn-pill" id="heroPlay">${icon("play")}<span>${T("now_playing", "Play All")}</span></button>
+            <button class="btn-ghost" id="heroShuffle">${icon("shuffle")}<span>${T("shuffle", "Shuffle")}</span></button>
         </div>
         <div class="list" id="libList"></div>`;
   const list = $("#libList");
@@ -550,14 +907,14 @@ function renderLibrary() {
 function renderRecents() {
   const items = State.recents.slice(0, 100).map((r) => r.song);
   if (!items.length) {
-    view.innerHTML = `<h1 class="section-title">Recently Played</h1>
+    view.innerHTML = `<h1 class="section-title">${T("recently", "Recently Played")}</h1>
             <div class="empty">Nothing played yet.</div>`;
     return;
   }
-  view.innerHTML = `<h1 class="section-title">Recently Played</h1>
+  view.innerHTML = `<h1 class="section-title">${T("recently", "Recently Played")}</h1>
         <div class="actions" style="margin-bottom:12px">
-            <button class="btn-pill" id="heroPlay">▶ Play All</button>
-            <button class="btn-ghost" id="heroShuffle">🔀 Shuffle</button>
+            <button class="btn-pill" id="heroPlay">${icon("play")}<span>${T("now_playing", "Play All")}</span></button>
+            <button class="btn-ghost" id="heroShuffle">${icon("shuffle")}<span>${T("shuffle", "Shuffle")}</span></button>
         </div>
         <div class="list" id="recentList"></div>`;
   const list = $("#recentList");
@@ -567,40 +924,39 @@ function renderRecents() {
 
 function renderLocalPlaylists() {
   const ids = Object.keys(State.playlists);
-  view.innerHTML = `<h1 class="section-title">My Playlists</h1>
+  view.innerHTML = `<h1 class="section-title">${T("your_playlists", "My Playlists")}</h1>
         ${ids.length === 0 ?
-  `<div class="empty">No playlists yet. Click "+ New playlist" in the sidebar.</div>` :
+  `<div class="empty">${T("no_playlists_added", "No playlists yet. Click \"+ New playlist\" in the sidebar.")}</div>` :
   `<div class="grid">${ids.map((id) => {
     const p = State.playlists[id];
     const cover = p.songs[0]?.thumbnail?.url || "";
     return `<div class="card" data-pl="${id}">
                     <img loading="lazy" src="${cover}" alt=""/>
                     <div class="t">${escapeHtml(p.name)}</div>
-                    <div class="a">${p.songs.length} tracks</div>
+                    <div class="a">${p.songs.length} ${T("songs", "tracks")}</div>
                 </div>`;
   }).join("")}</div>`}`;
   $$(".card[data-pl]").forEach((c) =>
-  c.addEventListener("click", () => navigate(`/playlist/${c.dataset.pl}`))
-  );
+  c.addEventListener("click", () => navigate(`/playlist/${c.dataset.pl}`)));
 }
 
 function renderLocalPlaylist(id) {
   const p = State.playlists[id];
   if (!p) {
-    view.innerHTML = `<div class="empty">Playlist not found.</div>`;
+    view.innerHTML = `<div class="empty">${T("error", "Playlist not found.")}</div>`;
     return;
   }
   const cover = p.songs[0]?.thumbnail?.url || "";
   view.innerHTML = renderHero({
-    kind: "Local Playlist",
+    kind: T("playlist", "Local Playlist"),
     name: p.name,
-    subtitle: `${p.songs.length} tracks`,
+    subtitle: `${p.songs.length} ${T("songs", "tracks")}`,
     image: cover,
     songs: p.songs
   }) + `
         <div class="actions" style="margin: -10px 0 14px">
-            <button class="btn-ghost" id="renamePlaylistBtn">✏ Rename</button>
-            <button class="btn-ghost" id="deletePlaylistBtn" style="color:var(--danger)">🗑 Delete</button>
+            <button class="btn-ghost" id="renamePlaylistBtn">${icon("edit")}<span>${T("edit_title", "Rename")}</span></button>
+            <button class="btn-ghost" id="deletePlaylistBtn" style="color:var(--danger)">${icon("trash")}<span>${T("delete_playlist", "Delete")}</span></button>
         </div>
         <div class="list" id="songList"></div>`;
   const list = $("#songList");
@@ -619,7 +975,7 @@ function renderLocalPlaylist(id) {
   wireHero(p.songs);
   $("#renamePlaylistBtn").addEventListener("click", () => promptRenamePlaylist(id));
   $("#deletePlaylistBtn").addEventListener("click", () => {
-    if (confirm(`Delete "${p.name}"?`)) {
+    if (confirm(`${T("delete_playlist", "Delete")} "${p.name}"?`)) {
       delete State.playlists[id];
       persistPlaylists();
       renderSidebarPlaylists();
@@ -627,6 +983,89 @@ function renderLocalPlaylist(id) {
     }
   });
 }
+
+async function renderDownloads() {
+  view.innerHTML = `<h1 class="section-title">${T("downloaded", "Downloads")}</h1>
+        <div id="dlList"></div>`;
+  const renderList = async () => {
+    const list = await Offline.list();
+    list.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    const wrap = $("#dlList");
+    if (!wrap) return;
+    if (!list.length) {
+      wrap.innerHTML = `<div class="empty">${T("no_playlists_downloaded", "No downloads yet. Use the download button in the player or row context menu.")}</div>`;
+      return;
+    }
+    wrap.innerHTML = list.map((rec) => {
+      const s = rec.song || { name: rec.videoId, artists: [] };
+      const pct = rec.total ? Math.min(100, rec.received / rec.total * 100) : 0;
+      const status = rec.status === "complete" ?
+      `${icon("check", "ic-sm")} ${T("downloaded", "Ready")} · ${fmtBytes(rec.received)}` :
+      rec.status === "downloading" ?
+      `${icon("spinner", "ic-sm")} ${T("downloading", "Downloading")} · ${fmtBytes(rec.received)} / ${rec.total ? fmtBytes(rec.total) : "?"}` :
+      rec.status === "paused" ?
+      `${T("preparing", "Paused")} · ${fmtBytes(rec.received)}` :
+      `${icon("close", "ic-sm")} ${T("error", "Error")} · ${escapeHtml(rec.error || "")}`;
+      return `<div class="dl-row" data-vid="${rec.videoId}">
+                <img loading="lazy" src="${s.thumbnail?.url || ""}" alt=""/>
+                <div>
+                    <div class="dl-meta-t">${escapeHtml(s.name || rec.videoId)}</div>
+                    <div class="dl-meta-a">${escapeHtml(artistsText(s.artists))}</div>
+                </div>
+                <div>
+                    <div class="dl-progress"><div class="dl-progress-bar" style="width:${pct}%"></div></div>
+                    <div class="dl-status ${rec.status === 'error' ? 'error' : ''}">${status}</div>
+                </div>
+                <div class="dl-actions">
+                    <button class="icon-btn" data-act="play" title="${T("now_playing", "Play")}">${icon("play")}</button>
+                    ${rec.status === "complete" ? "" :
+      rec.status === "downloading" ?
+      `<button class="icon-btn" data-act="pause" title="${T("pause", "Pause")}">${icon("pause")}</button>` :
+      `<button class="icon-btn" data-act="resume" title="${T("download", "Resume")}">${icon("download")}</button>`}
+                    <button class="icon-btn" data-act="remove" title="${T("delete_playlist", "Remove")}">${icon("trash")}</button>
+                </div>
+            </div>`;
+    }).join("");
+
+    $$(".dl-row").forEach((el) => {
+      const vid = el.dataset.vid;
+      el.querySelector('[data-act="play"]').addEventListener("click", async () => {
+        const rec = await Offline.get(vid);
+        if (rec?.song) playQueue([rec.song], 0);
+      });
+      el.querySelector('[data-act="pause"]')?.addEventListener("click", async () => {
+        const ac = Offline.activeDownloads.get(vid);
+        if (ac) ac.abort();
+      });
+      el.querySelector('[data-act="resume"]')?.addEventListener("click", async () => {
+        const rec = await Offline.get(vid);
+        if (rec) Offline.download(rec.song);
+      });
+      el.querySelector('[data-act="remove"]').addEventListener("click", async () => {
+        await Offline.remove(vid);
+        renderList();
+      });
+    });
+  };
+  await renderList();
+  Offline.on(renderList);
+
+  const stop = () => {Offline.off(renderList);window.removeEventListener("hashchange", stop);};
+  window.addEventListener("hashchange", stop);
+}
+
+async function refreshDlBadge() {
+  if (!Offline.DB) return;
+  const list = await Offline.list();
+  const active = list.filter((r) => r.status === "downloading" || r.status === "paused").length;
+  if (active > 0) {
+    dlBadge.textContent = String(active);
+    dlBadge.classList.remove("hidden");
+  } else {
+    dlBadge.classList.add("hidden");
+  }
+}
+Offline.on(refreshDlBadge);
 
 function renderShortcuts() {
   view.innerHTML = `<h1 class="section-title">Keyboard Shortcuts</h1>
@@ -643,6 +1082,7 @@ function renderShortcuts() {
   ["R", "Cycle repeat"],
   ["F", "Toggle fullscreen player"],
   ["V", "Toggle video mode"],
+  ["D", "Download current track"],
   ["Esc", "Close fullscreen / panels"],
   ["?", "This page"]].
   map(([k, d]) =>
@@ -653,9 +1093,21 @@ function renderShortcuts() {
 
 function renderSettings() {
   const s = State.settings;
+  const localesHtml = I18N.available.map((l) =>
+  `<option value="${l.code}" ${l.code === I18N.code ? "selected" : ""}>${escapeHtml(l.name)} (${l.code})</option>`
+  ).join("") || `<option value="en">English</option>`;
+
   view.innerHTML = `
         <div class="settings">
-            <h1>Settings</h1>
+            <h1>${T("settings", "Settings")}</h1>
+
+            <div class="setting">
+                <div>
+                    <div class="setting-title">${T("language", "Language")}</div>
+                    <div class="setting-desc">${I18N.available.length} locales available · sourced from the Android app's strings.xml</div>
+                </div>
+                <select id="setLocale">${localesHtml}</select>
+            </div>
 
             <div class="setting">
                 <div>
@@ -672,8 +1124,7 @@ function renderSettings() {
   t === "lime" ? "#a5d651" :
   t === "amber" ? "#ffb74d" :
   "linear-gradient(135deg,#f9d423,#ff4e50)"}"></div>
-                    `
-  ).join("")}
+                    `).join("")}
                 </div>
             </div>
 
@@ -695,7 +1146,7 @@ function renderSettings() {
 
             <div class="setting" style="grid-template-columns:1fr">
                 <div>
-                    <div class="setting-title">Equalizer (3-band)</div>
+                    <div class="setting-title">${T("equalizer", "Equalizer")} (3-band)</div>
                     <div class="setting-desc">Adjust low / mid / high frequencies.</div>
                 </div>
                 <div style="margin-top:6px">
@@ -704,21 +1155,16 @@ function renderSettings() {
                             <label>${label}</label>
                             <input type="range" min="-12" max="12" step="0.5" value="${s.eq[i]}" data-eq="${i}"/>
                             <div class="val">${s.eq[i].toFixed(1)} dB</div>
-                        </div>
-                    `).join("")}
+                        </div>`).join("")}
                 </div>
             </div>
 
             <div class="setting">
                 <div>
-                    <div class="setting-title">Lyrics source</div>
-                    <div class="setting-desc">Where to load lyrics from.</div>
+                    <div class="setting-title">${T("lyrics", "Lyrics")} source</div>
+                    <div class="setting-desc">Multi-source chain: LRCLIB → NetEase → Genius → KuGou → YouTube.</div>
                 </div>
-                <select id="setLyricsSrc">
-                    <option value="auto" ${s.lyricsSource === "auto" ? "selected" : ""}>Auto (LRCLIB → YouTube)</option>
-                    <option value="lrclib" ${s.lyricsSource === "lrclib" ? "selected" : ""}>LRCLIB only</option>
-                    <option value="youtube" ${s.lyricsSource === "youtube" ? "selected" : ""}>YouTube subtitles</option>
-                </select>
+                <select id="setLyricsSrc"></select>
             </div>
 
             <div class="setting">
@@ -735,26 +1181,26 @@ function renderSettings() {
 
             <div class="setting">
                 <div>
-                    <div class="setting-title">Backup / Restore</div>
-                    <div class="setting-desc">Export or import your liked songs and playlists.</div>
+                    <div class="setting-title">${T("backup_your_data", "Backup")} / ${T("restore_your_data", "Restore")}</div>
+                    <div class="setting-desc">${T("save_all_your_playlist_data", "Export or import your liked songs and playlists.")}</div>
                 </div>
                 <div style="display:flex;gap:8px">
-                    <button class="btn secondary" id="exportBtn">Export</button>
-                    <button class="btn secondary" id="importBtn">Import</button>
+                    <button class="btn secondary" id="exportBtn">${T("backup", "Export")}</button>
+                    <button class="btn secondary" id="importBtn">${T("restore_your_data", "Import")}</button>
                 </div>
             </div>
         </div>`;
+
+  populateLyricsSourceSelect($("#setLyricsSrc"), s.lyricsSource);
 
   $$(".theme-swatch").forEach((el) =>
   el.addEventListener("click", () => {
     State.settings.theme = el.dataset.theme;
     saveSettings();applyTheme();
     renderSettings();
-  })
-  );
-  $("#setCrossfade").addEventListener("input", (e) => {
-    State.settings.crossfade = +e.target.value;saveSettings();
-  });
+  }));
+  $("#setLocale").addEventListener("change", (e) => I18N.setLocale(e.target.value));
+  $("#setCrossfade").addEventListener("input", (e) => {State.settings.crossfade = +e.target.value;saveSettings();});
   $("#setSleep").addEventListener("change", (e) => {
     State.settings.sleepMin = +e.target.value;saveSettings();
     scheduleSleepTimer();
@@ -765,17 +1211,45 @@ function renderSettings() {
     State.settings.eq[i] = +e.target.value;
     saveSettings();applyEqFromSettings();
     el.parentElement.querySelector(".val").textContent = State.settings.eq[i].toFixed(1) + " dB";
-  })
-  );
+  }));
   $("#setLyricsSrc").addEventListener("change", (e) => {
     State.settings.lyricsSource = e.target.value;saveSettings();
-    lyricsSourceSelect.value = e.target.value;
+    if (lyricsSourceSelect) lyricsSourceSelect.value = e.target.value;
   });
   $("#setViz").addEventListener("change", (e) => {
     State.settings.visualizer = e.target.value;saveSettings();
   });
   $("#exportBtn").addEventListener("click", exportData);
   $("#importBtn").addEventListener("click", importData);
+}
+
+const LYRICS_SOURCES = [
+{ id: "auto", label: "Auto (full chain)" },
+{ id: "lrclib", label: "LRCLIB" },
+{ id: "netease", label: "NetEase Cloud Music" },
+{ id: "genius", label: "Genius" },
+{ id: "kugou", label: "KuGou" },
+{ id: "youtube", label: "YouTube subtitles" }];
+
+function fillLyricsSourceSelect(el, current, providers = LYRICS_SOURCES) {
+  if (!el) return;
+  el.innerHTML = providers.map((p) =>
+  `<option value="${p.id}" ${p.id === current ? "selected" : ""}>${escapeHtml(p.label)}</option>`
+  ).join("");
+}
+
+async function populateLyricsSourceSelect(el, current) {
+  if (!el) return;
+
+  fillLyricsSourceSelect(el, current, LYRICS_SOURCES);
+
+  try {
+    const r = await api.lyricsSources();
+    if (r?.providers) {
+      const list = [r.auto, ...r.providers];
+      fillLyricsSourceSelect(el, current, list);
+    }
+  } catch {}
 }
 
 function exportData() {
@@ -807,9 +1281,9 @@ function importData() {
       persistLiked();persistPlaylists();persistRecents();saveSettings();
       applyTheme();applyEqFromSettings();
       renderSidebarPlaylists();
-      showToast("Backup restored");
+      showToast(T("restore_success", "Backup restored"));
       renderSettings();
-    } catch (e) {showToast("Invalid file");}
+    } catch {showToast(T("restore_failed", "Invalid file"));}
   };
   input.click();
 }
@@ -822,7 +1296,7 @@ function renderSidebarPlaylists() {
   const ids = Object.keys(State.playlists);
   sidebarPlaylists.innerHTML = ids.map((id) =>
   `<a href="#/playlist/${id}">${escapeHtml(State.playlists[id].name)}</a>`
-  ).join("") || `<div class="empty" style="padding:8px 0;font-size:12px">No playlists</div>`;
+  ).join("") || `<div class="empty" style="padding:8px 0;font-size:12px">${T("no_playlists_added", "No playlists")}</div>`;
 }
 
 function newPlaylist(name) {
@@ -835,9 +1309,9 @@ function newPlaylist(name) {
 
 function promptNewPlaylist() {
   openModal({
-    title: "New playlist",
-    body: `<label>Name<input type="text" id="plName" placeholder="My playlist"/></label>`,
-    ok: "Create",
+    title: T("playlist_name", "New playlist"),
+    body: `<label>${T("playlist_name", "Name")}<input type="text" id="plName" placeholder="${T("playlist_name", "My playlist")}"/></label>`,
+    ok: T("create", "Create"),
     onOk: () => {
       const name = $("#plName").value.trim();
       if (!name) return;
@@ -850,9 +1324,9 @@ function promptNewPlaylist() {
 function promptRenamePlaylist(id) {
   const p = State.playlists[id];
   openModal({
-    title: "Rename playlist",
-    body: `<label>Name<input type="text" id="plName" value="${escapeHtml(p.name)}"/></label>`,
-    ok: "Save",
+    title: T("edit_title", "Rename playlist"),
+    body: `<label>${T("playlist_name", "Name")}<input type="text" id="plName" value="${escapeHtml(p.name)}"/></label>`,
+    ok: T("save_playback_state", "Save"),
     onOk: () => {
       const name = $("#plName").value.trim();
       if (!name) return;
@@ -864,7 +1338,7 @@ function promptRenamePlaylist(id) {
 }
 newPlaylistBtn.addEventListener("click", promptNewPlaylist);
 
-function openModal({ title, body, ok = "OK", cancel = "Cancel", onOk }) {
+function openModal({ title, body, ok = "OK", cancel = T("cancel", "Cancel"), onOk }) {
   modalCard.innerHTML = `
         <h2>${escapeHtml(title)}</h2>
         ${body}
@@ -881,40 +1355,33 @@ modal.addEventListener("click", (e) => {if (e.target === modal) closeModal();});
 
 function openContextMenu(e, song, opts = {}) {
   closeContextMenu();
+  const isLiked = State.liked.has(song.videoId);
   const items = [
-  { label: "▶ Play now", run: () => playQueue([song], 0) },
-  {
-    label: "＋ Add to queue", run: () => {
-      State.queue.push(song);showToast("Added to queue");renderFpQueue();
-    }
-  },
-  {
-    label: "◇ Play next", run: () => {
-      State.queue.splice(State.queueIndex + 1, 0, song);showToast("Playing next");renderFpQueue();
-    }
-  },
+  { i: "play", label: T("now_playing", "Play now"), run: () => playQueue([song], 0) },
+  { i: "plus", label: T("queue", "Add to queue"), run: () => {State.queue.push(song);showToast(T("added_to_playlist", "Added to queue"));renderFpQueue();} },
+  { i: "next", label: T("up_next", "Play next") || "Play next", run: () => {State.queue.splice(State.queueIndex + 1, 0, song);showToast(T("up_next", "Playing next"));renderFpQueue();} },
   { divider: true },
+  { i: isLiked ? "heart-fill" : "heart", label: isLiked ? T("liked", "Unlike") : T("like", "Like"), run: () => toggleLike(song) },
+  { i: "download", label: T("download", "Download"), run: () => Offline.download(song) },
   {
-    label: State.liked.has(song.videoId) ? "♥ Unlike" : "♡ Like",
-    run: () => toggleLike(song)
-  },
-  {
-    label: "→ Add to playlist", submenu: Object.keys(State.playlists).map((id) => ({
+    i: "list",
+    label: T("add_to_a_playlist", "Add to playlist"),
+    submenu: Object.keys(State.playlists).map((id) => ({
       label: State.playlists[id].name,
       run: () => {
         State.playlists[id].songs.push(song);persistPlaylists();
-        showToast(`Added to ${State.playlists[id].name}`);
+        showToast(`${T("added_to_playlist", "Added to")} ${State.playlists[id].name}`);
       }
     })).concat([
     { divider: true },
-    { label: "+ New playlist…", run: () => promptNewPlaylist() }]
+    { i: "plus", label: T("playlist_name", "+ New playlist…"), run: () => promptNewPlaylist() }]
     )
   }];
 
   if (opts.playlistId) {
     items.push({ divider: true });
     items.push({
-      label: "Remove from this playlist", run: () => {
+      i: "trash", label: T("delete_song_from_playlist", "Remove from this playlist"), run: () => {
         const p = State.playlists[opts.playlistId];
         p.songs = p.songs.filter((s) => s.videoId !== song.videoId);
         persistPlaylists();
@@ -924,26 +1391,26 @@ function openContextMenu(e, song, opts = {}) {
   }
   items.push({ divider: true });
   if (song.album?.albumId) {
-    items.push({ label: "Go to album", run: () => navigate(`/album/${song.album.albumId}`) });
+    items.push({ i: "music", label: T("album", "Go to album"), run: () => navigate(`/album/${song.album.albumId}`) });
   }
   if (song.artists?.[0]?.artistId) {
-    items.push({ label: "Go to artist", run: () => navigate(`/artist/${song.artists[0].artistId}`) });
+    items.push({ i: "mic", label: T("artists", "Go to artist"), run: () => navigate(`/artist/${song.artists[0].artistId}`) });
   }
-  items.push({ label: "Open on YouTube", run: () => window.open(`https://youtu.be/${song.videoId}`, "_blank") });
+  items.push({ i: "video", label: T("youtube_url", "Open on YouTube"), run: () => window.open(`https://youtu.be/${song.videoId}`, "_blank") });
 
   ctxMenu.innerHTML = items.map((it, i) => {
     if (it.divider) return `<div class="ctx-divider"></div>`;
     if (it.submenu) {
       return `<div class="ctx-item" data-i="${i}">
-                ${escapeHtml(it.label)}
-                <span class="ctx-sub-arrow">▸</span></div>`;
+                ${icon(it.i || "list", "ic-sm")} ${escapeHtml(it.label)}
+                <span class="ctx-sub-arrow">${icon("chev-right", "ic-sm")}</span></div>`;
     }
-    return `<div class="ctx-item" data-i="${i}">${escapeHtml(it.label)}</div>`;
+    return `<div class="ctx-item" data-i="${i}">${icon(it.i || "more", "ic-sm")} ${escapeHtml(it.label)}</div>`;
   }).join("");
 
   ctxMenu.classList.remove("hidden");
   const x = Math.min(e.clientX, window.innerWidth - 240);
-  const y = Math.min(e.clientY, window.innerHeight - 300);
+  const y = Math.min(e.clientY, window.innerHeight - 320);
   ctxMenu.style.left = x + "px";
   ctxMenu.style.top = y + "px";
 
@@ -962,11 +1429,11 @@ function openContextMenu(e, song, opts = {}) {
 }
 function openSubmenu(parent, submenu) {
   const sub = document.createElement("div");
-  sub.className = "ctx-menu";
+  sub.className = "ctx-menu glass-strong";
   sub.style.position = "fixed";
   sub.innerHTML = submenu.map((it, i) =>
   it.divider ? `<div class="ctx-divider"></div>` :
-  `<div class="ctx-item" data-i="${i}">${escapeHtml(it.label)}</div>`
+  `<div class="ctx-item" data-i="${i}">${it.i ? icon(it.i, "ic-sm") : ""} ${escapeHtml(it.label)}</div>`
   ).join("");
   document.body.appendChild(sub);
   const r = parent.getBoundingClientRect();
@@ -1015,24 +1482,53 @@ function wireDrag(div, queue, opts) {
 
 async function loadLyricsForCurrent() {
   const cur = State.queue[State.queueIndex];
-  if (!cur) return;
-  fpLyricsInner.innerHTML = `<div class="empty">Loading lyrics…</div>`;
+  if (!cur) {
+    fpLyricsInner.innerHTML = `<div class="empty">${T("hello_blank_fragment", "Play something first")}</div>`;
+    return;
+  }
+  fpLyricsInner.innerHTML = `<div class="empty">${icon("spinner", "ic-sm")} ${T("loading", "Loading lyrics…")}</div>`;
   try {
-    const sourcePref = State.settings.lyricsSource;
+    const sourcePref = State.settings.lyricsSource || "auto";
     const data = await api.lyrics({
       title: cur.name,
       artist: artistsText(cur.artists),
       album: cur.album?.name || "",
       duration: cur.duration || "",
       videoId: cur.videoId,
-      ...(sourcePref === "youtube" ? { source: "youtube" } : {})
+      source: sourcePref
     });
     State.lyrics = parseLyrics(data);
     renderLyricLines();
   } catch (e) {
-    fpLyricsInner.innerHTML = `<div class="empty">Failed: ${escapeHtml(e.message)}</div>`;
+    fpLyricsInner.innerHTML = renderLyricsEmpty(`${T("error", "Failed")}: ${escapeHtml(e.message)}`);
+    wireLyricsEmptyActions();
   }
 }
+
+function renderLyricsEmpty(reason) {
+  const cur = State.queue[State.queueIndex];
+  const buttons = LYRICS_SOURCES.
+  filter((p) => p.id !== "auto" && p.id !== State.settings.lyricsSource).
+  map((p) =>
+  `<button class="btn-ghost" data-try="${p.id}" type="button">${escapeHtml(p.label)}</button>`
+  ).join("");
+  return `<div class="empty">
+        <div>${escapeHtml(reason)}</div>
+        <div class="muted" style="margin-top:8px">${escapeHtml(cur?.name || "")}</div>
+        <div class="lyrics-empty-actions">${buttons}</div>
+    </div>`;
+}
+function wireLyricsEmptyActions() {
+  fpLyricsInner.querySelectorAll("[data-try]").forEach((b) =>
+  b.addEventListener("click", () => {
+    State.settings.lyricsSource = b.dataset.try;
+    saveSettings();
+    if (lyricsSourceSelect) lyricsSourceSelect.value = b.dataset.try;
+    loadLyricsForCurrent();
+  })
+  );
+}
+
 function parseLyrics(data) {
   if (!data?.found) return null;
   if (data.synced) {
@@ -1054,11 +1550,11 @@ function parseLyrics(data) {
 }
 function renderLyricLines() {
   if (!State.lyrics) {
-    fpLyricsInner.innerHTML = `<div class="empty">No lyrics found.</div>`;
+    fpLyricsInner.innerHTML = `<div class="empty">${T("error", "No lyrics found.")}</div>`;
     return;
   }
   fpLyricsInner.innerHTML =
-  `<div class="muted" style="font-size:11px">Source: ${escapeHtml(State.lyrics.source || "")}</div>` +
+  `<div class="muted" style="font-size:11px">${T("share_url", "Source")}: ${escapeHtml(State.lyrics.source || "")}</div>` +
   State.lyrics.lines.map((l, i) =>
   `<div class="lyric-line" data-i="${i}">${escapeHtml(l.text) || "&nbsp;"}</div>`
   ).join("");
@@ -1079,7 +1575,7 @@ function tickLyrics() {
     } else el.classList.remove("active");
   });
 
-  if (activeEl && !tickLyrics._lastActive !== activeEl) {
+  if (activeEl && tickLyrics._lastActive !== activeEl) {
     tickLyrics._lastActive = activeEl;
     const container = fpLyricsInner;
     const target =
@@ -1088,10 +1584,12 @@ function tickLyrics() {
   }
 }
 
-lyricsSourceSelect.addEventListener("change", (e) => {
-  State.settings.lyricsSource = e.target.value;
-  saveSettings();
-  loadLyricsForCurrent();
+populateLyricsSourceSelect(lyricsSourceSelect, State.settings.lyricsSource).then(() => {
+  lyricsSourceSelect.addEventListener("change", (e) => {
+    State.settings.lyricsSource = e.target.value;
+    saveSettings();
+    loadLyricsForCurrent();
+  });
 });
 
 function mediaEl() {return State.mode === "video" ? video : audio;}
@@ -1123,8 +1621,11 @@ async function playCurrent() {
 
   const next = State.queue[State.queueIndex + 1];
   if (next?.videoId) {
-    const path = State.mode === "video" ? "prefetch-video" : "prefetch";
-    fetch(`/api/${path}/${next.videoId}`, { method: "POST" }).catch(() => {});
+    Offline.isReady(next.videoId).then((rec) => {
+      if (rec) return;
+      const path = State.mode === "video" ? "prefetch-video" : "prefetch";
+      fetch(`/api/${path}/${next.videoId}`, { method: "POST" }).catch(() => {});
+    });
   }
 
   const item = { song: s, when: Date.now() };
@@ -1133,17 +1634,33 @@ async function playCurrent() {
 
   audio.pause();
   video.pause();
+
+  let audioSrc = `/api/stream/${s.videoId}`;
+  let videoSrc = `/api/video/${s.videoId}`;
+  if (State.mode === "audio") {
+    const blobUrl = await Offline.toBlobUrl(s.videoId);
+    if (blobUrl) {
+      audioSrc = blobUrl;
+
+      if (playCurrent._lastBlobUrl) URL.revokeObjectURL(playCurrent._lastBlobUrl);
+      playCurrent._lastBlobUrl = blobUrl;
+    } else if (playCurrent._lastBlobUrl) {
+      URL.revokeObjectURL(playCurrent._lastBlobUrl);
+      playCurrent._lastBlobUrl = null;
+    }
+  }
+
   if (State.mode === "video") {
-    video.src = `/api/video/${s.videoId}`;
+    video.src = videoSrc;
     video.load();
-    video.play().catch((e) => showToast("Playback failed: " + e.message));
+    video.play().catch((e) => showToast(T("error", "Playback failed") + ": " + e.message));
     video.classList.remove("hidden");
     vinylWrap.classList.add("hidden");
     fpStage.classList.add("video-mode");
   } else {
-    audio.src = `/api/stream/${s.videoId}`;
+    audio.src = audioSrc;
     audio.load();
-    audio.play().catch((e) => showToast("Playback failed: " + e.message));
+    audio.play().catch((e) => showToast(T("error", "Playback failed") + ": " + e.message));
     video.classList.add("hidden");
     vinylWrap.classList.remove("hidden");
     fpStage.classList.remove("video-mode");
@@ -1151,12 +1668,22 @@ async function playCurrent() {
 
   npTitle.textContent = s.name;
   npArtist.textContent = artistsText(s.artists);
-  if (s.thumbnail?.url) npArt.src = s.thumbnail.url;else npArt.removeAttribute("src");
-  likeBtn.textContent = State.liked.has(s.videoId) ? "♥" : "♡";
+  npArt.removeAttribute("src");
+  vinylArt.removeAttribute("src");
+  fpBackdrop.style.backgroundImage = "none";
+  if (s.thumbnail?.url) {
+    npArt.src = s.thumbnail.url;
+    vinylArt.src = s.thumbnail.url;
+    fpBackdrop.style.backgroundImage = `url("${s.thumbnail.url}")`;
+  }
+  setBtnIcon(likeBtn, State.liked.has(s.videoId) ? "heart-fill" : "heart");
   syncFullPlayerUi();
   if (s.thumbnail?.url) {
     const c = await extractAccentFromImage(s.thumbnail.url);
     if (c) document.documentElement.style.setProperty("--art-color", c);
+  } else {
+
+    document.documentElement.style.removeProperty("--art-color");
   }
 
   if (!fpLyricsPanel.classList.contains("hidden")) loadLyricsForCurrent();
@@ -1214,17 +1741,20 @@ function toggleLike(song) {
   if (State.liked.has(song.videoId)) {
     State.liked.delete(song.videoId);
     delete State.likedMeta[song.videoId];
-    showToast("Removed from liked");
+    showToast(T("removed_download", "Removed from liked"));
   } else {
     State.liked.add(song.videoId);
     State.likedMeta[song.videoId] = song;
-    showToast("Added to liked");
+    showToast(T("liked", "Added to liked"));
   }
   persistLiked();
   const cur = State.queue[State.queueIndex];
   if (cur?.videoId === song.videoId) {
-    likeBtn.textContent = State.liked.has(song.videoId) ? "♥" : "♡";
+    setBtnIcon(likeBtn, State.liked.has(song.videoId) ? "heart-fill" : "heart");
     fpLike.classList.toggle("active", State.liked.has(song.videoId));
+
+    const useEl = fpLike.querySelector("use");
+    if (useEl) useEl.setAttribute("href", State.liked.has(song.videoId) ? "#ic-heart-fill" : "#ic-heart");
   }
 }
 
@@ -1246,7 +1776,7 @@ function toggleFullPlayer() {
 function syncFullPlayerUi() {
   const s = State.queue[State.queueIndex];
   if (!s) {
-    fpTitle.textContent = "Nothing playing";
+    fpTitle.textContent = T("hello_blank_fragment", "Nothing playing");
     fpArtist.textContent = "";
     return;
   }
@@ -1256,10 +1786,16 @@ function syncFullPlayerUi() {
     vinylArt.src = s.thumbnail.url;
     fpBackdrop.style.backgroundImage = `url("${s.thumbnail.url}")`;
   }
-  fpLike.classList.toggle("active", State.liked.has(s.videoId));
+  const liked = State.liked.has(s.videoId);
+  fpLike.classList.toggle("active", liked);
+  const fpLikeUse = fpLike.querySelector("use");
+  if (fpLikeUse) fpLikeUse.setAttribute("href", liked ? "#ic-heart-fill" : "#ic-heart");
+
   fpShuffle.classList.toggle("active", State.shuffle);
   fpRepeat.classList.toggle("active", State.repeat !== "off");
-  fpRepeat.textContent = State.repeat === "one" ? "🔂" : "🔁";
+  const repUse = fpRepeat.querySelector("use");
+  if (repUse) repUse.setAttribute("href", State.repeat === "one" ? "#ic-repeat-one" : "#ic-repeat");
+
   fpVideoToggle.classList.toggle("active", State.mode === "video");
   renderFpQueue();
 }
@@ -1292,12 +1828,12 @@ clearQueueBtn.addEventListener("click", () => {
 
 function attachMediaEvents(el) {
   el.addEventListener("play", () => {
-    playBtn.textContent = "⏸";fpPlay.textContent = "⏸";
+    setBtnIcon(playBtn, "pause", "ic");setBtnIcon(fpPlay, "pause", "ic");
     vinyl.classList.add("playing");tonearm.classList.add("playing");
     if (State.settings.visualizer) startVisualizer();
   });
   el.addEventListener("pause", () => {
-    playBtn.textContent = "▶";fpPlay.textContent = "▶";
+    setBtnIcon(playBtn, "play", "ic");setBtnIcon(fpPlay, "play", "ic");
     vinyl.classList.remove("playing");tonearm.classList.remove("playing");
   });
   el.addEventListener("ended", () => playNext(true));
@@ -1329,7 +1865,7 @@ function attachMediaEvents(el) {
     }
   });
   el.addEventListener("error", () => {
-    showToast("Playback failed: trying to recover…");
+    showToast(T("error", "Playback failed: trying to recover…"));
     setTimeout(() => playNext(false), 800);
   });
 }
@@ -1383,7 +1919,6 @@ function startVisualizer() {
         ctx.beginPath();ctx.moveTo(x1, y1);ctx.lineTo(x2, y2);ctx.stroke();
       }
     } else {
-
       analyser.getByteFrequencyData(buf);
       const bars = 64;
       const barW = w / bars;
@@ -1410,7 +1945,7 @@ vol.addEventListener("input", () => {
   const v = vol.value / 100;
   audio.volume = v;video.volume = v;
   State.lastVolume = v;
-  muteBtn.textContent = v === 0 ? "🔇" : "🔊";
+  setBtnIcon(muteBtn, v === 0 ? "volume-mute" : "volume");
 });
 audio.volume = vol.value / 100;video.volume = vol.value / 100;
 
@@ -1431,18 +1966,20 @@ function updateShuffleUi() {
 }
 const toggleShuffle = () => {
   State.shuffle = !State.shuffle;updateShuffleUi();
-  showToast("Shuffle " + (State.shuffle ? "on" : "off"));
+  showToast(`${T("shuffle", "Shuffle")} ${State.shuffle ? "on" : "off"}`);
 };
 shuffleBtn.addEventListener("click", toggleShuffle);
 fpShuffle.addEventListener("click", toggleShuffle);
 
 const cycleRepeat = () => {
   State.repeat = State.repeat === "off" ? "all" : State.repeat === "all" ? "one" : "off";
-  const sym = State.repeat === "one" ? "🔂" : "🔁";
-  repeatBtn.textContent = sym;fpRepeat.textContent = sym;
+  const useEl = repeatBtn.querySelector("use");
+  if (useEl) useEl.setAttribute("href", State.repeat === "one" ? "#ic-repeat-one" : "#ic-repeat");
+  const fpUseEl = fpRepeat.querySelector("use");
+  if (fpUseEl) fpUseEl.setAttribute("href", State.repeat === "one" ? "#ic-repeat-one" : "#ic-repeat");
   repeatBtn.classList.toggle("active", State.repeat !== "off");
   fpRepeat.classList.toggle("active", State.repeat !== "off");
-  showToast("Repeat: " + State.repeat);
+  showToast(`${T("repeat", "Repeat")}: ${State.repeat}`);
 };
 repeatBtn.addEventListener("click", cycleRepeat);
 fpRepeat.addEventListener("click", cycleRepeat);
@@ -1456,12 +1993,12 @@ muteBtn.addEventListener("click", () => {
   if (v > 0) {
     State.lastVolume = v;
     audio.volume = 0;video.volume = 0;vol.value = 0;
-    muteBtn.textContent = "🔇";
+    setBtnIcon(muteBtn, "volume-mute");
   } else {
     const nv = State.lastVolume || 0.8;
     audio.volume = nv;video.volume = nv;
     vol.value = nv * 100;
-    muteBtn.textContent = "🔊";
+    setBtnIcon(muteBtn, "volume");
   }
 });
 
@@ -1471,10 +2008,11 @@ fpClose.addEventListener("click", closeFullPlayer);
 
 const toggleVideoMode = () => {
   if (!State.queue[State.queueIndex]) {
-    showToast("Play something first");return;
+    showToast(T("hello_blank_fragment", "Play something first"));
+    return;
   }
   State.mode = State.mode === "video" ? "audio" : "video";
-  showToast("Video mode " + (State.mode === "video" ? "on" : "off"));
+  showToast(`${T("videos", "Video mode")} ${State.mode === "video" ? "on" : "off"}`);
   videoModeBtn.classList.toggle("active", State.mode === "video");
   fpVideoToggle.classList.toggle("active", State.mode === "video");
 
@@ -1490,6 +2028,12 @@ const toggleVideoMode = () => {
 };
 videoModeBtn.addEventListener("click", toggleVideoMode);
 fpVideoToggle.addEventListener("click", toggleVideoMode);
+
+fpDownload.addEventListener("click", () => {
+  const cur = State.queue[State.queueIndex];
+  if (!cur) {showToast(T("hello_blank_fragment", "Play something first"));return;}
+  Offline.download(cur);
+});
 
 function updatePanelLayout() {
   const open =
@@ -1531,6 +2075,30 @@ fpVizToggle.addEventListener("click", () => {
   if (willShow) startVisualizer();else stopVisualizer();
 });
 
+function renderLangMenu() {
+  langMenu.innerHTML = I18N.available.map((l) =>
+  `<div class="lang-item ${l.code === I18N.code ? "active" : ""}" data-code="${l.code}">
+            <span>${escapeHtml(l.name)}</span>${icon("check", "ic-sm")}
+        </div>`).join("") || `<div class="empty">No locales</div>`;
+  $$(".lang-item", langMenu).forEach((el) => {
+    el.addEventListener("click", async () => {
+      await I18N.setLocale(el.dataset.code);
+      renderLangMenu();
+      langMenu.classList.add("hidden");
+    });
+  });
+}
+langBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (langMenu.classList.contains("hidden")) renderLangMenu();
+  langMenu.classList.toggle("hidden");
+});
+document.addEventListener("click", (e) => {
+  if (!langMenu.classList.contains("hidden") && !langMenu.contains(e.target) && e.target !== langBtn) {
+    langMenu.classList.add("hidden");
+  }
+});
+
 let suggestActive = -1;
 let suggestTimer = null;
 searchInput.addEventListener("input", () => {
@@ -1542,7 +2110,7 @@ searchInput.addEventListener("input", () => {
       const { suggestions } = await api.suggest(q);
       if (!suggestions.length) {suggestList.classList.add("hidden");return;}
       suggestList.innerHTML = suggestions.slice(0, 8).map((s, i) =>
-      `<div class="suggest-item" data-i="${i}" data-q="${escapeHtml(s)}">🔎 ${escapeHtml(s)}</div>`
+      `<div class="suggest-item" data-i="${i}" data-q="${escapeHtml(s)}">${icon("search", "ic-sm")} ${escapeHtml(s)}</div>`
       ).join("");
       suggestList.classList.remove("hidden");
       suggestActive = -1;
@@ -1587,7 +2155,7 @@ function scheduleSleepTimer() {
   if (!m) return;
   State.sleepTimerId = setTimeout(() => {
     mediaEl().pause();
-    showToast("Sleep timer triggered. Goodnight 💤");
+    showToast(T("save_last_played", "Sleep timer triggered. Goodnight"));
   }, m * 60 * 1000);
 }
 
@@ -1617,6 +2185,11 @@ window.addEventListener("keydown", (e) => {
     case "r":case "R":cycleRepeat();break;
     case "f":case "F":toggleFullPlayer();break;
     case "v":case "V":toggleVideoMode();break;
+    case "d":case "D":{
+        const cur = State.queue[State.queueIndex];
+        if (cur) Offline.download(cur);
+        break;
+      }
     case "Escape":
       if (!ctxMenu.classList.contains("hidden")) closeContextMenu();else
       if (!modal.classList.contains("hidden")) closeModal();else
@@ -1626,6 +2199,59 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-applyTheme();
-renderSidebarPlaylists();
-router(true);
+async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+
+    reg.addEventListener("updatefound", () => {
+      const sw = reg.installing;
+      if (!sw) return;
+      sw.addEventListener("statechange", () => {
+        if (sw.state === "installed" && navigator.serviceWorker.controller) {
+          showToast(T("update_available", "New update available — reload to apply"));
+        }
+      });
+    });
+  } catch (e) {
+    console.warn("[sw] registration failed:", e.message);
+  }
+}
+
+function setupConnectivityBadge() {
+  let badge = $("#connBadge");
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.id = "connBadge";
+    badge.className = "conn-badge hidden";
+    badge.innerHTML = `${icon("wifi-off", "ic-sm")}<span data-i18n="unavailable">Offline</span>`;
+    $(".topbar")?.appendChild(badge);
+  }
+  const sync = () => {
+    badge.classList.toggle("hidden", navigator.onLine);
+  };
+  window.addEventListener("online", sync);
+  window.addEventListener("offline", sync);
+  sync();
+}
+
+(async function boot() {
+  applyTheme();
+  renderSidebarPlaylists();
+
+  setBtnIcon(playBtn, "play");
+  setBtnIcon(fpPlay, "play");
+  setBtnIcon(muteBtn, "volume");
+
+  await I18N.loadIndex();
+  const initial = I18N.pickInitialLocale();
+  await I18N.load(initial);
+  I18N.apply();
+
+  await Offline.init();
+  refreshDlBadge();
+  registerServiceWorker();
+  setupConnectivityBadge();
+
+  router(true);
+})();

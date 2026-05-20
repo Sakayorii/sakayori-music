@@ -1,10 +1,17 @@
 package com.sakayori.music.expect.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,12 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.sakayori.logger.Logger
 import org.jetbrains.compose.resources.stringResource
 import com.sakayori.music.generated.resources.Res
 import com.sakayori.music.generated.resources.failed_to_initialize_browser
 import dev.datlag.kcef.KCEF
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -74,19 +86,46 @@ actual fun clearWebViewCacheAndCookies() {
 @Volatile
 private var kcefInitialized = false
 
+@Volatile
+private var kcefInitError: String? = null
+
+@Volatile
+private var kcefDownloadProgress: Int = 0
+
 private suspend fun ensureKcefInitialized() {
     if (kcefInitialized) return
     withContext(Dispatchers.Default) {
         try {
+            Logger.i("KCef", "Starting KCef init at ${System.getProperty("user.home")}/.sakayori-music/kcef-bundle")
             KCEF.init(
                 builder = {
                     installDir(File(System.getProperty("user.home"), ".sakayori-music/kcef-bundle"))
+                    progress {
+                        onDownloading { percent ->
+                            kcefDownloadProgress = percent.toInt()
+                            if (percent.toInt() % 10 == 0) {
+                                Logger.i("KCef", "Downloading CEF: ${percent.toInt()}%")
+                            }
+                        }
+                        onInitialized {
+                            Logger.i("KCef", "KCef initialized successfully")
+                        }
+                    }
                 },
-                onError = { },
-                onRestartRequired = { },
+                onError = { t ->
+                    val msg = t?.message ?: t?.toString() ?: "unknown KCef error"
+                    kcefInitError = msg
+                    Logger.e("KCef", "KCef init failed: $msg", t)
+                },
+                onRestartRequired = {
+                    Logger.w("KCef", "KCef requires JVM restart to complete init")
+                },
             )
             kcefInitialized = true
-        } catch (_: Throwable) {
+            Logger.i("KCef", "kcefInitialized=true")
+        } catch (t: Throwable) {
+            kcefInitError = "${t::class.simpleName}: ${t.message ?: "no message"}"
+            Logger.e("KCef", "KCef init threw exception", t)
         }
     }
 }
@@ -100,19 +139,40 @@ private fun KcefBrowserView(
 ) {
     var ready by remember { mutableStateOf(kcefInitialized) }
     var browser by remember { mutableStateOf<CefBrowser?>(null) }
+    var progressPercent by remember { mutableStateOf(kcefDownloadProgress) }
+    var errorMessage by remember { mutableStateOf(kcefInitError) }
 
     LaunchedEffect(Unit) {
         if (!kcefInitialized) {
-            ensureKcefInitialized()
+            val pollJob = launch {
+                while (isActive) {
+                    progressPercent = kcefDownloadProgress
+                    errorMessage = kcefInitError
+                    delay(200)
+                }
+            }
+            try {
+                ensureKcefInitialized()
+            } finally {
+                pollJob.cancel()
+                progressPercent = kcefDownloadProgress
+                errorMessage = kcefInitError
+            }
         }
         ready = kcefInitialized
-        if (ready) {
+        if (ready && errorMessage == null) {
             try {
                 val client = KCEF.newClientOrNullBlocking()
                 val b = client?.createBrowser(url, org.cef.browser.CefRendering.DEFAULT, false)
                 browser = b
-                if (b != null) onBrowserReady(b)
-            } catch (_: Throwable) {
+                if (b != null) {
+                    onBrowserReady(b)
+                } else {
+                    Logger.e("KCef", "createBrowser returned null after init success for $url")
+                }
+            } catch (t: Throwable) {
+                Logger.e("KCef", "createBrowser threw exception", t)
+                errorMessage = "createBrowser: ${t::class.simpleName}: ${t.message ?: "no message"}"
             }
         }
     }
@@ -149,9 +209,45 @@ private fun KcefBrowserView(
         }
     }
 
-    if (!ready) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(modifier = Modifier.size(48.dp), color = Color.White)
+    if (errorMessage != null) {
+        Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.failed_to_initialize_browser),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = "KCef: $errorMessage",
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    } else if (!ready) {
+        Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(48.dp), color = Color.White)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (progressPercent in 1..99) "Downloading browser engine ${progressPercent}%" else "Initializing browser engine",
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
+                if (progressPercent in 1..99) {
+                    LinearProgressIndicator(
+                        progress = { progressPercent / 100f },
+                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        color = Color.White,
+                    )
+                }
+            }
         }
     } else {
         val b = browser
@@ -161,8 +257,12 @@ private fun KcefBrowserView(
                 factory = { b.uiComponent },
             )
         } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(stringResource(Res.string.failed_to_initialize_browser), color = Color.White)
+            Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(Res.string.failed_to_initialize_browser),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

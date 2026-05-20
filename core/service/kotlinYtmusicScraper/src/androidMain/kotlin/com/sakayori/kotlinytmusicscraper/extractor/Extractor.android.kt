@@ -9,6 +9,7 @@ import okio.FileSystem
 import okio.IOException
 import okio.Path.Companion.toPath
 import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
 private const val TAG = "Extractor"
@@ -27,6 +28,13 @@ actual class Extractor {
             (it.itagItem?.id ?: return@mapNotNull null) to it.content
         }
     }
+
+    actual fun getSignatureTimestamp(videoId: String): Int? =
+        try {
+            YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
+        } catch (_: Throwable) {
+            null
+        }
 
     actual fun mergeAudioVideoDownload(filePath: String): DownloadProgress {
         val command =

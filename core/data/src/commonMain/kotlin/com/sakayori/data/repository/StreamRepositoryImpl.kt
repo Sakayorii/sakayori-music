@@ -135,7 +135,7 @@ internal class StreamRepositoryImpl(
             }
             playerResult.exceptionOrNull()?.let { ex ->
                 lastExtractionError = "${ex::class.simpleName}: ${ex.message ?: "no message"}"
-                Logger.e("Stream", "Player resolution failed after $attempts attempts: $lastExtractionError")
+                Logger.e("Stream", "Player resolution failed after $attempts attempts for videoId=$videoId: $lastExtractionError", ex)
             }
             playerResult
                 .onSuccess { data ->

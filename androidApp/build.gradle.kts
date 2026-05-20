@@ -125,7 +125,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
-    // enable view binding
     buildFeatures {
         viewBinding = true
         compose = true
@@ -166,18 +165,13 @@ dependencies {
     implementation(libs.splashscreen)
     implementation(libs.slf4j.android)
 
-    // Custom Activity On Crash
     implementation(libs.customactivityoncrash)
 
-    // Easy Permissions
     implementation(libs.easypermissions)
 
-    // Legacy Support
     implementation(libs.legacy.support.v4)
-    // Coroutines
     implementation(libs.coroutines.android)
 
-    // Glance
     implementation(libs.glance)
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
@@ -185,6 +179,7 @@ dependencies {
     implementation(projects.composeApp)
     implementation(projects.data)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.process)
 
     if (isFullBuild) {
         implementation(projects.crashlytics)

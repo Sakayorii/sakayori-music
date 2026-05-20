@@ -2,7 +2,6 @@ package com.sakayori.music
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,7 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.key.Key
@@ -42,13 +40,11 @@ import com.sakayori.music.viewModel.SharedViewModel
 import com.sakayori.music.viewModel.changeLanguageNative
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import multiplatform.network.cmptoast.ToastHost
-import multiplatform.network.cmptoast.showToast
 import okhttp3.OkHttpClient
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.core.context.loadKoinModules
@@ -58,20 +54,14 @@ import org.koin.mp.KoinPlatform.getKoin
 import com.sakayori.music.generated.resources.Res
 import com.sakayori.music.generated.resources.app_name
 import com.sakayori.music.generated.resources.circle_app_icon
-import com.sakayori.music.generated.resources.close_miniplayer
 import com.sakayori.music.generated.resources.explicit_content_blocked
-import com.sakayori.music.generated.resources.open_app
-import com.sakayori.music.generated.resources.open_miniplayer
-import com.sakayori.music.generated.resources.quit_app
 import com.sakayori.music.generated.resources.time_out_check_internet_connection_or_change_piped_instance_in_settings
 import java.io.File
 import kotlin.system.exitProcess
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun main(args: Array<String>) {
+    val t0 = System.currentTimeMillis()
     try {
         if (!com.sakayori.music.utils.SingleInstance.acquire()) {
             com.sakayori.music.utils.SingleInstance.signalExisting()
@@ -81,14 +71,19 @@ fun main(args: Array<String>) {
         CrashDialog.install()
         com.sakayori.music.utils.FreezeWatchdog.start()
         com.sakayori.music.utils.HeapPressureMonitor.start()
-        com.sakayori.music.utils.DesktopCrashReporting.init(
-            BuildKonfig.sentryDsnDesktop,
-            VersionManager.getVersionName(),
-        )
 
         System.setProperty("compose.swing.render.on.graphics", "true")
         System.setProperty("compose.interop.blending", "true")
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")
+
+        try {
+            co.touchlab.kermit.Logger.addLogWriter(com.sakayori.music.utils.FileLogWriter())
+        } catch (_: Throwable) {
+        }
+        try {
+            com.sakayori.logger.Logger.installReporter(com.sakayori.music.utils.SentryJvmLogReporter())
+        } catch (_: Throwable) {
+        }
 
         val osName = System.getProperty("os.name", "").lowercase()
         val subDir = when {
@@ -105,10 +100,6 @@ fun main(args: Array<String>) {
         }
         System.setProperty("jna.library.path", vlcPath)
 
-        val splash = SplashScreen()
-        splash.show()
-
-        splash.updateStatus("Loading modules...")
         startKoin {
             loadKoinModules(listOf(viewModelModule))
             loadAllModules()
@@ -132,28 +123,32 @@ fun main(args: Array<String>) {
             },
         )
 
-        splash.updateStatus("Initializing version manager...")
-        VersionManager.initialize()
-
-        splash.updateStatus("Initializing media player...")
-        val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
-
-        splash.updateStatus("Starting background services...")
         Thread {
+            try {
+                VersionManager.initialize()
+            } catch (_: Throwable) {
+            }
+            try {
+                com.sakayori.music.utils.DesktopCrashReporting.init(
+                    BuildKonfig.sentryDsnDesktop,
+                    VersionManager.getVersionName(),
+                )
+            } catch (_: Throwable) {
+            }
             try {
                 val lang = kotlinx.coroutines.runBlocking(Dispatchers.IO) {
                     getKoin().get<DataStoreManager>().language.first().take(2)
                 }
                 changeLanguageNative(lang)
-                Thread {
-                    kotlinx.coroutines.runBlocking(Dispatchers.IO) {
-                        getKoin().get<DataStoreManager>().crashReportingEnabled.collect { value ->
-                            com.sakayori.music.utils.DesktopCrashReporting.setEnabled(value == "TRUE")
-                        }
+            } catch (_: Throwable) {
+            }
+            try {
+                val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.IO + kotlinx.coroutines.SupervisorJob())
+                scope.launch {
+                    getKoin().get<DataStoreManager>().crashReportingEnabled.collect { value ->
+                        com.sakayori.music.utils.DesktopCrashReporting.setEnabled(value == "TRUE")
                     }
-                }.apply { isDaemon = true; name = "SentryToggleWatcher" }.start()
-                Thread.sleep(2000)
-                getKoin().get<SharedViewModel>().checkForUpdate()
+                }
             } catch (_: Throwable) {
             }
         }.apply {
@@ -161,27 +156,48 @@ fun main(args: Array<String>) {
             name = "DeferredInit"
         }.start()
 
-        splash.updateStatus("Configuring player...")
-        mediaPlayerHandler.showToast = { type ->
-            makeDarkToast(
-                when (type) {
-                    ToastType.ExplicitContent -> {
-                        getStringBlocking(Res.string.explicit_content_blocked)
-                    }
-                    is ToastType.PlayerError -> {
-                        getStringBlocking(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error)
-                    }
-                }
-            )
-        }
+        Thread {
+            try {
+                Thread.sleep(1500)
+                getKoin().get<SharedViewModel>().checkForUpdate()
+            } catch (_: Throwable) {
+            }
+        }.apply {
+            isDaemon = true
+            name = "UpdateCheckDeferred"
+        }.start()
 
-        splash.updateStatus("Done!")
-        Thread.sleep(200)
-        splash.close()
+        val mediaPlayerHandler by inject<MediaPlayerHandler>(MediaPlayerHandler::class.java)
+
+        Thread {
+            try {
+                mediaPlayerHandler.showToast = { type ->
+                    makeDarkToast(
+                        when (type) {
+                            ToastType.ExplicitContent -> {
+                                getStringBlocking(Res.string.explicit_content_blocked)
+                            }
+                            is ToastType.PlayerError -> {
+                                getStringBlocking(Res.string.time_out_check_internet_connection_or_change_piped_instance_in_settings, type.error)
+                            }
+                        }
+                    )
+                }
+            } catch (_: Throwable) {
+            }
+        }.apply {
+            isDaemon = true
+            name = "MediaToastWiring"
+        }.start()
+
+        try {
+            com.sakayori.logger.Logger.w("Startup", "Pre-window time: ${System.currentTimeMillis() - t0}ms")
+        } catch (_: Throwable) {
+        }
 
         application {
             val windowState = rememberWindowState(
-                size = DpSize(1500.dp, 860.dp),
+                size = DpSize(1280.dp, 780.dp),
             )
             var isVisible by remember { mutableStateOf(true) }
 

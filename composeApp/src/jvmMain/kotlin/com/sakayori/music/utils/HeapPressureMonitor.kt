@@ -57,19 +57,10 @@ object HeapPressureMonitor {
 
     private fun performStandardCleanup() {
         onPressure?.invoke()
-        try {
-            Runtime.getRuntime().gc()
-        } catch (_: Throwable) {
-        }
     }
 
     private fun performAggressiveCleanup() {
         onPressure?.invoke()
-        try {
-            System.gc()
-            Runtime.getRuntime().gc()
-        } catch (_: Throwable) {
-        }
         try {
             val os = ManagementFactory.getOperatingSystemMXBean()
             Logger.w(TAG, "System load avg: ${os.systemLoadAverage}")

@@ -92,6 +92,10 @@ fun generateRandomColor(): Color {
 
 fun Modifier.shimmer(): Modifier =
     composed {
+        val lowResourceMode = LocalLowResourceMode.current
+        if (lowResourceMode) {
+            return@composed background(shimmerBackground)
+        }
         var size by remember {
             mutableStateOf(IntSize.Zero)
         }

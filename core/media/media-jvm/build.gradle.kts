@@ -9,7 +9,7 @@ java {
 }
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
         freeCompilerArgs.add("-Xwhen-guards")
     }
     dependencies {
@@ -20,7 +20,6 @@ kotlin {
         implementation(libs.kotlinx.serialization.json)
         implementation(libs.kotlinx.coroutinesSwing)
 
-        // VLC
         implementation(libs.vlcj)
     }
 }

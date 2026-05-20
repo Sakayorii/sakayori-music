@@ -14,4 +14,6 @@ expect class Extractor() {
     ): DownloadProgress
 
     fun newPipePlayer(videoId: String): List<Pair<Int, String>>
+
+    fun getSignatureTimestamp(videoId: String): Int?
 }

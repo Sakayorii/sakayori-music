@@ -33,7 +33,6 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlin.stdlib)
-                // Add KMP dependencies here
                 implementation(projects.common)
                 implementation(projects.domain)
                 implementation(projects.ktorExt)

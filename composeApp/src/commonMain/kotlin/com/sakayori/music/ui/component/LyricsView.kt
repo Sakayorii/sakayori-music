@@ -340,7 +340,7 @@ fun LyricsLineItem(
                             if (isCurrent) {
                                 Modifier
                             } else {
-                                Modifier.blur(1.dp)
+                                if (com.sakayori.music.extension.LocalLowResourceMode.current) Modifier else Modifier.blur(1.dp)
                             },
                         ),
                     text = originalWords,
@@ -365,7 +365,7 @@ fun LyricsLineItem(
                                 if (isCurrent) {
                                     Modifier
                                 } else {
-                                    Modifier.blur(1.dp)
+                                    if (com.sakayori.music.extension.LocalLowResourceMode.current) Modifier else Modifier.blur(1.dp)
                                 },
                             ),
                         text = translatedWords,
@@ -390,7 +390,7 @@ fun LyricsLineItem(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                modifier = Modifier.blur(1.dp),
+                modifier = if (com.sakayori.music.extension.LocalLowResourceMode.current) Modifier else Modifier.blur(1.dp),
                 text = originalWords,
                 style = typo().headlineMedium,
                 color =
@@ -400,7 +400,7 @@ fun LyricsLineItem(
             )
             if (translatedWords != null) {
                 Text(
-                    modifier = Modifier.blur(1.dp),
+                    modifier = if (com.sakayori.music.extension.LocalLowResourceMode.current) Modifier else Modifier.blur(1.dp),
                     text = translatedWords,
                     style = typo().bodyMedium,
                     color =
@@ -444,7 +444,7 @@ fun RichSyncLyricsLineItem(
                     if (isCurrent) {
                         Modifier
                     } else {
-                        Modifier.blur(1.dp)
+                        if (com.sakayori.music.extension.LocalLowResourceMode.current) Modifier else Modifier.blur(1.dp)
                     },
                 ),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -485,7 +485,7 @@ fun RichSyncLyricsLineItem(
                         if (isCurrent) {
                             Modifier
                         } else {
-                            Modifier.blur(1.dp)
+                            if (com.sakayori.music.extension.LocalLowResourceMode.current) Modifier else Modifier.blur(1.dp)
                         },
                     ),
                 text = translatedWords,

@@ -51,7 +51,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // Compose
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.material3.lib)
@@ -63,11 +62,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    // Koin
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.androidx.compose)
 
-    // Media3
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
     implementation(libs.media3.compose)

@@ -89,18 +89,32 @@ actual fun PlatformWebView(
     }
 }
 
+private const val SAKAYORI_DISCORD_APP_ID = "1493865560013017160"
+private const val SAKAYORI_BOT_AUTHORIZE_URL =
+    "https://discord.com/oauth2/authorize?client_id=$SAKAYORI_DISCORD_APP_ID&integration_type=1&scope=applications.commands+bot"
+
 @Composable
 actual fun DiscordWebView(
     state: MutableState<WebViewState>,
     aboveContent: @Composable (BoxScope.() -> Unit),
     onLoginDone: (token: String) -> Unit,
 ) {
+    var authorizeStarted = false
+    var tokenCaptured = false
     PlatformWebView(
         state = state,
         initUrl = "https://discord.com/login",
         aboveContent = aboveContent,
         onPageFinished = { finishedUrl ->
-            if (finishedUrl.contains("/channels/@me") || finishedUrl.contains("/app")) {
+            if (tokenCaptured) return@PlatformWebView
+            val isLoggedIn = finishedUrl.contains("/channels/") ||
+                finishedUrl.endsWith("/app") ||
+                finishedUrl.contains("/discovery") ||
+                finishedUrl.contains("/store")
+            val isAuthorizedPage = finishedUrl.contains("/oauth2/authorized") ||
+                finishedUrl.contains("/oauth2/authorize/callback")
+            if (isAuthorizedPage) {
+                tokenCaptured = true
                 val tokenCookie = NSHTTPCookieStorage.sharedHTTPCookieStorage.cookies?.firstOrNull { raw ->
                     val c = raw as? NSHTTPCookie ?: return@firstOrNull false
                     c.name == "__Secure-authToken" || c.name == "token"
@@ -109,6 +123,10 @@ actual fun DiscordWebView(
                 if (!tokenValue.isNullOrEmpty()) {
                     onLoginDone(tokenValue)
                 }
+                return@PlatformWebView
+            }
+            if (isLoggedIn && !authorizeStarted) {
+                authorizeStarted = true
             }
         },
     )

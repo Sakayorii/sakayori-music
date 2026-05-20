@@ -30,7 +30,6 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-// prepare for git submodules
 val coreDir =
     if (File(rootDir, "../core").exists()) {
         File(rootDir, "../core")
@@ -73,12 +72,10 @@ include(
     ":kizzy",
 )
 
-// core modules
 project(":common").projectDir = File(coreDir, "common")
 project(":data").projectDir = File(coreDir, "data")
 project(":domain").projectDir = File(coreDir, "domain")
 
-// service modules
 project(":ktorExt").projectDir = File(serviceDir, "ktorExt")
 project(":aiService").projectDir = File(serviceDir, "aiService")
 project(":lyricsService").projectDir = File(serviceDir, "lyricsService")
@@ -86,7 +83,6 @@ project(":kotlinYtmusicScraper").projectDir = File(serviceDir, "kotlinYtmusicScr
 project(":spotify").projectDir = File(serviceDir, "spotify")
 project(":kizzy").projectDir = File(serviceDir, "kizzy")
 
-// media modules
 project(":media-jvm").projectDir = File(mediaDir, "media-jvm")
 project(":media-jvm-ui").projectDir = File(mediaDir, "media-jvm-ui")
 project(":media3").projectDir = File(mediaDir, "media3")

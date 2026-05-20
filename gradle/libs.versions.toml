@@ -1,5 +1,5 @@
 [versions]
-version-name = "2.1.5"
+version-name = "2.1.6"
 version-code = "61"
 
 android = "8.13.2"
@@ -49,6 +49,7 @@ slf4j = "1.7.36"
 sentry-android = "8.34.1"
 sentry-gradle-android = "6.1.0"
 sentry-jvm = "8.34.1"
+sentry-kmp = "0.13.0"
 newpipe = "v0.26.0"
 webkit = "1.15.0"
 kermit = "2.1.0"
@@ -83,6 +84,7 @@ osdetector = "1.7.3"
 tray = "1.1.0"
 commonsIo = "2.5"
 packagedeps = "0.2.5"
+smoothCornerRect = "v1.0.0"
 
 [libraries]
 kcef = { group = "dev.datlag", name = "kcef", version = "2024.04.20.4" }
@@ -106,6 +108,7 @@ ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-native" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-native" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startup-runtime" }
@@ -205,6 +208,7 @@ native-tray = { module = "io.github.kdroidfilter:composenativetray", version.ref
 vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jnaPlatform" }
+smooth-corner-rect = { module = "com.github.racra:smooth-corner-rect-android-compose", version.ref = "smoothCornerRect" }
 nowplaying = { module = "org.simpmusic:nowplayingcenter", version = "0.0.1" }
 jmtc = { module = "org.simpmusic:jmtc", version = "0.0.1" }
 
@@ -220,6 +224,7 @@ koin-android = { module = "io.insert-koin:koin-android"}
 #Sentry
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry-android"}
 sentry-jvm = { module = "io.sentry:sentry", version.ref = "sentry-jvm"}
+sentry-kmp = { module = "io.sentry:sentry-kotlin-multiplatform", version.ref = "sentry-kmp" }
 
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
 

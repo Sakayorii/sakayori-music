@@ -17,8 +17,8 @@ import com.sakayori.spotify.Spotify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.dsl.module
-import org.SakayoriMusic.aiservice.AiClient
-import org.SakayoriMusic.lyrics.SakayoriMusicLyricsClient
+import com.sakayori.aiservice.AiClient
+import com.sakayori.lyrics.SakayoriMusicLyricsClient
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)

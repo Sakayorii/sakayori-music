@@ -48,7 +48,6 @@ dependencies {
     implementation(projects.common)
     implementation(projects.domain)
 
-    // Koin
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
@@ -56,7 +55,6 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    // Media3
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
     api(libs.media3.session)

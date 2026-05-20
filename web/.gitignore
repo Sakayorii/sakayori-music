@@ -7,3 +7,7 @@ cookies.txt
 youtube-cookies.txt
 yt-cookies.txt
 cookies/
+# Auto-downloaded yt-dlp binary
+bin/
+
+

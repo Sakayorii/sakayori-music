@@ -95,25 +95,36 @@ actual fun DiscordWebView(
     aboveContent: @Composable (BoxScope.() -> Unit),
     onLoginDone: (token: String) -> Unit
 ) {
-    val url = "https://discord.com/login"
+    val startUrl = "https://discord.com/login"
     Box {
         AndroidView(factory = {
             WebView(it).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
                 )
+                var authorizeStarted = false
+                var tokenCaptured = false
                 webViewClient = object : WebViewClient() {
 
-                    @Deprecated("Deprecated in Java")
-                    override fun shouldOverrideUrlLoading(
-                        webView: WebView,
-                        url: String,
-                    ): Boolean {
-                        stopLoading()
-                        if (url.endsWith("/app")) {
-                            loadUrl(JS_SNIPPET)
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        if (url == null || view == null || tokenCaptured) return
+                        val isLoggedIn = url.contains("/channels/") ||
+                            url.endsWith("/app") ||
+                            url.contains("/discovery") ||
+                            url.contains("/store")
+                        val isAuthorizedPage = url.contains("/oauth2/authorized") ||
+                            url.contains("/oauth2/authorize/callback")
+                        if (isAuthorizedPage) {
+                            tokenCaptured = true
+                            view.loadUrl("https://discord.com/app")
+                            view.postDelayed({ view.loadUrl(JS_SNIPPET) }, 600)
+                            return
                         }
-                        return false
+                        if (isLoggedIn && !authorizeStarted) {
+                            authorizeStarted = true
+                            view.loadUrl(SAKAYORI_BOT_AUTHORIZE_URL)
+                        }
                     }
                 }
                 settings.javaScriptEnabled = true
@@ -129,11 +140,13 @@ actual fun DiscordWebView(
                         message: String,
                         result: JsResult,
                     ): Boolean {
+                        if (!tokenCaptured) tokenCaptured = true
                         onLoginDone(message)
+                        result.confirm()
                         return true
                     }
                 }
-                loadUrl(url)
+                loadUrl(startUrl)
             }
         })
         aboveContent()
@@ -141,7 +154,10 @@ actual fun DiscordWebView(
 }
 
 const val JS_SNIPPET =
-    "javascript:(function()%7Bvar%20i%3Ddocument.createElement('iframe')%3Bdocument.body.appendChild(i)%3Balert(i.contentWindow.localStorage.token.slice(1,-1))%7D)()"
+    "javascript:(function()%7Bvar%20i%3Ddocument.createElement('iframe')%3Bdocument.body.appendChild(i)%3Btry%7Balert(i.contentWindow.localStorage.token.slice(1%2C-1))%7Dcatch(e)%7Balert('')%7D%7D)()"
+private const val SAKAYORI_DISCORD_APP_ID = "1493865560013017160"
+private const val SAKAYORI_BOT_AUTHORIZE_URL =
+    "https://discord.com/oauth2/authorize?client_id=$SAKAYORI_DISCORD_APP_ID&integration_type=1&scope=applications.commands+bot"
 private const val MOTOROLA = "motorola"
 private const val SAMSUNG_USER_AGENT =
     "Mozilla/5.0 (Linux; Android 14; SM-S921U; Build/UP1A.231005.007) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.363"

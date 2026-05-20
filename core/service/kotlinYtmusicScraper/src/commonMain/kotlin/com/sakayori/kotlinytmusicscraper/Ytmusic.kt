@@ -238,6 +238,8 @@ class Ytmusic {
 
     fun getNewPipePlayer(videoId: String): List<Pair<Int, String>> = extractor.newPipePlayer(videoId)
 
+    fun getNewPipeSignatureTimestamp(videoId: String): Int? = extractor.getSignatureTimestamp(videoId)
+
     fun mergeAudioVideoDownload(filePath: String): DownloadProgress = extractor.mergeAudioVideoDownload(filePath)
 
     fun saveAudioWithThumbnail(

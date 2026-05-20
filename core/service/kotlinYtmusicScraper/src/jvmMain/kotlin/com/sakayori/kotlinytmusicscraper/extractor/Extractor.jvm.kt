@@ -3,6 +3,7 @@ package com.sakayori.kotlinytmusicscraper.extractor
 import com.sakayori.kotlinytmusicscraper.models.SongItem
 import com.sakayori.kotlinytmusicscraper.models.response.DownloadProgress
 import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
 actual class Extractor {
@@ -23,6 +24,13 @@ actual class Extractor {
         temp.add(96 to (streamInfo.dashMpdUrl.takeIf { !it.isNullOrEmpty() } ?: streamInfo.hlsUrl))
         return temp
     }
+
+    actual fun getSignatureTimestamp(videoId: String): Int? =
+        try {
+            YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
+        } catch (_: Throwable) {
+            null
+        }
 
     actual fun mergeAudioVideoDownload(filePath: String): DownloadProgress = DownloadProgress.failed("Not supported on JVM")
 

@@ -367,6 +367,30 @@ interface DataStoreManager {
 
     suspend fun setAutoBackupLastTime(time: Long)
 
+    val initialSetupDone: Flow<String>
+
+    suspend fun setInitialSetupDone(done: Boolean)
+
+    val userName: Flow<String>
+
+    suspend fun setUserName(name: String)
+
+    val userDisplayId: Flow<String>
+
+    suspend fun setUserDisplayId(displayId: String)
+
+    val systemThemeFollow: Flow<String>
+
+    suspend fun setSystemThemeFollow(follow: Boolean)
+
+    val themeMode: Flow<String>
+
+    suspend fun setThemeMode(mode: String)
+
+    val systemLanguageFollow: Flow<String>
+
+    suspend fun setSystemLanguageFollow(follow: Boolean)
+
     enum class ProxyType {
         PROXY_TYPE_HTTP,
         PROXY_TYPE_SOCKS,
@@ -405,5 +429,10 @@ interface DataStoreManager {
         const val AUTO_BACKUP_FREQUENCY_DAILY = "daily"
         const val AUTO_BACKUP_FREQUENCY_WEEKLY = "weekly"
         const val AUTO_BACKUP_FREQUENCY_MONTHLY = "monthly"
+
+        const val THEME_MODE_SYSTEM = "system"
+        const val THEME_MODE_LIGHT = "light"
+        const val THEME_MODE_DARK = "dark"
+        const val THEME_MODE_OLED = "oled"
     }
 }

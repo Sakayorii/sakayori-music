@@ -36,6 +36,7 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import com.sakayori.music.crashlytics.configCrashlytics
+import com.sakayori.music.crashlytics.installLogReporter
 import com.sakayori.music.crashlytics.setCrashReportingEnabled
 import java.lang.reflect.Field
 
@@ -53,6 +54,7 @@ class SakayoriMusicApplication :
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         if (BuildKonfig.sentryDsnAndroid.isNotEmpty()) {
             configCrashlytics(this, BuildKonfig.sentryDsnAndroid)
+            installLogReporter()
         }
         startKoin {
             androidLogger(level = Level.INFO)
@@ -91,11 +93,19 @@ class SakayoriMusicApplication :
             .restartActivity(MainActivity::class.java)
             .apply()
 
-        @SuppressLint("DiscouragedPrivateApi")
-        val field: Field = CursorWindow::class.java.getDeclaredField("sCursorWindowSize")
-        field.isAccessible = true
-        val expectSize = 100 * 1024 * 1024
-        field.set(null, expectSize)
+        try {
+            @SuppressLint("DiscouragedPrivateApi")
+            val field: Field = CursorWindow::class.java.getDeclaredField("sCursorWindowSize")
+            field.isAccessible = true
+            val isLowRam = try {
+                (getSystemService(android.app.ActivityManager::class.java))?.isLowRamDevice == true
+            } catch (_: Throwable) {
+                false
+            }
+            val expectSize = if (isLowRam) 4 * 1024 * 1024 else 8 * 1024 * 1024
+            field.set(null, expectSize)
+        } catch (_: Throwable) {
+        }
 
         AppContext.apply {
             set(applicationContext)
@@ -110,8 +120,25 @@ class SakayoriMusicApplication :
         Logger.w("Terminate", "Checking")
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader =
-        ImageLoader
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        val activityManager = getSystemService(android.app.ActivityManager::class.java)
+        val isLowRam = try {
+            activityManager?.isLowRamDevice == true
+        } catch (_: Throwable) {
+            false
+        }
+        val memClassMb = try {
+            activityManager?.memoryClass ?: 256
+        } catch (_: Throwable) {
+            256
+        }
+        val memoryCacheBytes = if (isLowRam) {
+            (memClassMb * 1024L * 1024L * 0.12).toLong()
+        } else {
+            (memClassMb * 1024L * 1024L * 0.20).toLong()
+        }
+        val diskCacheBytes = if (isLowRam) 192L * 1024L * 1024L else 512L * 1024L * 1024L
+        return ImageLoader
             .Builder(context)
             .components {
                 add(
@@ -122,13 +149,20 @@ class SakayoriMusicApplication :
                     ),
                 )
             }.diskCachePolicy(CachePolicy.ENABLED)
+            .memoryCache {
+                coil3.memory.MemoryCache
+                    .Builder()
+                    .maxSizeBytes(memoryCacheBytes)
+                    .build()
+            }
             .networkCachePolicy(CachePolicy.ENABLED)
             .diskCache(
                 DiskCache
                     .Builder()
                     .directory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "image_cache")
-                    .maxSizeBytes(512L * 1024 * 1024)
+                    .maxSizeBytes(diskCacheBytes)
                     .build(),
             ).crossfade(true)
             .build()
+    }
 }

@@ -229,6 +229,8 @@ object SUPPORTED_LANGUAGE {
             "en-MS",
         )
 
+    val memeCodes: Set<String> = setOf("en-PH", "en-LC", "en-IO", "en-GG", "en-MS")
+
     fun getLanguageFromCode(code: String?): String {
         val index = codes.indexOf(code)
         Logger.d("Config", "getLanguageFromCode: $index")

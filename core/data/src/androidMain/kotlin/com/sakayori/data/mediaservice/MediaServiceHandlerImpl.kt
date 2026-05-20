@@ -351,29 +351,14 @@ internal class MediaServiceHandlerImpl(
                 }
             val discordRPCEnabledJob =
                 launch {
-                    dataStoreManager.richPresenceEnabled.collectLatest {
-                        try {
-                            if (it == TRUE && discordRPC == null) {
-                                discordRPC = DiscordRPC(dataStoreManager.discordToken.first())
-                                nowPlayingState.value.songEntity?.let { song ->
-                                    try {
-                                        discordRPC?.updateSong(song)
-                                    } catch (_: Exception) {
-                                    }
-                                }
-                            } else if (it == FALSE) {
-                                try {
-                                    if (discordRPC?.isRpcRunning() == true) {
-                                        discordRPC?.closeRPC()
-                                    }
-                                } catch (_: Exception) {
-                                }
-                                discordRPC = null
-                            }
-                        } catch (e: Exception) {
-                            Logger.e(TAG, "Discord RPC init error: ${e.message}")
-                            discordRPC = null
-                        }
+                    try {
+                        if (discordRPC?.isRpcRunning() == true) discordRPC?.closeRPC()
+                    } catch (_: Exception) {
+                    }
+                    discordRPC = null
+                    try {
+                        dataStoreManager.setRichPresenceEnabled(false)
+                    } catch (_: Throwable) {
                     }
                 }
             controlStateJob.join()

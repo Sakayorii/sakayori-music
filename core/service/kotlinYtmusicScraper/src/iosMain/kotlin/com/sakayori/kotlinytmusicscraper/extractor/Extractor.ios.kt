@@ -9,6 +9,8 @@ actual class Extractor {
 
     actual fun newPipePlayer(videoId: String): List<Pair<Int, String>> = emptyList()
 
+    actual fun getSignatureTimestamp(videoId: String): Int? = null
+
     actual fun mergeAudioVideoDownload(filePath: String): DownloadProgress = DownloadProgress.failed("Not supported on iOS")
 
     actual fun saveAudioWithThumbnail(

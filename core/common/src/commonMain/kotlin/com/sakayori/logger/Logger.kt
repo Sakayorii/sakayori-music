@@ -1,29 +1,46 @@
 package com.sakayori.logger
 
-import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Logger as KermitLogger
+
+interface LogReporter {
+    fun onLog(level: LogLevel, tag: String, message: String, throwable: Throwable?)
+}
 
 object Logger {
-    private val logger = Logger
+    @kotlin.concurrent.Volatile
+    private var reporter: LogReporter? = null
+
+    fun installReporter(r: LogReporter) {
+        reporter = r
+    }
 
     fun d(
         tag: String,
         message: String,
     ) {
-        logger.d(messageString = message, tag = tag)
+        KermitLogger.d(messageString = message, tag = tag)
     }
 
     fun i(
         tag: String,
         message: String,
     ) {
-        logger.i(messageString = message, tag = tag)
+        KermitLogger.i(messageString = message, tag = tag)
+        try {
+            reporter?.onLog(LogLevel.INFO, tag, message, null)
+        } catch (_: Throwable) {
+        }
     }
 
     fun w(
         tag: String,
         message: String,
     ) {
-        logger.w(messageString = message, tag = tag)
+        KermitLogger.w(messageString = message, tag = tag)
+        try {
+            reporter?.onLog(LogLevel.WARN, tag, message, null)
+        } catch (_: Throwable) {
+        }
     }
 
     fun e(
@@ -31,7 +48,11 @@ object Logger {
         message: String,
         e: Throwable? = null,
     ) {
-        logger.e(messageString = message, throwable = e, tag = tag)
+        KermitLogger.e(messageString = message, throwable = e, tag = tag)
+        try {
+            reporter?.onLog(LogLevel.ERROR, tag, message, e)
+        } catch (_: Throwable) {
+        }
     }
 }
 
@@ -39,5 +60,5 @@ enum class LogLevel {
     DEBUG,
     INFO,
     WARN,
-    ERROR
+    ERROR,
 }

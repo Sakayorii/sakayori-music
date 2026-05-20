@@ -9,14 +9,13 @@ java {
 }
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
     }
 
     dependencies {
         implementation(projects.common)
         implementation(projects.domain)
         implementation(projects.mediaJvm)
-        // UI
         implementation(libs.compose.ui)
         implementation(libs.compose.material3)
 
@@ -27,7 +26,6 @@ kotlin {
         implementation(libs.koin.jvm)
         implementation(libs.koin.compose)
 
-        // VLC
         implementation(libs.vlcj)
         implementation(libs.kotlinx.coroutinesSwing)
     }

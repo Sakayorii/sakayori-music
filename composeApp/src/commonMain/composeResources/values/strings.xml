@@ -171,7 +171,7 @@
     <string name="eq_bands">Bands</string>
     <string name="open_system_equalizer">Open System Equalizer</string>
     <string name="use_your_system_equalizer">Use your system equalizer</string>
-    <string name="version_format" translatable="false">v%1$s</string>
+    <string name="version_format" translatable="false">v%1$s (Pre-release)</string>
     <string name="streaming_data_provider_piped">Streaming data provider (Piped)</string>
     <string name="itag">Itag</string>
     <string name="mime_type">Mime Type</string>
@@ -515,6 +515,8 @@
     <string name="crossfade_dj_mode_description">Apply low-pass and high-pass filter sweeps during crossfade for a smoother, DJ-like transition (similar to Apple Music Automix).</string>
     <string name="crossfade_preview">Preview Crossfade</string>
     <string name="crossfade_preview_description">Skip to end of current track to preview the crossfade transition</string>
+    <string name="crossfade_preview_no_song">Please play a song first to preview the crossfade.</string>
+    <string name="language_system_format">System (%1$s)</string>
     <string name="youtube_subtitle_language">YouTube Subtitle Translation Language</string>
     <string name="youtube_subtitle_language_message">Type language code (Eg: en) (2 letters). This is the preferred translation language for YouTube subtitles.</string>
     <string name="use_anonymous">Use anonymous name to contribute</string>
@@ -606,6 +608,67 @@
     <string name="bpm">BPM</string>
     <string name="key">Key</string>
     <string name="scale">Scale</string>
+
+    <string name="setup_welcome_title">Welcome to Sakayori Music</string>
+    <string name="setup_welcome_subtitle">A modern, cross-platform music experience.</string>
+    <string name="setup_welcome_body">We just need a moment to set things up — permissions, look and feel, and how you want to be known.</string>
+    <string name="setup_get_started">Get Started</string>
+    <string name="setup_next">Next</string>
+    <string name="setup_back">Back</string>
+    <string name="setup_skip">Skip</string>
+    <string name="setup_perm_title">Permissions</string>
+    <string name="setup_perm_subtitle">Give the app what it needs to play music smoothly.</string>
+    <string name="setup_perm_notif_title">Notifications</string>
+    <string name="setup_perm_notif_desc">Show playback controls and now-playing information in the notification shade.</string>
+    <string name="setup_perm_notif_allow">Allow</string>
+    <string name="setup_perm_notif_granted">Granted</string>
+    <string name="setup_perm_battery_title">Background playback</string>
+    <string name="setup_perm_battery_desc">Ask the system to exempt the app from battery optimization so music never pauses unexpectedly.</string>
+    <string name="setup_perm_battery_open">Open Settings</string>
+    <string name="setup_perm_battery_ignored">Ignored</string>
+    <string name="setup_perm_nothing">Nothing to configure on this platform.</string>
+    <string name="setup_appearance_title">Appearance</string>
+    <string name="setup_appearance_subtitle">Pick a theme and confirm your language.</string>
+    <string name="setup_theme_label">Theme</string>
+    <string name="setup_theme_system">System</string>
+    <string name="setup_theme_light">Light</string>
+    <string name="setup_theme_dark">Dark</string>
+    <string name="setup_theme_oled">OLED</string>
+    <string name="setup_lang_label">Language</string>
+    <string name="setup_lang_system_format">System (%1$s)</string>
+    <string name="setup_lang_more_hint">More languages can be picked later in Settings → Content → Language.</string>
+    <string name="setup_identity_title">Set your name</string>
+    <string name="setup_identity_subtitle">Used when contributing lyrics, appearing on charts, or filing bug reports.</string>
+    <string name="setup_identity_placeholder">Your name</string>
+    <string name="setup_identity_hint">If you leave it blank you will be anonymous — a stable identifier (anonymous-######) will be generated for this device.</string>
+    <string name="setup_identity_continue">Continue</string>
+    <string name="setup_identity_checking">Checking…</string>
+    <string name="setup_identity_conflict_format">\"%1$s\" is already taken on another device. Use \"%2$s\" instead?</string>
+    <string name="setup_identity_accept_suggestion">Accept suggestion</string>
+    <string name="setup_account_title">Account</string>
+    <string name="setup_account_subtitle">Optional — sign in for the best experience.</string>
+    <string name="setup_account_google">Sign in with Google</string>
+    <string name="setup_account_google_desc">Reduces YouTube rate limits, syncs your library and playlists, and unlocks subscriptions.</string>
+    <string name="setup_account_signin">Sign in</string>
+    <string name="setup_account_signed_in">Signed in</string>
+    <string name="setup_account_help_title">Why sign in?</string>
+    <string name="setup_account_help_body">Signing in with your Google account lets Sakayori Music: (1) avoid YouTube rate limits that anonymous clients hit quickly, (2) sync your library — likes, playlists, subscriptions, listening history, (3) access subscriber-only or premium-restricted content. No login data leaves your device — sessions are stored locally.</string>
+    <string name="setup_account_help_close">Got it</string>
+    <string name="setup_account_later">You can sign in any time later from Settings → Content → YouTube Account.</string>
+    <string name="setup_done_title">Almost done</string>
+    <string name="setup_done_subtitle">Optionally restore a backup, then start listening.</string>
+    <string name="setup_done_start">Start Listening</string>
+    <string name="setup_done_finishing">Finishing…</string>
+    <string name="setup_restore_title">Restore from backup</string>
+    <string name="setup_restore_desc">Import a Sakayori Music backup file — playlists, downloads metadata, settings.</string>
+    <string name="setup_restore_pick">Choose backup file</string>
+    <string name="setup_restore_progress">Restoring…</string>
+    <string name="setup_done_display_format">You will be known as: %1$s</string>
+    <string name="setup_new_badge">new</string>
+    <string name="setup_ios_done_note">On iOS, the system manages permissions — nothing extra to configure.</string>
+    <string name="setup_upgrade_title">Welcome back</string>
+    <string name="setup_upgrade_body">Your saved data (playlists, downloads, login) is intact. These quick steps make sure everything works smoothly on this version.</string>
+    <string name="setup_upgrade_continue">Got it</string>
 </resources>
 
 

@@ -232,6 +232,7 @@ import com.sakayori.music.generated.resources.crash_reporting
 import com.sakayori.music.generated.resources.crash_reporting_description
 import com.sakayori.music.generated.resources.crossfade_preview
 import com.sakayori.music.generated.resources.crossfade_preview_description
+import com.sakayori.music.generated.resources.crossfade_preview_no_song
 import com.sakayori.music.generated.resources.open_equalizer
 import com.sakayori.music.generated.resources.privacy
 import com.sakayori.music.generated.resources.view_privacy_policy
@@ -280,6 +281,7 @@ import com.sakayori.music.generated.resources.keep_your_youtube_playlist_offline
 import com.sakayori.music.generated.resources.kill_service_on_exit
 import com.sakayori.music.generated.resources.kill_service_on_exit_description
 import com.sakayori.music.generated.resources.language
+import com.sakayori.music.generated.resources.language_system_format
 import com.sakayori.music.generated.resources.last_backup
 import com.sakayori.music.generated.resources.last_checked_at
 import com.sakayori.music.generated.resources.never
@@ -336,6 +338,11 @@ import com.sakayori.music.generated.resources.save_shuffle_and_repeat_mode
 import com.sakayori.music.generated.resources.send_back_listening_data_to_google
 import com.sakayori.music.generated.resources.set
 import com.sakayori.music.generated.resources.settings
+import com.sakayori.music.generated.resources.setup_theme_dark
+import com.sakayori.music.generated.resources.setup_theme_label
+import com.sakayori.music.generated.resources.setup_theme_light
+import com.sakayori.music.generated.resources.setup_theme_oled
+import com.sakayori.music.generated.resources.setup_theme_system
 import com.sakayori.music.generated.resources.signed_in
 import com.sakayori.music.generated.resources.SakayoriMusic_lyrics
 import com.sakayori.music.generated.resources.skip_no_music_part
@@ -503,6 +510,8 @@ fun SettingScreen(
     val crossfadeEnabled by viewModel.crossfadeEnabled.collectAsStateWithLifecycle()
     val crossfadeDuration by viewModel.crossfadeDuration.collectAsStateWithLifecycle()
     val crossfadeDjMode by viewModel.crossfadeDjMode.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val systemLanguageFollow by viewModel.systemLanguageFollow.collectAsStateWithLifecycle()
 
     val isCheckingUpdate by sharedViewModel.isCheckingUpdate.collectAsStateWithLifecycle()
 
@@ -541,6 +550,8 @@ fun SettingScreen(
     LaunchedEffect(true) {
         viewModel.getData()
         viewModel.getThumbCacheSize(platformContext)
+        viewModel.getSystemLanguageFollow()
+        viewModel.getThemeMode()
     }
 
     var settingsSearchQuery by remember { mutableStateOf("") }
@@ -641,6 +652,47 @@ fun SettingScreen(
                     switch = (enableTranslucentNavBar to { viewModel.setTranslucentBottomBar(it) }),
                 )
                 SettingItem(
+                    title = stringResource(Res.string.setup_theme_label),
+                    subtitle = when (themeMode) {
+                        DataStoreManager.THEME_MODE_LIGHT -> stringResource(Res.string.setup_theme_light)
+                        DataStoreManager.THEME_MODE_DARK -> stringResource(Res.string.setup_theme_dark)
+                        DataStoreManager.THEME_MODE_OLED -> stringResource(Res.string.setup_theme_oled)
+                        else -> stringResource(Res.string.setup_theme_system)
+                    },
+                    onClick = {
+                        val systemLabel = getStringBlocking(Res.string.setup_theme_system)
+                        val lightLabel = getStringBlocking(Res.string.setup_theme_light)
+                        val darkLabel = getStringBlocking(Res.string.setup_theme_dark)
+                        val oledLabel = getStringBlocking(Res.string.setup_theme_oled)
+                        viewModel.setAlertData(
+                            SettingAlertState(
+                                title = getStringBlocking(Res.string.setup_theme_label),
+                                selectOne =
+                                    SettingAlertState.SelectData(
+                                        listSelect =
+                                            listOf(
+                                                (themeMode == DataStoreManager.THEME_MODE_SYSTEM) to systemLabel,
+                                                (themeMode == DataStoreManager.THEME_MODE_LIGHT) to lightLabel,
+                                                (themeMode == DataStoreManager.THEME_MODE_DARK) to darkLabel,
+                                                (themeMode == DataStoreManager.THEME_MODE_OLED) to oledLabel,
+                                            ),
+                                    ),
+                                confirm =
+                                    getStringBlocking(Res.string.change) to { state ->
+                                        val mode = when (state.selectOne?.getSelected()) {
+                                            lightLabel -> DataStoreManager.THEME_MODE_LIGHT
+                                            darkLabel -> DataStoreManager.THEME_MODE_DARK
+                                            oledLabel -> DataStoreManager.THEME_MODE_OLED
+                                            else -> DataStoreManager.THEME_MODE_SYSTEM
+                                        }
+                                        viewModel.setThemeMode(mode)
+                                    },
+                                dismiss = getStringBlocking(Res.string.cancel),
+                            ),
+                        )
+                    },
+                )
+                SettingItem(
                     title = stringResource(Res.string.blur_fullscreen_lyrics),
                     subtitle = stringResource(Res.string.blur_fullscreen_lyrics_description),
                     smallSubtitle = true,
@@ -670,6 +722,8 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.very_low_performance_mode_description),
                     smallSubtitle = true,
                     switch = (lowResourceMode to { viewModel.setLowResourceMode(it) }),
+                    isEnable = !isLowEndDevice,
+                    disableReason = if (isLowEndDevice) lowEndDisableReason else null,
                 )
             }
         }
@@ -688,7 +742,14 @@ fun SettingScreen(
                 )
                 SettingItem(
                     title = stringResource(Res.string.language),
-                    subtitle = SUPPORTED_LANGUAGE.getLanguageFromCode(language ?: "en-US"),
+                    subtitle = run {
+                        val resolved = SUPPORTED_LANGUAGE.getLanguageFromCode(language ?: "en-US")
+                        if (systemLanguageFollow) {
+                            stringResource(Res.string.language_system_format, resolved)
+                        } else {
+                            resolved
+                        }
+                    },
                     onClick = {
                         viewModel.setAlertData(
                             SettingAlertState(
@@ -1171,6 +1232,10 @@ fun SettingScreen(
                                     val seekTo = (duration - previewMs).coerceAtLeast(0L)
                                     val progress = seekTo.toFloat() / duration.toFloat()
                                     sharedViewModel.onUIEvent(UIEvent.UpdateProgress(progress))
+                                } else {
+                                    sharedViewModel.makeToast(
+                                        getStringBlocking(Res.string.crossfade_preview_no_song),
+                                    )
                                 }
                             },
                         )
@@ -1557,46 +1622,16 @@ fun SettingScreen(
                 )
             }
         }
-        if (matchQuery(discordLabel)) item(key = "discord") {
+        if (matchQuery(discordLabel) && getPlatform() == Platform.Desktop) item(key = "discord") {
             SettingSection(
                 title = stringResource(Res.string.discord_integration),
                 icon = Icons.Outlined.SettingsEthernet,
             ) {
-                if (getPlatform() == Platform.Android) {
-                    SettingItem(
-                        title = stringResource(Res.string.log_in_to_discord),
-                        subtitle =
-                            if (discordLoggedIn) {
-                                stringResource(Res.string.logged_in)
-                            } else {
-                                stringResource(Res.string.intro_login_to_discord)
-                            },
-                        onClick = {
-                            if (discordLoggedIn) {
-                                viewModel.logOutDiscord()
-                            } else {
-                                navController.navigate(DiscordLoginDestination)
-                            }
-                        },
-                    )
-                    SettingItem(
-                        title = stringResource(Res.string.enable_rich_presence),
-                        subtitle = stringResource(Res.string.rich_presence_info),
-                        switch = (richPresenceEnabled to { viewModel.setDiscordRichPresenceEnabled(it) }),
-                        isEnable = discordLoggedIn,
-                        onDisable = {
-                            if (discordLoggedIn) {
-                                viewModel.setDiscordRichPresenceEnabled(false)
-                            }
-                        },
-                    )
-                } else {
-                    SettingItem(
-                        title = stringResource(Res.string.enable_rich_presence),
-                        subtitle = stringResource(Res.string.desktop_rpc_auto_description),
-                        switch = (richPresenceEnabled to { viewModel.setDiscordRichPresenceEnabled(it) }),
-                    )
-                }
+                SettingItem(
+                    title = stringResource(Res.string.enable_rich_presence),
+                    subtitle = stringResource(Res.string.desktop_rpc_auto_description),
+                    switch = (richPresenceEnabled to { viewModel.setDiscordRichPresenceEnabled(it) }),
+                )
             }
         }
         if (matchQuery(sponsorLabel)) item(key = "sponsor_block") {

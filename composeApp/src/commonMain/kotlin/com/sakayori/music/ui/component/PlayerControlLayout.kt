@@ -5,22 +5,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PauseCircle
-import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,171 +43,91 @@ fun PlayerControlLayout(
         haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
         onUIEvent(event)
     }
-    val height = if (isSmallSize) 48.dp else 96.dp
-    val smallIcon = if (isSmallSize) 20.dp to 28.dp else 32.dp to 42.dp
-    val mediumIcon = if (isSmallSize) 28.dp to 38.dp else 42.dp to 52.dp
-    val bigIcon = if (isSmallSize) 38.dp to 48.dp else 72.dp to 96.dp
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(height)
-                .padding(horizontal = 20.dp),
+    val mainRowHeight = if (isSmallSize) 56.dp else 80.dp
+    val sideIconBox = if (isSmallSize) 36.dp else 44.dp
+    val sideIcon = if (isSmallSize) 22.dp else 26.dp
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+        AnimatedPlaybackControls(
+            isPlaying = controllerState.isPlaying,
+            onPrevious = {
+                if (controllerState.isPreviousAvailable) withHaptic(UIEvent.Previous)
+            },
+            onPlayPause = { withHaptic(UIEvent.PlayPause) },
+            onNext = {
+                if (controllerState.isNextAvailable) withHaptic(UIEvent.Next)
+            },
+            height = mainRowHeight,
+            playPauseIconSize = if (isSmallSize) 28.dp else 36.dp,
+            iconSize = if (isSmallSize) 26.dp else 32.dp,
+            colorPlayPause = MaterialTheme.colorScheme.primary,
+            tintPlayPauseIcon = MaterialTheme.colorScheme.onPrimary,
+            colorSideButtons = MaterialTheme.colorScheme.secondaryContainer,
+            tintSideIcons = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(sideIconBox),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
-                modifier =
-                    Modifier
-                        .size(smallIcon.second)
-                        .aspectRatio(1f)
-                        .clip(CircleShape)
-                        .background(
-                            if (controllerState.isShuffle) seed.copy(alpha = 0.15f) else transparent,
-                        )
-                        .clickable {
-                            withHaptic(UIEvent.Shuffle)
-                        },
+                modifier = Modifier
+                    .size(sideIconBox)
+                    .aspectRatio(1f)
+                    .clip(CircleShape)
+                    .background(
+                        if (controllerState.isShuffle) seed.copy(alpha = 0.18f) else transparent,
+                    )
+                    .clickable { withHaptic(UIEvent.Shuffle) },
                 contentAlignment = Alignment.Center,
             ) {
-                Crossfade(targetState = controllerState.isShuffle, label = "Shuffle Button") { isShuffle ->
+                Crossfade(targetState = controllerState.isShuffle, label = "shuffleTint") { isShuffle ->
                     Icon(
                         imageVector = Icons.Rounded.Shuffle,
                         tint = if (isShuffle) seed else Color.White,
                         contentDescription = null,
-                        modifier = Modifier.size(smallIcon.first),
+                        modifier = Modifier.size(sideIcon),
                     )
                 }
             }
-        }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Box(
-                modifier =
-                    Modifier
-                        .background(transparent)
-                        .size(mediumIcon.second)
-                        .aspectRatio(1f)
-                        .clip(
-                            CircleShape,
-                        )
-                        .clickable {
-                            if (controllerState.isPreviousAvailable) {
-                                withHaptic(UIEvent.Previous)
-                            }
-                        },
+                modifier = Modifier
+                    .size(sideIconBox)
+                    .aspectRatio(1f)
+                    .clip(CircleShape)
+                    .background(
+                        if (controllerState.repeatState !is RepeatState.None) seed.copy(alpha = 0.18f) else transparent,
+                    )
+                    .clickable { withHaptic(UIEvent.Repeat) },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipPrevious,
-                    tint = if (controllerState.isPreviousAvailable) Color.White else Color.Gray,
-                    contentDescription = null,
-                    modifier = Modifier.size(mediumIcon.first),
-                )
-            }
-        }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Box(
-                modifier =
-                    Modifier
-                        .background(transparent)
-                        .size(bigIcon.second)
-                        .aspectRatio(1f)
-                        .clip(
-                            CircleShape,
-                        )
-                        .clickable {
-                            withHaptic(UIEvent.PlayPause)
-                        },
-                contentAlignment = Alignment.Center,
-            ) {
-                Crossfade(targetState = controllerState.isPlaying) { isPlaying ->
-                    if (!isPlaying) {
-                        Icon(
-                            imageVector = Icons.Rounded.PlayCircle,
-                            tint = Color.White,
-                            contentDescription = null,
-                            modifier = Modifier.size(bigIcon.first),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.PauseCircle,
-                            tint = Color.White,
-                            contentDescription = null,
-                            modifier = Modifier.size(bigIcon.first),
-                        )
-                    }
-                }
-            }
-        }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Box(
-                modifier =
-                    Modifier
-                        .background(transparent)
-                        .size(mediumIcon.second)
-                        .aspectRatio(1f)
-                        .clip(
-                            CircleShape,
-                        )
-                        .clickable {
-                            if (controllerState.isNextAvailable) {
-                                withHaptic(UIEvent.Next)
-                            }
-                        },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipNext,
-                    tint = if (controllerState.isNextAvailable) Color.White else Color.Gray,
-                    contentDescription = null,
-                    modifier = Modifier.size(mediumIcon.first),
-                )
-            }
-        }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(smallIcon.second)
-                        .aspectRatio(1f)
-                        .clip(CircleShape)
-                        .background(
-                            if (controllerState.repeatState !is RepeatState.None) seed.copy(alpha = 0.15f) else transparent,
-                        )
-                        .clickable {
-                            withHaptic(UIEvent.Repeat)
-                        },
-                contentAlignment = Alignment.Center,
-            ) {
-                Crossfade(targetState = controllerState.repeatState) { rs ->
+                Crossfade(targetState = controllerState.repeatState, label = "repeatTint") { rs ->
                     when (rs) {
-                        is RepeatState.None -> {
-                            Icon(
-                                imageVector = Icons.Rounded.Repeat,
-                                tint = Color.White,
-                                contentDescription = null,
-                                modifier = Modifier.size(smallIcon.first),
-                            )
-                        }
-
-                        RepeatState.All -> {
-                            Icon(
-                                imageVector = Icons.Rounded.Repeat,
-                                tint = seed,
-                                contentDescription = null,
-                                modifier = Modifier.size(smallIcon.first),
-                            )
-                        }
-
-                        RepeatState.One -> {
-                            Icon(
-                                imageVector = Icons.Rounded.RepeatOne,
-                                tint = seed,
-                                contentDescription = null,
-                                modifier = Modifier.size(smallIcon.first),
-                            )
-                        }
+                        is RepeatState.None -> Icon(
+                            imageVector = Icons.Rounded.Repeat,
+                            tint = Color.White,
+                            contentDescription = null,
+                            modifier = Modifier.size(sideIcon),
+                        )
+                        RepeatState.All -> Icon(
+                            imageVector = Icons.Rounded.Repeat,
+                            tint = seed,
+                            contentDescription = null,
+                            modifier = Modifier.size(sideIcon),
+                        )
+                        RepeatState.One -> Icon(
+                            imageVector = Icons.Rounded.RepeatOne,
+                            tint = seed,
+                            contentDescription = null,
+                            modifier = Modifier.size(sideIcon),
+                        )
                     }
                 }
             }

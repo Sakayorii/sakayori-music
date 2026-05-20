@@ -17,6 +17,7 @@ import com.sakayori.music.viewModel.PodcastViewModel
 import com.sakayori.music.viewModel.RecentlySongsViewModel
 import com.sakayori.music.viewModel.SearchViewModel
 import com.sakayori.music.viewModel.SettingsViewModel
+import com.sakayori.music.viewModel.SetupViewModel
 import com.sakayori.music.viewModel.SharedViewModel
 import com.sakayori.music.update.UpdateDownloadManager
 import io.ktor.client.HttpClient
@@ -157,6 +158,11 @@ val viewModelModule =
                 get(),
                 get(),
                 get(),
+                get(),
+            )
+        }
+        single {
+            SetupViewModel(
                 get(),
             )
         }

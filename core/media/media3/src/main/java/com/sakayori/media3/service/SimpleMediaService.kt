@@ -1,8 +1,6 @@
 package com.sakayori.media3.service
 
 import android.app.Activity
-import android.app.ActivityManager
-import android.app.ActivityManager.RunningAppProcessInfo
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -24,7 +22,6 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.DefaultMediaDescriptionAdapter
 import androidx.media3.ui.PlayerNotificationManager
-import com.google.common.util.concurrent.MoreExecutors
 import com.sakayori.common.MEDIA_NOTIFICATION
 import com.sakayori.domain.manager.DataStoreManager
 import com.sakayori.domain.mediaservice.handler.MediaPlayerHandler
@@ -35,17 +32,14 @@ import com.sakayori.media3.R
 import com.sakayori.media3.extension.toCommandButton
 import com.sakayori.media3.utils.CoilBitmapLoader
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.seconds
 
 @UnstableApi
 internal class SimpleMediaService :
@@ -127,16 +121,24 @@ internal class SimpleMediaService :
 
         val sessionToken = SessionToken(this, ComponentName(this, SimpleMediaService::class.java))
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-        controllerFuture.addListener({ controllerFuture.get() }, MoreExecutors.directExecutor())
-
-        val keepServiceAliveSnapshot = runCatching {
-            kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.Default) {
-                kotlinx.coroutines.withTimeoutOrNull(500) {
-                    dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE
-                } ?: false
+        controllerFuture.addListener({
+            try {
+                controllerFuture.get()
+            } catch (_: Throwable) {
             }
-        }.getOrDefault(false)
-        if (keepServiceAliveSnapshot) {
+        }, Dispatchers.IO.asExecutor())
+
+        coroutineScope.launch {
+            val keepAlive = try {
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    kotlinx.coroutines.withTimeoutOrNull(2000) {
+                        dataStoreManager.keepServiceAlive.first() == DataStoreManager.TRUE
+                    } ?: false
+                }
+            } catch (_: Throwable) {
+                false
+            }
+            if (!keepAlive) return@launch
             val notificationManager = getSystemService<NotificationManager>()
             notificationManager?.run {
                 createNotificationChannel(
@@ -153,7 +155,7 @@ internal class SimpleMediaService :
             }
             playerNotificationManager =
                 PlayerNotificationManager
-                    .Builder(this, 2026, "media_playback_channel")
+                    .Builder(this@SimpleMediaService, 2026, "media_playback_channel")
                     .setNotificationListener(
                         object : PlayerNotificationManager.NotificationListener {
                             override fun onNotificationPosted(
@@ -253,10 +255,4 @@ internal class SimpleMediaService :
             ).setId(this.javaClass.name)
             .setBitmapLoader(coilBitmapLoader)
             .build()
-
-    private fun isAppInForeground(): Boolean {
-        val appProcessInfo = RunningAppProcessInfo()
-        ActivityManager.getMyMemoryState(appProcessInfo)
-        return appProcessInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-    }
 }

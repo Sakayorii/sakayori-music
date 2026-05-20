@@ -32,11 +32,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.SakayoriMusic.aiservice.AiClient
-import org.SakayoriMusic.lyrics.SakayoriMusicLyricsClient
-import org.SakayoriMusic.lyrics.models.request.LyricsBody
-import org.SakayoriMusic.lyrics.models.request.TranslatedLyricsBody
-import org.SakayoriMusic.lyrics.parser.parseTtmlLyrics
+import com.sakayori.aiservice.AiClient
+import com.sakayori.lyrics.SakayoriMusicLyricsClient
+import com.sakayori.lyrics.models.request.LyricsBody
+import com.sakayori.lyrics.models.request.TranslatedLyricsBody
+import com.sakayori.lyrics.parser.parseTtmlLyrics
 import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

@@ -29,11 +29,11 @@ import com.sakayori.kotlinytmusicscraper.models.youtube.Transcript
 import com.sakayori.kotlinytmusicscraper.models.youtube.YouTubeInitialPage
 import com.sakayori.spotify.model.response.spotify.CanvasResponse
 import com.sakayori.spotify.model.response.spotify.SpotifyLyricsResponse
-import org.SakayoriMusic.lyrics.models.response.LyricsResponse
-import org.SakayoriMusic.lyrics.models.response.TranslatedLyricsResponse
-import org.SakayoriMusic.lyrics.parser.parseRichSyncLyrics
-import org.SakayoriMusic.lyrics.parser.parseSyncedLyrics
-import org.SakayoriMusic.lyrics.parser.parseUnsyncedLyrics
+import com.sakayori.lyrics.models.response.LyricsResponse
+import com.sakayori.lyrics.models.response.TranslatedLyricsResponse
+import com.sakayori.lyrics.parser.parseRichSyncLyrics
+import com.sakayori.lyrics.parser.parseSyncedLyrics
+import com.sakayori.lyrics.parser.parseUnsyncedLyrics
 import kotlin.jvm.JvmName
 
 internal fun SongItem.toTrack(): Track =
@@ -106,7 +106,7 @@ internal fun Track.toSongItemForDownload(): SongItem =
         explicit = this.isExplicit,
     )
 
-internal fun org.SakayoriMusic.lyrics.domain.Lyrics.toLyrics(): Lyrics {
+internal fun com.sakayori.lyrics.domain.Lyrics.toLyrics(): Lyrics {
     val lines: ArrayList<Line> = arrayListOf()
     if (this.lyrics != null) {
         this.lyrics?.lines?.forEach {
@@ -133,13 +133,13 @@ internal fun org.SakayoriMusic.lyrics.domain.Lyrics.toLyrics(): Lyrics {
     }
 }
 
-internal fun Lyrics.toLibraryLyrics(): org.SakayoriMusic.lyrics.domain.Lyrics =
-    org.SakayoriMusic.lyrics.domain.Lyrics(
+internal fun Lyrics.toLibraryLyrics(): com.sakayori.lyrics.domain.Lyrics =
+    com.sakayori.lyrics.domain.Lyrics(
         lyrics =
-            org.SakayoriMusic.lyrics.domain.Lyrics.LyricsX(
+            com.sakayori.lyrics.domain.Lyrics.LyricsX(
                 lines =
                     this.lines?.map {
-                        org.SakayoriMusic.lyrics.domain.Lyrics.LyricsX.Line(
+                        com.sakayori.lyrics.domain.Lyrics.LyricsX.Line(
                             endTimeMs = it.endTimeMs,
                             startTimeMs = it.startTimeMs,
                             syllables = listOf(),
