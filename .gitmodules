@@ -1,0 +1,3 @@
+[submodule "sakayori-proto"]
+	path = sakayori-proto
+	url = https://github.com/Sakayorii/sakayori-proto

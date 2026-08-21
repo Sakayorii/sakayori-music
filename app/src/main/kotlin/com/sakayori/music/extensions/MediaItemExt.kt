@@ -1,0 +1,75 @@
+/**
+ * Sakayori Music Project (C) 2026
+ * Licensed under GPL-3.0 | See git history for contributors
+ */
+
+package com.sakayori.music.extensions
+
+import android.os.Bundle
+import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC
+import com.sakayori.innertube.models.SongItem
+import com.sakayori.music.db.entities.Song
+import com.sakayori.music.models.MediaMetadata
+import com.sakayori.music.models.toMediaMetadata
+import com.sakayori.music.utils.ArtistNameAliases
+
+val MediaItem.metadata: MediaMetadata?
+    get() = localConfiguration?.tag as? MediaMetadata
+
+fun Song.toMediaItem() = toMediaMetadata().toMediaItem()
+
+fun SongItem.toMediaItem() = toMediaMetadata().toMediaItem()
+
+fun MediaMetadata.toMediaItem(): MediaItem {
+    val resolvedMetadata = withResolvedArtistNameAliases()
+    val artistNames = resolvedMetadata.artists.joinToString { it.name }
+    return MediaItem.Builder()
+        .setMediaId(resolvedMetadata.id)
+        .setUri(resolvedMetadata.id)
+        .setCustomCacheKey(resolvedMetadata.id)
+        .setTag(resolvedMetadata)
+        .setMediaMetadata(
+            androidx.media3.common.MediaMetadata.Builder()
+                .setTitle(resolvedMetadata.title)
+                .setSubtitle(artistNames)
+                .setArtist(artistNames)
+                .setArtworkUri(resolvedMetadata.thumbnailUrl?.toUri())
+                .setAlbumTitle(resolvedMetadata.album?.title)
+                .setAlbumArtist(resolvedMetadata.artists.firstOrNull()?.name)
+                .setDisplayTitle(resolvedMetadata.title)
+                .setMediaType(MEDIA_TYPE_MUSIC)
+                .setIsBrowsable(false)
+                .setIsPlayable(true)
+                .setExtras(Bundle().apply {
+                    resolvedMetadata.thumbnailUrl?.let { putString("artwork_uri", it) }
+                })
+                .build(),
+        ).build()
+}
+
+fun MediaMetadata.withResolvedArtistNameAliases(): MediaMetadata {
+    val resolvedArtists =
+        artists.map { artist ->
+            artist.copy(name = ArtistNameAliases.resolve(artist.id, artist.name))
+        }
+    return if (resolvedArtists == artists) this else copy(artists = resolvedArtists)
+}
+
+fun MediaItem.withResolvedArtistNameAliases(): MediaItem {
+    val currentMetadata = metadata ?: return this
+    val resolvedMetadata = currentMetadata.withResolvedArtistNameAliases()
+    if (resolvedMetadata === currentMetadata) return this
+
+    val artistNames = resolvedMetadata.artists.joinToString { it.name }
+    return buildUpon()
+        .setTag(resolvedMetadata)
+        .setMediaMetadata(
+            mediaMetadata.buildUpon()
+                .setSubtitle(artistNames)
+                .setArtist(artistNames)
+                .setAlbumArtist(resolvedMetadata.artists.firstOrNull()?.name)
+                .build(),
+        ).build()
+}
