@@ -1005,6 +1005,14 @@ fun RichPresence(
         else -> stringResource(R.string.discord_activity_listening)
     }
 
+    // Resolve placeholders in the activity name exactly like the real presence does
+    // (DiscordActivityBuilder), so the preview never shows raw "{album.name}" text.
+    val renderedActivityName = if (advancedMode && activityName.isNotEmpty()) {
+        DiscordTemplateRenderer.render(activityName, previewSongTitle, previewArtistName, previewAlbumName, song?.song?.id ?: "")
+    } else {
+        activityName.ifEmpty { stringResource(R.string.sakayori) }
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.medium,
@@ -1016,7 +1024,7 @@ fun RichPresence(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "$activityPrefix ${activityName.ifEmpty { stringResource(R.string.sakayori) }}",
+                text = "$activityPrefix $renderedActivityName",
                 style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Start,
                 fontWeight = FontWeight.ExtraBold,
