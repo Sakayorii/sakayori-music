@@ -3536,6 +3536,14 @@ class MusicService :
         }
 
         val isPlaying = player.isPlaying
+        if (!isPlaying) {
+            // Paused: clear the presence (Spotify-style). Keeping a stale activity
+            // makes Discord show a phantom counting timer instead of real state.
+            // Resume re-sends via EVENT_IS_PLAYING_CHANGED.
+            Timber.tag("DiscordSvc").d("syncDiscordState: paused, clearing presence")
+            DiscordRpcManager.clear()
+            return
+        }
         if (DiscordRpcManager.isShowingSong(songId, isPlaying)) {
             Timber.tag("DiscordSvc").d("syncDiscordState: dedup, already showing songId=%s isPlaying=%s", songId, isPlaying)
             return
