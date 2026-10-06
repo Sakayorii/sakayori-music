@@ -1004,22 +1004,22 @@ interface DatabaseDao {
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY title")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY title")
     fun albumsUploadedByNameAsc(): Flow<List<Album>>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY year")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY year")
     fun albumsUploadedByYearAsc(): Flow<List<Album>>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY songCount")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY songCount")
     fun albumsUploadedBySongCountAsc(): Flow<List<Album>>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
-    @Query("SELECT * FROM album WHERE bookmarkedAt IS NOT NULL ORDER BY duration")
+    @Query("SELECT * FROM album WHERE isUploaded = 1 ORDER BY duration")
     fun albumsUploadedByLengthAsc(): Flow<List<Album>>
 
     @Transaction
@@ -1030,7 +1030,7 @@ interface DatabaseDao {
         FROM album
                  JOIN song
                       ON song.albumId = album.id
-        WHERE bookmarkedAt IS NOT NULL
+        WHERE album.isUploaded = 1
         GROUP BY album.id
         ORDER BY SUM(song.totalPlayTime)
     """
