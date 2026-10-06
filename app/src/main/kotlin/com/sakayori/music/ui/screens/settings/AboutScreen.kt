@@ -7,6 +7,7 @@ package com.sakayori.music.ui.screens.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,6 +61,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -68,6 +70,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.navigation.NavController
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import coil3.compose.AsyncImage
 import com.sakayori.innertube.models.WatchEndpoint
 import com.sakayori.music.BuildConfig
@@ -210,6 +216,7 @@ fun AboutScreen(
     navController: NavController,
 ) {
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     val playerConnection = LocalPlayerConnection.current
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -428,7 +435,18 @@ fun AboutScreen(
                 Text(
                     text = "45SsusJDkAEaQgz8jWKPonhvWjhUj2EEfdTQat22TaaFLyb1noVfzN2U9PGpGeX5Qe55XikAKZ42eC7z1F9E3uL9LsLx14L",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(
+                                ClipData.newPlainText(
+                                    "Monero",
+                                    "45SsusJDkAEaQgz8jWKPonhvWjhUj2EEfdTQat22TaaFLyb1noVfzN2U9PGpGeX5Qe55XikAKZ42eC7z1F9E3uL9LsLx14L"
+                                )
+                            )
+                            Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
+                        },
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
