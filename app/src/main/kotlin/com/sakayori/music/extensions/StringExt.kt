@@ -40,6 +40,17 @@ fun matchesNormalizedQuery(normalizedQuery: String, vararg values: String?): Boo
 }
 
 fun String.toInetSocketAddress(): InetSocketAddress {
-    val (host, port) = split(":")
-    return createUnresolved(host, port.toInt())
+    val input = trim()
+    // Bracketed IPv6: [2001:db8::1]:8080
+    val bracketed = Regex("^\\[(.+)]:(\\d+)$").matchEntire(input)
+    if (bracketed != null) {
+        return createUnresolved(bracketed.groupValues[1], bracketed.groupValues[2].toInt())
+    }
+    // host:port — split on the last colon so unbracketed IPv6 (2001:db8::1:8080) parses too.
+    // The old split(":") destructuring threw on any address containing more than one colon.
+    val lastColon = input.lastIndexOf(':')
+    require(lastColon > 0 && lastColon < input.length - 1) { "Invalid proxy address: $input" }
+    val host = input.substring(0, lastColon)
+    val port = input.substring(lastColon + 1).toInt()
+    return createUnresolved(host, port)
 }
