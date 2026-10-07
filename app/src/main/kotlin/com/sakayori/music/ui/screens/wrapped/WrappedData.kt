@@ -9,7 +9,7 @@ data class MessagePair(val range: LongRange, val tease: String, val reveal: Stri
 
 object WrappedRepository {
     private val messages = listOf(
-        MessagePair(0L..999L, "I really hope you are not dissapointed...", "That's **%d minutes**. Just warming up?"),
+        MessagePair(0L..999L, "I really hope you are not disappointed...", "That's **%d minutes**. Just warming up?"),
         MessagePair(0L..999L, "Testing the waters, are we?", "**%d minutes** is a quick dip in the musical ocean."),
         MessagePair(0L..999L, "Busy schedule this year?", "**%d minutes** is short, sweet, and to the point."),
         MessagePair(0L..999L, "Silence is golden, they say...", "But you preferred **%d minutes** of noise."),

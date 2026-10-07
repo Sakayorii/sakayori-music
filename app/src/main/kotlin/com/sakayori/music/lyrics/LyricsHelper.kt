@@ -45,10 +45,16 @@ constructor(
     private val cache = LruCache<String, List<LyricsResult>>(MAX_CACHE_SIZE)
     private var currentLyricsJob: Job? = null
 
+    // Single key derivation for the lyrics LRU: getLyrics() and getAllLyrics()
+    // must use the same key or cache reads never hit (previously getLyrics read
+    // by mediaMetadata.id while puts used the artists-title key).
+    private fun lyricsCacheKey(songTitle: String, songArtists: String) =
+        "$songArtists-$songTitle".replace(" ", "")
+
     suspend fun getLyrics(mediaMetadata: MediaMetadata): LyricsWithProvider {
         currentLyricsJob?.cancel()
 
-        val cached = cache.get(mediaMetadata.id)?.firstOrNull()
+        val cached = cache.get(lyricsCacheKey(mediaMetadata.title, mediaMetadata.artists.joinToString { it.name }))?.firstOrNull()
         if (cached != null) {
             return LyricsWithProvider(cached.lyrics, cached.providerName)
         }
@@ -121,7 +127,7 @@ constructor(
     ) {
         currentLyricsJob?.cancel()
 
-        val cacheKey = "$songArtists-$songTitle".replace(" ", "")
+        val cacheKey = lyricsCacheKey(songTitle, songArtists)
         cache.get(cacheKey)?.let { results ->
             results.forEach { callback(it) }
             return
