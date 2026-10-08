@@ -1,7 +1,7 @@
 ## 14.0.0-beta01
 
-* Kh?i ch?y d? �n Sakayori Music (Rebranded t? Sakayori Music)
-* Ho�n thi?n ki?n tr�c thuong hi?u m?i
+* Khởi chạy dự án Sakayori Music (Rebranded từ Sakayori Music)
+* Hoàn thiện kiến trúc thương hiệu mới
 
 ---v13.6.3
 
@@ -41,7 +41,7 @@ Sakayori Music KMP is almost ready. We are ironing out the remaining bugs and pr
 
 ---v13.6.1
 # THE FUTURE OF SAKAYORI
-The new Kotlin Multiplatform version of Sakayori Music is now in a good state, and we are aiming to release it within the next month. Until then, the current app will remain in maintenance mode and receive bug fixes and minor improvements.
+The new Kotlin Multiplatform version of Sakayori Music is now in a good state, and we are aiming to release it within the next month. Until then, the current app will remain in maintenance mode and re[...] 
 
 # Major changes
 - Improved playback reliability and recovery from YouTube player failures (@alltechdev @JASK625 @kairosci @Sakayorii @nyxiereal)
@@ -67,7 +67,7 @@ The new Kotlin Multiplatform version of Sakayori Music is now in a good state, a
 
 ---v13.5.0
 # MAINTENANCE MODE
-Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.
+Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be a[...] 
 
 # Major changes
 - Rewrote the Discord RPC integration again (@adrielGGmotion @nyxiereal)
@@ -94,7 +94,7 @@ Sakayori Music is currently in maintenance mode. This means we will only be fixi
 
 ---v13.4.3
 # MAINTENANCE MODE
-Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.
+Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be a[...] 
 
 # Major changes
 - Rewrote the Discord RPC integration (@adrielGGmotion)
@@ -120,7 +120,7 @@ Sakayori Music is currently in maintenance mode. This means we will only be fixi
 
 ---v13.4.2
 # MAINTENANCE MODE
-Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.
+Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be a[...] 
 
 # Major changes
 - Fixed random crashes and some memory leaks (@nyxiereal)
@@ -148,7 +148,7 @@ Sakayori Music is currently in maintenance mode. This means we will only be fixi
 
 ---v13.4.1
 # MAINTENANCE MODE
-Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.
+Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be a[...] 
 
 # Major changes
 - Fixed cached songs showing up in the downloads playlist (@nyxiereal)
@@ -188,7 +188,7 @@ Sakayori Music is currently in maintenance mode. This means we will only be fixi
 **Full Changelog**: https://github.com/Sakayorii/sakayori-music/compare/v13.4.0...v13.4.1
 ---v13.4.0
 # MAINTENANCE MODE
-Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.
+Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be a[...] 
 
 No, this is not an April Fools joke, even though this update is being released on April 1st.
 
