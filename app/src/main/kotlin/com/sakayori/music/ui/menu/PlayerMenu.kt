@@ -99,6 +99,7 @@ import com.sakayori.music.ui.component.Material3MenuGroup
 import com.sakayori.music.ui.component.Material3MenuItemData
 import com.sakayori.music.ui.component.NewAction
 import com.sakayori.music.ui.component.NewActionGrid
+import com.sakayori.music.ui.component.PeekAvatar
 import com.sakayori.music.ui.component.VolumeSlider
 import com.sakayori.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
@@ -1545,37 +1546,11 @@ fun ListenTogetherDialog(
                                     Box(
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        Surface(
+                                        PeekAvatar(
+                                            name = user.username,
                                             modifier = Modifier.size(52.dp),
-                                            shape = RoundedCornerShape(50),
-                                            color =
-                                                if (user.isHost) {
-                                                    MaterialTheme.colorScheme.primary
-                                                } else if (user.userId == userId) {
-                                                    MaterialTheme.colorScheme.secondary
-                                                } else {
-                                                    MaterialTheme.colorScheme.surfaceVariant
-                                                },
-                                        ) {
-                                            Box(
-                                                contentAlignment = Alignment.Center,
-                                                modifier = Modifier.fillMaxSize(),
-                                            ) {
-                                                Text(
-                                                    text = user.username.take(1).uppercase(),
-                                                    style = MaterialTheme.typography.titleLarge,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color =
-                                                        if (user.isHost) {
-                                                            MaterialTheme.colorScheme.onPrimary
-                                                        } else if (user.userId == userId) {
-                                                            MaterialTheme.colorScheme.onSecondary
-                                                        } else {
-                                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                                        },
-                                                )
-                                            }
-                                        }
+                                            contentDescription = user.username,
+                                        )
 
                                         // Host/You badge
                                         if (user.isHost || user.userId == userId) {

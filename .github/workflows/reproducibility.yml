@@ -1,0 +1,57 @@
+name: Reproducibility Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Tag or commit to test'
+        default: 'v2.1.7'
+
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Apply F-Droid prebuild patches
+        run: |
+          sed -i '/maven.aliyun.com/d' settings.gradle.kts build.gradle.kts
+          cat >> build.gradle.kts << 'EOF'
+          subprojects{
+          configurations.all{
+          resolutionStrategy.dependencySubstitution{
+          substitute(module("com.github.promeg:tinypinyin"))
+          .using(
+          module("io.github.biezhi:TinyPinyin:2.0.3.RELEASE")
+          )
+          }}}
+          EOF
+
+      - name: Build 3 times
+        run: |
+          chmod +x gradlew
+          for i in 1 2 3; do
+            ./gradlew clean :app:assembleIzzyRelease --no-daemon -q
+            cp app/build/outputs/apk/izzy/release/app-izzy-release.apk /tmp/build$i.apk
+          done
+
+      - name: Compare outputs
+        run: |
+          for i in 1 2 3; do
+            mkdir -p /tmp/c$i
+            unzip -oq /tmp/build$i.apk -d /tmp/c$i
+          done
+          echo "=== build1 vs build2 ==="
+          diff -r /tmp/c1 /tmp/c2 --exclude='META-INF' && echo "IDENTICAL 1-2"
+          echo "=== build2 vs build3 ==="
+          diff -r /tmp/c2 /tmp/c3 --exclude='META-INF' && echo "IDENTICAL 2-3"

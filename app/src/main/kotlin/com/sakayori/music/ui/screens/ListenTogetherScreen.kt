@@ -99,6 +99,7 @@ import com.sakayori.music.listentogether.SuggestionReceivedPayload
 import com.sakayori.music.listentogether.UserInfo
 import com.sakayori.music.ui.component.DefaultDialog
 import com.sakayori.music.ui.component.IconButton
+import com.sakayori.music.ui.component.PeekAvatar
 import com.sakayori.music.ui.utils.backToMain
 import com.sakayori.music.utils.rememberPreference
 import kotlinx.coroutines.launch
@@ -808,33 +809,11 @@ private fun UserAvatar(
         Box(
             contentAlignment = Alignment.Center,
         ) {
-            Surface(
+            PeekAvatar(
+                name = user.username,
                 modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                color =
-                    when {
-                        user.isHost -> MaterialTheme.colorScheme.primary
-                        isCurrentUser -> MaterialTheme.colorScheme.secondary
-                        else -> MaterialTheme.colorScheme.surfaceVariant
-                    },
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Text(
-                        text = user.username.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color =
-                            when {
-                                user.isHost -> MaterialTheme.colorScheme.onPrimary
-                                isCurrentUser -> MaterialTheme.colorScheme.onSecondary
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
-                }
-            }
+                contentDescription = user.username,
+            )
 
             if (user.isHost || isCurrentUser) {
                 Surface(
@@ -1087,11 +1066,19 @@ private fun JoinCreateRoomSection(
                 label = { Text(stringResource(R.string.username)) },
                 placeholder = { Text(stringResource(R.string.enter_username)) },
                 leadingIcon = {
-                    Icon(
-                        painterResource(R.drawable.person),
-                        null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
+                    if (usernameInput.isNotBlank()) {
+                        PeekAvatar(
+                            name = usernameInput,
+                            modifier = Modifier.size(32.dp),
+                            contentDescription = null,
+                        )
+                    } else {
+                        Icon(
+                            painterResource(R.drawable.person),
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 },
                 trailingIcon = {
                     if (usernameInput.isNotBlank()) {
