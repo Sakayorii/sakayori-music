@@ -98,6 +98,7 @@ import com.sakayori.music.db.entities.Song
 import com.sakayori.music.discord.DiscordDefaults
 import com.sakayori.music.discord.DiscordRpcManager
 import com.sakayori.music.discord.DiscordTemplateRenderer
+import com.sakayori.music.discord.discordAlbumName
 import com.sakayori.music.ui.component.EnumDialog
 import com.sakayori.music.ui.component.DefaultDialog
 import com.sakayori.music.ui.component.IconButton
@@ -965,7 +966,7 @@ fun RichPresence(
 
     val previewSongTitle = song?.song?.title ?: "Song Title"
     val previewArtistName = song?.artists?.joinToString { it.name } ?: "Artist"
-    val previewAlbumName = song?.album?.title
+    val previewAlbumName = song?.discordAlbumName()
 
     val renderedState = if (advancedMode) {
         DiscordTemplateRenderer.render(stateTemplate.ifEmpty { DiscordDefaults.STATE_TEMPLATE }, previewSongTitle, previewArtistName, previewAlbumName, song?.song?.id ?: "")
