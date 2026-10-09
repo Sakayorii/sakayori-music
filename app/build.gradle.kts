@@ -376,6 +376,8 @@ dependencies {
 
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.svg)
+    implementation(libs.peek.kotlin)
     implementation(libs.browser)
 
     implementation(libs.ucrop)

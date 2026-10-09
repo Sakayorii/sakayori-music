@@ -181,6 +181,7 @@ import com.sakayori.music.ui.component.BottomSheetMenu
 import com.sakayori.music.ui.component.BottomSheetPage
 import com.sakayori.music.ui.component.LocalBottomSheetPageState
 import com.sakayori.music.ui.component.LocalMenuState
+import com.sakayori.music.ui.component.PeekAvatar
 import com.sakayori.music.ui.component.rememberBottomSheetState
 import com.sakayori.music.ui.component.shimmer.ShimmerTheme
 import com.sakayori.music.ui.menu.YouTubeSongMenu
@@ -696,6 +697,7 @@ class MainActivity : ComponentActivity() {
 
                 val homeViewModel: HomeViewModel = hiltViewModel()
                 val accountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
+                val ltUsername by rememberPreference(ListenTogetherUsernameKey, "")
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
@@ -1063,6 +1065,12 @@ class MainActivity : ComponentActivity() {
                                                                 Modifier
                                                                     .size(24.dp)
                                                                     .clip(CircleShape),
+                                                        )
+                                                    } else if (ltUsername.isNotBlank()) {
+                                                        PeekAvatar(
+                                                            name = ltUsername,
+                                                            modifier = Modifier.size(24.dp),
+                                                            contentDescription = stringResource(R.string.account),
                                                         )
                                                     } else {
                                                         Icon(
