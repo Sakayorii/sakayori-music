@@ -72,6 +72,8 @@ androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTes
 
 coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+peek-kotlin = { module = "com.github.Sakayorii:peek-kotlin", version = "v1.0.1" }
 ucrop = { module = "com.github.yalantis:ucrop", version.ref = "ucrop" }
 
 shimmer = { module = "com.valentinilk.shimmer:compose-shimmer", version.ref = "shimmer" }
