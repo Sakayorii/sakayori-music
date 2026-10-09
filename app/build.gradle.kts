@@ -102,8 +102,7 @@ abstract class GenerateProtoTask : DefaultTask() {
 
 android {
     namespace = "com.sakayori.music"
-    // API 37 removed from public SDK repo (2026-10-08); code uses max API 34 so 36 is safe
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = applicationIdOverride ?: baseApplicationId
