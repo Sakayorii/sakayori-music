@@ -134,6 +134,7 @@ import com.sakayori.music.discord.DiscordActivity
 import com.sakayori.music.discord.DiscordDefaults
 import com.sakayori.music.discord.DiscordRpcManager
 import com.sakayori.music.discord.DiscordActivityBuilder
+import com.sakayori.music.discord.discordAlbumName
 import com.sakayori.music.discord.DiscordTemplateRenderer
 import com.sakayori.music.discord.PresenceStatus
 import com.sakayori.music.constants.EnableLastFMScrobblingKey
@@ -3586,7 +3587,7 @@ class MusicService :
         val endTime = if (isPlaying && adjustedRemainingMs != null) now + adjustedRemainingMs else null
 
         val artistName = song.artists.joinToString { it.name }.ifEmpty { DiscordDefaults.UNKNOWN_ARTIST }
-        val albumName = song.album?.title
+        val albumName = song.discordAlbumName()
         val songTitle = if (speed != 1.0f) {
             "${song.song.title} [${String.format("%.2fx", speed)}]"
         } else {
@@ -3653,7 +3654,7 @@ class MusicService :
         if (fetched != null && DiscordRpcManager.isReady() && discordRpcEnabled) {
             Timber.tag("DiscordSvc").i("updateDiscordRPC: updating with fetched thumbnail")
             val fetchedArtistName = fetched.artists.joinToString { it.name }.ifEmpty { DiscordDefaults.UNKNOWN_ARTIST }
-            val fetchedAlbumName = fetched.album?.title
+            val fetchedAlbumName = fetched.discordAlbumName()
             val fetchedArtistThumbnail = fetched.artists.firstOrNull()?.thumbnailUrl
 
             val (freshPosition, freshSpeed, freshIsPlaying) = withContext(Dispatchers.Main.immediate) {
