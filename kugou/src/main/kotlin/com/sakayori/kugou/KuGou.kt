@@ -49,8 +49,6 @@ private const val HEAD_CUT_LIMIT = 30
  * Modified from [ViMusic](https://github.com/vfsfitvnm/ViMusic)
  */
 object KuGou {
-    var useTraditionalChinese: Boolean = false
-
     suspend fun getLyrics(title: String, artist: String, duration: Int, album: String? = null): Result<String> =
         runCatching {
             val keyword = generateKeyword(title, artist, album)

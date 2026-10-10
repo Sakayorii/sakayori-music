@@ -156,7 +156,6 @@ class App :
             )
 
         if (languageTag == "zh-TW") {
-            KuGou.useTraditionalChinese = true
         }
 
         // Initialize LastFM with API keys from BuildConfig (GitHub Secrets)

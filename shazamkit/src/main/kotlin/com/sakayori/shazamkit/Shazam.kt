@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import java.io.IOException
+import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -54,6 +56,7 @@ object Shazam {
     // Internal State
     private val activeRequests = AtomicInteger(0)
     
+    @Volatile
     private var lastRequestTime = 0L
     
     private val requestMutex = Mutex()
@@ -236,18 +239,17 @@ object Shazam {
                 lastException = e
                 Timber.tag(TAG).w(e, "Request failed on attempt %d/%d: %s", attempt + 1, MAX_RETRIES, e.message)
 
-                if (e.message?.contains("429") == true ||
-                    e.message?.contains("Too many requests", ignoreCase = true) == true
-                ) {
-                    if (attempt < MAX_RETRIES - 1) {
-                        val delayTime = calculateBackoffDelay(attempt)
-                        Timber.tag(TAG).d("Rate limited, retrying in %dms (attempt %d/%d)", delayTime, attempt + 2, MAX_RETRIES)
-                        delay(delayTime)
-                        continue
-                    }
-                } else {
-                    throw e
+                val retryable = e is IOException ||
+                    e.message?.contains("429") == true ||
+                    e.message?.contains("Too many requests", ignoreCase = true) == true ||
+                    e.message?.contains("temporarily unavailable", ignoreCase = true) == true
+                if (retryable && attempt < MAX_RETRIES - 1) {
+                    val delayTime = calculateBackoffDelay(attempt)
+                    Timber.tag(TAG).d("Retryable failure, retrying in %dms (attempt %d/%d)", delayTime, attempt + 2, MAX_RETRIES)
+                    delay(delayTime)
+                    continue
                 }
+                throw e
             }
         }
 
@@ -338,7 +340,8 @@ object Shazam {
      * Generate cache key
      */
     private fun generateCacheKey(signature: String): String {
-        return signature.hashCode().toString()
+        val digest = MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     /**

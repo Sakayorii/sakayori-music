@@ -375,7 +375,8 @@ class CastConnectionHandler(
             Timber.d("Cast session ending")
             // Capture Cast position before session ends
             val castPosition = remoteMediaClient?.approximateStreamPosition ?: _castPosition.value
-            if (castPosition > 0) {
+            val localMediaId = musicService.player.currentMediaItem?.mediaId
+            if (castPosition > 0 && currentMediaId != null && currentMediaId == localMediaId) {
                 // Seek local player to Cast position so playback can continue from there
                 musicService.player.seekTo(castPosition)
                 Timber.d("Saved Cast position: $castPosition")
@@ -415,9 +416,12 @@ class CastConnectionHandler(
         
         override fun onSessionResumeFailed(session: CastSession, error: Int) {
             _isConnecting.value = false
+            stopPositionUpdates()
         }
         
-        override fun onSessionSuspended(session: CastSession, reason: Int) {}
+        override fun onSessionSuspended(session: CastSession, reason: Int) {
+            stopPositionUpdates()
+        }
     }
     
     fun initialize(): Boolean {
