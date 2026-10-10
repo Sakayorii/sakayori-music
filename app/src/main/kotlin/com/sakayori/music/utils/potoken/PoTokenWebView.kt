@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -293,7 +294,7 @@ class PoTokenWebView private constructor(
                 // resolves, delivering this token to the other call's continuation.
                 webView.evaluateJavascript(
                     """(function() {
-                        var requestKey = "$requestKey"
+                        var requestKey = ${Json.encodeToString(requestKey)}
                         try {
                             var u8Identifier = ${stringToU8(identifier)}
                             obtainPoToken(u8Identifier).then(function(poTokenU8) {

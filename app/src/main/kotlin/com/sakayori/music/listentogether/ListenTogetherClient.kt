@@ -635,7 +635,7 @@ class ListenTogetherClient
          * Calculate exponential backoff delay with jitter
          */
         private fun calculateBackoffDelay(attempt: Int): Long {
-            val exponentialDelay = INITIAL_RECONNECT_DELAY_MS * (2 shl (minOf(attempt - 1, 4)))
+            val exponentialDelay = INITIAL_RECONNECT_DELAY_MS * (1 shl (minOf(attempt - 1, 4)))
             val cappedDelay = minOf(exponentialDelay, MAX_RECONNECT_DELAY_MS)
             // Add 0-20% jitter to prevent thundering herd
             val jitter = (cappedDelay * 0.2 * Math.random()).toLong()
@@ -843,8 +843,8 @@ class ListenTogetherClient
             if (revision <= 0L) return true
             while (true) {
                 val current = lastPlaybackRevision.get()
-                if (revision < current) return false
-                if (revision == current || lastPlaybackRevision.compareAndSet(current, revision)) return true
+                if (revision <= current) return false
+                if (lastPlaybackRevision.compareAndSet(current, revision)) return true
             }
         }
 
@@ -1477,9 +1477,13 @@ class ListenTogetherClient
                                         "Attempting automatic rejoin to room: $storedRoomCode",
                                     )
                                     // Try rejoining as a guest
+                                    val roomCode = storedRoomCode
+                                    val username = storedUsername
                                     scope.launch {
                                         delay(500) // Small delay before rejoin attempt
-                                        joinRoom(storedRoomCode!!, storedUsername!!)
+                                        if (roomCode != null && username != null) {
+                                            joinRoom(roomCode, username)
+                                        }
                                     }
                                 } else if (storedRoomCode != null && storedUsername != null) {
                                     // Host session expired - would need to create new room

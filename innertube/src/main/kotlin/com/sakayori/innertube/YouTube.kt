@@ -442,7 +442,7 @@ object YouTube {
                             ?.getItems()
                             ?.mapNotNull {
                                 AlbumPage.getSong(it, albumItem)
-                            }!!
+                            }.orEmpty()
                             .toMutableList(),
                     otherVersions = emptyList(),
                 )
@@ -488,7 +488,7 @@ object YouTube {
                                         name = it.text,
                                         id = it.navigationEndpoint?.browseEndpoint?.browseId,
                                     )
-                                }!!,
+                                },
                         year =
                             response.contents.twoColumnBrowseResultsRenderer.tabs
                                 .firstOrNull()
@@ -781,7 +781,7 @@ object YouTube {
                         ?.content
                         ?.sectionListRenderer
                         ?.contents
-                        ?.mapNotNull(ArtistPage::fromSectionListRendererContent)!!,
+                        ?.mapNotNull(ArtistPage::fromSectionListRendererContent).orEmpty(),
                 description = descriptionRuns?.joinToString(separator = "") { it.text },
                 subscriberCountText =
                     response.header
@@ -1217,6 +1217,7 @@ object YouTube {
                 allContents
                     .mapNotNull { content: MusicShelfRenderer.Content -> content.musicResponsiveListItemRenderer }
                     .mapNotNull { renderer -> PlaylistPage.fromMusicResponsiveListItemRenderer(renderer) }
+                    .distinctBy { it.id }
 
             val nextContinuation =
                 if (songs.isEmpty()) {
@@ -1701,8 +1702,9 @@ object YouTube {
                 ?.tabRenderer
                 ?.content
                 ?.sectionListRenderer
-                ?.contents!!
-                .mapNotNull(MoodAndGenres.Companion::fromSectionListRendererContent)
+                ?.contents
+                ?.mapNotNull(MoodAndGenres.Companion::fromSectionListRendererContent)
+                .orEmpty()
         }
 
     suspend fun browse(
@@ -1931,10 +1933,11 @@ object YouTube {
                         items =
                             contents
                                 ?.musicShelfContinuation
-                                ?.contents!!
-                                .mapNotNull(MusicShelfRenderer.Content::musicResponsiveListItemRenderer)
-                                .mapNotNull { LibraryPage.fromMusicResponsiveListItemRenderer(it) },
-                        continuation = contents.musicShelfContinuation.continuations?.getContinuation(),
+                                ?.contents
+                                ?.mapNotNull(MusicShelfRenderer.Content::musicResponsiveListItemRenderer)
+                                ?.mapNotNull { LibraryPage.fromMusicResponsiveListItemRenderer(it) }
+                                .orEmpty(),
+                        continuation = contents?.musicShelfContinuation?.continuations?.getContinuation(),
                     )
                 }
             }
@@ -3129,18 +3132,18 @@ object YouTube {
                         ?.tabbedRenderer
                         ?.watchNextTabbedResultsRenderer
                         ?.tabs
-                        ?.get(0)
+                        ?.getOrNull(0)
                         ?.tabRenderer
                         ?.content
                         ?.musicQueueRenderer
                         ?.content
-                        ?.playlistPanelRenderer!!
+                        ?.playlistPanelRenderer
             val title =
                 response.contents.singleColumnMusicWatchNextResultsRenderer
                     ?.tabbedRenderer
                     ?.watchNextTabbedResultsRenderer
                     ?.tabs
-                    ?.get(0)
+                    ?.getOrNull(0)
                     ?.tabRenderer
                     ?.content
                     ?.musicQueueRenderer
@@ -3151,17 +3154,17 @@ object YouTube {
                     ?.firstOrNull()
                     ?.text
             val items =
-                playlistPanelRenderer.contents.mapNotNull { content ->
+                playlistPanelRenderer?.contents?.mapNotNull { content ->
                     content.playlistPanelVideoRenderer
                         ?.let(NextPage::fromPlaylistPanelVideoRenderer)
                         ?.let { it to content.playlistPanelVideoRenderer.selected }
-                }
+                } ?: emptyList()
             val songs = items.map { it.first }
             val currentIndex = items.indexOfFirst { it.second }.takeIf { it != -1 }
 
             // load automix items
-            playlistPanelRenderer.contents
-                .lastOrNull()
+            playlistPanelRenderer?.contents
+                ?.lastOrNull()
                 ?.automixPreviewVideoRenderer
                 ?.content
                 ?.automixPlaylistVideoRenderer
@@ -3221,7 +3224,7 @@ object YouTube {
                         )?.tabRenderer
                         ?.endpoint
                         ?.browseEndpoint,
-                continuation = playlistPanelRenderer.continuations?.getContinuation(),
+                continuation = playlistPanelRenderer?.continuations?.getContinuation(),
                 endpoint = endpoint,
             )
         }
@@ -3320,19 +3323,16 @@ object YouTube {
                 ?.body
                 ?.transcriptBodyRenderer
                 ?.cueGroups
+                ?.mapNotNull { group ->
+                    group.transcriptCueGroupRenderer.cues.firstOrNull()?.let { cue ->
+                        val time = cue.transcriptCueRenderer.startOffsetMs
+                        val text = cue.transcriptCueRenderer.cue.simpleText.trim('♪').trim(' ')
+                        "[%02d:%02d.%03d]$text".format(time / 60000, (time / 1000) % 60, time % 1000)
+                    }
+                }
                 ?.joinToString(
                     separator = "\n",
-                ) { group ->
-                    val time =
-                        group.transcriptCueGroupRenderer.cues[0]
-                            .transcriptCueRenderer.startOffsetMs
-                    val text =
-                        group.transcriptCueGroupRenderer.cues[0]
-                            .transcriptCueRenderer.cue.simpleText
-                            .trim('♪')
-                            .trim(' ')
-                    "[%02d:%02d.%03d]$text".format(time / 60000, (time / 1000) % 60, time % 1000)
-                }!!
+                )!!
         }
 
     suspend fun visitorData(): Result<String> =

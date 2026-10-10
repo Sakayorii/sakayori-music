@@ -1008,8 +1008,8 @@ class ListenTogetherManager
         }
 
         private fun handlePlaybackSync(action: PlaybackActionPayload) {
-            if (action.revision > 0L && action.revision < lastAppliedRevision) {
-                Timber.tag(TAG).d("Ignoring stale playback revision ${action.revision} < $lastAppliedRevision")
+            if (action.revision > 0L && action.revision <= lastAppliedRevision) {
+                Timber.tag(TAG).d("Ignoring stale playback revision ${action.revision} <= $lastAppliedRevision")
                 return
             }
             lastAppliedRevision = maxOf(lastAppliedRevision, action.revision)
@@ -1416,8 +1416,8 @@ class ListenTogetherManager
             state: SyncStatePayload,
             forceFullState: Boolean = false,
         ) {
-            if (state.revision > 0L && state.revision < lastAppliedRevision) {
-                Timber.tag(TAG).d("Ignoring stale sync revision ${state.revision} < $lastAppliedRevision")
+            if (state.revision > 0L && state.revision <= lastAppliedRevision) {
+                Timber.tag(TAG).d("Ignoring stale sync revision ${state.revision} <= $lastAppliedRevision")
                 return
             }
             lastAppliedRevision = maxOf(lastAppliedRevision, state.revision)

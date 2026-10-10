@@ -28,6 +28,7 @@ data class DiscordUser(
 
 object DiscordRpcManager {
     private const val TAG = "DiscordSvc"
+    private const val MAX_IMAGE_RESOLVE_ATTEMPTS = 3
 
     @Volatile
     private var initialized: Boolean = false
@@ -55,6 +56,8 @@ object DiscordRpcManager {
     private val currentActivityId = AtomicLong(0L)
     @Volatile private var imageResolutionJob: Job? = null
     @Volatile private var currentActivityHadImages: Boolean = false
+    @Volatile private var imageResolveFailedSongId: String? = null
+    @Volatile private var imageResolveFailures: Int = 0
     private val reconnectMutex = Mutex()
 
     private val _accessTokenFlow = MutableStateFlow<String?>(null)
@@ -102,6 +105,9 @@ object DiscordRpcManager {
             lastActivity?.largeImage == null && lastActivity?.smallImage == null &&
             (imageResolutionJob == null || imageResolutionJob?.isCompleted == true)
         ) {
+            if (imageResolveFailedSongId == songId && imageResolveFailures >= MAX_IMAGE_RESOLVE_ATTEMPTS) {
+                return true
+            }
             return false
         }
         return true
@@ -387,6 +393,12 @@ object DiscordRpcManager {
 
             if (largeResolved == null && smallResolved == null) {
                 Timber.tag(TAG).i("setActivity: image resolution returned null, keeping text-only presence")
+                if (songIdAtLaunch == imageResolveFailedSongId) {
+                    imageResolveFailures++
+                } else {
+                    imageResolveFailedSongId = songIdAtLaunch
+                    imageResolveFailures = 1
+                }
                 return@launch
             }
 
@@ -442,6 +454,8 @@ object DiscordRpcManager {
         currentSongId = null
         currentIsPlaying = false
         currentActivityHadImages = false
+        imageResolveFailedSongId = null
+        imageResolveFailures = 0
         currentActivityId.incrementAndGet()
         imageResolutionJob?.cancel()
         try {
