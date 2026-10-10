@@ -288,7 +288,7 @@ constructor(
         var current = this
         while (current != null) {
             if (current is HttpDataSource.InvalidResponseCodeException &&
-                (current.responseCode == 403 || current.responseCode == 410)
+                (current.responseCode == 403 || current.responseCode == 410 || current.responseCode == 416)
             ) {
                 return true
             }
