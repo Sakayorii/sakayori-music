@@ -1,0 +1,4 @@
+- Fixed playback freeze caused by YouTube API changes
+- Fixed playlist sync duplication and out-of-memory crashes
+- Fixed crossfade timing at non-default playback speeds
+- Fixed app lingering in background after closing
