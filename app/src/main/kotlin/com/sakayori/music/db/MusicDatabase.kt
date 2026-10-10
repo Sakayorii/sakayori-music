@@ -144,7 +144,6 @@ class MusicDatabase(
         AutoMigration(from = 21, to = 22, spec = Migration21To22::class),
         AutoMigration(from = 22, to = 23, spec = Migration22To23::class),
         AutoMigration(from = 23, to = 24, spec = Migration23To24::class),
-        AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
         AutoMigration(from = 26, to = 27),
         AutoMigration(from = 27, to = 28),
@@ -224,11 +223,6 @@ abstract class InternalDatabase : RoomDatabase() {
                             super.onOpen(db)
                             applyPragmaSettings(db)
                         }
-
-                        override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
-                            super.onDestructiveMigration(db)
-                            backupDatabase(context, dbName)
-                        }
                     },
                 )
             }
@@ -259,7 +253,14 @@ private fun applyPragmaSettings(db: SupportSQLiteDatabase) {
 private fun backupDatabase(
     context: Context,
     dbName: String,
+    db: SupportSQLiteDatabase,
 ): File? {
+    try {
+        db.query("PRAGMA wal_checkpoint(FULL)").close()
+    } catch (e: Exception) {
+        Timber.tag("DatabaseBackup").e(e, "Failed to checkpoint before backup")
+    }
+
     val dbFile = context.getDatabasePath(dbName)
     if (!dbFile.exists()) return null
 
@@ -292,6 +293,16 @@ private fun backupDatabase(
             copyFile(it, File("$backupBase.db-shm"))
         }
         Timber.tag("DatabaseBackup").i("Backed up database to $backupBase.db")
+
+        backupDir.listFiles { file ->
+            file.isFile && file.name.startsWith("${dbName}_backup_") && file.name.endsWith(".db")
+        }?.sortedByDescending { it.lastModified() }
+            ?.drop(5)
+            ?.forEach { old ->
+                old.delete()
+                File("${old.absolutePath}-wal").delete()
+                File("${old.absolutePath}-shm").delete()
+            }
     }
     return if (success) File("$backupBase.db") else null
 }
@@ -331,7 +342,7 @@ private class BackupCallback(
         newVersion: Int,
     ) {
         Timber.tag("DatabaseBackup").i("Database upgrade $oldVersion -> $newVersion, backing up first")
-        backupDatabase(context, dbName)
+        backupDatabase(context, dbName, db)
         delegate.onUpgrade(db, oldVersion, newVersion)
     }
 
@@ -341,7 +352,7 @@ private class BackupCallback(
         newVersion: Int,
     ) {
         Timber.tag("DatabaseBackup").i("Database downgrade $oldVersion -> $newVersion, backing up first")
-        backupDatabase(context, dbName)
+        backupDatabase(context, dbName, db)
         delegate.onDowngrade(db, oldVersion, newVersion)
     }
 
@@ -752,26 +763,6 @@ class Migration20To21 : AutoMigrationSpec
 
 class Migration21To22 : AutoMigrationSpec {
     override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        try {
-            db.execSQL("ALTER TABLE song ADD COLUMN libraryAddToken TEXT DEFAULT ''")
-        } catch (e: Exception) {
-            Timber.tag("Migration21To22").w(e, "Column may already exist")
-        }
-        try {
-            db.execSQL("ALTER TABLE song ADD COLUMN libraryRemoveToken TEXT DEFAULT ''")
-        } catch (e: Exception) {
-            Timber.tag("Migration21To22").w(e, "Column may already exist")
-        }
-        try {
-            db.execSQL("ALTER TABLE song ADD COLUMN romanizeLyrics INTEGER NOT NULL DEFAULT 1")
-        } catch (e: Exception) {
-            Timber.tag("Migration21To22").w(e, "Column may already exist")
-        }
-        try {
-            db.execSQL("ALTER TABLE song ADD COLUMN isDownloaded INTEGER NOT NULL DEFAULT 0")
-        } catch (e: Exception) {
-            Timber.tag("Migration21To22").w(e, "Column may already exist")
-        }
     }
 }
 
