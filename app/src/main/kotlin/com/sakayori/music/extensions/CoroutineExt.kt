@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 fun <T> Flow<T>.collect(
     scope: CoroutineScope,
@@ -29,4 +30,4 @@ fun <T> Flow<T>.collectLatest(
     }
 }
 
-val SilentHandler = CoroutineExceptionHandler { _, _ -> }
+val SilentHandler = CoroutineExceptionHandler { _, throwable -> Timber.tag("CoroutineExt").e(throwable) }
