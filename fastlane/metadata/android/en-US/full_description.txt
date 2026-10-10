@@ -21,3 +21,13 @@ Features:
 - Sleep timer
 - Material 3 
 - etc.
+
+Network services used:
+
+- YouTube Music (music.youtube.com) for streaming, search and library sync
+- Shazam for song recognition
+- Lyrics providers: Kugou, Lrclib, Paxsenix, LyricsPlus mirrors, Better Lyrics
+- Return YouTube Dislike for dislike counts
+- Listen Together server (wss://listen.sakayori.studio) for synced listening sessions
+- Player cipher configs fetched from GitHub (Sakayorii/faraday, ZemerTeam/zemer-cipher)
+- Optional: Discord Rich Presence, AI translation (OpenRouter, Mistral, DeepL) using your own API keys
