@@ -52,7 +52,7 @@ class YouTubePlaylistQueue(
             val currentContinuation = continuation ?: return@withContext emptyList()
             var lastException: Throwable? = null
             
-            for (attempt in 0..maxRetries) {
+            for (attempt in 0 until maxRetries) {
                 try {
                     val continuationPage = YouTube.playlistContinuation(currentContinuation).getOrThrow()
                     continuation = continuationPage.continuation

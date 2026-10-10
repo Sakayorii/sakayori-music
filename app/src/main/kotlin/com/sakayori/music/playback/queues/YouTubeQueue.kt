@@ -38,10 +38,10 @@ class YouTubeQueue(
                 endpoint.playlistId?.startsWith("RDAMVM") == true ||
                 (endpoint.videoId != null && endpoint.playlistId == null)
 
-            for (attempt in 0..maxRetries) {
+            for (attempt in 0 until maxRetries) {
                 try {
                     val nextResult = YouTube.next(endpoint, continuation).getOrThrow()
-                    
+
                     var items = nextResult.items
                     val relEndpoint = nextResult.relatedEndpoint
                     
@@ -67,13 +67,16 @@ class YouTubeQueue(
                     )
                 } catch (e: Exception) {
                     lastException = e
-                    if (
-                        e is EmptyRadioQueueException &&
-                        endpoint.playlistId?.startsWith("RDAMVM") == true &&
-                        endpoint.videoId != null
-                    ) {
-                        endpoint = WatchEndpoint(videoId = endpoint.videoId)
-                        // It will loop again and try with just videoId
+                    if (e is EmptyRadioQueueException) {
+                        if (
+                            endpoint.playlistId?.startsWith("RDAMVM") == true &&
+                            endpoint.videoId != null
+                        ) {
+                            endpoint = WatchEndpoint(videoId = endpoint.videoId)
+                            // It will loop again and try with just videoId
+                        } else {
+                            throw e
+                        }
                     }
                 }
             }
@@ -87,7 +90,7 @@ class YouTubeQueue(
         return withContext(IO) {
             var lastException: Throwable? = null
 
-            for (attempt in 0..maxRetries) {
+            for (attempt in 0 until maxRetries) {
                 try {
                     val nextResult = YouTube.next(endpoint, continuation).getOrThrow()
                     endpoint = nextResult.endpoint

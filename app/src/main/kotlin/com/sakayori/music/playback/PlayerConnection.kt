@@ -515,18 +515,18 @@ class PlayerConnection(
 
             Timber.tag(TAG).d("Current: time=$currentTime dayOfWeek=$adjustedDayOfWeek")
 
-            val isDayAllowed =
+            fun isDayAllowedFor(dayIndex: Int): Boolean =
                 when (sleepTimerRepeat) {
                     "daily" -> {
                         true
                     }
 
                     "weekdays" -> {
-                        adjustedDayOfWeek in 0..4
+                        dayIndex in 0..4
                     }
 
                     "weekends" -> {
-                        adjustedDayOfWeek in 5..6
+                        dayIndex in 5..6
                     }
 
                     "weekdays_weekends" -> {
@@ -536,19 +536,14 @@ class PlayerConnection(
                     // both groups active; per-day time handles the distinction
                     "custom" -> {
                         val customDays = sleepTimerCustomDaysStr.split(",").mapNotNull { it.trim().toIntOrNull() }
-                        Timber.tag(TAG).d("Custom days: $customDays, adjustedDayOfWeek=$adjustedDayOfWeek")
-                        adjustedDayOfWeek in customDays
+                        Timber.tag(TAG).d("Custom days: $customDays, dayIndex=$dayIndex")
+                        dayIndex in customDays
                     }
 
                     else -> {
                         false
                     }
                 }
-
-            if (!isDayAllowed) {
-                Timber.tag(TAG).d("✗ Day not allowed for Sleep Timer")
-                return false
-            }
 
 // "daily" uses the single global time window.
 // All other modes store per-day times in the dayTimes map so that
@@ -576,7 +571,20 @@ class PlayerConnection(
 
             Timber.tag(TAG).d("Time check: $currentTime between $startStr-$endStr? $isTimeInRange")
 
-            if (isTimeInRange) {
+            val prevDayIndex = (adjustedDayOfWeek + 6) % 7
+            val isPrevDaySpillover =
+                if (!isTimeInRange && usesDayTimesMap && isDayAllowedFor(prevDayIndex)) {
+                    val (prevStartStr, prevEndStr) =
+                        parseDayTimes(sleepTimerDayTimesStr)[prevDayIndex]
+                            ?: (sleepTimerStartTime to sleepTimerEndTime)
+                    val prevStartTime = LocalTime.parse(prevStartStr, timeFormatter)
+                    val prevEndTime = LocalTime.parse(prevEndStr, timeFormatter)
+                    !prevEndTime.isAfter(prevStartTime) && currentTime.isBefore(prevEndTime)
+                } else {
+                    false
+                }
+
+            if ((isDayAllowedFor(adjustedDayOfWeek) && isTimeInRange) || isPrevDaySpillover) {
                 Timber.tag(TAG).i("AUTO SLEEP TIMER STARTED: $sleepTimerDefaultMinutes minutes")
                 service.sleepTimer?.start(sleepTimerDefaultMinutes)
                 return true
