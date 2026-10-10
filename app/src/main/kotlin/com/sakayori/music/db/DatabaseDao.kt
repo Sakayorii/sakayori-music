@@ -58,12 +58,9 @@ import com.sakayori.music.models.toMediaMetadata
 import com.sakayori.music.ui.utils.resize
 import com.sakayori.music.utils.ArtistNameAliases
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import java.text.Collator
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.Locale
 
 /**
@@ -729,16 +726,22 @@ interface DatabaseDao {
     @Query("SELECT * FROM song WHERE id = :songId LIMIT 1")
     fun getSongByIdBlocking(songId: String): Song?
 
+    suspend fun getSongsByIds(songIds: List<String>): List<Song> =
+        if (songIds.isEmpty()) emptyList() else getSongsByIdsQuery(songIds)
+
     @Transaction
     @Query("SELECT * FROM song WHERE id IN (:songIds)")
-    suspend fun getSongsByIds(songIds: List<String>): List<Song>
+    suspend fun getSongsByIdsQuery(songIds: List<String>): List<Song>
 
     @Transaction
     @Query("SELECT * FROM song WHERE dateDownload IS NOT NULL")
     fun cachePlaylistSongs(): Flow<List<Song>>
 
+    suspend fun existingSongIds(songIds: List<String>): List<String> =
+        if (songIds.isEmpty()) emptyList() else existingSongIdsQuery(songIds)
+
     @Query("SELECT id FROM song WHERE id IN (:songIds)")
-    suspend fun existingSongIds(songIds: List<String>): List<String>
+    suspend fun existingSongIdsQuery(songIds: List<String>): List<String>
 
 
     @Transaction
@@ -1192,8 +1195,14 @@ interface DatabaseDao {
         songId: String,
     ): Int
 
-    @Query("SELECT songId from playlist_song_map WHERE playlistId = :playlistId AND songId IN (:songIds)")
     fun playlistDuplicates(
+        playlistId: String,
+        songIds: List<String>,
+    ): List<String> =
+        if (songIds.isEmpty()) emptyList() else playlistDuplicatesQuery(playlistId, songIds)
+
+    @Query("SELECT songId from playlist_song_map WHERE playlistId = :playlistId AND songId IN (:songIds)")
+    fun playlistDuplicatesQuery(
         playlistId: String,
         songIds: List<String>,
     ): List<String>
@@ -1630,23 +1639,6 @@ interface DatabaseDao {
     @Query("UPDATE playCount SET count = count + 1 WHERE song = :songId AND year = :year AND month = :month")
     fun incrementPlayCount(songId: String, year: Int, month: Int)
 
-    /**
-     * Increment by one the play count with today's year and month.
-     */
-    fun incrementPlayCount(songId: String) {
-        val time = LocalDateTime.now().atOffset(ZoneOffset.UTC)
-        var oldCount: Int
-        runBlocking {
-            oldCount = getPlayCountByMonth(songId, time.year, time.monthValue).first()
-        }
-
-        // add new
-        if (oldCount <= 0) {
-            insert(PlayCountEntity(songId, time.year, time.monthValue, 0))
-        }
-        incrementPlayCount(songId, time.year, time.monthValue)
-    }
-
     @Transaction
     @Query("UPDATE song SET inLibrary = :inLibrary WHERE id = :songId")
     fun inLibrary(
@@ -1721,7 +1713,6 @@ interface DatabaseDao {
         UPDATE artist SET name = :name
         WHERE id = :artistId
            OR (:channelId IS NOT NULL AND (id = :channelId OR channelId = :channelId))
-           OR name = :originalName
         """,
     )
     fun renameArtist(
@@ -1800,21 +1791,18 @@ interface DatabaseDao {
 
     @Transaction
     fun insert(albumPage: AlbumPage) {
-        if (insert(
-                AlbumEntity(
-                    id = albumPage.album.browseId,
-                    playlistId = albumPage.album.playlistId,
-                    title = albumPage.album.title,
-                    year = albumPage.album.year,
-                    thumbnailUrl = albumPage.album.thumbnail,
-                    songCount = albumPage.songs.size,
-                    duration = albumPage.songs.sumOf { it.duration ?: 0 },
-                    explicit = albumPage.album.explicit || albumPage.songs.any { it.explicit },
-                ),
-            ) == -1L
-        ) {
-            return
-        }
+        insert(
+            AlbumEntity(
+                id = albumPage.album.browseId,
+                playlistId = albumPage.album.playlistId,
+                title = albumPage.album.title,
+                year = albumPage.album.year,
+                thumbnailUrl = albumPage.album.thumbnail,
+                songCount = albumPage.songs.size,
+                duration = albumPage.songs.sumOf { it.duration ?: 0 },
+                explicit = albumPage.album.explicit || albumPage.songs.any { it.explicit },
+            ),
+        )
         albumPage.songs
             .map(SongItem::toMediaMetadata)
             .onEach(::insert)
@@ -1857,30 +1845,32 @@ interface DatabaseDao {
                 title = mediaMetadata.title,
                 duration = mediaMetadata.duration,
                 thumbnailUrl = mediaMetadata.thumbnailUrl,
-                albumId = mediaMetadata.album?.id,
-                albumName = mediaMetadata.album?.title,
+                albumId = mediaMetadata.album?.id ?: song.song.albumId,
+                albumName = mediaMetadata.album?.title ?: song.song.albumName,
                 libraryAddToken = mediaMetadata.libraryAddToken,
                 libraryRemoveToken = mediaMetadata.libraryRemoveToken
             ),
         )
-        songArtistMap(song.id).forEach(::delete)
-        mediaMetadata.artists.forEachIndexed { index, artist ->
-            val artistId = artist.id ?: artistByName(artist.name)?.id ?: ArtistEntity.generateArtistId()
+        if (mediaMetadata.artists.isNotEmpty()) {
+            songArtistMap(song.id).forEach(::delete)
+            mediaMetadata.artists.forEachIndexed { index, artist ->
+                val artistId = artist.id ?: artistByName(artist.name)?.id ?: ArtistEntity.generateArtistId()
 
-            insert(
-                ArtistEntity(
-                    id = artistId,
-                    name = artist.name,
-                    channelId = artist.id,
-                ),
-            )
-            insert(
-                SongArtistMap(
-                    songId = song.id,
-                    artistId = artistId,
-                    position = index,
-                ),
-            )
+                insert(
+                    ArtistEntity(
+                        id = artistId,
+                        name = artist.name,
+                        channelId = artist.id,
+                    ),
+                )
+                insert(
+                    SongArtistMap(
+                        songId = song.id,
+                        artistId = artistId,
+                        position = index,
+                    ),
+                )
+            }
         }
     }
 
@@ -1971,7 +1961,6 @@ interface DatabaseDao {
         }
     }
 
-    @Update
     fun update(playlistEntity: PlaylistEntity, playlistItem: PlaylistItem) {
         update(
             playlistEntity.copy(
@@ -2019,9 +2008,6 @@ interface DatabaseDao {
 
     @Delete
     fun delete(playlistSongMap: PlaylistSongMap)
-
-    @Query("DELETE FROM playlist WHERE browseId = :browseId")
-    fun deletePlaylistById(browseId: String)
 
     @Delete
     fun delete(lyrics: LyricsEntity)

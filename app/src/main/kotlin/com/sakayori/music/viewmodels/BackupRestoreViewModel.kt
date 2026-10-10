@@ -79,47 +79,51 @@ class BackupRestoreViewModel @Inject constructor(
     val database: MusicDatabase,
 ) : ViewModel() {
     fun backup(context: Context, uri: Uri) {
-        runCatching {
-            context.applicationContext.contentResolver.openOutputStream(uri)?.use {
-                it.buffered().zipOutputStream().use { outputStream ->
-                    (context.filesDir / "datastore" / SETTINGS_FILENAME).inputStream().buffered()
-                        .use { inputStream ->
-                            outputStream.putNextEntry(ZipEntry(SETTINGS_FILENAME))
-                            inputStream.copyTo(outputStream)
-                        }
-                    outputStream.putNextEntry(ZipEntry(ArtistNameAliases.BACKUP_FILENAME))
-                    outputStream.write(ArtistNameAliases.serialize().encodeToByteArray())
-                    runBlocking(Dispatchers.IO) {
-                        database.checkpoint()
-                    }
-                    val dbPath = database.openHelper.writableDatabase.path
-                    if (dbPath != null) {
-                        FileInputStream(dbPath).use { inputStream ->
-                            outputStream.putNextEntry(ZipEntry(InternalDatabase.DB_NAME))
-                            inputStream.copyTo(outputStream)
-                        }
-                        val walFile = File("$dbPath-wal")
-                        if (walFile.exists()) {
-                            FileInputStream(walFile).use { inputStream ->
-                                outputStream.putNextEntry(ZipEntry("${InternalDatabase.DB_NAME}-wal"))
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                context.applicationContext.contentResolver.openOutputStream(uri)?.use {
+                    it.buffered().zipOutputStream().use { outputStream ->
+                        (context.filesDir / "datastore" / SETTINGS_FILENAME).inputStream().buffered()
+                            .use { inputStream ->
+                                outputStream.putNextEntry(ZipEntry(SETTINGS_FILENAME))
                                 inputStream.copyTo(outputStream)
                             }
-                        }
-                        val shmFile = File("$dbPath-shm")
-                        if (shmFile.exists()) {
-                            FileInputStream(shmFile).use { inputStream ->
-                                outputStream.putNextEntry(ZipEntry("${InternalDatabase.DB_NAME}-shm"))
+                        outputStream.putNextEntry(ZipEntry(ArtistNameAliases.BACKUP_FILENAME))
+                        outputStream.write(ArtistNameAliases.serialize().encodeToByteArray())
+                        database.checkpoint()
+                        val dbPath = database.openHelper.writableDatabase.path
+                        if (dbPath != null) {
+                            FileInputStream(dbPath).use { inputStream ->
+                                outputStream.putNextEntry(ZipEntry(InternalDatabase.DB_NAME))
                                 inputStream.copyTo(outputStream)
+                            }
+                            val walFile = File("$dbPath-wal")
+                            if (walFile.exists()) {
+                                FileInputStream(walFile).use { inputStream ->
+                                    outputStream.putNextEntry(ZipEntry("${InternalDatabase.DB_NAME}-wal"))
+                                    inputStream.copyTo(outputStream)
+                                }
+                            }
+                            val shmFile = File("$dbPath-shm")
+                            if (shmFile.exists()) {
+                                FileInputStream(shmFile).use { inputStream ->
+                                    outputStream.putNextEntry(ZipEntry("${InternalDatabase.DB_NAME}-shm"))
+                                    inputStream.copyTo(outputStream)
+                                }
                             }
                         }
                     }
                 }
+            }.onSuccess {
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    Toast.makeText(context, R.string.backup_create_success, Toast.LENGTH_SHORT).show()
+                }
+            }.onFailure {
+                reportException(it)
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    Toast.makeText(context, R.string.backup_create_failed, Toast.LENGTH_SHORT).show()
+                }
             }
-        }.onSuccess {
-            Toast.makeText(context, R.string.backup_create_success, Toast.LENGTH_SHORT).show()
-        }.onFailure {
-            reportException(it)
-            Toast.makeText(context, R.string.backup_create_failed, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -243,14 +247,16 @@ class BackupRestoreViewModel @Inject constructor(
                         backupFile.delete()
 
                         File(restoreDbPath).copyTo(stagedFile, overwrite = true)
-
-                        // Preserve current DB, promote staged, remove backup
-                        if (!currentFile.renameTo(backupFile)) {
-                            error("Failed to preserve current DB before restore")
+                        if (!stagedFile.exists()) {
+                            error("Failed to stage restored DB")
                         }
+
+                        currentFile.copyTo(backupFile, overwrite = true)
+                        if (!backupFile.exists()) {
+                            error("Failed to back up current DB before restore")
+                        }
+
                         if (!stagedFile.renameTo(currentFile)) {
-                            // Rollback: restore the original
-                            backupFile.renameTo(currentFile)
                             error("Failed to promote restored DB")
                         }
                         backupFile.delete()
