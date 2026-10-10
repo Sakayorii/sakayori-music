@@ -117,11 +117,7 @@ private class LazyCache(
     ): Boolean = delegate().isCached(key, position, length)
 
     override fun release() {
-        val cacheToRelease =
-            synchronized(lock) {
-                cache.also { cache = null }
-            }
-        cacheToRelease?.release()
+        synchronized(lock) { cache }?.release()
     }
 }
 
