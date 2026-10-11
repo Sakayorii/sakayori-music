@@ -1559,9 +1559,14 @@ class SyncUtils @Inject constructor(
                                 changed = true
                             }
                         }
+                        var pendingPosition = desiredEntries.size
                         remainingMaps.values.forEach { queue ->
                             queue.forEach {
-                                database.delete(it)
+                                if (it.setVideoId == null && it.songId !in remoteIdSet) {
+                                    database.update(it.copy(position = pendingPosition++))
+                                } else {
+                                    database.delete(it)
+                                }
                                 changed = true
                             }
                         }
