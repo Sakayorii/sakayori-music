@@ -107,62 +107,71 @@ fun AiSettings(navController: NavController) {
             "OpenRouter" to
                 listOf(
                     "google/gemini-2.5-flash-lite",
-                    "google/gemini-2.5-flash",
-                    "x-ai/grok-4.1-fast",
-                    "deepseek/deepseek-v3.1-terminus:exacto",
+                    "google/gemini-3.5-flash-lite",
                     "openai/gpt-4o-mini",
+                    "anthropic/claude-haiku-4-5",
+                    "google/gemini-2.5-flash",
+                    "deepseek/deepseek-v3.1-terminus:exacto",
+                    "x-ai/grok-4.1-fast",
                     "meta-llama/llama-4-scout",
                     "openai/gpt-5-nano",
-                    "openai/gpt-oss-120b",
-                    "google/gemini-3-flash-preview",
                 ),
             "OrcaRouter" to
                 listOf(
+                    "orcarouter/auto",
                     "openai/gpt-4o-mini",
                     "openai/gpt-4o",
-                    "anthropic/claude-3-5-sonnet-20241022",
                     "google/gemini-2.5-flash",
                     "google/gemini-2.5-pro",
+                    "anthropic/claude-haiku-4-5",
+                    "anthropic/claude-sonnet-5",
                     "deepseek/deepseek-chat",
-                    "x-ai/grok-2"
+                    "grok/grok-4.3",
                 ),
             "OpenAI" to
                 listOf(
                     "gpt-4o-mini",
                     "gpt-4o",
-                    "gpt-4-turbo",
+                    "gpt-5-nano",
+                    "gpt-5-mini",
+                    "gpt-5",
+                    "gpt-5.6-luna",
                 ),
             "Claude" to
                 listOf(
-                    "claude-opus-4-6",
-                    "claude-sonnet-4-6",
                     "claude-haiku-4-5-20251001",
+                    "claude-sonnet-4-6",
+                    "claude-sonnet-5",
+                    "claude-opus-4-8",
                 ),
             "Gemini" to
                 listOf(
-                    "gemini-flash-lite-latest",
                     "gemini-2.5-flash-lite",
-                    "gemini-flash-latest",
                     "gemini-2.5-flash",
-                    "gemini-3-flash-preview",
+                    "gemini-3.5-flash-lite",
+                    "gemini-3.5-flash",
+                    "gemini-3.8-flash",
                 ),
             "Perplexity" to
                 listOf(
                     "sonar",
                     "sonar-pro",
-                    "sonar-reasoning",
+                    "sonar-reasoning-pro",
+                    "sonar-deep-research",
                 ),
             "XAi" to
                 listOf(
-                    "grok-4-1-fast",
-                    "grok-vision-beta",
+                    "grok-4.3",
+                    "grok-4.5",
+                    "grok-4.7",
+                    "grok-4.20-0309-non-reasoning",
                 ),
             "Mistral" to
                 listOf(
-                    "mistral-large-latest",
-                    "mistral-medium-latest",
-                    "mistral-small-latest",
-                    "mistral-tiny-latest",
+                    "mistral-small-2603",
+                    "mistral-medium-3-5",
+                    "mistral-large-2512",
+                    "codestral-2508",
                 ),
             "DeepL" to listOf(),
             "Custom" to listOf(),
