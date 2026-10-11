@@ -10,24 +10,17 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -46,7 +39,6 @@ import com.sakayori.music.ui.component.ReleaseNotesCard
 import com.sakayori.music.ui.utils.backToMain
 import com.sakayori.music.utils.Updater
 import androidx.compose.runtime.remember
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -296,98 +288,4 @@ fun SettingsScreen(
             }
         }
     )
-
-    WarmSettingsIcons()
-}
-
-private val settingsIconWarmup =
-    listOf(
-        R.drawable.about_icon,
-        R.drawable.album,
-        R.drawable.arrow_forward,
-        R.drawable.artist,
-        R.drawable.backup,
-        R.drawable.baseline_event_repeat_24,
-        R.drawable.bluetooth,
-        R.drawable.buymeacoffee,
-        R.drawable.cached,
-        R.drawable.cast,
-        R.drawable.check,
-        R.drawable.clear_all,
-        R.drawable.close,
-        R.drawable.crop,
-        R.drawable.delete_history,
-        R.drawable.discord,
-        R.drawable.discover_tune,
-        R.drawable.download,
-        R.drawable.drag_handle,
-        R.drawable.edit,
-        R.drawable.explicit,
-        R.drawable.explore_outlined,
-        R.drawable.fast_forward,
-        R.drawable.favorite,
-        R.drawable.fullscreen,
-        R.drawable.github,
-        R.drawable.gradient,
-        R.drawable.graphic_eq,
-        R.drawable.grid_view,
-        R.drawable.group_outlined,
-        R.drawable.hide_image,
-        R.drawable.history,
-        R.drawable.home_outlined,
-        R.drawable.ic_logo_oval,
-        R.drawable.key,
-        R.drawable.language_korean_latin,
-        R.drawable.linear_scale,
-        R.drawable.location_on,
-        R.drawable.lyrics,
-        R.drawable.manage_search,
-        R.drawable.more_time,
-        R.drawable.music_note,
-        R.drawable.nav_bar,
-        R.drawable.notification,
-        R.drawable.offline,
-        R.drawable.person,
-        R.drawable.playlist_add,
-        R.drawable.queue_music,
-        R.drawable.refresh,
-        R.drawable.repeat,
-        R.drawable.screenshot,
-        R.drawable.search_off,
-        R.drawable.settings,
-        R.drawable.shuffle,
-        R.drawable.similar,
-        R.drawable.skip_next,
-        R.drawable.sliders,
-        R.drawable.slow_motion_video,
-        R.drawable.speed,
-        R.drawable.stats,
-        R.drawable.swipe,
-        R.drawable.sync,
-        R.drawable.tab,
-        R.drawable.time_auto,
-        R.drawable.timer,
-        R.drawable.timer_arrow_down,
-        R.drawable.trending_up,
-        R.drawable.tune,
-        R.drawable.volume_off_pause,
-        R.drawable.volume_up,
-        R.drawable.wifi_proxy,
-    )
-
-@Composable
-private fun WarmSettingsIcons() {
-    var warmed by remember { mutableStateOf(0) }
-    LaunchedEffect(Unit) {
-        delay(400)
-        while (warmed < settingsIconWarmup.size) {
-            withFrameNanos { }
-            warmed = (warmed + 6).coerceAtMost(settingsIconWarmup.size)
-        }
-    }
-    if (warmed > 0) {
-        Box(Modifier.size(0.dp)) {
-            settingsIconWarmup.take(warmed).forEach { painterResource(it) }
-        }
-    }
 }
