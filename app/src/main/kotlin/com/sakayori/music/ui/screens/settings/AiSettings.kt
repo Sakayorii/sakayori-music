@@ -138,7 +138,7 @@ fun AiSettings(navController: NavController) {
                     "gpt-5.6-sol",
                     "gpt-5.5",
                     "gpt-5",
-                    "gpt-4o-mini",
+                    "gpt-5-mini",
                 ),
             "Claude" to
                 listOf(
@@ -154,15 +154,15 @@ fun AiSettings(navController: NavController) {
                 ),
             "Gemini" to
                 listOf(
+                    "gemini-flash-latest",
                     "gemini-3.8-flash",
                     "gemini-3.6-flash",
-                    "gemini-3.5-flash",
                     "gemini-3.5-flash-lite",
                     "gemini-3.1-flash-lite",
+                    "gemini-3.1-pro-preview",
                     "gemini-2.5-pro",
                     "gemini-2.5-flash",
                     "gemini-2.5-flash-lite",
-                    "gemini-flash-latest",
                 ),
             "Perplexity" to
                 listOf(
