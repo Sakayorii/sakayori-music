@@ -93,6 +93,7 @@ import com.sakayori.music.ui.component.DefaultDialog
 import com.sakayori.music.ui.component.IconButton
 import com.sakayori.music.ui.component.IntegrationCard
 import com.sakayori.music.ui.component.IntegrationCardItem
+import com.sakayori.music.ui.component.PeekAvatar
 import com.sakayori.music.ui.utils.backToMain
 import com.sakayori.music.utils.rememberPreference
 import com.sakayori.music.viewmodels.ListenTogetherViewModel
@@ -212,7 +213,15 @@ fun ListenTogetherSettings(
                 onValueChange = { tempUsername = it },
                 label = { Text(stringResource(R.string.listen_together_username)) },
                 leadingIcon = {
-                    Icon(painterResource(R.drawable.person), contentDescription = null)
+                    if (tempUsername.isNotBlank()) {
+                        PeekAvatar(
+                            name = tempUsername,
+                            modifier = Modifier.size(32.dp),
+                            contentDescription = null,
+                        )
+                    } else {
+                        Icon(painterResource(R.drawable.person), contentDescription = null)
+                    }
                 },
                 trailingIcon = {
                     if (tempUsername.isNotBlank()) {

@@ -43,6 +43,8 @@ class CastConnectionHandler(
     
     fun initialize(): Boolean = false
     fun disconnect() {}
+    fun refreshCastingState() {}
+    val castMediaId: String? get() = null
     fun loadCurrentMedia() {}
     fun loadMedia(metadata: com.sakayori.music.models.MediaMetadata) {}
     fun play() {}

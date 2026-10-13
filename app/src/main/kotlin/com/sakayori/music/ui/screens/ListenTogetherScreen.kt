@@ -146,7 +146,7 @@ fun ListenTogetherScreen(
     val joinRequestDeniedText = stringResource(R.string.join_request_denied)
 
     LaunchedEffect(savedUsername) {
-        if (usernameInput.isBlank() && savedUsername.isNotBlank()) {
+        if (usernameInput != savedUsername) {
             usernameInput = savedUsername
         }
     }
