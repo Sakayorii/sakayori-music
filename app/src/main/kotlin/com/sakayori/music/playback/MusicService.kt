@@ -3516,7 +3516,16 @@ class MusicService :
     private fun syncDiscordState() {
         if (!discordRpcEnabled) return
 
-        val songId = player.currentMetadata?.id
+        val isCasting = castConnectionHandler?.isCasting?.value == true
+        val songId: String?
+        val isPlaying: Boolean
+        if (isCasting) {
+            songId = castConnectionHandler?.castMediaId
+            isPlaying = castConnectionHandler?.castIsPlaying?.value == true
+        } else {
+            songId = player.currentMetadata?.id
+            isPlaying = player.isPlaying
+        }
         if (songId == null) {
             Timber.tag("DiscordSvc").d("syncDiscordState: no song, clearing presence")
             DiscordRpcManager.clear()
@@ -3543,7 +3552,11 @@ class MusicService :
             return
         }
 
-        val isPlaying = player.isPlaying
+        val isPlaying = if (castConnectionHandler?.isCasting?.value == true) {
+            castConnectionHandler?.castIsPlaying?.value == true
+        } else {
+            player.isPlaying
+        }
         if (!isPlaying) {
             // Paused: clear the presence (Spotify-style). Keeping a stale activity
             // makes Discord show a phantom counting timer instead of real state.
@@ -3558,13 +3571,22 @@ class MusicService :
         }
 
         scope.launch(Dispatchers.IO) {
+            val isCasting = castConnectionHandler?.isCasting?.value == true
             val (freshSongId, freshIsPlaying) = withContext(Dispatchers.Main.immediate) {
-                player.currentMetadata?.id to player.isPlaying
+                if (isCasting) {
+                    castConnectionHandler?.castMediaId to (castConnectionHandler?.castIsPlaying?.value == true)
+                } else {
+                    player.currentMetadata?.id to player.isPlaying
+                }
             }
             if (freshSongId == null) return@launch
             val song = database.song(freshSongId).first() ?: return@launch
             updateDiscordRPC(song, freshIsPlaying)
         }
+    }
+
+    fun onCastPlaybackStateChanged() {
+        syncDiscordState()
     }
 
     private suspend fun updateDiscordRPC(song: Song, isPlaying: Boolean) {
@@ -3579,9 +3601,14 @@ class MusicService :
 
         Timber.tag("DiscordSvc").i("updateDiscordRPC: song=%s, isPlaying=%s", song.song.title, isPlaying)
 
+        val isCasting = castConnectionHandler?.isCasting?.value == true
         // ExoPlayer must be accessed on the main thread
         val (currentPosition, speed) = withContext(Dispatchers.Main.immediate) {
-            player.currentPosition to player.playbackParameters.speed
+            if (isCasting) {
+                (castConnectionHandler?.castPosition?.value ?: 0L) to 1.0f
+            } else {
+                player.currentPosition to player.playbackParameters.speed
+            }
         }
         val safeSpeed = speed.coerceAtLeast(0.01f)
         val safePosition = currentPosition.coerceAtLeast(0L)

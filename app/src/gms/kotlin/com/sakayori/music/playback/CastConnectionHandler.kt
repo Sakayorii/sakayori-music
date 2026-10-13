@@ -79,6 +79,7 @@ class CastConnectionHandler(
     
     private var positionUpdateJob: Job? = null
     private var currentMediaId: String? = null
+    val castMediaId: String? get() = currentMediaId
     private var lastCastItemId: Int = -1
     private var isReloadingQueue: Boolean = false
     
@@ -108,6 +109,7 @@ class CastConnectionHandler(
                 lastCastItemId = currentItemId
                 
                 Timber.d("Cast status updated: playing=${_castIsPlaying.value}, buffering=${_castIsBuffering.value}, itemId=$currentItemId")
+                musicService.onCastPlaybackStateChanged()
             }
         }
         
@@ -420,6 +422,25 @@ class CastConnectionHandler(
         }
         
         override fun onSessionSuspended(session: CastSession, reason: Int) {
+            stopPositionUpdates()
+            if (sessionManager?.currentCastSession?.isConnected != true) {
+                _isCasting.value = false
+                _castDeviceName.value = null
+                remoteMediaClient?.unregisterCallback(remoteMediaClientCallback)
+                remoteMediaClient = null
+                castSession = null
+            }
+        }
+    }
+
+    fun refreshCastingState() {
+        if (_isCasting.value && sessionManager?.currentCastSession?.isConnected != true) {
+            _isCasting.value = false
+            _isConnecting.value = false
+            _castDeviceName.value = null
+            remoteMediaClient?.unregisterCallback(remoteMediaClientCallback)
+            remoteMediaClient = null
+            castSession = null
             stopPositionUpdates()
         }
     }
