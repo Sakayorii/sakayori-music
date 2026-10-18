@@ -220,7 +220,7 @@ fun SongMenu(
                     database.query {
                         update(song.song.copy(title = newTitle))
                         if (artist != null) {
-                            renameArtist(artist.id, artist.channelId, artist.name, newArtist)
+                            renameArtist(artist.id, artist.channelId, newArtist)
                         }
                     }
                     playerConnection.refreshArtistNameAliases()

@@ -1718,7 +1718,6 @@ interface DatabaseDao {
     fun renameArtist(
         artistId: String,
         channelId: String?,
-        originalName: String,
         name: String,
     )
 
