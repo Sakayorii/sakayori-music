@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import javax.inject.Inject
+import kotlin.coroutines.coroutineContext
 
 private const val MAX_LYRICS_FETCH_MS = 25000L
 private const val PER_PROVIDER_TIMEOUT_MS = 8000L
