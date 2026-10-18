@@ -3552,11 +3552,6 @@ class MusicService :
             return
         }
 
-        val isPlaying = if (castConnectionHandler?.isCasting?.value == true) {
-            castConnectionHandler?.castIsPlaying?.value == true
-        } else {
-            player.isPlaying
-        }
         if (!isPlaying) {
             // Paused: clear the presence (Spotify-style). Keeping a stale activity
             // makes Discord show a phantom counting timer instead of real state.
