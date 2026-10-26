@@ -30,6 +30,14 @@
 
 </div>
 
+> [!IMPORTANT]
+> # Attribution
+> **Sakayori Music is a fork of [Metrolist](https://github.com/MetrolistGroup/Metrolist)**, a YouTube Music client for Android by the Metrolist Group and its contributors. Most of this codebase originates from Metrolist, which itself builds on [InnerTune](https://github.com/z-huang/InnerTune) and OuterTune.
+>
+> Full credit for the original work belongs to the Metrolist team and contributors. Sakayori Music only adds its own modifications, branding, and maintenance on top of it, and is distributed under the same GNU General Public License v3.0. If you enjoy this app, please also consider supporting the upstream project: [Metrolist on GitHub](https://github.com/MetrolistGroup/Metrolist).
+>
+> This attribution was missing from earlier versions of this README. That was an oversight, and it has been corrected here and in the in-app About screen.
+
 > [!WARNING]
 > # MAINTENANCE MODE
 > Sakayori Music is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.  
@@ -44,12 +52,12 @@
 
 <h1><a id="screenshots"></a>Screenshots</h1>
 
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_1.png" alt="Home screen" width="30%" />
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Artist screen" width="30%" />
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Recognize music screen" width="30%" />
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_4.png" alt="Listen together screen" width="30%" />
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Player screen" width="30%" />
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Player lyrics screen" width="30%" />
+<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_1.png" alt="Home screen" width="30%" />
+<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_2.png" alt="Artist screen" width="30%" />
+<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_3.png" alt="Recognize music screen" width="30%" />
+<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_4.png" alt="Listen together screen" width="30%" />
+<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_5.png" alt="Player screen" width="30%" />
+<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_6.png" alt="Player lyrics screen" width="30%" />
 
 </div>
 
@@ -207,6 +215,25 @@
 
 <h3>Sakayori Music stands on the shoulders of incredible open-source work.</h3>
 
+<h3>Upstream Project</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th align="center">Project</th>
+      <th align="center">Authors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><a href="https://github.com/MetrolistGroup/Metrolist"><strong>Metrolist</strong></a></td>
+      <td align="center"><a href="https://github.com/MetrolistGroup">Metrolist Group</a> and contributors, created by <a href="https://github.com/mostafaalagamy">Mo Agamy</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Sakayori Music is a fork of Metrolist. Without Metrolist, this project would not exist.</h3>
+
 <h3>Main Inspirations</h3>
 
 <table>
@@ -291,7 +318,7 @@
 
 <h1>Disclaimer</h1>
 
-This project is **not affiliated with, funded, authorized, endorsed by, or in any way associated** with YouTube, Google LLC, Sakayori Studio, or any of their affiliates and subsidiaries.
+This project is **not affiliated with, funded, authorized, endorsed by, or in any way associated** with YouTube, Google LLC, Sakayori Studio, the Metrolist Group, or any of their affiliates and subsidiaries. It is an independent fork of Metrolist, distributed under GPL-3.0.
 
 All trademarks, service marks, and intellectual property rights referenced in this project belong to their respective owners.
 

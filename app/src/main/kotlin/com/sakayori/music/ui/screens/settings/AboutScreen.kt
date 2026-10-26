@@ -519,6 +519,27 @@ fun AboutScreen(
 
         Spacer(Modifier.height(32.dp))
 
+        // Upstream & Credits: Sakayori Music is a fork of Metrolist
+        Material3SettingsGroup(
+            title = stringResource(R.string.credits_upstream_section),
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.github),
+                    title = { Text(text = "Metrolist", fontWeight = FontWeight.SemiBold) },
+                    description = { Text(stringResource(R.string.credits_metrolist_desc)) },
+                    onClick = { uriHandler.openUri("https://github.com/MetrolistGroup/Metrolist") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.github),
+                    title = { Text(text = "InnerTune", fontWeight = FontWeight.SemiBold) },
+                    description = { Text(stringResource(R.string.credits_innertune_desc)) },
+                    onClick = { uriHandler.openUri("https://github.com/z-huang/InnerTune") }
+                )
+            )
+        )
+
+        Spacer(Modifier.height(32.dp))
+
         // Community & Info using standard Group
         Material3SettingsGroup(
             title = stringResource(R.string.community_and_info),

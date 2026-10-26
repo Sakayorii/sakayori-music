@@ -741,6 +741,9 @@
     <string name="credits_discord">Discord server</string>
     <string name="credits_telegram">Telegram channel</string>
     <string name="credits_view_repo">View repository</string>
+    <string name="credits_upstream_section">Upstream</string>
+    <string name="credits_metrolist_desc">Sakayori Music is a fork of Metrolist. Thank you to the Metrolist Group and its contributors</string>
+    <string name="credits_innertune_desc">The original YouTube Music client that Metrolist is based on</string>
     <string name="buy_mo_a_coffee">Buy me a coffee!</string>
     <string name="community_and_info">Community &amp; Info</string>
     <string name="sakayori">SAKAYORI MUSIC</string>
