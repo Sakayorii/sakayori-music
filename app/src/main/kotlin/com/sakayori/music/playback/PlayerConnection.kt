@@ -172,7 +172,9 @@ class PlayerConnection(
         }.stateIn(scope, SharingStarted.Lazily, null)
     val currentFormat =
         mediaMetadata.flatMapLatest { mediaMetadata ->
-            database.format(mediaMetadata?.id)
+            combine(database.format(mediaMetadata?.id), service.currentRendition) { saved, active ->
+                if (active != null && active.mediaId == mediaMetadata?.id) active.toPlaybackFormat() else saved?.toPlaybackFormat()
+            }
         }.stateIn(scope, SharingStarted.Lazily, null)
 
     val queueTitle = MutableStateFlow<String?>(null)
@@ -600,7 +602,8 @@ class PlayerConnection(
 
     override fun onPlaybackStateChanged(state: Int) {
         playbackState.value = state
-        error.value = player.playerError
+        val failure = player.playerError
+        error.value = failure?.takeUnless { service.losslessFallbackInProgress || service.isOptionalPlaybackFailure(it) }
     }
 
     override fun onPlayWhenReadyChanged(
@@ -650,6 +653,10 @@ class PlayerConnection(
     }
 
     override fun onPlayerErrorChanged(playbackError: PlaybackException?) {
+        if (playbackError != null && (service.losslessFallbackInProgress || service.isOptionalPlaybackFailure(playbackError))) {
+            error.value = null
+            return
+        }
         if (playbackError != null) {
             reportException(playbackError)
         }

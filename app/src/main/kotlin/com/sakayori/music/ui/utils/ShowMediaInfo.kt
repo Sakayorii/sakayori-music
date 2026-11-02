@@ -47,7 +47,8 @@ import com.sakayori.music.LocalPlayerConnection
 import com.sakayori.music.R
 import com.sakayori.music.constants.LoudnessLevel
 import com.sakayori.music.constants.LoudnessLevelKey
-import com.sakayori.music.db.entities.FormatEntity
+import com.sakayori.music.playback.PlaybackFormat
+import com.sakayori.music.playback.toPlaybackFormat
 import com.sakayori.music.db.entities.Song
 import com.sakayori.music.ui.component.Material3SettingsGroup
 import com.sakayori.music.utils.cipher.CipherDeobfuscator
@@ -58,6 +59,8 @@ import com.sakayori.music.ui.component.shimmer.TextPlaceholder
 import com.sakayori.music.utils.ArtistNameAliases
 import com.sakayori.music.utils.rememberEnumPreference
 import androidx.compose.ui.platform.LocalLocale
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun getLoudnessLevelLabel(loudnessLevel: LoudnessLevel): String {
@@ -82,7 +85,7 @@ fun ShowMediaInfo(videoId: String) {
     val database = LocalDatabase.current
     var song by remember { mutableStateOf<Song?>(null) }
 
-    var currentFormat by remember { mutableStateOf<FormatEntity?>(null) }
+    var currentFormat by remember { mutableStateOf<PlaybackFormat?>(null) }
 
     val playerConnection = LocalPlayerConnection.current
     val currentStreamClient by playerConnection?.currentStreamClient?.collectAsState() ?: remember { mutableStateOf(null) }
@@ -106,8 +109,10 @@ fun ShowMediaInfo(videoId: String) {
         }
     }
 
-    LaunchedEffect(Unit, videoId) {
-        database.format(videoId).collect {
+    LaunchedEffect(videoId, playerConnection) {
+        combine(database.format(videoId), playerConnection?.service?.currentRendition ?: flowOf(null)) { saved, active ->
+            if (active != null && active.mediaId == videoId) active.toPlaybackFormat() else saved?.toPlaybackFormat()
+        }.collect {
             currentFormat = it
         }
     }

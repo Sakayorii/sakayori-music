@@ -102,6 +102,7 @@ val CheckForUpdatesKey = booleanPreferencesKey("checkForUpdates")
 val UpdateNotificationsEnabledKey = booleanPreferencesKey("updateNotifications")
 
 val AudioQualityKey = stringPreferencesKey("audioQuality")
+val PreferLosslessKey = booleanPreferencesKey("preferLossless")
 
 enum class AudioQuality {
     AUTO,

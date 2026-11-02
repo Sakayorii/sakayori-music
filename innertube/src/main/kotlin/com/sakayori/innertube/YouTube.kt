@@ -35,6 +35,10 @@ import com.sakayori.innertube.models.getContinuation
 import com.sakayori.innertube.models.getItems
 import com.sakayori.innertube.models.oddElements
 import com.sakayori.innertube.models.splitBySeparator
+import com.sakayori.innertube.models.missingArtistNames
+import com.sakayori.innertube.models.withResolvedArtistIds
+import com.sakayori.innertube.utils.ArtistIdLookupCache
+import com.sakayori.innertube.utils.runOnIoCatching
 import com.sakayori.innertube.utils.parseTime
 import com.sakayori.innertube.models.response.AccountMenuResponse
 import com.sakayori.innertube.models.response.BrowseResponse
@@ -78,6 +82,9 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -96,51 +103,76 @@ import kotlin.random.Random
 object YouTube {
     private val innerTube = InnerTube()
     private const val ENABLE_NEWPIPE_STREAM_INFO_EXTRACTOR = false
+    private val requestRevision = MutableStateFlow(0L)
+    val requestContextRevision = requestRevision.asStateFlow()
+    private val artistIdLookup = ArtistIdLookupCache(currentRevision = { requestRevision.value })
+
+    private fun invalidateRequestContext() {
+        requestRevision.update { it + 1L }
+        artistIdLookup.clear()
+    }
 
     var locale: YouTubeLocale
         get() = innerTube.locale
         set(value) {
+            if (value == innerTube.locale) return
             innerTube.locale = value
+            invalidateRequestContext()
         }
     var visitorData: String?
         get() = innerTube.visitorData
         set(value) {
+            if (value == innerTube.visitorData) return
             innerTube.visitorData = value
+            invalidateRequestContext()
         }
     var dataSyncId: String?
         get() = innerTube.dataSyncId
         set(value) {
+            if (value == innerTube.dataSyncId) return
             innerTube.dataSyncId = value
+            invalidateRequestContext()
         }
     var authUser: String
         get() = innerTube.authUser
         set(value) {
+            if (value == innerTube.authUser) return
             innerTube.authUser = value
+            invalidateRequestContext()
         }
     var cookie: String?
         get() = innerTube.cookie
         set(value) {
+            if (value == innerTube.cookie) return
             innerTube.cookie = value
+            invalidateRequestContext()
         }
     var proxy: Proxy?
         get() = innerTube.proxy
         set(value) {
+            // The delegate setter also rebuilds the HTTP client after proxy credentials change,
+            // even when the proxy address itself is unchanged.
             innerTube.proxy = value
+            invalidateRequestContext()
         }
 
     var proxyAuth: String?
         get() = innerTube.proxyAuth
         set(value) {
+            if (value == innerTube.proxyAuth) return
             innerTube.proxyAuth = value
+            invalidateRequestContext()
         }
     var useLoginForBrowse: Boolean
         get() = innerTube.useLoginForBrowse
         set(value) {
+            if (value == innerTube.useLoginForBrowse) return
             innerTube.useLoginForBrowse = value
+            invalidateRequestContext()
         }
 
     suspend fun searchSuggestions(query: String): Result<SearchSuggestions> =
-        runCatching {
+        runOnIoCatching {
             val response = innerTube.getSearchSuggestions(WEB_REMIX, query).body<GetSearchSuggestionsResponse>()
             SearchSuggestions(
                 queries =
@@ -168,7 +200,7 @@ object YouTube {
         }
 
     suspend fun searchSummary(query: String): Result<SearchSummaryPage> =
-        runCatching {
+        runOnIoCatching {
             val response = innerTube.search(WEB_REMIX, query).body<SearchResponse>()
             val allSummaries = mutableListOf<SearchSummary>()
 
@@ -318,7 +350,7 @@ object YouTube {
         query: String,
         filter: SearchFilter,
     ): Result<SearchResult> =
-        runCatching {
+        runOnIoCatching {
             val response = innerTube.search(WEB_REMIX, query, filter.value).body<SearchResponse>()
             val searchItems = mutableListOf<YTItem>()
             var searchContinuation: String? = null
@@ -356,7 +388,7 @@ object YouTube {
         }
 
     suspend fun searchContinuation(continuation: String): Result<SearchResult> =
-        runCatching {
+        runOnIoCatching {
             val response = innerTube.search(WEB_REMIX, continuation = continuation).body<SearchResponse>()
             val items =
                 response.continuationContents
@@ -3084,7 +3116,7 @@ object YouTube {
         signatureTimestamp: Int? = null,
         poToken: String? = null,
     ): Result<PlayerResponse> =
-        runCatching {
+        runOnIoCatching {
             innerTube.player(client, videoId, playlistId, signatureTimestamp, poToken).body<PlayerResponse>()
         }
 
@@ -3617,54 +3649,8 @@ object YouTube {
      */
     const val MAX_UPLOAD_SIZE = 314572800L
 
-    suspend fun resolveArtistIds(items: List<YTItem>): List<YTItem> {
-        val missingNames = mutableSetOf<String>()
-        for (item in items) {
-            when (item) {
-                is SongItem -> item.artists.filter { it.id == null }.forEach { missingNames.add(it.name) }
-                is AlbumItem -> item.artists?.filter { it.id == null }?.forEach { missingNames.add(it.name) }
-                is PlaylistItem -> item.author?.let { if (it.id == null) missingNames.add(it.name) }
-                is EpisodeItem -> item.author?.let { if (it.id == null) missingNames.add(it.name) }
-                is PodcastItem -> item.author?.let { if (it.id == null) missingNames.add(it.name) }
-                else -> {}
-            }
-        }
-
-        if (missingNames.isEmpty()) return items
-
-        val resolved = coroutineScope {
-            val semaphore = kotlinx.coroutines.sync.Semaphore(8)
-            missingNames.map { name ->
-                async {
-                    semaphore.acquire()
-                    try {
-                        val searchResult = search(name, SearchFilter.FILTER_ARTIST).getOrNull()
-                        val normalizedName = name.trim()
-                        val artistId = searchResult?.items
-                            ?.filterIsInstance<ArtistItem>()
-                            ?.firstOrNull { candidate ->
-                                candidate.title.trim().equals(normalizedName, ignoreCase = true)
-                            }?.id
-                        if (artistId != null) name to artistId else null
-                    } finally {
-                        semaphore.release()
-                    }
-                }
-            }.awaitAll().filterNotNull().toMap()
-        }
-
-        fun Artist.resolve() = if (id == null) resolved[name]?.let { copy(id = it) } ?: this else this
-        return items.map { item ->
-            when (item) {
-                is SongItem -> item.copy(artists = item.artists.map { it.resolve() })
-                is AlbumItem -> item.copy(artists = item.artists?.map { it.resolve() })
-                is PlaylistItem -> item.copy(author = item.author?.resolve())
-                is EpisodeItem -> item.copy(author = item.author?.resolve())
-                is PodcastItem -> item.copy(author = item.author?.resolve())
-                else -> item
-            }
-        }
-    }
+    suspend fun resolveArtistIds(items: List<YTItem>): List<YTItem> =
+        items.withResolvedArtistIds(resolveArtistIdMap(items))
 
     /**
      * Collects all unique missing artist names from [items], resolves them in parallel,
@@ -3672,39 +3658,28 @@ object YouTube {
      * to avoid duplicate searches for the same artist.
      */
     suspend fun resolveArtistIdMap(items: List<YTItem>): Map<String, String> {
-        val missingNames = mutableSetOf<String>()
-        for (item in items) {
-            when (item) {
-                is SongItem -> item.artists.filter { it.id == null }.forEach { missingNames.add(it.name) }
-                is AlbumItem -> item.artists?.filter { it.id == null }?.forEach { missingNames.add(it.name) }
-                is PlaylistItem -> item.author?.let { if (it.id == null) missingNames.add(it.name) }
-                is EpisodeItem -> item.author?.let { if (it.id == null) missingNames.add(it.name) }
-                is PodcastItem -> item.author?.let { if (it.id == null) missingNames.add(it.name) }
-                else -> {}
-            }
-        }
-
+        val missingNames = items.missingArtistNames()
         if (missingNames.isEmpty()) return emptyMap()
-
+        val revision = requestRevision.value
         return coroutineScope {
-            val semaphore = kotlinx.coroutines.sync.Semaphore(8)
-            missingNames.map { name ->
-                async {
-                    semaphore.acquire()
-                    try {
-                        val searchResult = search(name, SearchFilter.FILTER_ARTIST).getOrNull()
-                        val normalizedName = name.trim()
-                        val artistId = searchResult?.items
-                            ?.filterIsInstance<ArtistItem>()
-                            ?.firstOrNull { candidate ->
-                                candidate.title.trim().equals(normalizedName, ignoreCase = true)
-                            }?.id
-                        if (artistId != null) name to artistId else null
-                    } finally {
-                        semaphore.release()
+            val resolved = mutableMapOf<String, String>()
+            // Bound coroutine creation as well as network concurrency for large result pages.
+            for (batch in missingNames.chunked(8)) {
+                val answers = batch.map { name ->
+                    async {
+                        val id = artistIdLookup.resolve(revision, name) { normalizedName ->
+                            search(normalizedName, SearchFilter.FILTER_ARTIST).map { page ->
+                                page.items.filterIsInstance<ArtistItem>().firstOrNull { candidate ->
+                                    candidate.title.trim().equals(normalizedName, ignoreCase = true)
+                                }?.id
+                            }
+                        }
+                        id?.let { name to it }
                     }
-                }
-            }.awaitAll().filterNotNull().toMap()
+                }.awaitAll()
+                answers.filterNotNull().forEach { (name, id) -> resolved[name] = id }
+            }
+            resolved
         }
     }
 }

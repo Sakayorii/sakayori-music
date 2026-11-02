@@ -55,21 +55,21 @@ class CachePlaylistPartitionTest {
     }
 
     @Test
-    fun `song with unknown content length is stale and is never looked up`() {
+    fun `missing format row still consults the rendition cache`() {
         var lookups = 0
         val result = partitionCachedSongs(listOf(song("a", contentLength = null))) { _, _ ->
             lookups++
             true
         }
 
-        assertEquals(emptyList<String>(), result.stillCached.map { it.id })
-        assertEquals(listOf("a"), result.stale.map { it.id })
-        assertEquals(0, lookups)
+        assertEquals(listOf("a"), result.stillCached.map { it.id })
+        assertEquals(emptyList<String>(), result.stale.map { it.id })
+        assertEquals(1, lookups)
     }
 
     @Test
     fun `each song is checked with its own id and content length`() {
-        val seen = mutableListOf<Pair<String, Long>>()
+        val seen = mutableListOf<Pair<String, Long?>>()
         val songs = listOf(song("a", contentLength = 10L), song("b", contentLength = 20L))
 
         partitionCachedSongs(songs) { id, length ->

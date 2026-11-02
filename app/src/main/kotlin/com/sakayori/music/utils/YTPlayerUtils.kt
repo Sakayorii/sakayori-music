@@ -16,6 +16,7 @@ import com.sakayori.innertube.models.response.PlayerResponse
 import com.sakayori.innertube.strategy.ContentAwareFallbackStrategy
 import com.sakayori.innertube.strategy.ContentHints
 import com.sakayori.music.constants.AudioQuality
+import com.sakayori.music.playback.PlaybackHttpClient
 import com.sakayori.music.utils.YTPlayerUtils.MAIN_CLIENT
 import com.sakayori.music.utils.YTPlayerUtils.validateStatus
 import com.sakayori.music.utils.cipher.CipherDeobfuscator
@@ -24,20 +25,26 @@ import com.sakayori.music.utils.cipher.PlayerJsFetcher
 import com.sakayori.music.utils.potoken.PoTokenGenerator
 import com.sakayori.music.utils.potoken.PoTokenResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.resume
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import java.io.IOException
 import timber.log.Timber
 
 object YTPlayerUtils {
     private const val logTag = "YTPlayerUtils"
     private const val TAG = "YTPlayerUtils"
 
-    private val httpClient = OkHttpClient.Builder()
-        .proxy(YouTube.proxy)
-        .build()
+    private val httpClient get() = PlaybackHttpClient.shared()
 
     private val poTokenGenerator = PoTokenGenerator()
 
@@ -115,6 +122,24 @@ object YTPlayerUtils {
         val streamClient: String = "unknown",
         val streamHeaders: Map<String, String> = emptyMap(),
     )
+
+    /** A cached/downloaded byte stream may only resume the same encoded rendition. */
+    data class RequiredStreamFormat(
+        val itag: Int,
+        val mimeType: String,
+        val codecs: String,
+        val contentLength: Long?,
+        val lastModified: Long?,
+        val audioTrackId: String?,
+        val sampleRate: Int?,
+    ) {
+        fun matches(format: PlayerResponse.StreamingData.Format): Boolean =
+            format.itag == itag && format.mimeType.substringBefore(';').trim() == mimeType &&
+                format.mimeType.substringAfter("codecs=", "").substringBefore(';').trim().removeSurrounding("\"") == codecs &&
+                format.contentLength?.takeIf { it > 0 } == contentLength &&
+                format.lastModified == lastModified &&
+                format.audioTrack?.id == audioTrackId && format.audioSampleRate == sampleRate
+    }
     /**
      * Custom player response intended to use for playback.
      * Metadata like audioConfig and videoDetails are from [MAIN_CLIENT].
@@ -126,6 +151,7 @@ object YTPlayerUtils {
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
         contentHints: ContentHints = ContentHints(),
+        requiredFormat: RequiredStreamFormat? = null,
     ): Result<PlaybackData> = runCatching {
         Timber.tag(TAG).d("=== PLAYER RESPONSE FOR PLAYBACK ===")
         Timber.tag(TAG).d("videoId: $videoId")
@@ -155,6 +181,8 @@ object YTPlayerUtils {
                 if (poToken != null) {
                     Timber.tag(logTag).d("PoToken generated successfully")
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.tag(logTag).e(e, "PoToken generation failed: ${e.message}")
             }
@@ -220,6 +248,7 @@ object YTPlayerUtils {
         val hasHighQuality = mainPlayerResponse?.streamingData?.adaptiveFormats?.any { it.audioQuality == "AUDIO_QUALITY_HIGH" } == true
 
         for ((clientIndex, client) in streamClients.withIndex()) {
+            currentCoroutineContext().ensureActive()
             // reset for each client
             format = null
             streamUrl = null
@@ -299,6 +328,7 @@ object YTPlayerUtils {
                         responseToUse,
                         audioQuality,
                         connectivityManager,
+                        requiredFormat,
                     )
 
                 if (format == null) {
@@ -394,7 +424,7 @@ object YTPlayerUtils {
                     else -> 0
                 }
 
-                if (audioQuality == AudioQuality.HIGH && format.audioQuality != "AUDIO_QUALITY_HIGH" && hasHighQuality) {
+                if (requiredFormat == null && audioQuality == AudioQuality.HIGH && format.audioQuality != "AUDIO_QUALITY_HIGH" && hasHighQuality) {
                     val isBetter = bestFallbackFormat == null ||
                         compareValuesBy(
                             format, bestFallbackFormat,
@@ -467,7 +497,7 @@ object YTPlayerUtils {
             }
         }
 
-        if (audioQuality == AudioQuality.HIGH && format?.audioQuality != "AUDIO_QUALITY_HIGH" && bestFallbackFormat != null) {
+        if (requiredFormat == null && audioQuality == AudioQuality.HIGH && format?.audioQuality != "AUDIO_QUALITY_HIGH" && bestFallbackFormat != null) {
             Timber.tag(logTag).d("Using best fallback format: ${bestFallbackFormat.mimeType}, bitrate: ${bestFallbackFormat.bitrate}")
             format = bestFallbackFormat
             streamUrl = bestFallbackUrl
@@ -497,6 +527,10 @@ object YTPlayerUtils {
                 null,
                 PlaybackException.ERROR_CODE_REMOTE_ERROR
             )
+        }
+
+        if (requiredFormat != null && format == null) {
+            throw PlaybackException("The cached audio rendition is no longer available", null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
         }
 
         if (streamExpiresInSeconds == null) {
@@ -529,6 +563,7 @@ object YTPlayerUtils {
             streamHeaders = successClient?.streamHeaders().orEmpty(),
         )
     }.onFailure { e ->
+        if (e is CancellationException) throw e
         println("[PLAYBACK_DEBUG] EXCEPTION during playback for videoId=$videoId: ${e::class.simpleName}: ${e.message}")
         e.printStackTrace()
     }
@@ -547,6 +582,8 @@ object YTPlayerUtils {
         if (MAIN_CLIENT.useWebPoTokens && sessionId != null) {
             try {
                 poToken = poTokenGenerator.getWebClientPoToken(videoId, sessionId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) { }
         }
         return YouTube.player(videoId, playlistId, WEB_REMIX, signatureTimestamp.timestamp, poToken?.playerRequestPoToken)
@@ -558,6 +595,7 @@ object YTPlayerUtils {
         playerResponse: PlayerResponse,
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
+        requiredFormat: RequiredStreamFormat? = null,
     ): PlayerResponse.StreamingData.Format? {
         Timber.tag(logTag).d("Finding format with audioQuality: $audioQuality, network metered: ${connectivityManager.isActiveNetworkMetered}")
 
@@ -565,6 +603,7 @@ object YTPlayerUtils {
 
         val audioCapableFormats = adaptiveFormats.filter { it.isAudio }
         if (audioCapableFormats.isEmpty()) return null
+        if (requiredFormat != null) return audioCapableFormats.firstOrNull(requiredFormat::matches)
 
         val maxBitrate = audioCapableFormats.maxOfOrNull { it.bitrate } ?: return null
 
@@ -641,7 +680,7 @@ object YTPlayerUtils {
      * If this returns true the url is likely to work.
      * If this returns false the url might cause an error during playback.
      */
-    private fun validateStatus(
+    private suspend fun validateStatus(
         url: String,
         requestHeaders: Map<String, String>,
     ): Boolean {
@@ -661,11 +700,23 @@ object YTPlayerUtils {
                 println("[PLAYBACK_DEBUG] Added cookie to validation request")
             }
 
-            httpClient.newCall(requestBuilder.build()).execute().use { response ->
-                val isSuccessful = response.isSuccessful
-                Timber.tag(logTag).d("Stream URL validation result: ${if (isSuccessful) "Success" else "Failed"} (${response.code})")
-                return isSuccessful
+            return suspendCancellableCoroutine { continuation ->
+                val call = httpClient.newCall(requestBuilder.build())
+                continuation.invokeOnCancellation { call.cancel() }
+                call.enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        if (continuation.isActive) continuation.resume(false)
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        response.use {
+                            if (continuation.isActive) continuation.resume(it.isSuccessful)
+                        }
+                    }
+                })
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             Timber.tag(logTag).e(e, "Stream URL validation failed with exception")
             reportException(e)
@@ -728,6 +779,7 @@ object YTPlayerUtils {
                 SignatureTimestampResult(chosen, isAgeRestricted = false)
             },
             onFailure = { error ->
+                if (error is CancellationException) throw error
                 val isAgeRestricted = error.message?.contains("age-restricted", ignoreCase = true) == true ||
                     error.cause?.message?.contains("age-restricted", ignoreCase = true) == true
                 when {

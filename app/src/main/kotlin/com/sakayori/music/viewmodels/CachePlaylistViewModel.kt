@@ -8,13 +8,11 @@ package com.sakayori.music.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.datasource.cache.Cache
 import com.sakayori.music.constants.HideExplicitKey
 import com.sakayori.music.constants.HideVideoSongsKey
 import com.sakayori.music.db.MusicDatabase
 import com.sakayori.music.db.entities.Song
-import com.sakayori.music.di.DownloadCache
-import com.sakayori.music.di.PlayerCache
+import com.sakayori.music.playback.AudioRenditionStore
 import com.sakayori.music.extensions.filterExplicit
 import com.sakayori.music.extensions.filterVideoSongs
 import com.sakayori.music.utils.dataStore
@@ -30,6 +28,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,8 +37,7 @@ class CachePlaylistViewModel
     constructor(
         @ApplicationContext private val context: Context,
         private val database: MusicDatabase,
-        @PlayerCache private val playerCache: Cache,
-        @DownloadCache private val downloadCache: Cache,
+        private val renditions: AudioRenditionStore,
     ) : ViewModel() {
         private data class Inputs(
             val flagged: List<Song>,
@@ -56,14 +54,13 @@ class CachePlaylistViewModel
                 ::Inputs,
             ).mapLatest { (flagged, hideExplicit, hideVideoSongs) ->
                 val partition = partitionCachedSongs(flagged) { songId, contentLength ->
-                    downloadCache.isCached(songId, 0, contentLength) ||
-                        playerCache.isCached(songId, 0, contentLength)
+                    renditions.isFullyCached(songId, contentLength)
                 }
 
                 // Clearing the flag removes these songs from cachePlaylistSongs(), so this
                 // re-emits once and then settles rather than looping.
                 partition.stale.forEach { song ->
-                    database.query { update(song.song.copy(dateDownload = null)) }
+                    database.query { clearPlaybackCached(song.song.id) }
                 }
 
                 partition.stillCached
@@ -74,18 +71,16 @@ class CachePlaylistViewModel
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
         fun removeSongFromCache(songId: String) {
-            playerCache.removeResource(songId)
-
-            // Dropping the bytes does not touch the database, so nothing would invalidate
-            // cachePlaylistSongs() and the song would linger in the list until the screen is
-            // re-entered. Re-check this one song against the same rules and clear its flag here.
-            database.query {
-                val song = getSongByIdBlocking(songId) ?: return@query
-                val partition = partitionCachedSongs(listOf(song)) { id, contentLength ->
-                    downloadCache.isCached(id, 0, contentLength) ||
-                        playerCache.isCached(id, 0, contentLength)
+            viewModelScope.launch(Dispatchers.IO) {
+                renditions.removePlayerCopies(songId)
+                // Saved downloads are separate; removing playback-cache copies must retain them.
+                database.query {
+                    val song = getSongByIdBlocking(songId) ?: return@query
+                    val partition = partitionCachedSongs(listOf(song)) { id, contentLength ->
+                        renditions.isFullyCached(id, contentLength)
+                    }
+                    partition.stale.forEach { clearPlaybackCached(it.song.id) }
                 }
-                partition.stale.forEach { update(it.song.copy(dateDownload = null)) }
             }
         }
     }
@@ -103,23 +98,22 @@ internal data class CachedSongPartition(
  * present and those whose flag must be cleared.
  *
  * A downloaded song is always considered present: its file is managed by the download service
- * rather than the player cache. A song whose content length is unknown cannot be checked, so it
- * is treated as stale rather than assumed present.
+ * rather than the player cache. Missing Room format metadata is not proof of a cache miss:
+ * the rendition store can know the actual file length independently.
  *
  * [isCached] receives the song id and its content length, and reports whether the complete file
  * is available in either cache.
  */
 internal fun partitionCachedSongs(
     flagged: List<Song>,
-    isCached: (songId: String, contentLength: Long) -> Boolean,
+    isCached: (songId: String, contentLength: Long?) -> Boolean,
 ): CachedSongPartition {
     val stillCached = mutableListOf<Song>()
     val stale = mutableListOf<Song>()
 
     for (song in flagged) {
         val contentLength = song.format?.contentLength
-        val present = song.song.isDownloaded ||
-            (contentLength != null && isCached(song.song.id, contentLength))
+        val present = song.song.isDownloaded || isCached(song.song.id, contentLength)
         if (present) stillCached += song else stale += song
     }
 

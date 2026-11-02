@@ -283,6 +283,10 @@
     <string name="audio_quality_auto">Auto</string>
     <string name="audio_quality_high">High</string>
     <string name="audio_quality_low">Low</string>
+    <string name="prefer_lossless">Prefer lossless</string>
+    <string name="lossless_new_badge">new</string>
+    <string name="prefer_lossless_description">Matching FLAC originals from Internet Archive when available. Otherwise, use your selected audio quality.</string>
+    <string name="lossless_decoder_unavailable">A compatible FLAC decoder is required. Your normal audio quality remains available.</string>
     <string name="queue">Queue</string>
     <string name="persistent_queue">Persistent queue</string>
     <string name="persistent_queue_desc">Restore your last queue when the app starts</string>

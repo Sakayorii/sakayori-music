@@ -38,9 +38,7 @@ import com.sakayori.music.extensions.tryOrNull
 import com.sakayori.music.extensions.zipInputStream
 import com.sakayori.music.extensions.zipOutputStream
 import com.sakayori.music.playback.MusicService
-import com.sakayori.music.playback.MusicService.Companion.PERSISTENT_AUTOMIX_FILE
-import com.sakayori.music.playback.MusicService.Companion.PERSISTENT_PLAYER_STATE_FILE
-import com.sakayori.music.playback.MusicService.Companion.PERSISTENT_QUEUE_FILE
+import com.sakayori.music.playback.PlaybackQueueStore
 import com.sakayori.music.utils.reportException
 import com.sakayori.music.utils.ArtistNameAliases
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,6 +75,7 @@ data class ConvertedSongLog(
 @HiltViewModel
 class BackupRestoreViewModel @Inject constructor(
     val database: MusicDatabase,
+    private val queueStore: PlaybackQueueStore,
 ) : ViewModel() {
     fun backup(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -322,9 +321,7 @@ class BackupRestoreViewModel @Inject constructor(
                         }
                     }
 
-                    context.filesDir.resolve(PERSISTENT_QUEUE_FILE).delete()
-                    context.filesDir.resolve(PERSISTENT_AUTOMIX_FILE).delete()
-                    context.filesDir.resolve(PERSISTENT_PLAYER_STATE_FILE).delete()
+                    queueStore.clear()
                     ArtistNameAliases.restore(context, restoredArtistNameAliases.orEmpty())
 
                     // 4. Restart — Room will open the swapped DB and run migrations if needed

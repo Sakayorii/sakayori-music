@@ -1332,6 +1332,12 @@ interface DatabaseDao {
     @Query("UPDATE song SET isDownloaded = :downloaded, dateDownload = :date WHERE id = :songId")
     fun updateDownloadedInfo(songId: String, downloaded: Boolean, date: LocalDateTime?)
 
+    @Query("UPDATE song SET dateDownload = :date WHERE id = :songId AND isDownloaded = 0 AND dateDownload IS NULL")
+    fun markPlaybackCached(songId: String, date: LocalDateTime)
+
+    @Query("UPDATE song SET dateDownload = NULL WHERE id = :songId AND isDownloaded = 0")
+    fun clearPlaybackCached(songId: String)
+
     @Query("UPDATE song SET playbackPosition = :position WHERE id = :songId")
     fun updatePlaybackPosition(songId: String, position: Long?)
 
@@ -1983,6 +1989,10 @@ interface DatabaseDao {
 
     @Upsert
     fun upsert(format: FormatEntity)
+
+    // Download/preload metadata must not overwrite the rendition currently selected for playback.
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertFormatIfMissing(format: FormatEntity)
 
     @Upsert
     fun upsert(song: SongEntity)

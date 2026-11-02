@@ -5,7 +5,9 @@
 
 package com.sakayori.music.ui.screens.settings
 
+import android.os.Build
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.height
@@ -17,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Badge
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -28,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -41,6 +46,7 @@ import com.sakayori.music.constants.AudioOffload
 import com.sakayori.music.constants.AudioTrackPlaybackParamsKey
 import com.sakayori.music.constants.AudioQuality
 import com.sakayori.music.constants.AudioQualityKey
+import com.sakayori.music.constants.PreferLosslessKey
 import com.sakayori.music.constants.AutoDownloadOnLikeKey
 import com.sakayori.music.constants.CrossfadeDurationKey
 import com.sakayori.music.constants.CrossfadeEnabledKey
@@ -99,6 +105,8 @@ fun PlayerSettings(
         AudioQualityKey,
         defaultValue = AudioQuality.AUTO
     )
+    val (preferLossless, onPreferLosslessChange) = rememberPreference(PreferLosslessKey, defaultValue = false)
+    val losslessAvailable = Build.VERSION.SDK_INT >= 27
     val (crossfadeEnabled, onCrossfadeEnabledChange) = rememberPreference(
         CrossfadeEnabledKey,
         defaultValue = false
@@ -299,6 +307,38 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { showAudioQualityDialog = true }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.music_note),
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.prefer_lossless), Modifier.weight(1f, fill = false))
+                            Badge(
+                                modifier = Modifier.padding(start = 8.dp),
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            ) { Text(stringResource(R.string.lossless_new_badge)) }
+                        }
+                    },
+                    description = {
+                        Text(stringResource(if (losslessAvailable) R.string.prefer_lossless_description else R.string.lossless_decoder_unavailable))
+                    },
+                    enabled = losslessAvailable,
+                    trailingContent = {
+                        Switch(
+                            checked = preferLossless,
+                            enabled = losslessAvailable,
+                            onCheckedChange = onPreferLosslessChange,
+                            thumbContent = {
+                                Icon(
+                                    painterResource(if (preferLossless) R.drawable.check else R.drawable.close),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                )
+                            },
+                        )
+                    },
+                    onClick = { onPreferLosslessChange(!preferLossless) },
                 ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.linear_scale),
