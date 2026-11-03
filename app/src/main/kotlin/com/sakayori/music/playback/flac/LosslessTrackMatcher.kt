@@ -30,11 +30,16 @@ internal fun matchLosslessTrack(target: MediaMetadata, candidates: List<Lossless
     val artists = target.artists.map { normalizedRecordingText(it.name) }.toSet()
     if (title.isBlank() || "" in artists) return null
     val album = target.album?.title?.takeIf { it.isNotBlank() }?.let(::normalizedRecordingText)
+    val primaryTargetArtist = normalizedRecordingText(target.artists.first().name)
     val matching = candidates.filter { candidate ->
+        val candidateArtists = candidate.artists.map(::normalizedRecordingText).toSet()
+        val artistMatches = candidateArtists == artists ||
+            (primaryTargetArtist in candidateArtists) ||
+            (candidateArtists.any { it in artists })
         candidate.id.isNotBlank() && candidate.durationMs > 0 &&
             normalizedRecordingText(candidate.recordingTitle()) == title &&
-            candidate.artists.map(::normalizedRecordingText).toSet() == artists &&
-            abs(candidate.durationMs - target.duration.toLong() * 1_000) <= 1_500 &&
+            artistMatches &&
+            abs(candidate.durationMs - target.duration.toLong() * 1_000) <= 4_000 &&
             (candidate.explicit == null || candidate.explicit == target.explicit) &&
             (album == null || candidate.album.isNullOrBlank() || normalizedRecordingText(candidate.album.orEmpty()) == album)
     }.distinctBy { it.id }

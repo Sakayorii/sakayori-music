@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -75,6 +77,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.sakayori.innertube.models.WatchEndpoint
 import com.sakayori.music.BuildConfig
 import com.sakayori.music.LocalPlayerAwareWindowInsets
@@ -416,12 +420,21 @@ fun AboutScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 AsyncImage(
-                    model = "https://img.vietqr.io/image/MB-0797611290-compact.png?accountName=Dinh%20Tran%20Gia%20Huy",
+                    model = ImageRequest.Builder(context)
+                        .data("https://qr.sakayori.me/image/970454-99ZP26301M80823757-payos.png?addInfo=ung%20ho%20nha%20phat%20trien")
+                        .placeholder(R.drawable.donate)
+                        .fallback(R.drawable.donate)
+                        .error(R.drawable.donate)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = "VietQR",
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .sizeIn(maxWidth = 260.dp, maxHeight = 260.dp)
+                        .aspectRatio(1f)
+                        .align(Alignment.CenterHorizontally)
+                        .clip(RoundedCornerShape(20.dp))
                 )
 
                 Spacer(Modifier.height(16.dp))

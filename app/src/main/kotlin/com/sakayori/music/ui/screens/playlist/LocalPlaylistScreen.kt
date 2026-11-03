@@ -193,6 +193,7 @@ fun LocalPlaylistScreen(
             true,
         )
     var locked by rememberPreference(PlaylistEditLockKey, defaultValue = true)
+    val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
 
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
@@ -584,7 +585,6 @@ fun LocalPlaylistScreen(
                         }
                     }
 
-                    val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
                     val dismissBoxState =
                         rememberSwipeToDismissBoxState(
                             positionalThreshold = { totalDistance -> totalDistance },

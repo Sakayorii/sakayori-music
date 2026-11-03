@@ -5526,7 +5526,7 @@ class MusicService :
         private const val QUALITY_PREPARE_TIMEOUT_MS = 5_000L
         private const val QUALITY_TRANSITION_MS = 120L
         private const val QUALITY_ALIGNMENT_TOLERANCE_MS = 10L
-        private const val QUALITY_DURATION_TOLERANCE_MS = 150L
+        private const val QUALITY_DURATION_TOLERANCE_MS = 4_000L
         private const val MAX_GAIN_MB = 300 // Maximum gain in millibels (3 dB)
         private const val MIN_GAIN_MB = -1500 // Minimum gain in millibels (-15 dB)
 

@@ -40,7 +40,7 @@ class ArchiveFlacSource @Inject constructor(private val httpClient: PlaybackHttp
         val artist = target.artists.firstOrNull()?.name?.takeIf { it.isNotBlank() } ?: return null
         if (target.title.isBlank() || target.duration <= 0 || target.isEpisode || target.isVideoSong || target.uploadEntityId != null) return null
         if (FlacPlaybackCapabilities.inspect(FlacStreamInfo(44_100, 2, 16, 1)) != FlacPlaybackCapability.SUPPORTED) return null
-        val query = "mediatype:audio AND collection:netlabels AND format:Flac AND creator:${quote(artist)} AND title:${quote(album)}"
+        val query = "mediatype:audio AND format:Flac AND creator:${quote(artist)} AND title:${quote(album)}"
         val searchUrl = BASE.newBuilder().addPathSegment("advancedsearch.php")
             .addQueryParameter("q", query).addQueryParameter("fl[]", "identifier")
             .addQueryParameter("rows", MAX_ALBUMS.toString()).addQueryParameter("output", "json").build()
