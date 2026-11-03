@@ -447,9 +447,10 @@ fun AlbumScreen(
                                             if (song.id == mediaMetadata?.id) {
                                                 playerConnection.togglePlayPause()
                                             } else {
+                                                val rawIndex = albumWithSongs?.songs?.indexOfFirst { it.id == song.id }?.takeIf { it >= 0 } ?: index
                                                 playerConnection.service.getAutomix(playlistId)
                                                 playerConnection.playQueue(
-                                                    LocalAlbumRadio(albumWithSongs, startIndex = index),
+                                                    LocalAlbumRadio(albumWithSongs, startIndex = rawIndex),
                                                 )
                                             }
                                         }

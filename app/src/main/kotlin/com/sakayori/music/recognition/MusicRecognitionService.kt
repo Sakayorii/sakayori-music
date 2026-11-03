@@ -67,8 +67,11 @@ object MusicRecognitionService {
      * Start the music recognition process.
      * Records audio, generates fingerprint, and queries Shazam API.
      */
+    private var recognitionJob: kotlinx.coroutines.Job? = null
+
     @SuppressLint("MissingPermission")
     suspend fun recognize(context: Context): RecognitionStatus = withContext(Dispatchers.IO) {
+        recognitionJob = coroutineContext[kotlinx.coroutines.Job]
         if (!hasRecordPermission(context)) {
             Timber.tag(TAG).w("Microphone permission not granted, aborting recognition")
             return@withContext RecognitionStatus.Error("Microphone permission not granted")
@@ -145,10 +148,16 @@ object MusicRecognitionService {
             )
             
             _recognitionStatus.value
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Recognition failed with exception")
             _recognitionStatus.value = RecognitionStatus.Error(e.message ?: "Recognition failed")
             _recognitionStatus.value
+        } finally {
+            if (recognitionJob === coroutineContext[kotlinx.coroutines.Job]) {
+                recognitionJob = null
+            }
         }
     }
     
@@ -195,6 +204,8 @@ object MusicRecognitionService {
     
     fun reset() {
         Timber.tag(TAG).d("Recognition state reset")
+        recognitionJob?.cancel()
+        recognitionJob = null
         _recognitionStatus.value = RecognitionStatus.Ready
         resultSavedExternally = false
     }

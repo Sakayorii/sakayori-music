@@ -173,8 +173,8 @@ class OnlinePlaylistViewModel @Inject constructor(
                 SongItem(
                     id = song.song.id,
                     title = song.song.title,
-                    artists = song.artists.map { Artist(it.id, it.name) },
-                    album = song.album?.let { com.sakayori.innertube.models.Album(it.id, it.title) },
+                    artists = song.artists.map { Artist(name = it.name, id = it.id) },
+                    album = song.album?.let { com.sakayori.innertube.models.Album(name = it.title, id = it.id) },
                     duration = song.song.duration,
                     thumbnail = song.song.thumbnailUrl ?: "",
                     explicit = song.song.explicit,
