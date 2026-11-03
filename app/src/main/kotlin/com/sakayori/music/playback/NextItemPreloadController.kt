@@ -13,6 +13,9 @@ import androidx.media3.datasource.TransferListener
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.analytics.PlayerId
 import androidx.media3.exoplayer.source.MediaSource.MediaPeriodId
+import androidx.media3.exoplayer.source.TrackGroupArray
+import androidx.media3.exoplayer.trackselection.ExoTrackSelection
+import androidx.media3.exoplayer.upstream.Allocator
 import kotlinx.coroutines.flow.StateFlow
 
 /** One controller per ExoPlayer. The native MediaPeriodQueue owns preparation and cancellation. */
@@ -54,7 +57,32 @@ internal class NextItemPreloadController {
         pending?.takeIf { it.mediaId == mediaId }?.budget?.resolutionPriority ?: foregroundStreamPriority
     }
 
-    fun wrap(delegate: LoadControl): LoadControl = object : LoadControl by delegate {
+    // Java default interface methods are not forwarded by Kotlin's `by` delegation.
+    // Explicitly forward the Media3 1.10.1 entry points to the configured load control.
+    fun wrap(delegate: LoadControl): LoadControl = object : LoadControl {
+        override fun onPrepared(playerId: PlayerId) = delegate.onPrepared(playerId)
+
+        override fun onTracksSelected(
+            parameters: LoadControl.Parameters,
+            trackGroups: TrackGroupArray,
+            trackSelections: Array<out ExoTrackSelection?>,
+        ) = delegate.onTracksSelected(parameters, trackGroups, trackSelections)
+
+        override fun onStopped(playerId: PlayerId) = delegate.onStopped(playerId)
+
+        override fun onReleased(playerId: PlayerId) = delegate.onReleased(playerId)
+
+        override fun getAllocator(playerId: PlayerId): Allocator = delegate.getAllocator(playerId)
+
+        override fun getBackBufferDurationUs(playerId: PlayerId): Long =
+            delegate.getBackBufferDurationUs(playerId)
+
+        override fun retainBackBufferFromKeyframe(playerId: PlayerId): Boolean =
+            delegate.retainBackBufferFromKeyframe(playerId)
+
+        override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean =
+            delegate.shouldStartPlayback(parameters)
+
         override fun shouldContinueLoading(parameters: LoadControl.Parameters): Boolean {
             // Native preloaded periods are promoted into the normal queue before playback needs
             // them. Remove their read restriction at that point, even before the UI event arrives.
