@@ -77,8 +77,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
 import com.sakayori.innertube.models.WatchEndpoint
 import com.sakayori.music.BuildConfig
 import com.sakayori.music.LocalPlayerAwareWindowInsets
@@ -419,16 +417,14 @@ fun AboutScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Spacer(Modifier.height(8.dp))
+                val donateFallback = painterResource(R.drawable.donate)
                 AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data("https://qr.sakayori.me/image/970454-99ZP26301M80823757-payos.png?addInfo=ung%20ho%20nha%20phat%20trien")
-                        .placeholder(R.drawable.donate)
-                        .fallback(R.drawable.donate)
-                        .error(R.drawable.donate)
-                        .crossfade(true)
-                        .build(),
+                    model = "https://qr.sakayori.me/image/970454-99ZP26301M80823757-payos.png?addInfo=ung%20ho%20nha%20phat%20trien",
                     contentDescription = "VietQR",
                     contentScale = ContentScale.Fit,
+                    placeholder = donateFallback,
+                    fallback = donateFallback,
+                    error = donateFallback,
                     modifier = Modifier
                         .fillMaxWidth()
                         .sizeIn(maxWidth = 260.dp, maxHeight = 260.dp)
