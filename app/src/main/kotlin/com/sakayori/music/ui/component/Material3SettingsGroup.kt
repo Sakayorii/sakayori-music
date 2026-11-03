@@ -6,6 +6,8 @@
 package com.sakayori.music.ui.component
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -75,7 +77,12 @@ fun Material3SettingsGroup(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize(),
+                        .animateContentSize(
+                            animationSpec = tween(
+                                durationMillis = 250,
+                                easing = FastOutSlowInEasing,
+                            )
+                        ),
                     shape = shape,
                     colors = CardDefaults.cardColors(
                         containerColor = if (!useLowContrast) {

@@ -1319,9 +1319,9 @@ class MainActivity : ComponentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (currentRouteIndex == -1 || currentRouteIndex > previousRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(tween(300)) { it / 6 } + fadeIn(tween(300))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(tween(300)) { -it / 6 } + fadeIn(tween(300))
                                         }
                                     },
                                     exitTransition = {
@@ -1329,9 +1329,9 @@ class MainActivity : ComponentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (targetRouteIndex == -1 || targetRouteIndex > currentRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(tween(300)) { -it / 6 } + fadeOut(tween(300))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(tween(300)) { it / 6 } + fadeOut(tween(300))
                                         }
                                     },
                                     popEnterTransition = {
@@ -1339,9 +1339,9 @@ class MainActivity : ComponentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (previousRouteIndex != -1 && previousRouteIndex < currentRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(tween(300)) { it / 6 } + fadeIn(tween(300))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(tween(300)) { -it / 6 } + fadeIn(tween(300))
                                         }
                                     },
                                     popExitTransition = {
@@ -1349,9 +1349,9 @@ class MainActivity : ComponentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (currentRouteIndex != -1 && currentRouteIndex < targetRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(tween(300)) { -it / 6 } + fadeOut(tween(300))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(tween(300)) { it / 6 } + fadeOut(tween(300))
                                         }
                                     },
                                     modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),

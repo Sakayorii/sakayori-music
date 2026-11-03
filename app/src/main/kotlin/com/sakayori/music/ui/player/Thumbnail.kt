@@ -70,6 +70,7 @@ import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.sakayori.music.LocalListenTogetherManager
 import com.sakayori.music.LocalPlayerConnection
 import com.sakayori.music.R
@@ -630,6 +631,7 @@ private fun ThumbnailImage(
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(artworkUri)
+                .crossfade(false) // show cached image instantly, no 200ms crossfade delay
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
