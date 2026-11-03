@@ -4470,7 +4470,7 @@ class MusicService :
             }
         }
 
-        if (playbackStats.totalPlayTimeMs >= historyDurationMs) {
+        if (playTimeMs >= historyDurationMs) {
             scope.launch(Dispatchers.IO) {
                 val playbackUrl =
                     playbackUrlCache[cacheKey(mediaItem.mediaId)]
@@ -4481,7 +4481,7 @@ class MusicService :
                             ?.videostatsPlaybackUrl
                             ?.baseUrl
                 if (playbackUrl == null) {
-                    Timber.tag(TAG).w("No playback tracking URL available for $mediaItem.mediaId, skipping YouTube history registration")
+                    Timber.tag(TAG).w("No playback tracking URL available for ${mediaItem.mediaId}, skipping YouTube history registration")
                     return@launch
                 }
                 YouTube
