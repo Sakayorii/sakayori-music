@@ -11,6 +11,7 @@ import com.sakayori.music.models.MediaMetadata
 
 interface Queue {
     val preloadItem: MediaMetadata?
+    val preloadPosition: Long get() = 0L
 
     suspend fun getInitialStatus(): Status
 
@@ -26,21 +27,27 @@ interface Queue {
     ) {
         fun filterExplicit(enabled: Boolean = true) =
             if (enabled) {
-                copy(
-                    items = items.filterExplicit(),
-                )
+                filterItems { it.metadata?.explicit != true }
             } else {
                 this
             }
 
         fun filterVideoSongs(disableVideos: Boolean = false) =
             if (disableVideos) {
-                copy(
-                    items = items.filterVideoSongs(true),
-                )
+                filterItems { it.metadata?.isVideoSong != true }
             } else {
                 this
             }
+
+        private fun filterItems(include: (MediaItem) -> Boolean): Status {
+            val indices = items.indices.filter { include(items[it]) }
+            val selected = mediaItemIndex.coerceIn(0, items.lastIndex.coerceAtLeast(0))
+            val retained = indices.indexOf(selected)
+            val newIndex = if (retained >= 0) retained else indices.indexOfFirst { it >= selected }
+                .takeIf { it >= 0 } ?: indices.lastIndex.coerceAtLeast(0)
+            return copy(items = indices.map(items::get), mediaItemIndex = newIndex,
+                position = if (retained >= 0) position else 0L)
+        }
     }
 }
 

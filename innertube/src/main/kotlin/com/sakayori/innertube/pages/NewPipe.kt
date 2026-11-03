@@ -4,6 +4,8 @@ import com.sakayori.innertube.models.YouTubeClient
 import com.sakayori.innertube.models.response.PlayerResponse
 import io.ktor.http.URLBuilder
 import io.ktor.http.parseQueryString
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.NewPipe
@@ -16,12 +18,12 @@ import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
 import org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.Proxy
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 
-private class NewPipeDownloaderImpl(
-    proxy: Proxy?,
-    proxyAuth: String?,
-) : Downloader() {
+private class NewPipeDownloaderImpl : Downloader() {
     private fun normalizeResponseBody(
         url: String,
         body: String?,
@@ -38,30 +40,71 @@ private class NewPipeDownloaderImpl(
         return "{\"likes\":0,\"dislikes\":0,\"viewCount\":0}"
     }
 
-    private val client =
-        OkHttpClient
-            .Builder()
-            .proxy(proxy)
-            .proxyAuthenticator { _, response ->
-                proxyAuth?.let { auth ->
-                    response.request
-                        .newBuilder()
-                        .header("Proxy-Authorization", auth)
-                        .build()
-                } ?: response.request
-            }.build()
+    private data class ProxySettings(val proxy: Proxy?, val credentials: String?)
+    private var settings: ProxySettings? = null
+    private var client: OkHttpClient? = null
 
+    @Synchronized
+    private fun httpClient(): OkHttpClient {
+        val next = ProxySettings(YouTube.proxy, YouTube.proxyAuth)
+        if (settings == next) client?.let { return it }
+        return OkHttpClient.Builder()
+            .proxy(next.proxy)
+            .proxyAuthenticator { _, response ->
+                val credentials = next.credentials ?: return@proxyAuthenticator null
+                if (response.request.header("Proxy-Authorization") == credentials) null
+                else response.request.newBuilder().header("Proxy-Authorization", credentials).build()
+            }.build().also {
+                settings = next
+                client = it
+            }
+    }
+
+    // Matches SakayoriExtractor ab382ba1dfac01a999ed859a9f2a9af93454fa8e. Like
+    // Media3's OkHttp bridge, wait interruptibly instead of executing on the caller's thread.
+    // Complete only after body conversion so interruption also cancels an in-progress body read.
     @Throws(IOException::class, ReCaptchaException::class)
     override fun execute(request: Request): Response {
+        if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Extractor request interrupted")
+        val result = CompletableFuture<Response>()
+        val pending = executeAsync(request, object : Downloader.AsyncCallback {
+            override fun onSuccess(response: Response) {
+                result.complete(response)
+            }
+
+            override fun onError(error: Exception) {
+                result.completeExceptionally(error)
+            }
+        })
+        return try {
+            result.get()
+        } catch (interrupted: InterruptedException) {
+            pending.cancel()
+            result.cancel(false)
+            Thread.currentThread().interrupt()
+            throw InterruptedIOException("Extractor request interrupted").apply { initCause(interrupted) }
+        } catch (failed: ExecutionException) {
+            when (val cause = failed.cause) {
+                is IOException -> throw cause
+                is ReCaptchaException -> throw cause
+                is RuntimeException -> throw cause
+                else -> throw IOException("Extractor request failed", cause)
+            }
+        }
+    }
+
+    private fun newCall(request: Request): Call {
         val httpMethod = request.httpMethod()
         val url = request.url()
         val headers = request.headers()
         val dataToSend = request.dataToSend()
+        // Downloader.post explicitly permits a null payload; OkHttp requires an empty body.
+        val body = dataToSend?.toRequestBody() ?: if (httpMethod == "POST") ByteArray(0).toRequestBody() else null
 
         val requestBuilder =
             okhttp3.Request
                 .Builder()
-                .method(httpMethod, dataToSend?.toRequestBody())
+                .method(httpMethod, body)
                 .url(url)
                 .addHeader("User-Agent", YouTubeClient.USER_AGENT_WEB)
 
@@ -76,35 +119,67 @@ private class NewPipeDownloaderImpl(
             }
         }
 
-        val response = client.newCall(requestBuilder.build()).execute()
+        val base = httpClient()
+        val transport = if (base.followRedirects == request.followRedirects()) base else
+            base.newBuilder().followRedirects(request.followRedirects()).build()
+        return transport.newCall(requestBuilder.build())
+    }
 
+    private fun toExtractorResponse(response: okhttp3.Response, requestedUrl: String): Response {
         if (response.code == 429) {
-            response.close()
-
-            throw ReCaptchaException("reCaptcha Challenge requested", url)
+            throw ReCaptchaException("reCaptcha Challenge requested", requestedUrl)
         }
 
         val latestUrl = response.request.url.toString()
-        val responseBodyToReturn = normalizeResponseBody(latestUrl, response.body.string())
+        val responseBodyToReturn = normalizeResponseBody(latestUrl, response.body?.string())
         return Response(
             response.code,
             response.message,
             response.headers.toMultimap(),
             responseBodyToReturn,
-            responseBodyToReturn?.toByteArray(),
+            responseBodyToReturn?.toByteArray(Charsets.UTF_8) ?: ByteArray(0),
             latestUrl,
         )
     }
 
-    override fun executeAsync(request: Request, callback: AsyncCallback?): CancellableCall {
-        TODO("Placeholder")
+    @Throws(IOException::class, ReCaptchaException::class)
+    override fun executeAsync(request: Request, callback: Downloader.AsyncCallback?): CancellableCall {
+        val call = newCall(request)
+        val pending = CancellableCall(call)
+        call.enqueue(object : Callback {
+            override fun onFailure(call: Call, error: IOException) {
+                try {
+                    callback?.onError(error)
+                } finally {
+                    pending.setFinished()
+                }
+            }
+
+            override fun onResponse(call: Call, response: okhttp3.Response) {
+                try {
+                    val result = response.use {
+                        if (call.isCanceled()) throw IOException("Extractor request cancelled")
+                        toExtractorResponse(it, request.url())
+                    }
+                    if (call.isCanceled()) throw IOException("Extractor request cancelled")
+                    callback?.onSuccess(result)
+                } catch (error: Exception) {
+                    callback?.onError(error)
+                } finally {
+                    pending.setFinished()
+                }
+            }
+        })
+        return pending
     }
 }
 
 object NewPipeUtils {
     init {
-        NewPipe.init(NewPipeDownloaderImpl(YouTube.proxy, YouTube.proxyAuth))
+        NewPipe.init(NewPipeDownloaderImpl())
     }
+
+    internal fun ensureInitialized() = Unit
 
     fun getSignatureTimestamp(videoId: String): Result<Int> = runCatching {
         YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
@@ -140,6 +215,11 @@ object NewPipeUtils {
 }
 
 object NewPipeExtractor {
+    init {
+        // Playback uses this facade directly; merely declaring NewPipeUtils does not run its init.
+        NewPipeUtils.ensureInitialized()
+    }
+
     fun newPipePlayer(videoId: String): List<Pair<Int, String>> {
         return try {
             val streamInfo =

@@ -1,15 +1,18 @@
 package com.sakayori.music.utils.cipher
 
 import android.content.Context
-import com.sakayori.innertube.YouTube
+import com.sakayori.music.playback.PlaybackHttpClient
+import com.sakayori.music.playback.readCancellable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
 import java.io.File
@@ -116,13 +119,8 @@ object PlayerConfigStore {
     private val refreshMutex = Mutex()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Built once on first use (mirrors PlayerJsFetcher's single client) so config refreshes
-    // reuse one connection pool/dispatcher instead of allocating a fresh client per fetch.
-    private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .apply { YouTube.proxy?.let { proxy(it) } }
-            .build()
-    }
+    // Share the proxy-aware playback transport; credential changes do not retain a stale client.
+    private val httpClient get() = PlaybackHttpClient.shared()
 
     /**
      * Synchronous: loads the bundled asset and, if present and valid, the last-good cached
@@ -177,6 +175,8 @@ object PlayerConfigStore {
         scope.launch {
             try {
                 refreshIfStale()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 Timber.tag(TAG).w(e, "Startup config refresh failed: ${e.message}")
             }
@@ -223,7 +223,13 @@ object PlayerConfigStore {
                 return@withLock false
             }
             lastForcedAttemptMs = now
-            fetchFallbackChain(missingHash) { lastForcedAttemptMs = 0L }
+            try {
+                fetchFallbackChain(missingHash) { lastForcedAttemptMs = 0L }
+            } catch (cancelled: CancellationException) {
+                // An abandoned selection is not a failed-server cooldown for the next song.
+                lastForcedAttemptMs = 0L
+                throw cancelled
+            }
             mergedConfigs.containsKey(missingHash)
         }
     }
@@ -245,7 +251,12 @@ object PlayerConfigStore {
                 return@withLock false
             }
             lastRejectionAttemptMs = now
-            fetchFallbackChain(playerHash) { lastRejectionAttemptMs = 0L }
+            try {
+                fetchFallbackChain(playerHash) { lastRejectionAttemptMs = 0L }
+            } catch (cancelled: CancellationException) {
+                lastRejectionAttemptMs = 0L
+                throw cancelled
+            }
         }
     }
 
@@ -255,7 +266,7 @@ object PlayerConfigStore {
      * while briefly offline retries on the next trigger instead of waiting out the cooldown.
      * Returns whether the table changed. Must be called with [refreshMutex] held.
      */
-    private fun fetchFallbackChain(targetHash: String?, resetCooldown: () -> Unit): Boolean {
+    private suspend fun fetchFallbackChain(targetHash: String?, resetCooldown: () -> Unit): Boolean {
         val faraday = fetchAndApply(FARADAY_SOURCE)
         val zemer = if (targetHash != null && targetHash !in faradayConfigs) {
             fetchAndApply(ZEMER_SOURCE)
@@ -285,7 +296,7 @@ object PlayerConfigStore {
      * branch), network exception, or validation failure — keeps the previous map and cache.
      * lastFetchMs is only advanced on 200/304 so transient failures retry on the next trigger.
      */
-    private fun fetchAndApply(source: RemoteSource): FetchResult {
+    private suspend fun fetchAndApply(source: RemoteSource): FetchResult {
         try {
             val etag = readMeta(source)?.first
             val request = Request.Builder()
@@ -294,41 +305,47 @@ object PlayerConfigStore {
                 .apply { if (!etag.isNullOrEmpty()) header("If-None-Match", etag) }
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
-                if (response.code == 304) {
-                    Timber.tag(TAG).d("${source.name} configs unchanged (304)")
-                    writeMeta(source, etag.orEmpty(), System.currentTimeMillis())
-                    return FetchResult(changed = false, reachedServer = true)
-                }
-                if (!response.isSuccessful) {
-                    Timber.tag(TAG).w("${source.name} config fetch HTTP ${response.code} — keeping previous configs")
-                    return FetchResult(changed = false, reachedServer = true)
-                }
-
-                val body = response.body?.string()
-                if (body.isNullOrEmpty()) {
-                    Timber.tag(TAG).w("${source.name} config fetch returned empty body — keeping previous configs")
-                    return FetchResult(changed = false, reachedServer = true)
-                }
-
-                val remote = when (val result = PlayerConfigParser.parse(body)) {
-                    is PlayerConfigParser.ParseResult.Failure -> {
-                        Timber.tag(TAG).w("${source.name} configs rejected: ${result.reason} — keeping previous configs")
-                        return FetchResult(changed = false, reachedServer = true)
-                    }
-                    is PlayerConfigParser.ParseResult.Success -> {
-                        if (result.skippedEntries.isNotEmpty()) {
-                            Timber.tag(TAG).w("${source.name} configs: skipped invalid entries ${result.skippedEntries}")
-                        }
-                        result.configs
-                    }
-                }
-
-                return FetchResult(
-                    changed = applyRemote(source, remote, body, response.header("ETag").orEmpty()),
-                    reachedServer = true,
-                )
+            val fetched = httpClient.readCancellable(request) { response ->
+                Triple(response.code, response.header("ETag").orEmpty(),
+                    if (response.isSuccessful && response.code != 304) response.body?.string() else null)
             }
+            currentCoroutineContext().ensureActive()
+            val (code, responseEtag, body) = fetched
+            if (code == 304) {
+                Timber.tag(TAG).d("${source.name} configs unchanged (304)")
+                writeMeta(source, etag.orEmpty(), System.currentTimeMillis())
+                return FetchResult(changed = false, reachedServer = true)
+            }
+            if (code !in 200..299) {
+                Timber.tag(TAG).w("${source.name} config fetch HTTP $code — keeping previous configs")
+                return FetchResult(changed = false, reachedServer = true)
+            }
+
+            if (body.isNullOrEmpty()) {
+                Timber.tag(TAG).w("${source.name} config fetch returned empty body — keeping previous configs")
+                return FetchResult(changed = false, reachedServer = true)
+            }
+
+            val remote = when (val result = PlayerConfigParser.parse(body)) {
+                is PlayerConfigParser.ParseResult.Failure -> {
+                    Timber.tag(TAG).w("${source.name} configs rejected: ${result.reason} — keeping previous configs")
+                    return FetchResult(changed = false, reachedServer = true)
+                }
+                is PlayerConfigParser.ParseResult.Success -> {
+                    if (result.skippedEntries.isNotEmpty()) {
+                        Timber.tag(TAG).w("${source.name} configs: skipped invalid entries ${result.skippedEntries}")
+                    }
+                    result.configs
+                }
+            }
+
+            currentCoroutineContext().ensureActive()
+            return FetchResult(
+                changed = applyRemote(source, remote, body, responseEtag),
+                reachedServer = true,
+            )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             Timber.tag(TAG).w(e, "${source.name} config fetch failed: ${e.message} — keeping previous configs")
             return FetchResult(changed = false, reachedServer = false)

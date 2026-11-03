@@ -1005,7 +1005,7 @@ object YouTube {
         }
 
     suspend fun playlist(playlistId: String): Result<PlaylistPage> =
-        runCatching {
+        runOnIoCatching {
             val response =
                 innerTube
                     .browse(
@@ -1081,6 +1081,12 @@ object YouTube {
                 ?.avatarViewModel?.image?.sources?.firstOrNull()
                 ?.url
 
+            var snapshotUsable = true
+            val countText = (header?.secondSubtitle ?: response.header?.musicHeaderRenderer?.secondSubtitle)
+                ?.runs?.findLast { it.text.any(Char::isDigit) && !it.text.contains("view", true) &&
+                    !it.text.contains("hour", true) && !it.text.contains("minute", true) }?.text
+            val declaredCount = countText?.filter(Char::isDigit)?.toLongOrNull()
+
             PlaylistPage(
                 playlist =
                     PlaylistItem(
@@ -1143,7 +1149,7 @@ object YouTube {
                             ?.secondaryContents
                             ?.sectionListRenderer
                             ?.contents
-                            ?.firstOrNull()
+                            ?.firstOrNull { it.musicPlaylistShelfRenderer != null || it.musicShelfRenderer != null }
                     val twoColContents =
                         twoColShelf?.musicPlaylistShelfRenderer?.contents
                             ?: twoColShelf?.musicShelfRenderer?.contents
@@ -1151,7 +1157,7 @@ object YouTube {
                         response.contents
                             ?.singleColumnBrowseResultsRenderer
                             ?.tabs
-                            ?.firstOrNull()
+                            ?.firstOrNull { it.musicPlaylistShelfRenderer != null || it.musicShelfRenderer != null }
                             ?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
@@ -1160,10 +1166,14 @@ object YouTube {
                     val singleColContents =
                         singleColShelf?.musicPlaylistShelfRenderer?.contents
                             ?: singleColShelf?.musicShelfRenderer?.contents
-                    (twoColContents ?: singleColContents)
-                        ?.getItems()
-                        ?.mapNotNull { PlaylistPage.fromMusicResponsiveListItemRenderer(it) }
-                        ?: emptyList()
+                    val contents = twoColContents ?: singleColContents
+                    if (contents == null && declaredCount != 0L) snapshotUsable = false
+                    val rows = contents?.getItems().orEmpty()
+                    val parsed = rows.mapNotNull { renderer ->
+                        PlaylistPage.fromMusicResponsiveListItemRenderer(renderer).also { if (it == null) snapshotUsable = false }
+                    }
+                    if (parsed.isEmpty() && declaredCount != null && declaredCount > 0) snapshotUsable = false
+                    parsed
                 },
                 songsContinuation = run {
                     val twoColShelf =
@@ -1172,7 +1182,7 @@ object YouTube {
                             ?.secondaryContents
                             ?.sectionListRenderer
                             ?.contents
-                            ?.firstOrNull()
+                            ?.firstOrNull { it.musicPlaylistShelfRenderer != null || it.musicShelfRenderer != null }
                     val twoColContents =
                         twoColShelf?.musicPlaylistShelfRenderer?.contents
                             ?: twoColShelf?.musicShelfRenderer?.contents
@@ -1183,7 +1193,7 @@ object YouTube {
                         response.contents
                             ?.singleColumnBrowseResultsRenderer
                             ?.tabs
-                            ?.firstOrNull()
+                            ?.firstOrNull { it.musicPlaylistShelfRenderer != null || it.musicShelfRenderer != null }
                             ?.tabRenderer
                             ?.content
                             ?.sectionListRenderer
@@ -1206,11 +1216,12 @@ object YouTube {
                         ?.sectionListRenderer
                         ?.continuations
                         ?.getContinuation(),
+                isSnapshotUsableForSync = snapshotUsable,
             )
         }
 
     suspend fun playlistContinuation(continuation: String): Result<PlaylistContinuationPage> =
-        runCatching {
+        runOnIoCatching {
             val response =
                 innerTube
                     .browse(
@@ -1238,23 +1249,31 @@ object YouTube {
 
             val appendedContents: List<MusicShelfRenderer.Content> =
                 response.onResponseReceivedActions
-                    ?.firstOrNull()
-                    ?.appendContinuationItemsAction
-                    ?.continuationItems
+                    ?.flatMap { it.appendContinuationItemsAction?.continuationItems.orEmpty() }
                     .orEmpty()
 
+            if (response.continuationContents?.sectionListContinuation == null &&
+                response.continuationContents?.musicPlaylistShelfContinuation == null &&
+                response.continuationContents?.musicShelfContinuation == null &&
+                response.onResponseReceivedActions?.none { it.appendContinuationItemsAction != null } != false
+            ) {
+                throw java.io.IOException("Missing playlist continuation contents")
+            }
+
+            // Preserve every represented occurrence. Duplicate representations are removed by
+            // setVideoId below; repeated recordings with different occurrence IDs remain.
             val allContents = mainContents + shelfContents + musicShelfContinuationContents + appendedContents
+            val seenOccurrences = mutableSetOf<String>()
+            var snapshotUsable = true
 
             val songs =
                 allContents
                     .mapNotNull { content: MusicShelfRenderer.Content -> content.musicResponsiveListItemRenderer }
-                    .mapNotNull { renderer -> PlaylistPage.fromMusicResponsiveListItemRenderer(renderer) }
-                    .distinctBy { it.id }
+                    .mapNotNull { renderer -> PlaylistPage.fromMusicResponsiveListItemRenderer(renderer)
+                        .also { if (it == null) snapshotUsable = false } }
+                    .filter { song -> song.setVideoId?.let(seenOccurrences::add) ?: true }
 
             val nextContinuation =
-                if (songs.isEmpty()) {
-                    null
-                } else {
                     response.continuationContents
                         ?.sectionListContinuation
                         ?.continuations
@@ -1267,16 +1286,12 @@ object YouTube {
                             ?.musicShelfContinuation
                             ?.continuations
                             ?.getContinuation()
-                        ?: response.onResponseReceivedActions
-                            ?.firstOrNull()
-                            ?.appendContinuationItemsAction
-                            ?.continuationItems
-                            ?.getContinuation()
-                }
+                        ?: appendedContents.getContinuation()
 
             PlaylistContinuationPage(
                 songs = songs,
                 continuation = nextContinuation,
+                isSnapshotUsableForSync = snapshotUsable,
             )
         }
 
@@ -1864,7 +1879,7 @@ object YouTube {
         browseId: String,
         tabIndex: Int = 0,
     ): Result<LibraryPage> =
-        runCatching {
+        runOnIoCatching {
             val response =
                 innerTube
                     .browse(
@@ -1908,15 +1923,17 @@ object YouTube {
                     LibraryPage(
                         items = parsedItems,
                         continuation = gridRenderer.continuations?.getContinuation(),
+                        isSnapshotUsableForSync = parsedItems.size == gridItems.mapNotNull(GridRenderer.Item::musicTwoRowItemRenderer).size,
                     )
                 }
 
                 playlistShelfRenderer != null -> {
+                    val rows = playlistShelfRenderer.contents.getItems()
+                    val parsed = rows.mapNotNull(LibraryPage.Companion::fromMusicResponsiveListItemRenderer)
                     LibraryPage(
-                        items = playlistShelfRenderer.contents
-                            .getItems()
-                            .mapNotNull(LibraryPage.Companion::fromMusicResponsiveListItemRenderer),
+                        items = parsed,
                         continuation = playlistShelfRenderer.continuations?.getContinuation(),
+                        isSnapshotUsableForSync = parsed.size == rows.size,
                     )
                 }
 
@@ -1930,15 +1947,16 @@ object YouTube {
                     LibraryPage(
                         items = parsedItems,
                         continuation = musicShelfRenderer.continuations?.getContinuation(),
+                        isSnapshotUsableForSync = parsedItems.size == listItemRenderers.size,
                     )
                 }
 
-                else -> LibraryPage(items = emptyList(), continuation = null)
+                else -> throw java.io.IOException("Missing library snapshot contents")
             }
         }
 
     suspend fun libraryContinuation(continuation: String) =
-        runCatching {
+        runOnIoCatching {
             val response =
                 innerTube
                     .browse(
@@ -1951,27 +1969,26 @@ object YouTube {
 
             when {
                 contents?.gridContinuation != null -> {
+                    val rows = contents.gridContinuation.items.mapNotNull(GridRenderer.Item::musicTwoRowItemRenderer)
+                    val parsed = rows.mapNotNull(LibraryPage.Companion::fromMusicTwoRowItemRenderer)
                     LibraryContinuationPage(
-                        items =
-                            contents.gridContinuation.items
-                                .mapNotNull(GridRenderer.Item::musicTwoRowItemRenderer)
-                                .mapNotNull { LibraryPage.fromMusicTwoRowItemRenderer(it) },
+                        items = parsed,
                         continuation = contents.gridContinuation.continuations?.getContinuation(),
+                        isSnapshotUsableForSync = parsed.size == rows.size,
                     )
                 }
 
-                else -> { // contents?.musicShelfContinuation != null
+                contents?.musicShelfContinuation != null -> {
+                    val rows = contents.musicShelfContinuation.contents.orEmpty()
+                        .mapNotNull(MusicShelfRenderer.Content::musicResponsiveListItemRenderer)
+                    val parsed = rows.mapNotNull(LibraryPage.Companion::fromMusicResponsiveListItemRenderer)
                     LibraryContinuationPage(
-                        items =
-                            contents
-                                ?.musicShelfContinuation
-                                ?.contents
-                                ?.mapNotNull(MusicShelfRenderer.Content::musicResponsiveListItemRenderer)
-                                ?.mapNotNull { LibraryPage.fromMusicResponsiveListItemRenderer(it) }
-                                .orEmpty(),
+                        items = parsed,
                         continuation = contents?.musicShelfContinuation?.continuations?.getContinuation(),
+                        isSnapshotUsableForSync = parsed.size == rows.size,
                     )
                 }
+                else -> throw java.io.IOException("Missing library continuation contents")
             }
         }
 

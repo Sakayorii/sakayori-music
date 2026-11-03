@@ -12,6 +12,7 @@ data class PlaylistPage(
     val songs: List<SongItem>,
     val songsContinuation: String?,
     val continuation: String?,
+    val isSnapshotUsableForSync: Boolean = true,
 ) {
     companion object {
         fun fromMusicResponsiveListItemRenderer(renderer: MusicResponsiveListItemRenderer): SongItem? {

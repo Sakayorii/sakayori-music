@@ -623,8 +623,12 @@ class SyncUtils @Inject constructor(
             executeSyncSavedPlaylists()
             delay(DB_OPERATION_DELAY_MS)
 
-            updateState { copy(overallStatus = SyncStatus.Completed, currentOperation = "") }
-            Timber.d("Full sync completed successfully")
+            val state = _syncState.value
+            val failure = listOf(state.likedSongs, state.librarySongs, state.uploadedSongs,
+                state.likedAlbums, state.uploadedAlbums, state.artists, state.playlists)
+                .filterIsInstance<SyncStatus.Error>().firstOrNull()
+            updateState { copy(overallStatus = failure ?: SyncStatus.Completed, currentOperation = "") }
+            if (failure == null) Timber.d("Full sync completed successfully")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -1452,12 +1456,14 @@ class SyncUtils @Inject constructor(
                             }
                         } catch (e: Exception) {
                             Timber.e(e, "Failed to sync playlist ${playlist.title}")
+                            throw e
                         }
                     }
 
                     updateState { copy(playlists = SyncStatus.Completed) }
                     Timber.d("Synced ${remotePlaylists.size} saved playlists")
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Timber.e(e, "Error processing saved playlists")
                     updateState { copy(playlists = SyncStatus.Error(e.message ?: "Unknown error")) }
                 }
@@ -1493,10 +1499,13 @@ class SyncUtils @Inject constructor(
                     executeSyncPlaylist(playlist.browseId!!, playlist.id)
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to sync playlist ${playlist.name}")
+                    throw e
                 }
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Timber.e(e, "Error syncing auto-sync playlists")
+            updateState { copy(playlists = SyncStatus.Error(e.message ?: "Unknown error")) }
         }
     }
 
@@ -1504,17 +1513,17 @@ class SyncUtils @Inject constructor(
         Timber.d("syncPlaylist: Starting sync for browseId=$browseId, playlistId=$playlistId")
 
         withRetry {
-            YouTube.playlist(browseId).completed()
-        }.onSuccess { result ->
-            result.onSuccess { page ->
+            YouTube.playlist(browseId).completed().getOrThrow()
+        }.onSuccess { page ->
                 try {
                     val songs = page.songs.map(SongItem::toMediaMetadata)
                     Timber.d("syncPlaylist: Fetched ${songs.size} songs from remote")
 
                     val remoteIds = songs.map { it.id }
                     val localIds = database.playlistSongIds(playlistId)
+                    val localOccurrences = database.playlistSongMaps(playlistId, 0).map { it.setVideoId }
 
-                    if (remoteIds == localIds) {
+                    if (remoteIds == localIds && songs.map { it.setVideoId } == localOccurrences) {
                         Timber.d("syncPlaylist: Local and remote are in sync, no changes needed")
                         return@onSuccess
                     }
@@ -1527,7 +1536,7 @@ class SyncUtils @Inject constructor(
                     val desiredEntries: List<Pair<String, String?>> =
                         songs.map { it.id to it.setVideoId } + downloadedIds.map { songId -> songId to null }
 
-                    if (desiredEntries.map { it.first } == localIds) {
+                    if (desiredEntries.map { it.first } == localIds && desiredEntries.map { it.second } == localOccurrences) {
                         Timber.d("syncPlaylist: Local and remote are in sync, no changes needed")
                         return@onSuccess
                     }
@@ -1543,7 +1552,12 @@ class SyncUtils @Inject constructor(
                             .mapValues { ArrayDeque(it.value) }
                         var changed = false
                         desiredEntries.forEachIndexed { index, (songId, setVideoId) ->
-                            val existing = remainingMaps[songId]?.removeFirstOrNull()
+                            val candidates = remainingMaps[songId]
+                            val existing = if (setVideoId == null) candidates?.firstOrNull() else
+                                candidates?.firstOrNull { it.setVideoId == setVideoId }
+                                    ?: candidates?.firstOrNull { it.setVideoId != null }
+                                    ?: candidates?.firstOrNull()
+                            if (existing != null) candidates?.remove(existing)
                             if (existing == null) {
                                 database.insert(
                                     PlaylistSongMap(
@@ -1562,7 +1576,7 @@ class SyncUtils @Inject constructor(
                         var pendingPosition = desiredEntries.size
                         remainingMaps.values.forEach { queue ->
                             queue.forEach {
-                                if (it.setVideoId == null && it.songId !in remoteIdSet) {
+                                if (it.setVideoId == null) {
                                     database.update(it.copy(position = pendingPosition++))
                                 } else {
                                     database.delete(it)
@@ -1582,13 +1596,15 @@ class SyncUtils @Inject constructor(
                     }
                     Timber.d("syncPlaylist: Successfully synced playlist")
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Timber.e(e, "Error processing playlist sync")
+                    updateState { copy(playlists = SyncStatus.Error(e.message ?: "Unknown error")) }
+                    throw e
                 }
-            }.onFailure { e ->
-                Timber.e(e, "syncPlaylist: Failed to fetch playlist from YouTube")
-            }
         }.onFailure { e ->
             Timber.e(e, "syncPlaylist: Failed after retries")
+            updateState { copy(playlists = SyncStatus.Error(e.message ?: "Unknown error")) }
+            throw e
         }
     }
 

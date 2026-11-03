@@ -105,7 +105,9 @@ class PlaybackStreamResolver @Inject constructor(
                 mediaId, quality, metered, revision, clients, required?.cacheKey,
                 generations.getOrPut(mediaId) { ++nextGeneration },
             )
-            key to gates.getOrPut(key) { Gate() }.also { it.users++ }
+            // Compatible pinned and unpinned readers share the unfinished request gate. The
+            // cached-result check still verifies the exact encoded key for pinned readers.
+            key to gates.getOrPut(key.copy(requiredKey = null)) { Gate() }.also { it.users++ }
         }
         try {
             gate.mutex.withLock {
@@ -159,7 +161,8 @@ class PlaybackStreamResolver @Inject constructor(
         } finally {
             synchronized(lock) {
                 gate.users--
-                if (gate.users == 0 && gates[key] === gate) gates.remove(key)
+                val gateKey = key.copy(requiredKey = null)
+                if (gate.users == 0 && gates[gateKey] === gate) gates.remove(gateKey)
                 forgetIdleGeneration(key.mediaId)
             }
         }

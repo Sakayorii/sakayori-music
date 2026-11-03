@@ -7,6 +7,7 @@ package com.sakayori.music.playback.queues
 
 import androidx.media3.common.MediaItem
 import com.sakayori.music.models.MediaMetadata
+import com.sakayori.music.extensions.metadata
 
 class ListQueue(
     val title: String? = null,
@@ -14,7 +15,8 @@ class ListQueue(
     val startIndex: Int = 0,
     val position: Long = 0L,
 ) : Queue {
-    override val preloadItem: MediaMetadata? = null
+    override val preloadItem: MediaMetadata? = items.getOrNull(startIndex)?.metadata
+    override val preloadPosition: Long get() = position
 
     override suspend fun getInitialStatus() = Queue.Status(title, items, startIndex, position)
 

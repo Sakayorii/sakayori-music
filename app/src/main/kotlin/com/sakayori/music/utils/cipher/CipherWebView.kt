@@ -1,6 +1,8 @@
 package com.sakayori.music.utils.cipher
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.RenderProcessGoneDetail
@@ -9,13 +11,15 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import timber.log.Timber
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -75,6 +79,7 @@ class CipherWebView private constructor(
 
     @Volatile
     private var destroyed = false
+    private val closeRequested = AtomicBoolean(false)
 
     @Volatile
     var nFunctionAvailable: Boolean = false
@@ -159,7 +164,7 @@ class CipherWebView private constructor(
         takeInitContinuation()?.resumeSafely { it.resumeWithException(e) }
         sigSlot.takeAny()?.resumeSafely { it.resumeWithException(e) }
         nSlot.takeAny()?.resumeSafely { it.resumeWithException(e) }
-        destroyWebView()
+        close()
     }
 
     // Single-shot take — synchronized because JS-bridge callbacks arrive on a WebView-internal
@@ -447,6 +452,8 @@ function discoverAndInit() {
                 withContext(Dispatchers.Main) {
                     suspendCancellableCoroutine { cont ->
                         val requestId = sigSlot.arm(cont)
+                        cont.invokeOnCancellation { sigSlot.takeIfCurrent(requestId) }
+                        if (!cont.isActive) return@suspendCancellableCoroutine
                         val constArgJs = if (sigInfo.constantArg != null) "${sigInfo.constantArg}" else "null"
                         val jsCall = "deobfuscateSig('${sigInfo.name}', $constArgJs, '${escapeJsString(obfuscatedSig)}', $requestId)"
                         Timber.tag(TAG).d("Evaluating JS: ${jsCall.take(100)}...")
@@ -455,6 +462,7 @@ function discoverAndInit() {
                 }
             }
         } catch (e: TimeoutCancellationException) {
+            currentCoroutineContext().ensureActive()
             // A renderer that never answers evaluateJavascript is wedged/dead — safety net for
             // providers where onRenderProcessGone doesn't fire.
             Timber.tag(TAG).e("Sig deobfuscation timed out after ${EVAL_TIMEOUT_MS}ms — treating renderer as gone")
@@ -496,6 +504,8 @@ function discoverAndInit() {
                 withContext(Dispatchers.Main) {
                     suspendCancellableCoroutine { cont ->
                         val requestId = nSlot.arm(cont)
+                        cont.invokeOnCancellation { nSlot.takeIfCurrent(requestId) }
+                        if (!cont.isActive) return@suspendCancellableCoroutine
                         val jsCall = "transformN('${escapeJsString(nValue)}', $requestId)"
                         Timber.tag(TAG).d("Evaluating JS: $jsCall")
                         webView.evaluateJavascript(jsCall, null)
@@ -503,6 +513,7 @@ function discoverAndInit() {
                 }
             }
         } catch (e: TimeoutCancellationException) {
+            currentCoroutineContext().ensureActive()
             Timber.tag(TAG).e("N-transform timed out after ${EVAL_TIMEOUT_MS}ms — treating renderer as gone")
             failAsRendererGone("N-transform timed out after ${EVAL_TIMEOUT_MS}ms")
         }
@@ -540,9 +551,15 @@ function discoverAndInit() {
     }
 
     fun close() {
+        if (!closeRequested.compareAndSet(false, true)) return
+        isDead = true
+        val error = CipherException("Cipher WebView closed")
+        takeInitContinuation()?.resumeSafely { it.resumeWithException(error) }
+        sigSlot.takeAny()?.resumeSafely { it.resumeWithException(error) }
+        nSlot.takeAny()?.resumeSafely { it.resumeWithException(error) }
         Timber.tag(TAG).d("Closing CipherWebView...")
-        destroyWebView()
-        Timber.tag(TAG).d("CipherWebView closed")
+        if (Looper.myLooper() == Looper.getMainLooper()) destroyWebView()
+        else Handler(Looper.getMainLooper()).post { destroyWebView() }
     }
 
     private fun destroyWebView() {
@@ -555,8 +572,9 @@ function discoverAndInit() {
             webView.loadUrl("about:blank")
             webView.onPause()
             webView.removeAllViews()
-            webView.destroy()
         }.onFailure { Timber.tag(TAG).w("WebView teardown threw: $it") }
+        // A failed preparatory method after renderer death must not skip destroy() itself.
+        runCatching { webView.destroy() }.onFailure { Timber.tag(TAG).w("WebView destroy threw: $it") }
     }
 
     private fun escapeJsString(s: String): String {
@@ -690,6 +708,7 @@ function discoverAndInit() {
             // construction and the load call happen on the main thread below.
             val cacheDir = withContext(Dispatchers.IO) {
                 val modifiedJs = buildModifiedPlayerJsImpl(playerJs, sigInfo, nFuncInfo)
+                currentCoroutineContext().ensureActive()
                 val dir = File(context.cacheDir, "cipher")
                 dir.mkdirs()
                 val playerJsFile = File(dir, "player.js")
@@ -705,13 +724,19 @@ function discoverAndInit() {
                         suspendCancellableCoroutine { cont ->
                             val wv = CipherWebView(context, sigInfo, nFuncInfo, cont)
                             created = wv
+                            cont.invokeOnCancellation {
+                                wv.takeInitContinuation()
+                                wv.close()
+                            }
+                            if (!cont.isActive) return@suspendCancellableCoroutine
                             wv.loadPreparedPlayerJs(cacheDir)
                         }
                     }
                 }
             } catch (e: TimeoutCancellationException) {
-                Timber.tag(TAG).e("CipherWebView init timed out after ${CREATE_TIMEOUT_MS}ms — treating renderer as gone")
                 destroyQuietly(created)
+                currentCoroutineContext().ensureActive()
+                Timber.tag(TAG).e("CipherWebView init timed out after ${CREATE_TIMEOUT_MS}ms — treating renderer as gone")
                 throw CipherRendererGoneException("CipherWebView init timed out after ${CREATE_TIMEOUT_MS}ms")
             } catch (e: Exception) {
                 // Covers both caller cancellation (CancellationException is rethrown, never
@@ -723,13 +748,11 @@ function discoverAndInit() {
             }
         }
 
-        private suspend fun destroyQuietly(wv: CipherWebView?) {
+        private fun destroyQuietly(wv: CipherWebView?) {
             if (wv == null) return
-            withContext(NonCancellable + Dispatchers.Main) {
-                wv.isDead = true
-                wv.takeInitContinuation() // never resume a cancelled continuation later
-                wv.destroyWebView()
-            }
+            wv.takeInitContinuation() // never resume a cancelled continuation later
+            // close() posts teardown to Main itself; a losing resolution need not wait for it.
+            wv.close()
         }
     }
 }

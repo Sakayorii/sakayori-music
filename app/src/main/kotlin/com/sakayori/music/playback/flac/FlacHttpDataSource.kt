@@ -17,6 +17,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import com.sakayori.music.playback.PlaybackHttpClient
 import com.sakayori.music.playback.RenditionUnavailableException
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import java.io.EOFException
 import java.io.IOException
@@ -64,6 +65,7 @@ internal class FlacHttpDataSource(
             val http = client.get().newBuilder()
                 .connectTimeout(2, TimeUnit.SECONDS)
                 .readTimeout(2500, TimeUnit.MILLISECONDS)
+                .followSslRedirects(false)
                 .addNetworkInterceptor { chain ->
                 val response = chain.proceed(chain.request())
                 try {
@@ -102,6 +104,8 @@ internal class FlacHttpDataSource(
                 }
             }
             return remaining
+        } catch (timeout: TimeoutCancellationException) {
+            throw LosslessStreamException(IOException("FLAC resource renewal timed out", timeout))
         } catch (cancelled: CancellationException) {
             throw InterruptedIOException("FLAC request cancelled").apply { initCause(cancelled) }
         } catch (interrupted: InterruptedException) {

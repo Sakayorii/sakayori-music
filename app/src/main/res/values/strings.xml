@@ -285,7 +285,10 @@
     <string name="audio_quality_low">Low</string>
     <string name="prefer_lossless">Prefer lossless</string>
     <string name="lossless_new_badge">new</string>
-    <string name="prefer_lossless_description">Matching FLAC originals from Internet Archive when available. Otherwise, use your selected audio quality.</string>
+    <string name="prefer_lossless_description">Start with your selected audio quality while matching FLAC is checked in the background for up to 4 seconds.</string>
+    <string name="lossless_api_url">Lossless API URL</string>
+    <string name="lossless_api_automatic">Automatic sources</string>
+    <string name="lossless_api_url_description">Optional: the HTTPS base URL of an existing Monochrome- or HiFi-compatible API you are authorized to use. Leave empty for automatic sources. Do not include account tokens or passwords.</string>
     <string name="lossless_decoder_unavailable">A compatible FLAC decoder is required. Your normal audio quality remains available.</string>
     <string name="queue">Queue</string>
     <string name="persistent_queue">Persistent queue</string>

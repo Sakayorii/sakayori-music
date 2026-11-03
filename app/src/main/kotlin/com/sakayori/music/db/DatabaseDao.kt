@@ -63,6 +63,8 @@ import java.text.Collator
 import java.time.LocalDateTime
 import java.util.Locale
 
+private const val SONG_ID_QUERY_BATCH_SIZE = 500
+
 /**
  * Helloo! Note from a dev:
  * SQL Injection Prevention:
@@ -726,8 +728,9 @@ interface DatabaseDao {
     @Query("SELECT * FROM song WHERE id = :songId LIMIT 1")
     fun getSongByIdBlocking(songId: String): Song?
 
+    @Transaction
     suspend fun getSongsByIds(songIds: List<String>): List<Song> =
-        if (songIds.isEmpty()) emptyList() else getSongsByIdsQuery(songIds)
+        songIds.distinct().chunked(SONG_ID_QUERY_BATCH_SIZE).flatMap { getSongsByIdsQuery(it) }
 
     @Transaction
     @Query("SELECT * FROM song WHERE id IN (:songIds)")
@@ -737,8 +740,9 @@ interface DatabaseDao {
     @Query("SELECT * FROM song WHERE dateDownload IS NOT NULL")
     fun cachePlaylistSongs(): Flow<List<Song>>
 
+    @Transaction
     suspend fun existingSongIds(songIds: List<String>): List<String> =
-        if (songIds.isEmpty()) emptyList() else existingSongIdsQuery(songIds)
+        songIds.distinct().chunked(SONG_ID_QUERY_BATCH_SIZE).flatMap { existingSongIdsQuery(it) }
 
     @Query("SELECT id FROM song WHERE id IN (:songIds)")
     suspend fun existingSongIdsQuery(songIds: List<String>): List<String>
@@ -1195,11 +1199,12 @@ interface DatabaseDao {
         songId: String,
     ): Int
 
+    @Transaction
     fun playlistDuplicates(
         playlistId: String,
         songIds: List<String>,
     ): List<String> =
-        if (songIds.isEmpty()) emptyList() else playlistDuplicatesQuery(playlistId, songIds)
+        songIds.distinct().chunked(SONG_ID_QUERY_BATCH_SIZE).flatMap { playlistDuplicatesQuery(playlistId, it) }
 
     @Query("SELECT songId from playlist_song_map WHERE playlistId = :playlistId AND songId IN (:songIds)")
     fun playlistDuplicatesQuery(

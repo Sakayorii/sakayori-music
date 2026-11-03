@@ -3,30 +3,37 @@ package com.sakayori.innertube.utils
 import com.sakayori.innertube.YouTube
 import com.sakayori.innertube.pages.LibraryPage
 import com.sakayori.innertube.pages.PlaylistPage
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import java.io.IOException
 import java.security.MessageDigest
 
 @JvmName("completedLibrary")
-suspend fun Result<PlaylistPage>.completed(): Result<PlaylistPage> = runCatching {
+suspend fun Result<PlaylistPage>.completed(): Result<PlaylistPage> = runOnIoCatching {
     val page = getOrThrow()
+    if (!page.isSnapshotUsableForSync) throw IOException("Incomplete playlist snapshot")
     val songs = page.songs.toMutableList()
-    var continuation = page.songsContinuation
+    var continuation = page.songsContinuation ?: page.continuation
     val seenContinuations = mutableSetOf<String>()
     var requestCount = 0
     val maxRequests = 50
     var consecutiveEmptyResponses = 0
     
-    while (continuation != null && requestCount < maxRequests) {
-        if (continuation in seenContinuations) {
-            break
+    while (continuation != null) {
+        currentCoroutineContext().ensureActive()
+        if (requestCount >= maxRequests || !seenContinuations.add(continuation)) {
+            throw IOException("Playlist continuation did not complete")
         }
-        seenContinuations.add(continuation)
         requestCount++
         
-        val continuationPage = YouTube.playlistContinuation(continuation).getOrNull() ?: break
+        val continuationPage = YouTube.playlistContinuation(continuation).getOrThrow()
+        if (!continuationPage.isSnapshotUsableForSync) throw IOException("Incomplete playlist continuation")
         
         if (continuationPage.songs.isEmpty()) {
             consecutiveEmptyResponses++
-            if (consecutiveEmptyResponses >= 2) break
+            if (consecutiveEmptyResponses >= 2 && continuationPage.continuation != null) {
+                throw IOException("Playlist continuation made no progress")
+            }
         } else {
             consecutiveEmptyResponses = 0
             songs += continuationPage.songs
@@ -43,8 +50,9 @@ suspend fun Result<PlaylistPage>.completed(): Result<PlaylistPage> = runCatching
 }
 
 @JvmName("completedPlaylist")
-suspend fun Result<LibraryPage>.completed(): Result<LibraryPage> = runCatching {
+suspend fun Result<LibraryPage>.completed(): Result<LibraryPage> = runOnIoCatching {
     val page = getOrThrow()
+    if (!page.isSnapshotUsableForSync) throw IOException("Incomplete library snapshot")
     val items = page.items.toMutableList()
     var continuation = page.continuation
     val seenContinuations = mutableSetOf<String>()
@@ -52,18 +60,21 @@ suspend fun Result<LibraryPage>.completed(): Result<LibraryPage> = runCatching {
     val maxRequests = 50
     var consecutiveEmptyResponses = 0
     
-    while (continuation != null && requestCount < maxRequests) {
-        if (continuation in seenContinuations) {
-            break
+    while (continuation != null) {
+        currentCoroutineContext().ensureActive()
+        if (requestCount >= maxRequests || !seenContinuations.add(continuation)) {
+            throw IOException("Library continuation did not complete")
         }
-        seenContinuations.add(continuation)
         requestCount++
         
-        val continuationPage = YouTube.libraryContinuation(continuation).getOrNull() ?: break
+        val continuationPage = YouTube.libraryContinuation(continuation).getOrThrow()
+        if (!continuationPage.isSnapshotUsableForSync) throw IOException("Incomplete library continuation")
         
         if (continuationPage.items.isEmpty()) {
             consecutiveEmptyResponses++
-            if (consecutiveEmptyResponses >= 2) break
+            if (consecutiveEmptyResponses >= 2 && continuationPage.continuation != null) {
+                throw IOException("Library continuation made no progress")
+            }
         } else {
             consecutiveEmptyResponses = 0
             items += continuationPage.items

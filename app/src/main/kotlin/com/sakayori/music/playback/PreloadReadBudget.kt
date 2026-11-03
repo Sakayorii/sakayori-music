@@ -10,6 +10,9 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.TransferListener
 
 /**
  * A loader-side read budget, not an artificial end of the file. At the boundary the loader waits
@@ -68,5 +71,27 @@ internal class PreloadReadBudget(maxBytes: Long) {
     fun cancel() = lock.withLock {
         cancelled = true
         changed.signalAll()
+    }
+
+    /** The same bounded reader can prepare a muted rendition and then be promoted in place. */
+    fun wrap(factory: DataSource.Factory): DataSource.Factory = DataSource.Factory {
+        val source = factory.createDataSource()
+        source.addTransferListener(object : TransferListener {
+            override fun onTransferInitializing(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) = Unit
+            override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) = Unit
+            override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) = Unit
+            override fun onBytesTransferred(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean, bytesTransferred: Int) {
+                awaitReadLength(1)
+                onBytesRead(bytesTransferred)
+            }
+        })
+        object : DataSource by source {
+            override fun open(dataSpec: DataSpec): Long {
+                awaitReadLength(1)
+                return source.open(dataSpec)
+            }
+            override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+                source.read(buffer, offset, awaitReadLength(length))
+        }
     }
 }

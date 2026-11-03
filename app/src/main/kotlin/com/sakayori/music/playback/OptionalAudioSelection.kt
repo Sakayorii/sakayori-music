@@ -14,7 +14,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.supervisorScope
 
-/** Take an already usable optional result, otherwise let normal playback start without a grace delay. */
+/** Primary audio is never held for a pending optional result. The optional owner caps its lookup. */
 internal suspend fun <T : Any, P : Any> selectOptionalAudio(
     optional: Deferred<P?>?,
     convert: (P) -> T,
@@ -23,7 +23,8 @@ internal suspend fun <T : Any, P : Any> selectOptionalAudio(
     if (optional == null) return@supervisorScope normal()
     val preferred = async(start = CoroutineStart.UNDISPATCHED) {
         try {
-            optional.await()?.let(convert)
+            val value = optional.await()
+            value?.let(convert)
         } catch (cancelled: CancellationException) {
             currentCoroutineContext().ensureActive()
             null
@@ -55,6 +56,7 @@ internal suspend fun <T : Any, P : Any> selectOptionalAudio(
         preferred.cancel()
         fallback.cancel()
         // The optional job belongs to a bounded application lookup. It may finish warming this
-        // selected track after normal playback wins, but can never swap the active source.
+        // selected track after normal playback wins. An owning service may prepare a separate
+        // pinned period for an audible handoff; this reader never mixes encoded renditions.
     }
 }

@@ -223,13 +223,12 @@ class BackupRestoreViewModel @Inject constructor(
 
                 // 1. Stop service first — ensures no pending DB writes during swap
                 context.stopService(Intent(context, MusicService::class.java))
-                try {
-                    kotlinx.coroutines.withTimeout(5000) {
-                        MusicService.shutdownDeferred.await()
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Timeout waiting for MusicService to shutdown")
+                // A still-running service can write into the database being restored. Abort
+                // before closing or swapping files when shutdown has not completed.
+                kotlinx.coroutines.withTimeout(5000) {
+                    MusicService.shutdownDeferred.await()
                 }
+                queueStore.awaitPendingWrites()
 
                 // 2. Close the database — all operations should be done by now
                 database.close()

@@ -19,7 +19,6 @@ import com.sakayori.music.constants.HideVideoSongsKey
 import com.sakayori.music.db.MusicDatabase
 import com.sakayori.music.db.entities.SearchHistory
 import com.sakayori.music.utils.dataStore
-import com.sakayori.music.utils.get
 import com.sakayori.music.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -54,9 +54,23 @@ class OnlineSearchSuggestionViewModel
         val viewState = _viewState.asStateFlow()
 
         private data class SearchRequest(val query: String, val revision: Long)
+        private data class ContentPolicy(val hideExplicit: Boolean, val hideVideos: Boolean)
 
         init {
             viewModelScope.launch {
+                val contentPolicy = context.dataStore.data.map {
+                    ContentPolicy(it[HideExplicitKey] ?: false, it[HideVideoSongsKey] ?: false)
+                }.distinctUntilChanged().onStart {
+                    // History must not wait for the first settings-file read. Until policy is
+                    // available, only optional recommended items are conservatively hidden.
+                    emit(ContentPolicy(hideExplicit = true, hideVideos = true))
+                }.catch { error ->
+                    if (error is CancellationException || error !is Exception) throw error
+                    reportException(error)
+                    // A settings-file failure must not tear down live history/suggestions or
+                    // expose filtered content under a guessed permissive policy.
+                    emit(ContentPolicy(hideExplicit = true, hideVideos = true))
+                }
                 combine(query, YouTube.requestContextRevision, ::SearchRequest)
                     .flatMapLatest { request ->
                         val history = database.searchHistory(request.query)
@@ -76,14 +90,10 @@ class OnlineSearchSuggestionViewModel
                                         initial.copy(items = listOfNotNull(item), parsedUrlItem = item)
                                     } else {
                                         val suggestions = YouTube.searchSuggestions(request.query).valueOrNull()
-                                        val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                                        val hideVideos = context.dataStore.get(HideVideoSongsKey, false)
                                         initial.copy(
                                             suggestions = suggestions?.queries.orEmpty(),
                                             items = suggestions?.recommendedItems.orEmpty()
-                                                .distinctBy { it.id }
-                                                .filterExplicit(hideExplicit)
-                                                .filterVideoSongs(hideVideos),
+                                                .distinctBy { it.id },
                                         )
                                     }
                                 }
@@ -95,9 +105,15 @@ class OnlineSearchSuggestionViewModel
                                 reportException(error)
                             }
                         }
-                        combine(history, remote) { local, result ->
+                        combine(history, remote, contentPolicy) { local, result, policy ->
+                            // Preference updates refilter retained suggestions without another
+                            // query. Do not serially block the remote result on two runBlocking
+                            // preference reads. Explicit URL selections retain their existing contract.
+                            val visibleItems = if (result.isUrlQuery) result.items else result.items
+                                .filterExplicit(policy.hideExplicit).filterVideoSongs(policy.hideVideos)
                             request to result.copy(
                                 history = local,
+                                items = visibleItems,
                                 suggestions = result.suggestions.filter { suggestion -> local.none { it.query == suggestion } },
                             )
                         }

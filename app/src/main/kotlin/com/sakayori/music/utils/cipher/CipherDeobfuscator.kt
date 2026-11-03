@@ -45,6 +45,10 @@ object CipherDeobfuscator {
     // config for the current player, so getOrCreateWebView() rebuilds it instead of trusting it for
     // the life of the process — the staleness that previously required an app restart to recover.
     private var builtConfigEpoch = -1
+    private var builtPlayerEpoch = -1L
+    private data class SignatureFact(val player: Pair<String, Long>, val configEpoch: Int, val timestamp: Int)
+    @Volatile private var signatureFact: SignatureFact? = null
+    private val signatureMutex = Mutex()
 
     // Written on the decipher coroutine (Dispatchers.IO) but read via lastUsedPlayerHash from the
     // Compose UI thread (song-details sheet), so @Volatile to publish the write across threads.
@@ -74,15 +78,22 @@ object CipherDeobfuscator {
      * can land on a different player generation, and a sig minted for one player but
      * deciphered by another produces a URL the CDN 403s.
      */
-    suspend fun signatureTimestamp(): Int? {
+    suspend fun signatureTimestamp(): Int? = signatureMutex.withLock {
+        val identity = PlayerJsFetcher.cachedIdentity()
+        signatureFact?.takeIf { it.player == identity && it.configEpoch == PlayerConfigStore.configEpoch }
+            ?.let { return@withLock it.timestamp }
         Timber.tag(TAG).d("Resolving cipher player signatureTimestamp...")
         val (playerJs, hash) = PlayerJsFetcher.getPlayerJs(forceRefresh = false) ?: run {
             Timber.tag(TAG).w("signatureTimestamp: could not fetch player JS")
-            return null
+            return@withLock null
         }
+        val configEpoch = PlayerConfigStore.configEpoch
         val sts = FunctionNameExtractor.extractSignatureTimestamp(playerJs, hash)
+        PlayerJsFetcher.cachedIdentity()?.takeIf { it.first == hash }?.let { player ->
+            if (sts != null && PlayerConfigStore.configEpoch == configEpoch) signatureFact = SignatureFact(player, configEpoch, sts)
+        }
         Timber.tag(TAG).d("Cipher player STS (hash=$hash): $sts")
-        return sts
+        sts
     }
 
     /**
@@ -153,7 +164,10 @@ object CipherDeobfuscator {
      * rebuilds the WebView from the corrected config, recovering playback without an app restart.
      * Returns whether the config table changed.
      */
-    suspend fun onStreamRejected(): Boolean = PlayerConfigStore.refreshAfterStreamRejection(currentPlayerHash)
+    suspend fun onStreamRejected(): Boolean {
+        signatureFact = null
+        return PlayerConfigStore.refreshAfterStreamRejection(currentPlayerHash)
+    }
 
     private suspend fun deobfuscateInternal(signatureCipher: String, videoId: String, isRetry: Boolean): String? {
         Timber.tag(TAG).d("deobfuscateInternal: videoId=$videoId, isRetry=$isRetry")
@@ -315,7 +329,8 @@ object CipherDeobfuscator {
         // AFTER the build would record a config this WebView never actually incorporated — the
         // staleness this whole mechanism exists to prevent.
         val epochAtStart = PlayerConfigStore.configEpoch
-        if (!forceRefresh && cipherWebView != null && builtConfigEpoch == epochAtStart) {
+        if (!forceRefresh && cipherWebView != null && builtConfigEpoch == epochAtStart &&
+            builtPlayerEpoch == PlayerJsFetcher.cacheEpoch) {
             Timber.tag(TAG).d("Reusing existing CipherWebView (hash=$currentPlayerHash)")
             return cipherWebView
         }
@@ -339,6 +354,7 @@ object CipherDeobfuscator {
             return null
         }
         val (playerJs, hash) = result
+        val playerEpochAtStart = PlayerJsFetcher.cacheEpoch
         Timber.tag(TAG).d("Got player JS: hash=$hash, length=${playerJs.length}")
 
         // Run full analysis for logging - pass the known hash from PlayerJsFetcher
@@ -396,17 +412,17 @@ object CipherDeobfuscator {
         cipherWebView = webView
         currentPlayerHash = hash
         builtConfigEpoch = builtEpoch
+        builtPlayerEpoch = playerEpochAtStart
         return webView
     }
 
     private suspend fun closeWebView() {
         Timber.tag(TAG).d("closeWebView: existing=${cipherWebView != null}")
-        withContext(Dispatchers.Main) {
-            runCatching { cipherWebView?.close() }
-                .onFailure { Timber.tag(TAG).w("closeWebView threw: $it") }
-        }
+        val previous = cipherWebView
         cipherWebView = null
         currentPlayerHash = null
+        runCatching { previous?.close() }
+            .onFailure { Timber.tag(TAG).w("closeWebView threw: $it") }
         Timber.tag(TAG).d("CipherWebView closed and cleared")
     }
 

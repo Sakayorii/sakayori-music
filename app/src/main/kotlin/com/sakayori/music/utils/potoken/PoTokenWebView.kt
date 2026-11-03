@@ -11,22 +11,23 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.MainThread
 import androidx.collection.ArrayMap
-import com.sakayori.innertube.YouTube
 import com.sakayori.music.BuildConfig
+import com.sakayori.music.playback.PlaybackHttpClient
+import com.sakayori.music.playback.readCancellable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import okhttp3.Headers.Companion.toHeaders
-import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
 import java.time.Instant
@@ -50,8 +51,8 @@ class PoTokenWebView private constructor(
     // on a plain Continuation throws IllegalStateException.
     private val initResumed = AtomicBoolean(false)
 
-    @Volatile
-    private var closed = false
+    private val closeStarted = AtomicBoolean(false)
+    private val closed: Boolean get() = closeStarted.get()
 
     /**
      * Set when the renderer died or a generate timed out. The render-gone callback isn't
@@ -100,18 +101,12 @@ class PoTokenWebView private constructor(
                         Timber.tag(TAG).e("Uncaught JS error after init (treating as transient): $fmt")
                         isDead = true
                         val exception = PoTokenException(fmt)
-                        close()
-                        popAllPoTokenContinuations().forEach { (_, cont) ->
-                            runCatching { cont.resumeWithException(exception) }
-                        }
+                        onInitializationErrorCloseAndCancel(exception)
                     } else {
                         val exception = BadWebViewException(fmt)
                         Timber.tag(TAG).e("This WebView implementation is broken: $fmt")
 
                         onInitializationErrorCloseAndCancel(exception)
-                        popAllPoTokenContinuations().forEach { (_, cont) ->
-                            runCatching { cont.resumeWithException(exception) }
-                        }
                     }
                 }
                 return super.onConsoleMessage(m)
@@ -130,9 +125,6 @@ class PoTokenWebView private constructor(
                 // would permanently disable poTokens for the session in PoTokenGenerator.
                 val exception = PoTokenException("WebView render process gone (didCrash=$didCrash)")
                 onInitializationErrorCloseAndCancel(exception)
-                popAllPoTokenContinuations().forEach { (_, cont) ->
-                    runCatching { cont.resumeWithException(exception) }
-                }
                 // Consume the event so the framework doesn't kill the app process.
                 return true
             }
@@ -274,6 +266,9 @@ class PoTokenWebView private constructor(
                 generatePoTokenInternal(identifier, requestKey)
             }
         } catch (e: TimeoutCancellationException) {
+            // A parent's deadline/skip cancellation is not a wedged-renderer result. Preserve
+            // it so the outer resolver can stop immediately rather than start recovery work.
+            currentCoroutineContext().ensureActive()
             // A renderer that never answers is wedged/dead (safety net for providers where
             // onRenderProcessGone doesn't fire) — drop the pending continuation and fail fast;
             // PoTokenGenerator's retry recreates the WebView from scratch.
@@ -288,11 +283,17 @@ class PoTokenWebView private constructor(
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { cont ->
                 Timber.tag(TAG).d("generatePoToken() called with identifier $identifier")
-                addPoTokenEmitter(requestKey, cont)
+                if (!addPoTokenEmitter(requestKey, cont)) {
+                    cont.resumeWithException(PoTokenException("PoToken WebView is dead/closed"))
+                    return@suspendCancellableCoroutine
+                }
+                cont.invokeOnCancellation { popPoTokenContinuation(requestKey) }
+                if (!cont.isActive) return@suspendCancellableCoroutine
                 // The IIFE keeps requestKey/u8Identifier lexically captured per call: bare globals
                 // here would let a concurrent call reassign them before this call's promise
                 // resolves, delivering this token to the other call's continuation.
-                webView.evaluateJavascript(
+                try {
+                    webView.evaluateJavascript(
                     """(function() {
                         var requestKey = ${Json.encodeToString(requestKey)}
                         try {
@@ -307,7 +308,10 @@ class PoTokenWebView private constructor(
                         }
                     })()""",
                     null
-                )
+                    )
+                } catch (error: Exception) {
+                    popPoTokenContinuation(requestKey)?.resumeWithException(error)
+                }
             }
         }
     }
@@ -351,19 +355,24 @@ class PoTokenWebView private constructor(
     //endregion
 
     //region Handling multiple emitters
-    private fun addPoTokenEmitter(identifier: String, continuation: Continuation<String>) {
-        poTokenContinuations[identifier] = continuation
-    }
+    private fun addPoTokenEmitter(identifier: String, continuation: Continuation<String>): Boolean =
+        synchronized(poTokenContinuations) {
+            if (isDead || closed) false else {
+                poTokenContinuations[identifier] = continuation
+                true
+            }
+        }
 
     private fun popPoTokenContinuation(identifier: String): Continuation<String>? {
         return poTokenContinuations.remove(identifier)
     }
 
-    private fun popAllPoTokenContinuations(): Map<String, Continuation<String>> {
-        val result = poTokenContinuations.toMap()
-        poTokenContinuations.clear()
-        return result
-    }
+    private fun popAllPoTokenContinuations(): Map<String, Continuation<String>> =
+        synchronized(poTokenContinuations) {
+            val result = poTokenContinuations.toMap()
+            poTokenContinuations.clear()
+            result
+        }
     //endregion
 
     //region Utils
@@ -385,10 +394,8 @@ class PoTokenWebView private constructor(
                 .url(url)
             // .use{} so the response is closed on the non-200 path too (an unread body would
             // otherwise strand its connection).
-            val (httpCode, body) = withContext(Dispatchers.IO) {
-                httpClient.newCall(requestBuilder.build()).execute().use { response ->
-                    response.code to if (response.code == 200) response.body?.string() else null
-                }
+            val (httpCode, body) = httpClient.readCancellable(requestBuilder.build()) { response ->
+                response.code to if (response.code == 200) response.body?.string() else null
             }
             // Treat an empty 200 body as a failure too: handleResponseBody would otherwise pass
             // "" to parseChallengeData/parseIntegrityTokenData and fail later with a murkier error.
@@ -400,17 +407,21 @@ class PoTokenWebView private constructor(
         }
     }
 
-    private fun onInitializationErrorCloseAndCancel(error: Throwable) {
-        close()
+    private fun onInitializationErrorCloseAndCancel(error: Throwable) = closeWithError(error)
+
+    fun close() = closeWithError(PoTokenException("PoToken WebView closed"))
+
+    private fun closeWithError(error: Throwable) {
+        if (!closeStarted.compareAndSet(false, true)) return
         if (initResumed.compareAndSet(false, true)) {
             // The continuation may have been cancelled by the init timeout.
             runCatching { continuation.resumeWithException(error) }
         }
-    }
-
-    fun close() {
-        if (closed) return
-        closed = true
+        // Drain atomically: a replacement/renderer failure must not strand concurrent callers,
+        // and cancelled token requests remove only their own unique continuation.
+        popAllPoTokenContinuations().forEach { (_, cont) ->
+            runCatching { cont.resumeWithException(error) }
+        }
 
         scope.cancel()
 
@@ -435,8 +446,8 @@ class PoTokenWebView private constructor(
 
             webView.onPause()
             webView.removeAllViews()
-            webView.destroy()
         }.onFailure { Timber.tag(TAG).w("PoToken WebView teardown threw: $it") }
+        runCatching { webView.destroy() }.onFailure { Timber.tag(TAG).w("PoToken WebView destroy threw: $it") }
     }
     //endregion
 
@@ -455,9 +466,7 @@ class PoTokenWebView private constructor(
         // A live renderer mints a poToken in well under a second.
         private const val GENERATE_TIMEOUT_MS = 15_000L
 
-        private val httpClient = OkHttpClient.Builder()
-            .proxy(YouTube.proxy)
-            .build()
+        private val httpClient get() = PlaybackHttpClient.shared()
 
         suspend fun getNewPoTokenGenerator(context: Context): PoTokenWebView {
             var created: PoTokenWebView? = null
@@ -467,29 +476,36 @@ class PoTokenWebView private constructor(
                         suspendCancellableCoroutine { cont ->
                             val potWv = PoTokenWebView(context, cont)
                             created = potWv
+                            cont.invokeOnCancellation {
+                                potWv.initResumed.set(true)
+                                potWv.close()
+                            }
+                            if (!cont.isActive) return@suspendCancellableCoroutine
                             potWv.loadHtmlAndObtainBotguard()
                         }
                     }
                 }
             } catch (e: TimeoutCancellationException) {
-                Timber.tag(TAG).e("PoTokenWebView init timed out after ${INIT_TIMEOUT_MS}ms")
                 closeQuietly(created)
+                currentCoroutineContext().ensureActive()
+                Timber.tag(TAG).e("PoTokenWebView init timed out after ${INIT_TIMEOUT_MS}ms")
                 throw PoTokenException("PoTokenWebView init timed out after ${INIT_TIMEOUT_MS}ms")
             } catch (e: CancellationException) {
                 // Caller cancelled — don't leak the half-initialized WebView.
                 closeQuietly(created)
                 throw e
+            } catch (error: Exception) {
+                closeQuietly(created)
+                throw error
             }
         }
 
-        private suspend fun closeQuietly(potWv: PoTokenWebView?) {
+        private fun closeQuietly(potWv: PoTokenWebView?) {
             if (potWv == null) return
-            withContext(NonCancellable + Dispatchers.Main) {
-                // Mark init resumed so a late JS/network callback can't resume a cancelled
-                // continuation.
-                potWv.initResumed.set(true)
-                potWv.close()
-            }
+            // close() handles the required Main-thread teardown itself. Cancellation cleanup
+            // must not suspend waiting for Main while an already-selected source can proceed.
+            potWv.initResumed.set(true)
+            potWv.close()
         }
     }
 }

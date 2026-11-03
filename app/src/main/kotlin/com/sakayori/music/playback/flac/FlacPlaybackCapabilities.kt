@@ -35,8 +35,10 @@ internal object FlacPlaybackCapabilities {
 
     fun inspect(info: FlacStreamInfo): FlacPlaybackCapability {
         if (Build.VERSION.SDK_INT < 27) return FlacPlaybackCapability.ANDROID_26_REQUIRES_DECODER
-        // CD-quality first. A later hi-res source requires its own decoder/output evaluation.
-        if (info.sampleRate != 44_100 || info.bitDepth != 16 || info.channels !in 1..2) {
+        // CD and standard studio rates, including native 24-bit masters. Higher-rate and
+        // multichannel streams remain an explicit capability result, not a silent conversion.
+        // This describes source/decoder support, not bit-perfect output through the existing DSP.
+        if (info.sampleRate !in STANDARD_RATES || info.bitDepth !in STANDARD_DEPTHS || info.channels !in 1..2) {
             return FlacPlaybackCapability.PROFILE_NOT_SUPPORTED
         }
         return if (decoders.any { it.isSampleRateSupported(info.sampleRate) && it.maxInputChannelCount >= info.channels }) {
@@ -52,4 +54,7 @@ internal object FlacPlaybackCapabilities {
             throw DataSourceException("FLAC playback unavailable: $capability", null, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED)
         }
     }
+
+    private val STANDARD_RATES = setOf(44_100, 48_000)
+    private val STANDARD_DEPTHS = setOf(16, 24)
 }

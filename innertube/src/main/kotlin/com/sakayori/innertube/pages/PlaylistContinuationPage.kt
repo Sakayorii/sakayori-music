@@ -5,4 +5,5 @@ import com.sakayori.innertube.models.SongItem
 data class PlaylistContinuationPage(
     val songs: List<SongItem>,
     val continuation: String?,
+    val isSnapshotUsableForSync: Boolean = true,
 )

@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -47,6 +49,7 @@ import com.sakayori.music.constants.AudioTrackPlaybackParamsKey
 import com.sakayori.music.constants.AudioQuality
 import com.sakayori.music.constants.AudioQualityKey
 import com.sakayori.music.constants.PreferLosslessKey
+import com.sakayori.music.constants.LosslessApiUrlKey
 import com.sakayori.music.constants.AutoDownloadOnLikeKey
 import com.sakayori.music.constants.CrossfadeDurationKey
 import com.sakayori.music.constants.CrossfadeEnabledKey
@@ -79,6 +82,8 @@ import com.sakayori.music.ui.component.EnumDialog
 import com.sakayori.music.ui.component.IconButton
 import com.sakayori.music.ui.component.Material3SettingsGroup
 import com.sakayori.music.ui.component.Material3SettingsItem
+import com.sakayori.music.ui.component.TextFieldDialog
+import com.sakayori.music.playback.flac.LosslessApiHttp
 import com.sakayori.music.ui.utils.backToMain
 import com.sakayori.music.utils.rememberEnumPreference
 import com.sakayori.music.utils.rememberPreference
@@ -106,6 +111,8 @@ fun PlayerSettings(
         defaultValue = AudioQuality.AUTO
     )
     val (preferLossless, onPreferLosslessChange) = rememberPreference(PreferLosslessKey, defaultValue = false)
+    val (losslessApiUrl, onLosslessApiUrlChange) = rememberPreference(LosslessApiUrlKey, defaultValue = "")
+    var showLosslessApiDialog by remember { mutableStateOf(false) }
     val losslessAvailable = Build.VERSION.SDK_INT >= 27
     val (crossfadeEnabled, onCrossfadeEnabledChange) = rememberPreference(
         CrossfadeEnabledKey,
@@ -273,6 +280,19 @@ fun PlayerSettings(
         )
     }
 
+    if (showLosslessApiDialog) {
+        TextFieldDialog(
+            title = { Text(stringResource(R.string.lossless_api_url)) },
+            initialTextFieldValue = TextFieldValue(losslessApiUrl),
+            placeholder = { Text("https://") },
+            keyboardType = KeyboardType.Uri,
+            isInputValid = { it.isBlank() || LosslessApiHttp.validatedApiBase(it) != null },
+            extraContent = { Text(stringResource(R.string.lossless_api_url_description), style = MaterialTheme.typography.bodyMedium) },
+            onDone = { onLosslessApiUrlChange(it.trim()) },
+            onDismiss = { showLosslessApiDialog = false },
+        )
+    }
+
     Column(
         Modifier
             .windowInsetsPadding(
@@ -340,6 +360,16 @@ fun PlayerSettings(
                     },
                     onClick = { onPreferLosslessChange(!preferLossless) },
                 ))
+                if (preferLossless && losslessAvailable) {
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.link),
+                        title = { Text(stringResource(R.string.lossless_api_url)) },
+                        description = {
+                            Text(losslessApiUrl.ifBlank { stringResource(R.string.lossless_api_automatic) })
+                        },
+                        onClick = { showLosslessApiDialog = true },
+                    ))
+                }
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.linear_scale),
                     title = { Text(stringResource(R.string.crossfade)) },

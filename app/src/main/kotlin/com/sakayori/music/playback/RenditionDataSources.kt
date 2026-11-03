@@ -36,6 +36,12 @@ import com.sakayori.music.playback.flac.FlacResource
 import com.sakayori.music.playback.flac.LosslessStreamException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.StateFlow
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.IOException
@@ -61,6 +67,8 @@ class RenditionDataSources @Inject constructor(
         beforeSelection: suspend (String) -> Unit,
         priority: (String) -> StateFlow<StreamRequestPriority> = { foregroundStreamPriority },
         preferLossless: () -> Boolean = { false },
+        optionalLookup: (String) -> Deferred<FlacResource?>? = { null },
+        forcedLossless: (String) -> FlacResource? = { null },
         onSelected: (SelectedAudio) -> Unit,
     ): DataSource.Factory = DataSource.Factory {
         // A progressive period reopens this same datasource for retries and seeks. Pin its
@@ -69,7 +77,7 @@ class RenditionDataSources @Inject constructor(
         SelectingDataSource { original ->
             val mediaId = original.key ?: throw IOException("Missing media ID")
             val selected = selection ?: runBlocking {
-                beforeSelection(mediaId)
+                coroutineScope {
                 val selectedQuality = quality()
                 val version = selectionVersion()
                 val token = freshSelectionToken(mediaId)
@@ -77,6 +85,7 @@ class RenditionDataSources @Inject constructor(
                 val revision = YouTube.requestContextRevision.value
                 val useCache = usePlayerCache()
                 val wantsLossless = preferLossless()
+                val streamPriority = priority(mediaId)
                 fun selected(rendition: AudioRendition, stream: ResolvedPlaybackStream? = null) =
                     SelectedAudio(rendition, stream, selectedQuality, version, revision, token,
                         if (rendition.provider == AudioRendition.DIRECT_FLAC) AudioRendition.DIRECT_FLAC_PROFILE else profile)
@@ -90,25 +99,37 @@ class RenditionDataSources @Inject constructor(
                     }
                     val cached = saved ?: known ?: (if (token != null) null else store.legacyComplete(mediaId, useCache))
                     if (cached != null) return selected(cached)
-                    val resolved = resolver.resolve(mediaId, selectedQuality, priority = priority(mediaId))
+                    val resolved = resolver.resolve(mediaId, selectedQuality, priority = streamPriority)
                     return selected(resolved.rendition, resolved)
                 }
-                val cachedLossless = if (wantsLossless) lossless.get().cached(mediaId) else null
-                val choice = if (cachedLossless != null) selected(cachedLossless.rendition()) else {
-                    selectOptionalAudio(
-                        optional = if (wantsLossless) lossless.get().lookup(mediaId) else null,
-                        convert = { resource: FlacResource -> selected(resource.rendition()) },
-                        normal = { normal() },
-                    )
+                val resolution = async(Dispatchers.IO) {
+                    val forced = forcedLossless(mediaId)
+                    if (forced != null) selected(forced.rendition()) else try {
+                        normal()
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        // Only a failed primary consults the already running bounded lookup.
+                        // Successful primary audio never waits for optional discovery.
+                        val resource = if (wantsLossless) optionalLookup(mediaId)?.await()?.takeUnless { lossless.get().isBlocked(mediaId) } else null
+                        resource?.let { selected(it.rendition()) } ?: throw error
+                    }
                 }
-                if (version != selectionVersion() || selectedQuality != quality() ||
-                    profile != resolver.profile(selectedQuality) || token != freshSelectionToken(mediaId) ||
-                    revision != YouTube.requestContextRevision.value || wantsLossless != preferLossless()
-                ) {
+                // Discovery/resolution runs independently of removal IO; no cache writer opens
+                // until that barrier and all selection-context checks have completed.
+                beforeSelection(mediaId)
+                val choice = resolution.await()
+                val context = currentCoroutineContext()
+                fun current() = context.isActive && version == selectionVersion() && selectedQuality == quality() &&
+                    profile == resolver.profile(selectedQuality) && token == freshSelectionToken(mediaId) &&
+                    revision == YouTube.requestContextRevision.value &&
+                    (choice.rendition.provider != AudioRendition.DIRECT_FLAC || wantsLossless == preferLossless())
+                if (!current()) {
                     throw InterruptedIOException("Audio selection superseded")
                 }
-                store.bindPlayback(mediaId, if (choice.rendition.provider == AudioRendition.DIRECT_FLAC) AudioRendition.DIRECT_FLAC_PROFILE else profile, choice.rendition)
+                store.bindPlayback(mediaId, choice.profile, choice.rendition, ::current)
                 choice.also { selection = it }
+                }
             }
             if (selected.rendition.mediaId != mediaId) throw IOException("Audio period changed identity")
             onSelected(selected)
@@ -120,7 +141,7 @@ class RenditionDataSources @Inject constructor(
                 selection = updated
                 onSelected(updated)
             }.createDataSource()
-            source to original.buildUpon().setKey(selected.rendition.cacheKey).build()
+            ProtectedAudioDataSource(source, store, selected.rendition) to original.buildUpon().setKey(selected.rendition.cacheKey).build()
         }
     }
 
@@ -180,7 +201,7 @@ class RenditionDataSources @Inject constructor(
             store.bindPlayback(resource.mediaId, AudioRendition.DIRECT_FLAC_PROFILE, rendition)
             onSelected(rendition)
             val upstream = DataSource.Factory { FlacHttpDataSource(resource, httpClient, resolveLocation) }
-            cacheFirstPlaybackFactory(upstream, usePlayerCache()).createDataSource() to
+            ProtectedAudioDataSource(cacheFirstPlaybackFactory(upstream, usePlayerCache()).createDataSource(), store, rendition) to
                 original.buildUpon().setKey(rendition.cacheKey).build()
         }
     }
@@ -315,6 +336,32 @@ internal data class SelectedAudio(
     val freshSelectionToken: Long?,
     val profile: String,
 )
+
+private class ProtectedAudioDataSource(
+    private val delegate: DataSource,
+    private val store: AudioRenditionStore,
+    private val rendition: AudioRendition,
+) : DataSource by delegate {
+    private var protection: AutoCloseable? = null
+
+    override fun open(dataSpec: DataSpec): Long {
+        protection = store.protect(rendition)
+        return try {
+            delegate.open(dataSpec)
+        } catch (error: Exception) {
+            close()
+            throw error
+        }
+    }
+
+    override fun close() {
+        try { delegate.close() } finally {
+            val owned = protection
+            protection = null
+            owned?.close()
+        }
+    }
+}
 
 /** Invalidates rejected URLs before Media3's next loader retry, not only after final failure. */
 private class RejectedStreamDataSource(

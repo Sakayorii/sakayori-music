@@ -40,6 +40,7 @@ data class AudioRendition(
     val sourceResourceId: String? = null,
     val totalSamples: Long? = null,
     val contentHash: String? = null,
+    val sourceLocator: String? = null,
 ) {
     val cacheKey: String
         get() {

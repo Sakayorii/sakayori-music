@@ -1,9 +1,14 @@
 package com.sakayori.music.utils.cipher
 
-import com.sakayori.innertube.YouTube
+import com.sakayori.music.playback.PlaybackHttpClient
+import com.sakayori.music.playback.readCancellable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.Request
 import timber.log.Timber
 import java.io.File
@@ -20,9 +25,7 @@ object PlayerJsFetcher {
     private const val PLAYER_JS_URL_TEMPLATE = "https://www.youtube.com/s/player/%s/player_ias.vflset/en_GB/base.js"
     private const val CACHE_TTL_MS = 6 * 60 * 60 * 1000L // 6 hours
 
-    private val httpClient = OkHttpClient.Builder()
-        .proxy(YouTube.proxy)
-        .build()
+    private val httpClient get() = PlaybackHttpClient.shared()
 
     // Regex to extract player hash from iframe_api response
     private val PLAYER_HASH_REGEX = Regex("""\\?/s\\?/player\\?/([a-zA-Z0-9_-]+)\\?/""")
@@ -31,6 +34,15 @@ object PlayerJsFetcher {
     // unlocked writeToCache purge racing another writer's writeAtomic tmp window would delete
     // the tmp mid-write and silently degrade to a truncating non-atomic write.
     private val cacheWriteLock = Any()
+    private val fetchMutex = Mutex()
+    private data class CachedPlayer(val value: Pair<String, String>, val storedAt: Long, val epoch: Long)
+    @Volatile private var memory: CachedPlayer? = null
+    @Volatile internal var cacheEpoch = 0L
+        private set
+
+    internal fun cachedIdentity(): Pair<String, Long>? = memory?.takeIf {
+        it.epoch == cacheEpoch && PlayerConfigStore.withinWindow(System.currentTimeMillis(), it.storedAt, CACHE_TTL_MS)
+    }?.let { it.value.second to it.epoch }
 
     private fun getCacheDir(): File = File(CipherDeobfuscator.appContext.filesDir, "cipher_cache")
 
@@ -44,11 +56,24 @@ object PlayerJsFetcher {
      * Uses cached version if available and not expired, otherwise fetches fresh.
      * Returns Pair(playerJs, hash) or null if failed.
      */
-    suspend fun getPlayerJs(forceRefresh: Boolean = false): Pair<String, String>? = withContext(Dispatchers.IO) {
+    suspend fun getPlayerJs(forceRefresh: Boolean = false): Pair<String, String>? {
+        val requestedEpoch = cacheEpoch
+        return withContext(Dispatchers.IO) {
+            fetchMutex.withLock { fetchPlayerJsLocked(forceRefresh, requestedEpoch) }
+        }
+    }
+
+    private suspend fun fetchPlayerJsLocked(forceRefresh: Boolean, requestedEpoch: Long): Pair<String, String>? {
         Timber.tag(TAG).d("=== GET PLAYER.JS ===")
         Timber.tag(TAG).d("forceRefresh: $forceRefresh")
 
-        try {
+        return try {
+            currentCoroutineContext().ensureActive()
+            memory?.takeIf {
+                (!forceRefresh || it.epoch != requestedEpoch) && it.epoch == cacheEpoch &&
+                    PlayerConfigStore.withinWindow(System.currentTimeMillis(), it.storedAt, CACHE_TTL_MS)
+            }?.let { return it.value }
+            val epochAtStart = cacheEpoch
             val cacheDir = getCacheDir()
             if (!cacheDir.exists()) {
                 Timber.tag(TAG).d("Creating cache directory: ${cacheDir.absolutePath}")
@@ -57,11 +82,14 @@ object PlayerJsFetcher {
 
             // Check cache first (unless forced refresh)
             if (!forceRefresh) {
-                val cached = readFromCache()
+                val cached = synchronized(cacheWriteLock) {
+                    if (cacheEpoch != epochAtStart) throw CancellationException("Player JS cache superseded")
+                    readFromCache()
+                }
                 if (cached != null) {
                     Timber.tag(TAG).d("=== CACHE HIT ===")
                     Timber.tag(TAG).d("Using cached player JS (hash=${cached.second}, length=${cached.first.length})")
-                    return@withContext cached
+                    return cached
                 }
                 Timber.tag(TAG).d("Cache miss, will fetch fresh")
             }
@@ -71,7 +99,7 @@ object PlayerJsFetcher {
             val hash = fetchPlayerHash()
             if (hash == null) {
                 Timber.tag(TAG).e("Failed to extract player hash from iframe_api")
-                return@withContext null
+                return null
             }
             Timber.tag(TAG).d("Extracted player hash: $hash")
 
@@ -80,7 +108,7 @@ object PlayerJsFetcher {
             val playerJs = downloadPlayerJs(hash)
             if (playerJs == null) {
                 Timber.tag(TAG).e("Failed to download player JS for hash=$hash")
-                return@withContext null
+                return null
             }
 
             Timber.tag(TAG).d("=== PLAYER.JS DOWNLOADED ===")
@@ -89,9 +117,17 @@ object PlayerJsFetcher {
             Timber.tag(TAG).d("preview: ${playerJs.take(100)}...")
 
             // Cache the result
-            writeToCache(hash, playerJs)
+            currentCoroutineContext().ensureActive()
+            synchronized(cacheWriteLock) {
+                if (cacheEpoch != epochAtStart) throw CancellationException("Player JS fetch superseded")
+                writeToCache(hash, playerJs)
+                ++cacheEpoch
+                memory = CachedPlayer(Pair(playerJs, hash), System.currentTimeMillis(), cacheEpoch)
+            }
 
             Pair(playerJs, hash)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "getPlayerJs exception: ${e.message}")
             null
@@ -105,6 +141,8 @@ object PlayerJsFetcher {
     fun invalidateCache() {
         Timber.tag(TAG).d("Invalidating cache...")
         synchronized(cacheWriteLock) { try {
+            ++cacheEpoch
+            memory = null
             val cacheDir = getCacheDir()
             if (cacheDir.exists()) {
                 // Only the player.js cache (player_*.js + current_hash.txt) belongs to this fetcher.
@@ -142,6 +180,7 @@ object PlayerJsFetcher {
             }
 
             val hash = hashData[0]
+            if (!Regex("[A-Za-z0-9_-]{1,160}").matches(hash)) return null
             val timestamp = hashData[1].toLongOrNull()
             if (timestamp == null) {
                 Timber.tag(TAG).d("Could not parse timestamp from hash file")
@@ -172,7 +211,7 @@ object PlayerJsFetcher {
             }
 
             Timber.tag(TAG).d("Cache valid: hash=$hash, length=${playerJs.length}, age=${ageHours}h")
-            return Pair(playerJs, hash)
+            return Pair(playerJs, hash).also { memory = CachedPlayer(it, timestamp, cacheEpoch) }
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error reading cache: ${e.message}")
             return null
@@ -203,7 +242,7 @@ object PlayerJsFetcher {
         }
     }
 
-    private fun fetchPlayerHash(): String? {
+    private suspend fun fetchPlayerHash(): String? {
         Timber.tag(TAG).d("Fetching iframe_api from: $IFRAME_API_URL")
 
         val request = Request.Builder()
@@ -213,11 +252,11 @@ object PlayerJsFetcher {
 
         // .use{} so the response is closed on the error path too (an unread body would
         // otherwise strand its connection).
-        val body = httpClient.newCall(request).execute().use { response ->
+        val body = httpClient.readCancellable(request) { response ->
             Timber.tag(TAG).d("iframe_api response: HTTP ${response.code}")
             if (!response.isSuccessful) {
                 Timber.tag(TAG).e("iframe_api HTTP ${response.code}")
-                return null
+                return@readCancellable null
             }
             response.body?.string()
         }
@@ -241,7 +280,7 @@ object PlayerJsFetcher {
         return hash
     }
 
-    private fun downloadPlayerJs(hash: String): String? {
+    private suspend fun downloadPlayerJs(hash: String): String? {
         val url = PLAYER_JS_URL_TEMPLATE.format(hash)
         Timber.tag(TAG).d("Downloading player.js from: $url")
 
@@ -250,11 +289,11 @@ object PlayerJsFetcher {
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
             .build()
 
-        val body = httpClient.newCall(request).execute().use { response ->
+        val body = httpClient.readCancellable(request) { response ->
             Timber.tag(TAG).d("player.js response: HTTP ${response.code}")
             if (!response.isSuccessful) {
                 Timber.tag(TAG).e("player.js download HTTP ${response.code}")
-                return null
+                return@readCancellable null
             }
             response.body?.string()
         }

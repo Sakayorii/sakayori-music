@@ -21,6 +21,7 @@ internal data class FlacResource(
     val contentLength: Long,
     val streamInfo: FlacStreamInfo,
     val contentHash: String? = null,
+    val sourceLocator: String? = null,
 ) {
     init {
         require(mediaId.isNotBlank() && sourceId.isNotBlank() && resourceId.isNotBlank())
@@ -33,7 +34,11 @@ internal data class FlacResource(
     fun rendition() = AudioRendition(
         mediaId = mediaId,
         provider = AudioRendition.DIRECT_FLAC,
-        resourceId = if (contentHash == null) identityDigest(sourceId, resourceId) else identityDigest(sourceId, resourceId, contentHash),
+        resourceId = when {
+            sourceLocator != null -> identityDigest(sourceId, sourceLocator, resourceId, contentHash)
+            contentHash != null -> identityDigest(sourceId, resourceId, contentHash)
+            else -> identityDigest(sourceId, resourceId)
+        },
         mimeType = "audio/flac",
         codecs = "flac",
         // Average encoded bitrate is descriptive, never proof of source quality.
@@ -48,7 +53,13 @@ internal data class FlacResource(
         sourceResourceId = resourceId,
         totalSamples = streamInfo.totalSamples,
         contentHash = contentHash,
-        clientName = if (sourceId == "internet-archive") "Internet Archive" else sourceId,
+        sourceLocator = sourceLocator,
+        clientName = when (sourceId) {
+            "internet-archive" -> "Internet Archive"
+            "monochrome" -> "Monochrome"
+            "hifi-api" -> "HiFi API"
+            else -> sourceId
+        },
     )
 }
 

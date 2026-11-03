@@ -557,6 +557,8 @@ class ListenTogetherManager
 
                 is ListenTogetherEvent.Reconnected -> {
                     Timber.tag(TAG).d("Reconnected to room: ${event.roomCode}, isHost: ${event.isHost}")
+                    // The reconnect snapshot belongs to the new server session, for either role.
+                    lastAppliedRevision = event.state.revision
                     try {
                         // Re-register player listener
                         val connection = playerConnection
@@ -1008,11 +1010,17 @@ class ListenTogetherManager
         }
 
         private fun handlePlaybackSync(action: PlaybackActionPayload) {
+            if (playerConnection == null) return
             if (action.revision > 0L && action.revision <= lastAppliedRevision) {
                 Timber.tag(TAG).d("Ignoring stale playback revision ${action.revision} <= $lastAppliedRevision")
                 return
             }
             lastAppliedRevision = maxOf(lastAppliedRevision, action.revision)
+            applyPlaybackAction(action)
+        }
+
+        /** Applies effects of an already accepted action or snapshot; no second network gate. */
+        private fun applyPlaybackAction(action: PlaybackActionPayload) {
             val connection = playerConnection
             if (connection == null) {
                 Timber.tag(TAG).w("Cannot sync playback - no player connection")
@@ -1416,7 +1424,8 @@ class ListenTogetherManager
             state: SyncStatePayload,
             forceFullState: Boolean = false,
         ) {
-            if (state.revision > 0L && state.revision <= lastAppliedRevision) {
+            if (playerConnection == null) return
+            if (!forceFullState && state.revision > 0L && state.revision <= lastAppliedRevision) {
                 Timber.tag(TAG).d("Ignoring stale sync revision ${state.revision} <= $lastAppliedRevision")
                 return
             }
@@ -1430,7 +1439,7 @@ class ListenTogetherManager
             }
             val localTrackId = playerConnection?.player?.currentMediaItem?.mediaId
             if (!forceFullState && state.currentTrack != null && localTrackId == state.currentTrack.id && bufferingTrackId == null) {
-                handlePlaybackSync(
+                applyPlaybackAction(
                     PlaybackActionPayload(
                         action = if (state.isPlaying) PlaybackActions.PLAY else PlaybackActions.PAUSE,
                         trackId = state.currentTrack.id,

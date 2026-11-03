@@ -19,6 +19,7 @@ import timber.log.Timber
 data class LibraryPage(
     val items: List<YTItem>,
     val continuation: String?,
+    val isSnapshotUsableForSync: Boolean = true,
 ) {
     companion object {
         fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): YTItem? {

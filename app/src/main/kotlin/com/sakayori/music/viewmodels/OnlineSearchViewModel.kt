@@ -36,6 +36,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -55,7 +56,7 @@ constructor(
     val viewStateMap = mutableStateMapOf<String, ItemsPage?>()
 
     private data class ContentPolicy(val hideExplicit: Boolean, val hideVideos: Boolean, val hideShorts: Boolean)
-    private data class Selection(val filter: YouTube.SearchFilter?, val policy: ContentPolicy, val revision: Long)
+    private data class Selection(val filter: YouTube.SearchFilter?, val revision: Long)
     private data class PageRequest(val generation: Long, val filter: String, val continuation: String)
 
     // Keep raw pages so preference changes do not need another network search. Only the existing
@@ -66,14 +67,26 @@ constructor(
     private var revision = YouTube.requestContextRevision.value
     private var generation = 0L
     private var activeSelection: Selection? = null
+    private var contentPolicy = ContentPolicy(hideExplicit = true, hideVideos = true, hideShorts = true)
     private val pageRequests = Channel<PageRequest>(Channel.CONFLATED)
 
     init {
         viewModelScope.launch {
-            val policies = context.dataStore.data.map {
+            context.dataStore.data.map {
                 ContentPolicy(it[HideExplicitKey] ?: false, it[HideVideoSongsKey] ?: false, it[HideYoutubeShortsKey] ?: false)
-            }.distinctUntilChanged()
-            combine(filter, policies, YouTube.requestContextRevision, ::Selection).collectLatest { selection ->
+            }.distinctUntilChanged().catch { error ->
+                if (error is CancellationException) throw error
+                reportException(error)
+                emit(ContentPolicy(hideExplicit = true, hideVideos = true, hideShorts = true))
+            }.collect { policy ->
+                contentPolicy = policy
+                publish(policy)
+            }
+        }
+        viewModelScope.launch {
+            // Settings arrival/refiltering is not a second network selection. A cold settings
+            // read and the first search can run independently without restarting the request.
+            combine(filter, YouTube.requestContextRevision, ::Selection).collectLatest { selection ->
                 val selectedGeneration = ++generation
                 activeSelection = selection
                 if (revision != selection.revision) {
@@ -84,7 +97,7 @@ constructor(
                     summaryPage = null
                     viewStateMap.clear()
                 }
-                publish(selection.policy)
+                publish(contentPolicy)
                 coroutineScope {
                     var enrichment: Job? = null
                     fun enrich() {
@@ -135,7 +148,7 @@ constructor(
             if (!isCurrent(selection, selectedGeneration)) return
             rawPages[selectedFilter.value] = ItemsPage(result.items.distinctBy { it.id }, result.continuation)
         }
-        publish(selection.policy)
+        publish(contentPolicy)
     }
 
     private suspend fun loadPage(request: PageRequest, selection: Selection, selectedGeneration: Long): Boolean {
@@ -154,7 +167,7 @@ constructor(
             (latest.items + result.items).distinctBy { it.id },
             result.continuation?.takeUnless { it in consumed },
         )
-        publish(selection.policy)
+        publish(contentPolicy)
         return true
     }
 
@@ -179,10 +192,15 @@ constructor(
             // Do not replace the page captured before the lookup: it may now have more items.
             rawPages[key] = latest.copy(items = latest.items.withResolvedArtistIds(ids))
         }
-        publish(selection.policy)
+        publish(contentPolicy)
     }
 
     private fun publish(policy: ContentPolicy) {
+        if (revision != YouTube.requestContextRevision.value) {
+            summaryPage = null
+            viewStateMap.clear()
+            return
+        }
         summaryPage = rawSummary?.filterExplicit(policy.hideExplicit)
             ?.filterVideoSongs(policy.hideVideos)?.filterYoutubeShorts(policy.hideShorts)
         rawPages.forEach { (key, page) ->

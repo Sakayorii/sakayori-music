@@ -36,6 +36,7 @@ internal class RenditionDownloader(
 
     override fun download(progressListener: Downloader.ProgressListener?) {
         if (cancelled) throw InterruptedIOException("Download cancelled")
+        var protection: AutoCloseable? = null
         try {
             if (delegate == null) {
                 var resolved: ResolvedPlaybackStream? = null
@@ -79,6 +80,7 @@ internal class RenditionDownloader(
                 }
             }
             val downloader = delegate ?: throw IOException("Download source unavailable")
+            protection = boundRendition?.let(store::protect)
             if (cancelled) {
                 downloader.cancel()
                 throw InterruptedIOException("Download cancelled")
@@ -95,7 +97,7 @@ internal class RenditionDownloader(
         } catch (error: IOException) {
             val failed = boundRendition
             if (failed?.provider == AudioRendition.DIRECT_FLAC && !skipLossless && !cancelled && !Thread.currentThread().isInterrupted) {
-                lossless.failed(failed)
+                lossless.failed(failed, forDownload = true)
                 delegate?.cancel()
                 delegate = null
                 skipLossless = true
@@ -116,6 +118,8 @@ internal class RenditionDownloader(
             throw error
         } catch (error: Exception) {
             throw IOException("Unable to resolve download", error)
+        } finally {
+            protection?.close()
         }
     }
 

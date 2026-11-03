@@ -12,6 +12,7 @@ import com.sakayori.music.models.PersistPlayerState
 import com.sakayori.music.models.PersistQueue
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -45,13 +46,18 @@ class PlaybackQueueStore @Inject constructor(
     @ApplicationContext context: Context,
     @ApplicationScope applicationScope: CoroutineScope,
 ) {
-    private data class Operation(val revision: Long, val snapshot: PlaybackQueueSnapshot?)
+    private data class Operation(
+        val revision: Long,
+        val snapshot: PlaybackQueueSnapshot?,
+        val completion: CompletableDeferred<Unit>? = null,
+    )
     private data class Completion(val revision: Long, val failure: Exception? = null)
     private val directory by lazy { context.filesDir }
     private val lock = Any()
     private val io = Mutex()
     private var revision = 0L
-    private var pending: Operation? = null
+    private val pending = ArrayDeque<Operation>()
+    private var writing: Operation? = null
     private val wakeups = Channel<Unit>(Channel.CONFLATED)
     private val completed = MutableStateFlow(Completion(0L))
     @Volatile var enabled = true
@@ -59,35 +65,41 @@ class PlaybackQueueStore @Inject constructor(
     init {
         applicationScope.launch(Dispatchers.IO) {
             for (ignored in wakeups) {
-                val operation = synchronized(lock) { pending } ?: continue
-                var failure: Exception? = null
-                try {
-                    io.withLock {
-                        val snapshot = operation.snapshot
-                        if (snapshot == null) {
-                            FILES.forEach { name ->
-                                val file = AtomicFile(directory.resolve(name))
-                                file.delete()
-                                if (file.baseFile.exists() || File(file.baseFile.path + ".bak").exists()) {
-                                    throw IOException("Unable to clear playback queue")
+                while (true) {
+                    val operation = synchronized(lock) {
+                        pending.removeFirstOrNull()?.also { writing = it }
+                    } ?: break
+                    var failure: Exception? = null
+                    try {
+                        io.withLock {
+                            val snapshot = operation.snapshot
+                            if (snapshot == null) {
+                                FILES.forEach { name ->
+                                    val file = AtomicFile(directory.resolve(name))
+                                    file.delete()
+                                    if (file.baseFile.exists() || File(file.baseFile.path + ".bak").exists()) {
+                                        throw IOException("Unable to clear playback queue")
+                                    }
                                 }
+                            } else if (enabled) {
+                                snapshot.queue?.let { write(QUEUE_FILE, it) }
+                                snapshot.automix?.let { write(AUTOMIX_FILE, it) }
+                                snapshot.player?.let { write(PLAYER_STATE_FILE, it) }
                             }
-                        } else if (enabled) {
-                            snapshot.queue?.let { write(QUEUE_FILE, it) }
-                            snapshot.automix?.let { write(AUTOMIX_FILE, it) }
-                            snapshot.player?.let { write(PLAYER_STATE_FILE, it) }
                         }
-                    }
-                } catch (cancelled: CancellationException) {
-                    failure = cancelled
-                    throw cancelled
-                } catch (error: Exception) {
-                    failure = error
-                    Timber.tag(TAG).e(error, "Unable to persist playback queue")
-                } finally {
-                    synchronized(lock) {
-                        if (pending?.revision == operation.revision) pending = null
-                        completed.value = Completion(operation.revision, failure)
+                    } catch (cancelled: CancellationException) {
+                        failure = cancelled
+                        throw cancelled
+                    } catch (error: Exception) {
+                        failure = error
+                        Timber.tag(TAG).e(error, "Unable to persist playback queue")
+                    } finally {
+                        synchronized(lock) {
+                            writing = null
+                            completed.value = Completion(operation.revision, failure)
+                        }
+                        if (failure == null) operation.completion?.complete(Unit)
+                        else operation.completion?.completeExceptionally(failure)
                     }
                 }
             }
@@ -100,8 +112,9 @@ class PlaybackQueueStore @Inject constructor(
 
     /** Serialize clearing behind any final service snapshot, so it cannot recreate cleared files. */
     suspend fun clear() {
-        val target = enqueue(null)
-        completed.first { it.revision >= target }.failure?.let { throw it }
+        val completion = CompletableDeferred<Unit>()
+        enqueue(null, completion)
+        completion.await()
     }
 
     internal suspend fun awaitPendingWrites() {
@@ -111,7 +124,7 @@ class PlaybackQueueStore @Inject constructor(
 
     internal suspend fun load(): PlaybackQueueSnapshot = withContext(Dispatchers.IO) {
         io.withLock {
-            synchronized(lock) { pending }?.let {
+            synchronized(lock) { pending.lastOrNull() ?: writing }?.let {
                 return@withLock it.snapshot ?: PlaybackQueueSnapshot(null, null, null)
             }
             PlaybackQueueSnapshot(
@@ -122,9 +135,12 @@ class PlaybackQueueStore @Inject constructor(
         }
     }
 
-    private fun enqueue(snapshot: PlaybackQueueSnapshot?): Long = synchronized(lock) {
+    private fun enqueue(snapshot: PlaybackQueueSnapshot?, completion: CompletableDeferred<Unit>? = null): Long = synchronized(lock) {
         val next = ++revision
-        pending = Operation(next, snapshot)
+        // Only adjacent saves coalesce. A clear remains ordered and has its own completion,
+        // so a subsequent save cannot impersonate a clear that was never executed.
+        if (snapshot != null && pending.lastOrNull()?.snapshot != null) pending.removeLast()
+        pending.addLast(Operation(next, snapshot, completion))
         wakeups.trySend(Unit)
         next
     }

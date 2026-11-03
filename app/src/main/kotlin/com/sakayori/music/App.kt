@@ -13,6 +13,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import android.widget.Toast
+import androidx.datastore.preferences.core.Preferences
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -66,6 +67,8 @@ class App :
     @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
+    @Volatile internal var playbackPreferences: Preferences? = null
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -90,7 +93,7 @@ class App :
 
         // Plant logging BEFORE cipher init so the synchronous config-store load
         // (bundled asset + cached overlay) is captured, not just the async remote refresh.
-        Timber.plant(Timber.DebugTree())
+        if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
 
         // Initialize cipher deobfuscator for WEB_REMIX streaming
         CipherDeobfuscator.initialize(this)
@@ -98,6 +101,9 @@ class App :
         // Pre-read Coil cache size on background to avoid runBlocking in newImageLoader
         applicationScope.launch(Dispatchers.IO) {
             cachedCoilCacheSize = dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
+        }
+        applicationScope.launch(Dispatchers.IO) {
+            dataStore.data.collect { playbackPreferences = it }
         }
 
         // تهيئة إعدادات التطبيق عند الإقلاع
@@ -133,6 +139,7 @@ class App :
 
     private suspend fun initializeSettings() {
         val settings = dataStore.data.first()
+        playbackPreferences = settings
         val locale = Locale.getDefault()
         val languageTag = locale.language
 

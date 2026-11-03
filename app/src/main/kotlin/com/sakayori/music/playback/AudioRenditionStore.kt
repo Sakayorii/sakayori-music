@@ -17,6 +17,7 @@ import com.sakayori.music.di.PlayerCache
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.IOException
+import java.io.InterruptedIOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,6 +38,9 @@ class AudioRenditionStore @Inject constructor(
     private data class CachedBinding(val rendition: AudioRendition?)
     private val lock = Any()
     private val bindings = LinkedHashMap<BindingKey, CachedBinding>(0, 0.75f, true)
+    private data class ByteKey(val cache: String, val key: String)
+    private val readers = mutableMapOf<ByteKey, Int>()
+    private val pendingRemovals = mutableSetOf<ByteKey>()
     @Volatile private var tableReady = false
 
     internal fun playback(mediaId: String, profile: String): AudioRendition? =
@@ -45,9 +49,9 @@ class AudioRenditionStore @Inject constructor(
     internal fun downloaded(mediaId: String): AudioRendition? =
         read(DOWNLOAD, mediaId, DOWNLOAD)
 
-    internal fun bindPlayback(mediaId: String, profile: String, rendition: AudioRendition) {
+    internal fun bindPlayback(mediaId: String, profile: String, rendition: AudioRendition, isCurrent: () -> Boolean = { true }) {
         require(rendition.mediaId == mediaId && profile in PROFILES)
-        write(PLAYER, mediaId, profile, rendition)
+        write(PLAYER, mediaId, profile, rendition, isCurrent)
     }
 
     internal fun bindDownload(mediaId: String, rendition: AudioRendition) {
@@ -61,8 +65,8 @@ class AudioRenditionStore @Inject constructor(
         }
     }
 
-    internal fun forgetPlayback(mediaId: String, profile: String, expectedKey: String) = synchronized(lock) {
-        if (read(PLAYER, mediaId, profile)?.cacheKey == expectedKey) {
+    internal fun forgetPlayback(mediaId: String, profile: String, expectedKey: String, isCurrent: () -> Boolean = { true }) = synchronized(lock) {
+        if (isCurrent() && read(PLAYER, mediaId, profile)?.cacheKey == expectedKey) {
             bindingsDatabase().delete(TABLE, "cache_kind = ? AND media_id = ? AND profile = ?", arrayOf(PLAYER, mediaId, profile))
             bindings.remove(BindingKey(PLAYER, mediaId, profile))
         }
@@ -136,22 +140,86 @@ class AudioRenditionStore @Inject constructor(
         return false
     }
 
-    fun removePlayerCopies(mediaId: String) {
-        playbackBindings(mediaId).map { it.cacheKey }.distinct().forEach(playerCache::removeResource)
-        // Also remove older revisions displaced from a profile. This is an explicit IO action,
-        // never part of a lookup or playback callback.
-        playerCache.keys.filter { key -> playerCache.getContentMetadata(key).get(OWNER, "") == mediaId }
-            .forEach(playerCache::removeResource)
-        playerCache.removeResource(mediaId)
-        removeBindings(PLAYER, mediaId)
+    fun removePlayerCopies(mediaId: String) = synchronized(lock) {
+        removeCopies(PLAYER, playerCache, mediaId, playbackBindings(mediaId))
     }
 
-    internal fun removeDownload(mediaId: String) {
-        downloaded(mediaId)?.let { downloadCache.removeResource(it.cacheKey) }
-        downloadCache.keys.filter { key -> downloadCache.getContentMetadata(key).get(OWNER, "") == mediaId }
-            .forEach(downloadCache::removeResource)
-        downloadCache.removeResource(mediaId)
-        removeBindings(DOWNLOAD, mediaId)
+    internal fun removeDownload(mediaId: String) = synchronized(lock) {
+        removeCopies(DOWNLOAD, downloadCache, mediaId, listOfNotNull(downloaded(mediaId)))
+    }
+
+    private fun removeCopies(kind: String, cache: Cache, mediaId: String, renditions: List<AudioRendition>) {
+        val keys = (renditions.map { it.cacheKey } + cache.keys.filter {
+            cache.getContentMetadata(it).get(OWNER, "") == mediaId
+        } + mediaId).toSet()
+        val exclusive = keys.filterNot { isCacheKeyShared(kind, mediaId, it) }
+        removeBindings(kind, mediaId)
+        exclusive.forEach { key ->
+            val bytes = ByteKey(kind, key)
+            if ((readers[bytes] ?: 0) > 0) pendingRemovals.add(bytes)
+            else cache.removeResource(key)
+        }
+    }
+
+    /** Older bindings have only a serialized descriptor. Read them too, without a cache wipe
+     * or a Room migration. A corrupt retained descriptor is conservatively treated as an owner. */
+    private fun isCacheKeyShared(cacheKind: String, mediaId: String?, cacheKey: String): Boolean =
+        bindingsDatabase().query(
+            TABLE, arrayOf("media_id", "profile", "descriptor", "cache_key"),
+            "cache_kind = ? AND (cache_key = ? OR cache_key IS NULL)" + if (mediaId == null) "" else " AND media_id != ?",
+            if (mediaId == null) arrayOf(cacheKind, cacheKey) else arrayOf(cacheKind, cacheKey, mediaId), null, null, null,
+        ).use { cursor ->
+            var shared = false
+            val legacyKeys = mutableListOf<Triple<String, String, String>>()
+            while (cursor.moveToNext()) {
+                if (!cursor.isNull(3)) {
+                    shared = true
+                    continue
+                }
+                val id = cursor.getString(0)
+                val rendition = runCatching { json.decodeFromString<AudioRendition>(cursor.getString(2)) }.getOrNull()
+                    ?.takeIf { it.mediaId == id }
+                if (rendition == null) shared = true else {
+                    legacyKeys.add(Triple(id, cursor.getString(1), rendition.cacheKey))
+                    if (rendition.cacheKey == cacheKey) shared = true
+                }
+            }
+            // Backfill old descriptors on explicit removal IO, not every cold playback. Future
+            // ownership checks use the index rather than reparsing an entire download library.
+            legacyKeys.forEach { (id, profile, key) ->
+                bindingsDatabase().update(TABLE, ContentValues().apply { put("cache_key", key) },
+                    "cache_kind = ? AND media_id = ? AND profile = ?", arrayOf(cacheKind, id, profile))
+            }
+            shared
+        }
+
+    /** Protect open readers/writers after their logical binding is removed. Final deletion runs
+     * on the closing loader, and checks for bindings created in the meantime under the same lock. */
+    internal fun protect(rendition: AudioRendition): AutoCloseable = synchronized(lock) {
+        val kinds = when (rendition.legacyCache) {
+            LegacyAudioCache.PLAYER -> listOf(PLAYER)
+            LegacyAudioCache.DOWNLOAD -> listOf(DOWNLOAD)
+            null -> listOf(PLAYER, DOWNLOAD)
+        }
+        val keys = kinds.map { ByteKey(it, rendition.cacheKey) }
+        keys.forEach { readers[it] = (readers[it] ?: 0) + 1 }
+        var closed = false
+        AutoCloseable {
+            synchronized(lock) {
+                if (!closed) {
+                    closed = true
+                    keys.forEach { key ->
+                        val remaining = (readers[key] ?: 1) - 1
+                        if (remaining > 0) readers[key] = remaining else {
+                            readers.remove(key)
+                            if (pendingRemovals.remove(key) && !isCacheKeyShared(key.cache, null, key.key)) {
+                                (if (key.cache == PLAYER) playerCache else downloadCache).removeResource(key.key)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun playbackBindings(mediaId: String): List<AudioRendition> = PROFILES.mapNotNull { profile ->
@@ -193,24 +261,26 @@ class AudioRenditionStore @Inject constructor(
         rendition
     }
 
-    private fun write(cache: String, mediaId: String, profile: String, rendition: AudioRendition) {
+    private fun write(cache: String, mediaId: String, profile: String, rendition: AudioRendition, isCurrent: () -> Boolean = { true }) {
         synchronized(lock) {
+            if (!isCurrent()) throw InterruptedIOException("Audio binding superseded")
             if (read(cache, mediaId, profile) != rendition) {
                 val values = ContentValues().apply {
                     put("cache_kind", cache)
                     put("media_id", mediaId)
                     put("profile", profile)
                     put("descriptor", json.encodeToString(rendition))
+                    put("cache_key", rendition.cacheKey)
                 }
                 if (bindingsDatabase().insertWithOnConflict(TABLE, null, values, SQLiteDatabase.CONFLICT_REPLACE) == -1L) {
                     throw IOException("Unable to persist audio rendition")
                 }
                 remember(BindingKey(cache, mediaId, profile), rendition)
             }
-        }
-        val byteCache = if (cache == PLAYER) playerCache else downloadCache
-        if (byteCache.getContentMetadata(rendition.cacheKey).get(OWNER, "") != rendition.mediaId) {
-            byteCache.applyContentMetadataMutations(rendition.cacheKey, ContentMetadataMutations().set(OWNER, rendition.mediaId))
+            val byteCache = if (cache == PLAYER) playerCache else downloadCache
+            if (byteCache.getContentMetadata(rendition.cacheKey).get(OWNER, "") != rendition.mediaId) {
+                byteCache.applyContentMetadataMutations(rendition.cacheKey, ContentMetadataMutations().set(OWNER, rendition.mediaId))
+            }
         }
     }
 
@@ -234,9 +304,17 @@ class AudioRenditionStore @Inject constructor(
                         media_id TEXT NOT NULL,
                         profile TEXT NOT NULL,
                         descriptor TEXT NOT NULL,
+                        cache_key TEXT,
                         PRIMARY KEY (cache_kind, media_id, profile)
                     )
                 """.trimIndent())
+                val hasCacheKey = db.rawQuery("PRAGMA table_info($TABLE)", null).use { cursor ->
+                    var found = false
+                    while (cursor.moveToNext()) if (cursor.getString(1) == "cache_key") found = true
+                    found
+                }
+                if (!hasCacheKey) db.execSQL("ALTER TABLE $TABLE ADD COLUMN cache_key TEXT")
+                db.execSQL("CREATE INDEX IF NOT EXISTS sakayori_audio_renditions_key_v1 ON $TABLE (cache_kind, cache_key)")
                 tableReady = true
             }
         }
