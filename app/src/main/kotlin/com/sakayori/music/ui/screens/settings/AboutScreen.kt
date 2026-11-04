@@ -14,14 +14,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -407,59 +405,38 @@ fun AboutScreen(
                     Spacer(Modifier.width(12.dp))
                     Text(stringResource(R.string.buy_mo_a_coffee), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                 }
-            }
-        }
 
-        Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp))
 
-        // Donate Section Card
-        ElevatedCard(
-            shape = RoundedCornerShape(32.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Text(
                     text = "Donate via VietQR:",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                Spacer(Modifier.height(12.dp))
-                val donateFallback = painterResource(R.drawable.donate)
+                Spacer(Modifier.height(8.dp))
                 AsyncImage(
-                    model = "https://qr.sakayori.me/image/970454-99ZP26301M80823757-payos.png?addInfo=ung%20ho%20nha%20phat%20trien",
+                    model = "https://img.vietqr.io/image/MB-0797611290-compact.png?accountName=Dinh%20Tran%20Gia%20Huy",
                     contentDescription = "VietQR",
-                    contentScale = ContentScale.Fit,
-                    placeholder = donateFallback,
-                    fallback = donateFallback,
-                    error = donateFallback,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .sizeIn(maxWidth = 260.dp, maxHeight = 260.dp)
-                        .aspectRatio(1f)
-                        .align(Alignment.CenterHorizontally)
-                        .clip(RoundedCornerShape(20.dp))
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(12.dp))
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(16.dp))
 
                 Text(
                     text = "Monero (XMR):",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                Spacer(Modifier.height(8.dp))
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                Text(
+                    text = "45SsusJDkAEaQgz8jWKPonhvWjhUj2EEfdTQat22TaaFLyb1noVfzN2U9PGpGeX5Qe55XikAKZ42eC7z1F9E3uL9LsLx14L",
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
                         .clickable {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             clipboard.setPrimaryClip(
@@ -469,15 +446,9 @@ fun AboutScreen(
                                 )
                             )
                             Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                        }
-                ) {
-                    Text(
-                        text = "45SsusJDkAEaQgz8jWKPonhvWjhUj2EEfdTQat22TaaFLyb1noVfzN2U9PGpGeX5Qe55XikAKZ42eC7z1F9E3uL9LsLx14L",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(12.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
+                        },
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
         }
 

@@ -405,15 +405,9 @@ fun AlbumScreen(
                         }
                     }
 
-                    val songWithCover = if (song.song.thumbnailUrl == null && albumWithSongs?.album?.thumbnailUrl != null) {
-                        song.copy(song = song.song.copy(thumbnailUrl = albumWithSongs?.album?.thumbnailUrl))
-                    } else {
-                        song
-                    }
-
                     SongListItem(
-                        song = songWithCover,
-                        albumIndex = null,
+                        song = song,
+                        albumIndex = index + 1,
                         isActive = song.id == mediaMetadata?.id,
                         isPlaying = isPlaying,
                         showInLibraryIcon = true,

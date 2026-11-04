@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -118,15 +117,14 @@ class ArtistViewModel @Inject constructor(
     }
 
     private suspend fun loadCachedPage() {
-        withContext(Dispatchers.IO) {
-            try {
-                val cachedJson = database.artist(artistId).firstOrNull()?.artist?.cachedPageJson ?: return@withContext
-                val cachedDto = deserializeArtistPage(cachedJson)
+        try {
+            val cachedJson = database.artist(artistId).firstOrNull()?.artist?.cachedPageJson
+            if (cachedJson != null) {
+                val cachedDto = withContext(Dispatchers.IO) { deserializeArtistPage(cachedJson) }
                 val page = cachedDto.toArtistPage()
-                val prefs = context.dataStore.data.first()
-                val hideExplicit = prefs[HideExplicitKey] ?: false
-                val hideVideoSongs = prefs[HideVideoSongsKey] ?: false
-                val hideYoutubeShorts = prefs[HideYoutubeShortsKey] ?: false
+                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
 
                 val filteredSections = page.sections
                     .map { section ->
@@ -134,23 +132,19 @@ class ArtistViewModel @Inject constructor(
                     }
                     .filter { section -> section.items.isNotEmpty() }
 
-                val finalPage = page.copy(sections = filteredSections)
-                withContext(Dispatchers.Main) {
-                    artistPage = finalPage
-                    _apiSubscribed.value = page.isSubscribed
-                }
-            } catch (e: Exception) {
-                reportException(e)
+                artistPage = page.copy(sections = filteredSections)
+                _apiSubscribed.value = page.isSubscribed
             }
+        } catch (e: Exception) {
+            reportException(e)
         }
     }
 
     fun fetchArtistsFromYTM() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val prefs = context.dataStore.data.first()
-            val hideExplicit = prefs[HideExplicitKey] ?: false
-            val hideVideoSongs = prefs[HideVideoSongsKey] ?: false
-            val hideYoutubeShorts = prefs[HideYoutubeShortsKey] ?: false
+        viewModelScope.launch {
+            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
+            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
             YouTube.artist(artistId)
                 .onSuccess { page ->
                     // Collect all items from all sections and resolve artist IDs once
@@ -220,10 +214,7 @@ class ArtistViewModel @Inject constructor(
                         }
                         .filter { section -> section.items.isNotEmpty() }
 
-                    val finalPage = resolvedPage.copy(sections = filteredSections)
-                    withContext(Dispatchers.Main) {
-                        artistPage = finalPage
-                    }
+                    artistPage = resolvedPage.copy(sections = filteredSections)
                     // Cache page data + persist artist metadata
                     viewModelScope.launch(Dispatchers.IO) {
                         try {

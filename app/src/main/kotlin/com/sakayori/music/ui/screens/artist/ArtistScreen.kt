@@ -5,7 +5,6 @@
 
 package com.sakayori.music.ui.screens.artist
 
-import androidx.activity.compose.BackHandler
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -139,10 +138,6 @@ fun ArtistScreen(
     navController: NavController,
     viewModel: ArtistViewModel = hiltViewModel(),
 ) {
-    BackHandler {
-        navController.navigateUp()
-    }
-
     val context = LocalContext.current
     val database = LocalDatabase.current
     val menuState = LocalMenuState.current
