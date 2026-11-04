@@ -122,6 +122,7 @@ fun BottomSheet(
     ) {
         if (!state.isCollapsed && !state.isDismissed) {
             PredictiveBackHandler { progress ->
+                state.isDragging = true
                 val initialValue = state.value
                 try {
                     val range = initialValue - state.collapsedBound
@@ -133,6 +134,8 @@ fun BottomSheet(
                     state.collapseSoft()
                 } catch (_: CancellationException) {
                     state.expandSoft()
+                } finally {
+                    state.isDragging = false
                 }
             }
         }
@@ -176,11 +179,22 @@ class BottomSheetState(
     private val animatable: Animatable<Dp, AnimationVector1D>,
     private val onAnchorChanged: (Int) -> Unit,
     initialCollapsedBound: Dp,
+    initialAnchor: Int = dismissedAnchor,
 ) : DraggableState by draggableState {
     var collapsedBound by mutableStateOf(initialCollapsedBound)
         private set
 
     var isDragging by mutableStateOf(false)
+        set(value) {
+            val wasDragging = field
+            field = value
+            if (wasDragging && !value) {
+                onDragStopped()
+            }
+        }
+
+    private var hasPendingBoundsUpdate = false
+    private var lastRequestedAnchor = initialAnchor
 
     val dismissedBound: Dp
         get() = animatable.lowerBound!!
@@ -214,15 +228,38 @@ class BottomSheetState(
     ) {
         collapsedBound = newCollapsedBound
         animatable.updateBounds(dismissedBound.coerceAtMost(expandedBound), expandedBound)
+        lastRequestedAnchor = currentAnchor
         val targetValue = when (currentAnchor) {
             expandedAnchor -> expandedBound
             collapsedAnchor -> newCollapsedBound
             dismissedAnchor -> dismissedBound
             else -> newCollapsedBound
         }
-        if (!isDragging && animatable.targetValue != targetValue) {
-            coroutineScope.launch {
-                animatable.animateTo(targetValue, NavigationBarAnimationSpec)
+        if (isDragging) {
+            hasPendingBoundsUpdate = true
+        } else {
+            hasPendingBoundsUpdate = false
+            if (animatable.targetValue != targetValue) {
+                coroutineScope.launch {
+                    animatable.animateTo(targetValue, NavigationBarAnimationSpec)
+                }
+            }
+        }
+    }
+
+    private fun onDragStopped() {
+        if (hasPendingBoundsUpdate) {
+            hasPendingBoundsUpdate = false
+            val targetValue = when (lastRequestedAnchor) {
+                expandedAnchor -> expandedBound
+                collapsedAnchor -> collapsedBound
+                dismissedAnchor -> dismissedBound
+                else -> collapsedBound
+            }
+            if (!animatable.isRunning && animatable.targetValue != targetValue) {
+                coroutineScope.launch {
+                    animatable.animateTo(targetValue, NavigationBarAnimationSpec)
+                }
             }
         }
     }
@@ -322,6 +359,7 @@ class BottomSheetState(
                 }
 
                 return if (isTopReached && available.y < 0 && source == NestedScrollSource.UserInput) {
+                    isDragging = true
                     dispatchRawDelta(available.y)
                     available
                 } else {
@@ -339,6 +377,7 @@ class BottomSheetState(
                 }
 
                 return if (isTopReached && source == NestedScrollSource.UserInput) {
+                    isDragging = true
                     dispatchRawDelta(available.y)
                     available
                 } else {
@@ -350,15 +389,17 @@ class BottomSheetState(
                 return if (isTopReached) {
                     val velocity = -available.y
                     performFling(velocity, null)
-
+                    isDragging = false
                     available
                 } else {
+                    isDragging = false
                     Velocity.Zero
                 }
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
                 isTopReached = false
+                isDragging = false
                 return Velocity.Zero
             }
         }
@@ -403,7 +444,8 @@ fun rememberBottomSheetState(
             onAnchorChanged = { previousAnchor = it },
             coroutineScope = coroutineScope,
             animatable = animatable,
-            initialCollapsedBound = collapsedBound
+            initialCollapsedBound = collapsedBound,
+            initialAnchor = initialAnchor,
         )
     }
 
