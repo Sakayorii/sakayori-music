@@ -440,7 +440,9 @@ fun AboutScreen(
                     error = donateFallback,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .sizeIn(maxWidth = 260.dp, maxHeight = 260.dp)
                         .aspectRatio(1f)
+                        .align(Alignment.CenterHorizontally)
                         .clip(RoundedCornerShape(20.dp))
                 )
 

@@ -94,15 +94,20 @@ fun BottomSheet(
                 val velocityTracker = VelocityTracker()
 
                 detectVerticalDragGestures(
+                    onDragStart = {
+                        state.isDragging = true
+                    },
                     onVerticalDrag = { change, dragAmount ->
                         velocityTracker.addPointerInputChange(change)
                         state.dispatchRawDelta(dragAmount)
                     },
                     onDragCancel = {
+                        state.isDragging = false
                         velocityTracker.resetTracking()
                         state.snapTo(state.collapsedBound)
                     },
                     onDragEnd = {
+                        state.isDragging = false
                         val velocity = -velocityTracker.calculateVelocity().y
                         velocityTracker.resetTracking()
                         state.performFling(velocity, onDismiss)
@@ -175,6 +180,8 @@ class BottomSheetState(
     var collapsedBound by mutableStateOf(initialCollapsedBound)
         private set
 
+    var isDragging by mutableStateOf(false)
+
     val dismissedBound: Dp
         get() = animatable.lowerBound!!
 
@@ -213,8 +220,10 @@ class BottomSheetState(
             dismissedAnchor -> dismissedBound
             else -> newCollapsedBound
         }
-        coroutineScope.launch {
-            animatable.animateTo(targetValue, NavigationBarAnimationSpec)
+        if (!isDragging && animatable.targetValue != targetValue) {
+            coroutineScope.launch {
+                animatable.animateTo(targetValue, NavigationBarAnimationSpec)
+            }
         }
     }
 
@@ -372,23 +381,19 @@ fun rememberBottomSheetState(
     var previousAnchor by rememberSaveable {
         mutableIntStateOf(initialAnchor)
     }
+    val initialValue = when (previousAnchor) {
+        expandedAnchor -> expandedBound
+        collapsedAnchor -> collapsedBound
+        dismissedAnchor -> dismissedBound
+        else -> dismissedBound
+    }
     val animatable = remember {
-        Animatable(0.dp, Dp.VectorConverter)
+        Animatable(initialValue, Dp.VectorConverter).apply {
+            updateBounds(dismissedBound.coerceAtMost(expandedBound), expandedBound)
+        }
     }
 
     val state = remember(coroutineScope) {
-        val initialValue = when (previousAnchor) {
-            expandedAnchor -> expandedBound
-            collapsedAnchor -> collapsedBound
-            dismissedAnchor -> dismissedBound
-            else -> error("Unknown BottomSheet anchor")
-        }
-
-        animatable.updateBounds(dismissedBound.coerceAtMost(expandedBound), expandedBound)
-        coroutineScope.launch {
-            animatable.animateTo(initialValue, NavigationBarAnimationSpec)
-        }
-
         BottomSheetState(
             draggableState = DraggableState { delta ->
                 coroutineScope.launch {
