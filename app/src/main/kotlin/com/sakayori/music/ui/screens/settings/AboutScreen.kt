@@ -407,16 +407,29 @@ fun AboutScreen(
                     Spacer(Modifier.width(12.dp))
                     Text(stringResource(R.string.buy_mo_a_coffee), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                 }
+            }
+        }
 
-                Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
+        // Donate Section Card
+        ElevatedCard(
+            shape = RoundedCornerShape(32.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
                     text = "Donate via VietQR:",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 val donateFallback = painterResource(R.drawable.donate)
                 AsyncImage(
                     model = "https://qr.sakayori.me/image/970454-99ZP26301M80823757-payos.png?addInfo=ung%20ho%20nha%20phat%20trien",
@@ -427,25 +440,24 @@ fun AboutScreen(
                     error = donateFallback,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .sizeIn(maxWidth = 260.dp, maxHeight = 260.dp)
                         .aspectRatio(1f)
-                        .align(Alignment.CenterHorizontally)
                         .clip(RoundedCornerShape(20.dp))
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(20.dp))
 
                 Text(
                     text = "Monero (XMR):",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-                Text(
-                    text = "45SsusJDkAEaQgz8jWKPonhvWjhUj2EEfdTQat22TaaFLyb1noVfzN2U9PGpGeX5Qe55XikAKZ42eC7z1F9E3uL9LsLx14L",
-                    style = MaterialTheme.typography.bodySmall,
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
+                        .fillMaxWidth()
                         .clickable {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             clipboard.setPrimaryClip(
@@ -455,9 +467,15 @@ fun AboutScreen(
                                 )
                             )
                             Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                        },
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
+                        }
+                ) {
+                    Text(
+                        text = "45SsusJDkAEaQgz8jWKPonhvWjhUj2EEfdTQat22TaaFLyb1noVfzN2U9PGpGeX5Qe55XikAKZ42eC7z1F9E3uL9LsLx14L",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
         }
 

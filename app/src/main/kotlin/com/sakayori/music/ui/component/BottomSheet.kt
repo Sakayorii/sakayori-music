@@ -26,10 +26,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -168,8 +170,11 @@ class BottomSheetState(
     private val coroutineScope: CoroutineScope,
     private val animatable: Animatable<Dp, AnimationVector1D>,
     private val onAnchorChanged: (Int) -> Unit,
-    val collapsedBound: Dp,
+    initialCollapsedBound: Dp,
 ) : DraggableState by draggableState {
+    var collapsedBound by mutableStateOf(initialCollapsedBound)
+        private set
+
     val dismissedBound: Dp
         get() = animatable.lowerBound!!
 
@@ -192,6 +197,25 @@ class BottomSheetState(
 
     val progress by derivedStateOf {
         1f - (animatable.upperBound!! - animatable.value) / (animatable.upperBound!! - collapsedBound)
+    }
+
+    fun updateBounds(
+        dismissedBound: Dp,
+        expandedBound: Dp,
+        newCollapsedBound: Dp,
+        currentAnchor: Int
+    ) {
+        collapsedBound = newCollapsedBound
+        animatable.updateBounds(dismissedBound.coerceAtMost(expandedBound), expandedBound)
+        val targetValue = when (currentAnchor) {
+            expandedAnchor -> expandedBound
+            collapsedAnchor -> newCollapsedBound
+            dismissedAnchor -> dismissedBound
+            else -> newCollapsedBound
+        }
+        coroutineScope.launch {
+            animatable.animateTo(targetValue, NavigationBarAnimationSpec)
+        }
     }
 
     fun collapse(animationSpec: AnimationSpec<Dp>) {
@@ -352,7 +376,7 @@ fun rememberBottomSheetState(
         Animatable(0.dp, Dp.VectorConverter)
     }
 
-    return remember(dismissedBound, expandedBound, collapsedBound, coroutineScope) {
+    val state = remember(coroutineScope) {
         val initialValue = when (previousAnchor) {
             expandedAnchor -> expandedBound
             collapsedAnchor -> collapsedBound
@@ -374,7 +398,13 @@ fun rememberBottomSheetState(
             onAnchorChanged = { previousAnchor = it },
             coroutineScope = coroutineScope,
             animatable = animatable,
-            collapsedBound = collapsedBound
+            initialCollapsedBound = collapsedBound
         )
     }
+
+    LaunchedEffect(dismissedBound, expandedBound, collapsedBound) {
+        state.updateBounds(dismissedBound, expandedBound, collapsedBound, previousAnchor)
+    }
+
+    return state
 }

@@ -838,13 +838,6 @@ class MainActivity : ComponentActivity() {
                             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
                             .add(WindowInsets(top = AppBarHeight, bottom = bottom))
                     }
-                appBarScrollBehavior(
-                    canScroll = {
-                        !inSearchScreen &&
-                            (playerBottomSheetState.isCollapsed || playerBottomSheetState.isDismissed)
-                    },
-                )
-
                 val topAppBarScrollBehavior =
                     appBarScrollBehavior(
                         canScroll = {
@@ -870,14 +863,8 @@ class MainActivity : ComponentActivity() {
                         onQueryChange(TextFieldValue())
                     }
 
-                    // Reset scroll behavior for main navigation items
-                    if (navigationItems.fastAny { it.route == navBackStackEntry?.destination?.route }) {
-                        if (navigationItems.fastAny { it.route == previousTab }) {
-                            topAppBarScrollBehavior.state.resetHeightOffset()
-                        }
-                    }
-
-                    topAppBarScrollBehavior.state.resetHeightOffset()
+                    // Reset scroll offset instantly without running concurrent animation
+                    topAppBarScrollBehavior.state.heightOffset = 0f
 
                     // Collapse player when navigating to equalizer
                     if (navBackStackEntry?.destination?.route == "equalizer" &&
@@ -1105,15 +1092,12 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         bottomBar = {
-                            val currentBackStackEntry = navController.currentBackStackEntry // reads reactively outside remember
-
                             val onNavItemClick: (Screens, Boolean) -> Unit =
                                 remember(
                                     navController,
                                     coroutineScope,
                                     topAppBarScrollBehavior,
                                     playerBottomSheetState,
-                                    currentBackStackEntry,
                                 ) {
                                     { screen: Screens, isSelected: Boolean ->
                                         if (playerBottomSheetState.isExpanded) {
@@ -1354,7 +1338,6 @@ class MainActivity : ComponentActivity() {
                                             slideOutHorizontally(tween(300)) { it / 6 } + fadeOut(tween(300))
                                         }
                                     },
-                                    modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
                                 ) {
                                     navigationBuilder(
                                         navController = navController,
