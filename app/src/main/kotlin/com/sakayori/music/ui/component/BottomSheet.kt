@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.sakayori.music.constants.NavigationBarAnimationSpec
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
@@ -95,22 +96,20 @@ fun BottomSheet(
 
                 detectVerticalDragGestures(
                     onDragStart = {
-                        state.isDragging = true
+                        state.onDragStarted()
                     },
                     onVerticalDrag = { change, dragAmount ->
                         velocityTracker.addPointerInputChange(change)
                         state.dispatchRawDelta(dragAmount)
                     },
                     onDragCancel = {
-                        state.isDragging = false
                         velocityTracker.resetTracking()
-                        state.snapTo(state.collapsedBound)
+                        state.onDragCancelled()
                     },
                     onDragEnd = {
-                        state.isDragging = false
                         val velocity = -velocityTracker.calculateVelocity().y
                         velocityTracker.resetTracking()
-                        state.performFling(velocity, onDismiss)
+                        state.onDragEnded(velocity, onDismiss)
                     }
                 )
             }
@@ -122,7 +121,7 @@ fun BottomSheet(
     ) {
         if (!state.isCollapsed && !state.isDismissed) {
             PredictiveBackHandler { progress ->
-                state.isDragging = true
+                state.onDragStarted()
                 val initialValue = state.value
                 try {
                     val range = initialValue - state.collapsedBound
@@ -135,7 +134,7 @@ fun BottomSheet(
                 } catch (_: CancellationException) {
                     state.expandSoft()
                 } finally {
-                    state.isDragging = false
+                    state.onPredictiveBackEnded()
                 }
             }
         }
@@ -185,16 +184,12 @@ class BottomSheetState(
         private set
 
     var isDragging by mutableStateOf(false)
-        set(value) {
-            val wasDragging = field
-            field = value
-            if (wasDragging && !value) {
-                onDragStopped()
-            }
-        }
+        private set
 
     private var hasPendingBoundsUpdate = false
     private var lastRequestedAnchor = initialAnchor
+    private var currentTargetValue: Dp? = animatable.value
+    private var activeAnimationJob: Job? = null
 
     val dismissedBound: Dp
         get() = animatable.lowerBound!!
@@ -220,6 +215,29 @@ class BottomSheetState(
         1f - (animatable.upperBound!! - animatable.value) / (animatable.upperBound!! - collapsedBound)
     }
 
+    private fun setAnchor(anchor: Int) {
+        lastRequestedAnchor = anchor
+        onAnchorChanged(anchor)
+    }
+
+    private fun animateToInternal(
+        target: Dp,
+        animationSpec: AnimationSpec<Dp>
+    ) {
+        if (currentTargetValue == target && activeAnimationJob?.isActive == true) return
+        currentTargetValue = target
+        activeAnimationJob?.cancel()
+        activeAnimationJob = coroutineScope.launch {
+            try {
+                animatable.animateTo(target, animationSpec)
+            } finally {
+                if (currentTargetValue == target) {
+                    activeAnimationJob = null
+                }
+            }
+        }
+    }
+
     fun updateBounds(
         dismissedBound: Dp,
         expandedBound: Dp,
@@ -228,8 +246,8 @@ class BottomSheetState(
     ) {
         collapsedBound = newCollapsedBound
         animatable.updateBounds(dismissedBound.coerceAtMost(expandedBound), expandedBound)
-        lastRequestedAnchor = currentAnchor
-        val targetValue = when (currentAnchor) {
+        val activeAnchor = lastRequestedAnchor
+        val targetValue = when (activeAnchor) {
             expandedAnchor -> expandedBound
             collapsedAnchor -> newCollapsedBound
             dismissedAnchor -> dismissedBound
@@ -239,15 +257,36 @@ class BottomSheetState(
             hasPendingBoundsUpdate = true
         } else {
             hasPendingBoundsUpdate = false
-            if (animatable.targetValue != targetValue) {
-                coroutineScope.launch {
-                    animatable.animateTo(targetValue, NavigationBarAnimationSpec)
-                }
+            if (currentTargetValue != targetValue) {
+                animateToInternal(targetValue, NavigationBarAnimationSpec)
             }
         }
     }
 
-    private fun onDragStopped() {
+    fun onDragStarted() {
+        isDragging = true
+        hasPendingBoundsUpdate = false
+        activeAnimationJob?.cancel()
+        activeAnimationJob = null
+        currentTargetValue = null
+    }
+
+    fun onDragCancelled() {
+        isDragging = false
+        hasPendingBoundsUpdate = false
+        setAnchor(collapsedAnchor)
+        snapTo(collapsedBound)
+    }
+
+    fun onDragEnded(velocity: Float, onDismiss: (() -> Unit)?) {
+        // performFling decides the final anchor and animates to latest bounds
+        performFling(velocity, onDismiss)
+        isDragging = false
+        hasPendingBoundsUpdate = false
+    }
+
+    fun onNestedScrollEnded() {
+        isDragging = false
         if (hasPendingBoundsUpdate) {
             hasPendingBoundsUpdate = false
             val targetValue = when (lastRequestedAnchor) {
@@ -256,26 +295,25 @@ class BottomSheetState(
                 dismissedAnchor -> dismissedBound
                 else -> collapsedBound
             }
-            if (!animatable.isRunning && animatable.targetValue != targetValue) {
-                coroutineScope.launch {
-                    animatable.animateTo(targetValue, NavigationBarAnimationSpec)
-                }
+            if (activeAnimationJob?.isActive != true && currentTargetValue != targetValue) {
+                animateToInternal(targetValue, NavigationBarAnimationSpec)
             }
         }
     }
 
+    fun onPredictiveBackEnded() {
+        isDragging = false
+        hasPendingBoundsUpdate = false
+    }
+
     fun collapse(animationSpec: AnimationSpec<Dp>) {
-        onAnchorChanged(collapsedAnchor)
-        coroutineScope.launch {
-            animatable.animateTo(collapsedBound, animationSpec)
-        }
+        setAnchor(collapsedAnchor)
+        animateToInternal(collapsedBound, animationSpec)
     }
 
     fun expand(animationSpec: AnimationSpec<Dp>) {
-        onAnchorChanged(expandedAnchor)
-        coroutineScope.launch {
-            animatable.animateTo(animatable.upperBound!!, animationSpec)
-        }
+        setAnchor(expandedAnchor)
+        animateToInternal(animatable.upperBound!!, animationSpec)
     }
 
     private fun collapse() {
@@ -295,24 +333,31 @@ class BottomSheetState(
     }
 
     fun dismiss() {
-        onAnchorChanged(dismissedAnchor)
-        coroutineScope.launch {
-            animatable.animateTo(animatable.lowerBound!!)
-        }
+        setAnchor(dismissedAnchor)
+        animateToInternal(animatable.lowerBound!!, NavigationBarAnimationSpec)
     }
-    
+
     suspend fun dismissAndWait() {
-        onAnchorChanged(dismissedAnchor)
+        setAnchor(dismissedAnchor)
+        currentTargetValue = animatable.lowerBound!!
+        activeAnimationJob?.cancel()
+        activeAnimationJob = null
         animatable.animateTo(animatable.lowerBound!!)
     }
 
     fun snapTo(value: Dp) {
+        currentTargetValue = value
+        activeAnimationJob?.cancel()
+        activeAnimationJob = null
         coroutineScope.launch {
             animatable.snapTo(value)
         }
     }
 
     suspend fun snapToAndWait(value: Dp) {
+        currentTargetValue = value
+        activeAnimationJob?.cancel()
+        activeAnimationJob = null
         animatable.snapTo(value)
     }
 
@@ -344,7 +389,9 @@ class BottomSheetState(
 
                 in l1..l2 -> collapse()
                 in l2..l3 -> expand()
-                else -> Unit
+                else -> {
+                    if (value >= l3) expand() else collapse()
+                }
             }
         }
     }
@@ -359,7 +406,7 @@ class BottomSheetState(
                 }
 
                 return if (isTopReached && available.y < 0 && source == NestedScrollSource.UserInput) {
-                    isDragging = true
+                    onDragStarted()
                     dispatchRawDelta(available.y)
                     available
                 } else {
@@ -377,7 +424,7 @@ class BottomSheetState(
                 }
 
                 return if (isTopReached && source == NestedScrollSource.UserInput) {
-                    isDragging = true
+                    onDragStarted()
                     dispatchRawDelta(available.y)
                     available
                 } else {
@@ -388,18 +435,21 @@ class BottomSheetState(
             override suspend fun onPreFling(available: Velocity): Velocity {
                 return if (isTopReached) {
                     val velocity = -available.y
-                    performFling(velocity, null)
-                    isDragging = false
+                    onDragEnded(velocity, null)
                     available
                 } else {
-                    isDragging = false
+                    if (isDragging) {
+                        onNestedScrollEnded()
+                    }
                     Velocity.Zero
                 }
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
                 isTopReached = false
-                isDragging = false
+                if (isDragging) {
+                    onNestedScrollEnded()
+                }
                 return Velocity.Zero
             }
         }
