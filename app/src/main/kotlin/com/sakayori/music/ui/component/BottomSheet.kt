@@ -300,7 +300,7 @@ class BottomSheetState(
                 dismissedAnchor -> dismissedBound
                 else -> collapsedBound
             }
-            if (activeAnimationJob?.isActive != true && currentTargetValue != targetValue) {
+            if (currentTargetValue != targetValue) {
                 animateToInternal(targetValue, NavigationBarAnimationSpec)
             }
         }
