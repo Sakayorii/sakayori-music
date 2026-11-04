@@ -190,6 +190,7 @@ class BottomSheetState(
     private var lastRequestedAnchor = initialAnchor
     private var currentTargetValue: Dp? = animatable.value
     private var activeAnimationJob: Job? = null
+    private var animationToken = 0L
 
     val dismissedBound: Dp
         get() = animatable.lowerBound!!
@@ -226,16 +227,18 @@ class BottomSheetState(
     ) {
         if (currentTargetValue == target && activeAnimationJob?.isActive == true) return
         currentTargetValue = target
+        val token = ++animationToken
         activeAnimationJob?.cancel()
-        activeAnimationJob = coroutineScope.launch {
+        val job = coroutineScope.launch {
             try {
                 animatable.animateTo(target, animationSpec)
             } finally {
-                if (currentTargetValue == target) {
+                if (animationToken == token) {
                     activeAnimationJob = null
                 }
             }
         }
+        activeAnimationJob = job
     }
 
     fun updateBounds(
@@ -264,8 +267,10 @@ class BottomSheetState(
     }
 
     fun onDragStarted() {
+        if (isDragging) return
         isDragging = true
         hasPendingBoundsUpdate = false
+        ++animationToken
         activeAnimationJob?.cancel()
         activeAnimationJob = null
         currentTargetValue = null
@@ -339,6 +344,7 @@ class BottomSheetState(
 
     suspend fun dismissAndWait() {
         setAnchor(dismissedAnchor)
+        ++animationToken
         currentTargetValue = animatable.lowerBound!!
         activeAnimationJob?.cancel()
         activeAnimationJob = null
@@ -346,6 +352,7 @@ class BottomSheetState(
     }
 
     fun snapTo(value: Dp) {
+        ++animationToken
         currentTargetValue = value
         activeAnimationJob?.cancel()
         activeAnimationJob = null
@@ -355,6 +362,7 @@ class BottomSheetState(
     }
 
     suspend fun snapToAndWait(value: Dp) {
+        ++animationToken
         currentTargetValue = value
         activeAnimationJob?.cancel()
         activeAnimationJob = null
