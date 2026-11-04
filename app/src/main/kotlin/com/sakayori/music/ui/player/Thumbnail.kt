@@ -9,6 +9,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -41,20 +42,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -68,6 +75,10 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.asPainter
+import coil3.compose.rememberAsyncImagePainter
+import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -86,7 +97,12 @@ import com.sakayori.music.listentogether.RoomRole
 import com.sakayori.music.ui.component.CastButton
 import com.sakayori.music.utils.rememberEnumPreference
 import com.sakayori.music.utils.rememberPreference
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import coil3.Image as CoilImage
 
 /**
  * Pre-calculated thumbnail dimensions to avoid repeated calculations during recomposition.
@@ -108,6 +124,29 @@ data class MediaItemsData(
     val items: List<MediaItem>,
     val currentIndex: Int
 )
+
+private data class ReadyPlayerArtwork(
+    val key: String,
+    val mediaId: String,
+    val uri: String?,
+    val image: CoilImage,
+)
+
+/** Display state only: never changes the player's queue, selected track or metadata. */
+private data class PlayerArtworkPresentation(
+    val mediaItems: MediaItemsData,
+    val current: ReadyPlayerArtwork,
+    val previous: ReadyPlayerArtwork?,
+) {
+    fun imageFor(item: MediaItem): CoilImage? {
+        val key = playerArtworkKey(item)
+        return current.takeIf { it.key == key }?.image
+            ?: previous?.takeIf { it.key == key }?.image
+    }
+}
+
+private fun playerArtworkKey(item: MediaItem): String =
+    item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }
 
 /**
  * Calculate thumbnail dimensions once based on container size.
@@ -258,40 +297,6 @@ fun Thumbnail(
         )
     }
 
-    // Current item tracking - derived state for efficiency
-    val currentItem by remember { derivedStateOf { thumbnailLazyGridState.firstVisibleItemIndex } }
-    val itemScrollOffset by remember { derivedStateOf { thumbnailLazyGridState.firstVisibleItemScrollOffset } }
-
-    // Handle swipe to change song
-    LaunchedEffect(itemScrollOffset) {
-        if (!thumbnailLazyGridState.isScrollInProgress || !swipeThumbnail || itemScrollOffset != 0 || currentMediaIndex < 0) return@LaunchedEffect
-
-        if (currentItem > currentMediaIndex && canSkipNext) {
-            playerConnection.player.seekToNext()
-        } else if (currentItem < currentMediaIndex && canSkipPrevious) {
-            playerConnection.player.seekToPreviousMediaItem()
-        }
-    }
-
-    // Update position when song changes
-    LaunchedEffect(mediaMetadata, canSkipPrevious, canSkipNext) {
-        val index = maxOf(0, currentMediaIndex)
-        if (index >= 0 && index < mediaItems.size) {
-            try {
-                thumbnailLazyGridState.animateScrollToItem(index)
-            } catch (e: Exception) {
-                thumbnailLazyGridState.scrollToItem(index)
-            }
-        }
-    }
-
-    LaunchedEffect(playerConnection.player.currentMediaItemIndex) {
-        val index = mediaItemsData.currentIndex
-        if (index >= 0 && index != currentItem) {
-            thumbnailLazyGridState.scrollToItem(index)
-        }
-    }
-
     // Seek effect state
     var showSeekEffect by remember { mutableStateOf(false) }
     var seekDirection by remember { mutableStateOf("") }
@@ -361,6 +366,134 @@ fun Thumbnail(
                         )
                     }
 
+                    val imageSizePx = with(LocalDensity.current) {
+                        dimensions.thumbnailSize.roundToPx().coerceAtLeast(1)
+                    }
+                    val incomingItem = mediaItems.getOrNull(currentMediaIndex)
+                    val incomingUri = if (incomingItem?.mediaId == mediaMetadata?.id &&
+                        !mediaMetadata?.thumbnailUrl.isNullOrBlank()
+                    ) {
+                        mediaMetadata?.thumbnailUrl
+                    } else {
+                        incomingItem?.mediaMetadata?.artworkUri?.toString()
+                    }
+                    val imageContentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit
+                    val incoming = if (!hidePlayerThumbnail && incomingItem != null) {
+                        // A new request owns its own painter state. An obsolete success cannot
+                        // be mistaken for the replacement image during a rapid track change.
+                        key(playerArtworkKey(incomingItem), incomingUri, imageSizePx, cropAlbumArt, context) {
+                            val request = remember {
+                                ImageRequest.Builder(context)
+                                    .data(incomingUri)
+                                    .size(imageSizePx, imageSizePx)
+                                    .crossfade(false)
+                                    .memoryCachePolicy(CachePolicy.ENABLED)
+                                    .diskCachePolicy(CachePolicy.ENABLED)
+                                    .networkCachePolicy(CachePolicy.ENABLED)
+                                    .build()
+                            }
+                            val painter = rememberAsyncImagePainter(
+                                model = request,
+                                imageLoader = context.imageLoader,
+                                contentScale = imageContentScale,
+                            )
+                            // The collector must share the request's key as well. Otherwise
+                            // its remembered State could briefly retain the prior success.
+                            painter to painter.state.collectAsStateWithLifecycle()
+                        }
+                    } else null
+                    val incomingPainter = incoming?.first
+                    val incomingState = incoming?.second?.value
+                    var presentation by remember { mutableStateOf<PlayerArtworkPresentation?>(null) }
+
+                    LaunchedEffect(mediaItemsData, incomingPainter, incomingState, hidePlayerThumbnail) {
+                        if (hidePlayerThumbnail || incomingItem == null) {
+                            presentation = null
+                        } else if (incomingState is AsyncImagePainter.State.Success) {
+                            val ready = ReadyPlayerArtwork(
+                                key = playerArtworkKey(incomingItem),
+                                mediaId = incomingItem.mediaId,
+                                uri = incomingUri,
+                                image = incomingState.result.image,
+                            )
+                            val old = presentation
+                            presentation = PlayerArtworkPresentation(
+                                mediaItems = mediaItemsData,
+                                current = ready,
+                                previous = if (old?.current?.key != ready.key) old?.current else old?.previous,
+                            )
+                        }
+                        // Loading/error keeps the decoded incumbent and its grid window.
+                    }
+
+                    val displayedData = presentation?.mediaItems ?: mediaItemsData
+                    val displayedCurrentId = presentation?.current?.mediaId ?: incomingItem?.mediaId
+                    val displayedCurrentUri = presentation?.current?.uri ?: incomingUri
+                    val latestDisplayedIndex by rememberUpdatedState(displayedData.currentIndex)
+                    val latestSwipeThumbnail by rememberUpdatedState(swipeThumbnail)
+                    val latestCanSkipNext by rememberUpdatedState(canSkipNext)
+                    val latestCanSkipPrevious by rememberUpdatedState(canSkipPrevious)
+
+                    // Observe offsets without recomposing/relaunching the whole artwork for
+                    // every pixel. Keep the existing swipe thresholds and player calls.
+                    LaunchedEffect(thumbnailLazyGridState) {
+                        snapshotFlow { thumbnailLazyGridState.firstVisibleItemScrollOffset }
+                            .collect { offset ->
+                                if (!thumbnailLazyGridState.isScrollInProgress || !latestSwipeThumbnail ||
+                                    offset != 0 || latestDisplayedIndex < 0
+                                ) return@collect
+                                val currentItem = thumbnailLazyGridState.firstVisibleItemIndex
+                                if (currentItem > latestDisplayedIndex && latestCanSkipNext) {
+                                    playerConnection.player.seekToNext()
+                                } else if (currentItem < latestDisplayedIndex && latestCanSkipPrevious) {
+                                    playerConnection.player.seekToPreviousMediaItem()
+                                }
+                            }
+                    }
+
+                    var initiallyPositioned by remember { mutableStateOf(false) }
+                    LaunchedEffect(displayedData, presentation?.current?.key, canSkipPrevious, canSkipNext) {
+                        val index = maxOf(0, displayedData.currentIndex)
+                        if (index !in displayedData.items.indices) return@LaunchedEffect
+                        // Let the grid apply its new keyed window before reading its scroll
+                        // position. Otherwise an early same-index check can defeat the slide.
+                        snapshotFlow {
+                            val layout = thumbnailLazyGridState.layoutInfo
+                            layout.totalItemsCount == displayedData.items.size &&
+                                layout.visibleItemsInfo.isNotEmpty() &&
+                                layout.visibleItemsInfo.all { info ->
+                                    displayedData.items.getOrNull(info.index)?.let(::playerArtworkKey) == info.key
+                                }
+                        }.first { it }
+                        val alreadyPositioned = thumbnailLazyGridState.firstVisibleItemIndex == index &&
+                            thumbnailLazyGridState.firstVisibleItemScrollOffset == 0
+                        val incumbentInWindow = presentation?.previous?.key?.let { oldKey ->
+                            displayedData.items.any { playerArtworkKey(it) == oldKey }
+                        } == true
+                        if (!initiallyPositioned || !incumbentInWindow) {
+                            initiallyPositioned = true
+                            // Preserve initial positioning and nonanimated/disjoint windows.
+                            if (!alreadyPositioned) thumbnailLazyGridState.scrollToItem(index)
+                        } else if (!alreadyPositioned) {
+                            val systemScale = currentCoroutineContext()[MotionDurationScale]
+                            val artworkScale = object : MotionDurationScale {
+                                override val scaleFactor: Float
+                                    get() = (systemScale?.scaleFactor ?: 1f) * 1.1f
+                            }
+                            try {
+                                // Keep the native scroll spring. Only this scroll's clock is
+                                // 10% longer; user flings and other animations are untouched.
+                                withContext(artworkScale) {
+                                    thumbnailLazyGridState.animateScrollToItem(index)
+                                }
+                            } catch (cancelled: CancellationException) {
+                                throw cancelled
+                            } catch (_: Exception) {
+                                thumbnailLazyGridState.scrollToItem(index)
+                            }
+                        }
+                    }
+
                     // Remember the onSeek callback to prevent recomposition
                     val onSeekCallback = remember {
                         { direction: String, showEffect: Boolean ->
@@ -386,10 +519,8 @@ fun Thumbnail(
                         }
                     ) {
                         items(
-                            items = mediaItems,
-                            key = { item -> 
-                                item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }
-                            }
+                            items = displayedData.items,
+                            key = ::playerArtworkKey,
                         ) { item ->
                             ThumbnailItem(
                                 item = item,
@@ -403,8 +534,12 @@ fun Thumbnail(
                                 context = context,
                                 isLandscape = isLandscape,
                                 isListenTogetherGuest = isListenTogetherGuest,
-                                currentMediaId = mediaMetadata?.id,
-                                currentMediaThumbnail = mediaMetadata?.thumbnailUrl
+                                currentMediaId = displayedCurrentId,
+                                currentMediaThumbnail = displayedCurrentUri,
+                                readyImage = presentation?.imageFor(item),
+                                incomingPainter = incomingPainter.takeIf {
+                                    presentation == null && item.mediaId == incomingItem?.mediaId
+                                },
                             )
                         }
                     }
@@ -502,6 +637,8 @@ private fun ThumbnailItem(
     isListenTogetherGuest: Boolean = false,
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
+    readyImage: CoilImage? = null,
+    incomingPainter: Painter? = null,
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
@@ -573,7 +710,9 @@ private fun ThumbnailItem(
 
                 ThumbnailImage(
                     artworkUri = artworkUriToUse,
-                    cropArtwork = cropAlbumArt
+                    cropArtwork = cropAlbumArt,
+                    readyImage = readyImage,
+                    incomingPainter = incomingPainter,
                 )
             }
             
@@ -617,8 +756,14 @@ private fun HiddenThumbnailPlaceholder(
 private fun ThumbnailImage(
     artworkUri: String?,
     cropArtwork: Boolean,
+    readyImage: CoilImage? = null,
+    incomingPainter: Painter? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val painter = if (readyImage != null) {
+        remember(context, readyImage) { readyImage.asPainter(context) }
+    } else incomingPainter
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -628,18 +773,30 @@ private fun ThumbnailImage(
             }
             .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(artworkUri)
-                .crossfade(false) // show cached image instantly, no 200ms crossfade delay
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .networkCachePolicy(CachePolicy.ENABLED)
-                .build(),
-            contentDescription = null,
-            contentScale = if (cropArtwork) ContentScale.Crop else ContentScale.Fit,
-            modifier = Modifier.fillMaxSize()
-        )
+        if (painter != null) {
+            Image(
+                painter = painter,
+                contentDescription = null,
+                contentScale = if (cropArtwork) ContentScale.Crop else ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            val request = remember(context, artworkUri) {
+                ImageRequest.Builder(context)
+                    .data(artworkUri)
+                    .crossfade(false)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .networkCachePolicy(CachePolicy.ENABLED)
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                contentDescription = null,
+                contentScale = if (cropArtwork) ContentScale.Crop else ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 
