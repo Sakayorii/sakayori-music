@@ -416,7 +416,7 @@ fun AboutScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 AsyncImage(
-                    model = "https://img.vietqr.io/image/MB-0797611290-compact.png?accountName=Dinh%20Tran%20Gia%20Huy",
+                    model = "https://qr.sakayori.me/image/970454-99ZP26301M80823757-payos.png?addInfo=ung%20ho%20nha%20phat%20trien",
                     contentDescription = "VietQR",
                     modifier = Modifier
                         .fillMaxWidth()
