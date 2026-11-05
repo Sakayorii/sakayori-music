@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/icon.png" alt="Sakayori Music app icon" width="200" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Sakayorii/sakayori-music/blob/main/assets/ic_launcher_dark.png" />
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/icon.png" />
+  <img src="https://github.com/Sakayorii/sakayori-music/blob/main/fastlane/metadata/android/en-US/images/icon.png" alt="Sakayori Music app icon" width="200" />
+</picture>
 
 # Sakayori Music
 
