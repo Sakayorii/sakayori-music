@@ -321,6 +321,7 @@ fun BottomSheetPlayer(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val automix by playerConnection.service.automixItems.collectAsStateWithLifecycle()
+    val queueLoadState by playerConnection.service.queueLoadState.collectAsStateWithLifecycle()
     val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
@@ -402,8 +403,8 @@ fun BottomSheetPlayer(
     }
     val gradientColorsCache = remember { mutableMapOf<String, List<Color>>() }
 
-    if (!canSkipNext && automix.isNotEmpty()) {
-        playerConnection.service.addToQueueAutomix(automix[0], 0)
+    LaunchedEffect(canSkipNext, automix, queueLoadState) {
+        playerConnection.service.promoteAutomixIfNeeded(canSkipNext, automix, queueLoadState.generation)
     }
 
     val defaultGradientColors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)

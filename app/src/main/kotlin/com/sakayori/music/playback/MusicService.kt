@@ -423,6 +423,10 @@ class MusicService :
     private var isLoadingMore = false
     private var queueLoadJob: Job? = null
     private var queuePageJob: Job? = null
+    // Existing native/controller queues have no pending initial load. Explicit
+    // playQueue requests replace this with their uncommitted generation first.
+    private val _queueLoadState = MutableStateFlow(QueueLoadState(committed = true))
+    internal val queueLoadState = _queueLoadState.asStateFlow()
 
     val currentMediaMetadata = MutableStateFlow<com.sakayori.music.models.MediaMetadata?>(null)
     private val currentSong =
@@ -1866,6 +1870,7 @@ class MusicService :
     ) {
         if (!playerInitialized.value) {
             val requestGeneration = ++playQueueGeneration
+            _queueLoadState.value = QueueLoadState(requestGeneration)
             Timber.tag(TAG).w("playQueue called before player initialization, queuing request")
             scope.launch {
                 playerInitialized.first { it }
@@ -1875,6 +1880,9 @@ class MusicService :
         }
 
         val generation = ++playQueueGeneration
+        // Claim ownership before any preload/shuffle/crossfade callback can
+        // expose a temporary singleton to the UI's automatic recommendation path.
+        _queueLoadState.value = QueueLoadState(generation)
         queueLoadJob?.cancel()
         queuePageJob?.cancel()
         isLoadingMore = false
@@ -1896,6 +1904,10 @@ class MusicService :
             player.prepare()
             player.playWhenReady = playWhenReady
         }
+        val preloadPlayer = player
+        val preloadUid = if (preload != null && player.currentMediaItemIndex in 0 until player.currentTimeline.windowCount) {
+            player.currentTimeline.getWindow(player.currentMediaItemIndex, Timeline.Window()).uid
+        } else null
         queueLoadJob = scope.launch(SilentHandler) {
             val initialStatus =
                 withContext(Dispatchers.IO) {
@@ -1907,6 +1919,8 @@ class MusicService :
             if (generation != playQueueGeneration || currentQueue !== queue) return@launch
             if (preload != null && (player.playbackState == STATE_IDLE || player.mediaItemCount != 1 ||
                 player.currentMediaItem?.mediaId != preload.mediaId)) return@launch
+            if (preloadUid != null && player === preloadPlayer &&
+                player.currentTimeline.getWindow(player.currentMediaItemIndex, Timeline.Window()).uid != preloadUid) return@launch
             if (initialStatus.title != null) {
                 queueTitle = initialStatus.title
             }
@@ -1919,36 +1933,47 @@ class MusicService :
                     0,
                     initialStatus.items.subList(0, initialIndex),
                 )
+                if (generation != playQueueGeneration || currentQueue !== queue) return@launch
                 player.addMediaItems(
                     initialStatus.items.subList(
                         initialIndex + 1,
                         initialStatus.items.size,
                     ),
                 )
+                if (generation != playQueueGeneration || currentQueue !== queue) return@launch
             } else {
                 player.setMediaItems(
                     initialStatus.items,
                     initialIndex,
                     initialStatus.position,
                 )
+                if (generation != playQueueGeneration || currentQueue !== queue) return@launch
                 player.prepare()
+                if (generation != playQueueGeneration || currentQueue !== queue) return@launch
                 player.playWhenReady = playWhenReady
             }
 
             if (player.shuffleModeEnabled) {
                 applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, cachedShufflePlaylistFirst)
             }
+            if (generation != playQueueGeneration || currentQueue !== queue) return@launch
+            // Prefix/suffix, metadata and shuffle must all be installed before
+            // automatic promotion sees a committed queue. Failed/stale loads
+            // never grant that authority.
+            _queueLoadState.value = QueueLoadState(generation, committed = true)
+            if (cachedPersistentQueue) saveQueueToDisk()
         }
     }
 
     fun adoptQueue(queue: Queue, title: String? = null, initialQueueSize: Int = 0) {
-        ++playQueueGeneration
+        val generation = ++playQueueGeneration
         queueLoadJob?.cancel()
         queuePageJob?.cancel()
         isLoadingMore = false
         currentQueue = queue
         queueTitle = title
         originalQueueSize = initialQueueSize
+        _queueLoadState.value = QueueLoadState(generation, committed = true)
     }
 
     fun startRadioSeamlessly() {
@@ -2125,26 +2150,73 @@ class MusicService :
         }
     }
 
+    internal fun promoteAutomixIfNeeded(
+        canSkipNext: Boolean,
+        items: List<MediaItem>,
+        requestGeneration: Int = playQueueGeneration,
+    ) {
+        val load = _queueLoadState.value
+        if (!load.committed || load.generation != requestGeneration || load.generation != playQueueGeneration ||
+            !scope.isActive || !playerInitialized.value || !this::player.isInitialized || canSkipNext ||
+            items !== automixItems.value || items.isEmpty() || player.mediaItemCount == 0 ||
+            player.playbackState == STATE_IDLE || player.hasNextMediaItem()) return
+        val timeline = player.currentTimeline
+        val index = player.currentMediaItemIndex
+        if (index !in 0 until timeline.windowCount) return
+        val window = timeline.getWindow(index, Timeline.Window())
+        if (window.isLive && window.isDynamic) return
+        addToQueueAutomix(items[0], 0, items)
+    }
+
     fun addToQueueAutomix(
         item: MediaItem,
         position: Int,
+        expectedItems: List<MediaItem>? = null,
     ) {
-        automixItems.value =
-            automixItems.value.toMutableList().apply {
-                removeAt(position)
-            }
+        val items = automixItems.value
+        if (!canConsumeAutomix(items, item, position, expectedItems)) return
         addToQueue(listOf(item))
+        if (automixItems.value === items) {
+            automixItems.value = items.toMutableList().apply { removeAt(position) }
+        }
     }
 
     fun playNextAutomix(
         item: MediaItem,
         position: Int,
+        expectedItems: List<MediaItem>? = null,
     ) {
-        automixItems.value =
-            automixItems.value.toMutableList().apply {
-                removeAt(position)
-            }
+        val items = automixItems.value
+        if (!canConsumeAutomix(items, item, position, expectedItems)) return
         playNext(listOf(item))
+        if (automixItems.value === items) {
+            automixItems.value = items.toMutableList().apply { removeAt(position) }
+        }
+    }
+
+    private fun canConsumeAutomix(
+        items: List<MediaItem>,
+        item: MediaItem,
+        position: Int,
+        expectedItems: List<MediaItem>?,
+    ): Boolean = scope.isActive && playerInitialized.value && this::player.isInitialized &&
+        player.isCommandAvailable(Player.COMMAND_CHANGE_MEDIA_ITEMS) &&
+        (expectedItems == null || expectedItems === items) &&
+        position in items.indices && items[position] === item
+
+    private fun preserveManualEditDuringInitialization() {
+        val load = _queueLoadState.value
+        if (load.committed || load.generation != playQueueGeneration) return
+        val generation = ++playQueueGeneration
+        queueLoadJob?.cancel()
+        queuePageJob?.cancel()
+        isLoadingMore = false
+        // The explicit edit wins; a late initial result may not replace it.
+        // Copy the native view on its application thread before adopting it.
+        currentQueue = ListQueue(queueTitle, player.mediaItems.toList(), player.currentMediaItemIndex, player.currentPosition)
+        originalQueueSize = player.mediaItemCount
+        _queueLoadState.value = QueueLoadState(generation, committed = true)
+        if (cachedPersistentQueue) saveQueueToDisk()
     }
 
     fun clearAutomix() {
@@ -2159,6 +2231,7 @@ class MusicService :
             if (castConnectionHandler?.isCasting?.value != true) {
                 player.play()
             }
+            if (items.isNotEmpty()) preserveManualEditDuringInitialization()
             return
         }
 
@@ -2185,6 +2258,8 @@ class MusicService :
         // Insert items immediately after the current item in the window/index space
         player.addMediaItems(insertIndex, items)
         player.prepare()
+
+        if (items.isNotEmpty()) preserveManualEditDuringInitialization()
 
         if (shuffleEnabled) {
             // Rebuild shuffle order so that newly inserted items are played next
@@ -2268,6 +2343,7 @@ class MusicService :
             applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
         }
         player.prepare()
+        if (items.isNotEmpty()) preserveManualEditDuringInitialization()
     }
 
     fun toggleLibrary() {

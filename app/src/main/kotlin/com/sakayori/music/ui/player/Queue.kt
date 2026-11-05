@@ -992,6 +992,7 @@ fun Queue(
                                                 playerConnection.service.playNextAutomix(
                                                     item,
                                                     index,
+                                                    automix,
                                                 )
                                             },
                                         ) {
@@ -1005,6 +1006,7 @@ fun Queue(
                                                 playerConnection.service.addToQueueAutomix(
                                                     item,
                                                     index,
+                                                    automix,
                                                 )
                                             },
                                         ) {
