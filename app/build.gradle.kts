@@ -234,6 +234,10 @@ android {
         resValues = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
@@ -314,7 +318,11 @@ val generateProto = if (protoFile.exists()) {
         protocExecutable.set(layout.buildDirectory.file("protoc/$protocFileName"))
     }
 } else {
-    logger.warn("Proto file not found at $protoFile. Skipping protobuf generation.")
+    val checkedInProto = file("src/main/java/com/sakayori/music/listentogether/proto/Listentogether.java")
+    check(checkedInProto.isFile && checkedInProto.length() > 0L) {
+        "Neither $protoFile nor the checked-in Listen Together protocol source is available"
+    }
+    logger.lifecycle("Using checked-in Listen Together protocol source; external schema is absent.")
     null
 }
 

@@ -98,7 +98,8 @@ fun AddToPlaylistDialogOnline(
     onProgressStart: (Boolean) -> Unit,
     onPercentageChange: (Int) -> Unit,
     onSongChange: (String) -> Unit = {},
-    viewModel: PlaylistsViewModel = hiltViewModel()
+    viewModel: PlaylistsViewModel = hiltViewModel(),
+    knownSongs: List<SongItem>? = null,
 ) {
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
@@ -295,6 +296,19 @@ fun AddToPlaylistDialogOnline(
                             onDismiss()
                             val songsTot = songs.count()
                             if (songsTot == 0) return@launch
+
+                            if (knownSongs != null) {
+                                onProgressStart(true)
+                                try {
+                                    addOnlinePlaylistSelection(database, playlist, knownSongs)
+                                    onPercentageChange(100)
+                                } catch (error: Exception) {
+                                    reportException(error)
+                                } finally {
+                                    withContext(Dispatchers.Main) { onProgressStart(false) }
+                                }
+                                return@launch
+                            }
                             
                             val songsIdx = AtomicInteger(0)
                             val semaphore = kotlinx.coroutines.sync.Semaphore(15)

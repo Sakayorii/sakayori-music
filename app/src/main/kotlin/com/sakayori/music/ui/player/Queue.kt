@@ -107,6 +107,7 @@ import com.sakayori.music.constants.ListItemHeight
 import com.sakayori.music.constants.PlayerBackgroundStyle
 import com.sakayori.music.constants.QueueEditLockKey
 import com.sakayori.music.constants.UseNewPlayerDesignKey
+import com.sakayori.music.extensions.getQueueWindows
 import com.sakayori.music.extensions.metadata
 import com.sakayori.music.extensions.move
 import com.sakayori.music.extensions.toggleRepeatMode
@@ -665,9 +666,33 @@ fun Queue(
 
         val coroutineScope = rememberCoroutineScope()
 
-        val headerItems = 1
         val lazyListState = rememberLazyListState()
-        var dragInfo by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+        val dragState = remember { QueueDragState() }
+
+        fun finishDrag() {
+            val player = playerConnection.player
+            // Read the player at dispatch time, even if Compose has not collected
+            // its replacement timeline yet. No suspension between validation and command.
+            val windows = player.getQueueWindows()
+            val snapshot = QueueDragSnapshot(player, windows.map { it.uid }, player.shuffleModeEnabled)
+            val move = dragState.finish(snapshot)
+            if (move == null) {
+                mutableQueueWindows.clear()
+                mutableQueueWindows.addAll(windows)
+                return
+            }
+            val (from, to) = move
+            if (!snapshot.shuffled) {
+                player.moveMediaItem(from, to)
+            } else {
+                player.setShuffleOrder(
+                    DefaultShuffleOrder(
+                        windows.map { it.firstPeriodIndex }.toMutableList().move(from, to).toIntArray(),
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
+        }
 
         val currentPlayingUid =
             remember(currentWindowIndex, queueWindows) {
@@ -690,49 +715,29 @@ fun Queue(
                             ),
                         ).asPaddingValues(),
             ) { from, to ->
-                val currentDragInfo = dragInfo
-                dragInfo =
-                    if (currentDragInfo == null) {
-                        from.index to to.index
-                    } else {
-                        currentDragInfo.first to to.index
-                    }
-
-                val safeFrom = (from.index - headerItems).coerceIn(0, mutableQueueWindows.lastIndex)
-                val safeTo = (to.index - headerItems).coerceIn(0, mutableQueueWindows.lastIndex)
-
-                mutableQueueWindows.move(safeFrom, safeTo)
-            }
-
-        LaunchedEffect(reorderableState.isAnyItemDragging) {
-            if (!reorderableState.isAnyItemDragging) {
-                dragInfo?.let { (from, to) ->
-                    val safeFrom = (from - headerItems).coerceIn(0, queueWindows.lastIndex)
-                    val safeTo = (to - headerItems).coerceIn(0, queueWindows.lastIndex)
-
-                    if (!playerConnection.player.shuffleModeEnabled) {
-                        playerConnection.player.moveMediaItem(safeFrom, safeTo)
-                    } else {
-                        playerConnection.player.setShuffleOrder(
-                            DefaultShuffleOrder(
-                                queueWindows
-                                    .map { it.firstPeriodIndex }
-                                    .toMutableList()
-                                    .move(safeFrom, safeTo)
-                                    .toIntArray(),
-                                System.currentTimeMillis(),
-                            ),
-                        )
-                    }
-                    dragInfo = null
+                dragState.move(
+                    snapshot = QueueDragSnapshot(
+                        playerConnection.player,
+                        playerConnection.queueWindows.value.map { it.uid },
+                        playerConnection.player.shuffleModeEnabled,
+                    ),
+                    displayedUids = mutableQueueWindows.map { it.uid },
+                    fromKey = from.key,
+                    toKey = to.key,
+                )?.let { (fromIndex, toIndex) ->
+                    mutableQueueWindows.move(fromIndex, toIndex)
                 }
             }
-        }
 
         LaunchedEffect(queueWindows) {
+            val windows = playerConnection.queueWindows.value
+            val order = dragState.synchronize(
+                QueueDragSnapshot(playerConnection.player, windows.map { it.uid }, playerConnection.player.shuffleModeEnabled),
+            )
+            val byUid = windows.associateBy { it.uid }
             mutableQueueWindows.apply {
                 clear()
-                addAll(queueWindows)
+                addAll(order.mapNotNull(byUid::get))
             }
         }
 
@@ -873,7 +878,20 @@ fun Queue(
                                             if (!locked && !isListenTogetherGuest) {
                                                 IconButton(
                                                     onClick = { },
-                                                    modifier = Modifier.draggableHandle(),
+                                                    modifier = Modifier.draggableHandle(
+                                                        onDragStarted = {
+                                                            val player = playerConnection.player
+                                                            dragState.start(
+                                                                QueueDragSnapshot(
+                                                                    player,
+                                                                    player.getQueueWindows().map { it.uid },
+                                                                    player.shuffleModeEnabled,
+                                                                ),
+                                                                window.uid,
+                                                            )
+                                                        },
+                                                        onDragStopped = ::finishDrag,
+                                                    ),
                                                 ) {
                                                     Icon(
                                                         painter = painterResource(R.drawable.drag_handle),

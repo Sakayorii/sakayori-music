@@ -157,7 +157,7 @@ class ArchiveFlacSource @Inject constructor(private val httpClient: PlaybackHttp
             val creators = metadata.texts("creator").map(::normalized).toSet()
             val expectedCreators = target.artists.map { normalized(it.name) }.toSet()
             if (expectedCreators.isEmpty() || "" in expectedCreators || creators != expectedCreators) return emptyList()
-            if (normalized(metadata.text("title").orEmpty()) != normalized(target.album?.title.orEmpty())) return emptyList()
+            if (normalized(metadata.text("title").orEmpty()) != normalized(target.album.title)) return emptyList()
             val files = document.arrayAt("files").mapNotNull { it as? JsonObject }
             val byName = files.mapNotNull { file -> file.text("name")?.let { it to file } }.toMap()
             val expectedTitle = normalized(target.title)

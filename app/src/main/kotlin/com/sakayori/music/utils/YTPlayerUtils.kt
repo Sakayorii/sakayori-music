@@ -784,11 +784,6 @@ object YTPlayerUtils {
                         Timber.tag(logTag).d("Age-restricted content detected from NewPipe")
                         Timber.tag(TAG).i("Age-restricted detected early via NewPipe: videoId=$videoId")
                     }
-                    cipherSts != null -> {
-                        // Non-fatal: the cipher player's STS already covers us, so NewPipe is just
-                        // a fallback here — don't report its failure as an exception (avoids noise).
-                        Timber.tag(logTag).w("NewPipe STS unavailable, using cipher player STS: ${error.message}")
-                    }
                     else -> {
                         Timber.tag(logTag).e(error, "Failed to get signature timestamp via NewPipe")
                         reportException(error)

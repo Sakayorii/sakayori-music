@@ -92,6 +92,10 @@ import com.sakayori.music.db.entities.Playlist
 import com.sakayori.music.db.entities.PlaylistEntity
 import com.sakayori.music.db.entities.PlaylistSongMap
 import com.sakayori.music.models.toMediaMetadata
+import com.sakayori.music.models.playlistOccurrenceKeys
+import com.sakayori.music.models.isPlayingPlaylistOccurrence
+import com.sakayori.music.extensions.PLAYLIST_ID_EXTRA
+import com.sakayori.music.extensions.PLAYLIST_OCCURRENCE_EXTRA
 import com.sakayori.music.playback.queues.YouTubePlaylistQueue
 import com.sakayori.music.ui.component.ExpandableText
 import com.sakayori.music.ui.component.IconButton
@@ -125,9 +129,12 @@ fun OnlinePlaylistScreen(
 
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
+    val currentMediaItemIndex by playerConnection.currentMediaItemIndex.collectAsStateWithLifecycle()
+    val currentMediaItem = currentMediaItemIndex.takeIf { it >= 0 }?.let { playerConnection.player.currentMediaItem }
 
     val playlist by viewModel.playlist.collectAsStateWithLifecycle()
     val songs by viewModel.playlistSongs.collectAsStateWithLifecycle()
+    val occurrenceKeys = remember(songs) { playlistOccurrenceKeys(songs) }
     val dbPlaylist by viewModel.dbPlaylist.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
@@ -170,14 +177,14 @@ fun OnlinePlaylistScreen(
     LaunchedEffect(isSearching) { if (isSearching) focusRequester.requestFocus() }
 
     LaunchedEffect(filteredSongs) {
-        selection.fastForEachReversed { songId ->
-            if (filteredSongs.find { it.second.id == songId } == null) {
-                selection.remove(songId)
+        selection.fastForEachReversed { key ->
+            if (filteredSongs.none { occurrenceKeys[it.first] == key }) {
+                selection.remove(key)
             }
         }
 
-        if (selectionAnchorSongId != null && filteredSongs.none { it.second.id == selectionAnchorSongId }) {
-            selectionAnchorSongId = filteredSongs.firstOrNull { it.second.id in selection }?.second?.id
+        if (selectionAnchorSongId != null && filteredSongs.none { occurrenceKeys[it.first] == selectionAnchorSongId }) {
+            selectionAnchorSongId = filteredSongs.firstOrNull { occurrenceKeys[it.first] in selection }?.let { occurrenceKeys[it.first] }
         }
     }
 
@@ -261,28 +268,35 @@ fun OnlinePlaylistScreen(
                         }
                     }
 
-                    itemsIndexed(filteredSongs) { index, (_, songItem) ->
+                    itemsIndexed(filteredSongs, key = { _, song -> occurrenceKeys[song.first] }) { index, (originalIndex, songItem) ->
+                        val occurrenceKey = occurrenceKeys[originalIndex]
+                        val isCurrentOccurrence = isPlayingPlaylistOccurrence(
+                            songItem, occurrenceKey, playlist.id, songs, mediaMetadata?.id,
+                            mediaMetadata?.setVideoId,
+                            currentMediaItem?.mediaMetadata?.extras?.getString(PLAYLIST_ID_EXTRA),
+                            currentMediaItem?.mediaMetadata?.extras?.getString(PLAYLIST_OCCURRENCE_EXTRA),
+                        )
                         val onCheckedChange: (Boolean) -> Unit = {
                             if (it) {
-                                selection.add(songItem.id)
+                                selection.add(occurrenceKey)
                             } else {
-                                selection.remove(songItem.id)
+                                selection.remove(occurrenceKey)
                             }
                         }
 
                         YouTubeListItem(
                             item = songItem,
-                            isActive = mediaMetadata?.id == songItem.id,
+                            isActive = isCurrentOccurrence,
                             isPlaying = isPlaying,
-                            isSelected = inSelectMode && songItem.id in selection,
+                            isSelected = inSelectMode && occurrenceKey in selection,
                             modifier =
                                 Modifier
                                     .combinedClickable(
                                         enabled = !hideExplicit || !songItem.explicit,
                                         onClick = {
                                             if (inSelectMode) {
-                                                onCheckedChange(songItem.id !in selection)
-                                            } else if (songItem.id == mediaMetadata?.id) {
+                                                onCheckedChange(occurrenceKey !in selection)
+                                            } else if (isCurrentOccurrence) {
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
@@ -292,6 +306,7 @@ fun OnlinePlaylistScreen(
                                                         initialSongs = filteredSongs.map { it.second },
                                                         initialContinuation = viewModel.continuation,
                                                         startIndex = index,
+                                                        initialOccurrenceKeys = filteredSongs.map { occurrenceKeys[it.first] },
                                                     ),
                                                 )
                                             }
@@ -301,20 +316,20 @@ fun OnlinePlaylistScreen(
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 inSelectMode = true
                                                 onCheckedChange(true)
-                                                selectionAnchorSongId = songItem.id
+                                                selectionAnchorSongId = occurrenceKey
                                             } else {
                                                 val anchorIndex =
                                                     selectionAnchorSongId?.let { anchorSongId ->
-                                                        filteredSongs.indexOfFirst { it.second.id == anchorSongId }
+                                                        filteredSongs.indexOfFirst { occurrenceKeys[it.first] == anchorSongId }
                                                     } ?: -1
 
                                                 if (anchorIndex == -1) {
                                                     onCheckedChange(true)
-                                                    selectionAnchorSongId = songItem.id
+                                                    selectionAnchorSongId = occurrenceKey
                                                 } else {
                                                     val range = if (anchorIndex <= index) anchorIndex..index else index..anchorIndex
                                                     for (rangeIndex in range) {
-                                                        val rangeSongId = filteredSongs[rangeIndex].second.id
+                                                        val rangeSongId = occurrenceKeys[filteredSongs[rangeIndex].first]
                                                         if (rangeSongId !in selection) {
                                                             selection.add(rangeSongId)
                                                         }
@@ -326,7 +341,7 @@ fun OnlinePlaylistScreen(
                             trailingContent = {
                                 if (inSelectMode) {
                                     Checkbox(
-                                        checked = songItem.id in selection,
+                                        checked = occurrenceKey in selection,
                                         onCheckedChange = onCheckedChange,
                                     )
                                 } else {
@@ -437,7 +452,7 @@ fun OnlinePlaylistScreen(
                                 selection.clear()
                             } else {
                                 selection.clear()
-                                selection.addAll(filteredSongs.map { it.second.id })
+                                selection.addAll(filteredSongs.map { occurrenceKeys[it.first] })
                             }
                         },
                     )
@@ -448,10 +463,13 @@ fun OnlinePlaylistScreen(
                                 YouTubeSelectionSongMenu(
                                     songSelection =
                                         filteredSongs
-                                            .filter { it.second.id in selection }
+                                            .filter { occurrenceKeys[it.first] in selection }
                                             .map { it.second },
                                     onDismiss = menuState::dismiss,
                                     clearAction = onExitSelectionMode,
+                                    playlistId = playlist?.id.orEmpty(),
+                                    occurrenceKeys = filteredSongs.filter { occurrenceKeys[it.first] in selection }
+                                        .map { occurrenceKeys[it.first] },
                                 )
                             }
                         },

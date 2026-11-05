@@ -201,7 +201,7 @@ class LosslessResolver @Inject constructor(
                                     source.validate(saved)
                                 } catch (cancelled: CancellationException) { throw cancelled }
                                 catch (_: Exception) { false })
-                                val result = if (usable) saved?.also { publish(it) }
+                                val result = if (usable) saved.also { publish(it) }
                                     else source.find(target, configured, requestPriority, onValidated = { publish(it) })
                                 lookupCompleted = true
                                 result

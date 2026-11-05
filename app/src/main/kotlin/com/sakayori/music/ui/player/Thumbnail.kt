@@ -5,6 +5,7 @@
 
 package com.sakayori.music.ui.player
 
+import android.os.Bundle
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -74,6 +76,7 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.compose.asPainter
@@ -93,6 +96,9 @@ import com.sakayori.music.constants.PlayerHorizontalPadding
 import com.sakayori.music.constants.SeekExtraSeconds
 import com.sakayori.music.constants.SwipeThumbnailKey
 import com.sakayori.music.constants.ThumbnailCornerRadius
+import com.sakayori.music.extensions.PLAYLIST_ID_EXTRA
+import com.sakayori.music.extensions.PLAYLIST_OCCURRENCE_EXTRA
+import com.sakayori.music.extensions.metadata
 import com.sakayori.music.listentogether.RoomRole
 import com.sakayori.music.ui.component.CastButton
 import com.sakayori.music.utils.rememberEnumPreference
@@ -101,7 +107,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 import coil3.Image as CoilImage
 
 /**
@@ -145,8 +153,19 @@ private data class PlayerArtworkPresentation(
     }
 }
 
-private fun playerArtworkKey(item: MediaItem): String =
-    item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }
+private const val ARTWORK_OCCURRENCE_EXTRA = "sakayori.artwork.occurrence"
+
+internal fun playerArtworkKey(item: MediaItem): String {
+    val extras = item.mediaMetadata.extras
+    extras?.getString(ARTWORK_OCCURRENCE_EXTRA)?.let { return it }
+    val occurrence = extras?.getString(PLAYLIST_OCCURRENCE_EXTRA)
+    if (occurrence != null) {
+        val playlist = extras.getString(PLAYLIST_ID_EXTRA).orEmpty()
+        return "playlist:${playlist.length}:$playlist:$occurrence"
+    }
+    return item.metadata?.setVideoId?.takeIf { it.isNotBlank() }?.let { "set:$it" }
+        ?: item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }
+}
 
 /**
  * Calculate thumbnail dimensions once based on container size.
@@ -180,9 +199,10 @@ private fun calculateThumbnailDimensions(
  * Calculates previous, current, and next items based on shuffle mode.
  */
 @Stable
-private fun getMediaItems(
+internal fun getMediaItems(
     player: Player,
-    swipeThumbnail: Boolean
+    swipeThumbnail: Boolean,
+    artworkKeys: ArtworkItemKeys = ArtworkItemKeys(),
 ): MediaItemsData {
     val timeline = player.currentTimeline
     val currentIndex = player.currentMediaItemIndex
@@ -192,30 +212,55 @@ private fun getMediaItems(
         player.currentMediaItem
     } catch (e: Exception) { null }
     
-    val previousMediaItem = if (swipeThumbnail && !timeline.isEmpty) {
-        val previousIndex = timeline.getPreviousWindowIndex(
+    val previousIndex = if (swipeThumbnail && !timeline.isEmpty) {
+        timeline.getPreviousWindowIndex(
             currentIndex,
             Player.REPEAT_MODE_OFF,
             shuffleModeEnabled
         )
+    } else C.INDEX_UNSET
+    val previousMediaItem = if (swipeThumbnail && !timeline.isEmpty) {
         if (previousIndex != C.INDEX_UNSET) {
             try { player.getMediaItemAt(previousIndex) } catch (e: Exception) { null }
         } else null
     } else null
 
-    val nextMediaItem = if (swipeThumbnail && !timeline.isEmpty) {
-        val nextIndex = timeline.getNextWindowIndex(
+    val nextIndex = if (swipeThumbnail && !timeline.isEmpty) {
+        timeline.getNextWindowIndex(
             currentIndex,
             Player.REPEAT_MODE_OFF,
             shuffleModeEnabled
         )
+    } else C.INDEX_UNSET
+    val nextMediaItem = if (swipeThumbnail && !timeline.isEmpty) {
         if (nextIndex != C.INDEX_UNSET) {
             try { player.getMediaItemAt(nextIndex) } catch (e: Exception) { null }
         } else null
     } else null
 
-    val items = listOfNotNull(previousMediaItem, currentMediaItem, nextMediaItem)
-    val currentMediaIndex = items.indexOf(currentMediaItem)
+    val indexedItems = listOfNotNull(
+        previousMediaItem?.let { previousIndex to it },
+        currentMediaItem?.let { currentIndex to it },
+        nextMediaItem?.let { nextIndex to it },
+    )
+    val items = if (indexedItems.all { it.first in 0 until timeline.windowCount }) {
+        val keys = artworkKeys.resolve(indexedItems.map { (index, item) ->
+            timeline.getWindow(index, Timeline.Window()).uid to playerArtworkKey(item)
+        })
+        indexedItems.mapIndexed { index, (_, item) ->
+            if (keys[index] == playerArtworkKey(item)) item else {
+                // This is display-only metadata. The real player/queue is not modified.
+                val extras = item.mediaMetadata.extras?.let(::Bundle) ?: Bundle()
+                extras.putString(ARTWORK_OCCURRENCE_EXTRA, keys[index])
+                item.buildUpon().setMediaMetadata(item.mediaMetadata.buildUpon().setExtras(extras).build()).build()
+            }
+        }
+    } else indexedItems.map { it.second }
+    val currentMediaIndex = when {
+        currentMediaItem == null -> -1
+        previousMediaItem != null -> 1
+        else -> 0
+    }
     
     return MediaItemsData(items, currentMediaIndex)
 }
@@ -253,6 +298,9 @@ fun Thumbnail(
     val queueTitle by playerConnection.queueTitle.collectAsStateWithLifecycle()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
+    val currentMediaItemIndex by playerConnection.currentMediaItemIndex.collectAsStateWithLifecycle()
+    val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsStateWithLifecycle()
+    val queueWindows by playerConnection.queueWindows.collectAsStateWithLifecycle()
 
     // Preferences - computed once
     // Disable swipe for Listen Together guests
@@ -270,16 +318,18 @@ fun Thumbnail(
     
     // Grid state
     val thumbnailLazyGridState = rememberLazyGridState()
+    val artworkKeys = remember(playerConnection) { ArtworkItemKeys() }
     
     // Calculate media items data - memoized
     val mediaItemsData by remember(
-        playerConnection.player.currentMediaItemIndex,
-        playerConnection.player.shuffleModeEnabled,
+        currentMediaItemIndex,
+        shuffleModeEnabled,
+        queueWindows,
         swipeThumbnail,
         mediaMetadata
     ) {
         derivedStateOf {
-            getMediaItems(playerConnection.player, swipeThumbnail)
+            getMediaItems(playerConnection.player, swipeThumbnail, artworkKeys)
         }
     }
     
@@ -420,7 +470,7 @@ fun Thumbnail(
                             presentation = PlayerArtworkPresentation(
                                 mediaItems = mediaItemsData,
                                 current = ready,
-                                previous = if (old?.current?.key != ready.key) old?.current else old?.previous,
+                                previous = if (old?.current?.key != ready.key) old?.current else old.previous,
                             )
                         }
                         // Loading/error keeps the decoded incumbent and its grid window.
@@ -429,24 +479,66 @@ fun Thumbnail(
                     val displayedData = presentation?.mediaItems ?: mediaItemsData
                     val displayedCurrentId = presentation?.current?.mediaId ?: incomingItem?.mediaId
                     val displayedCurrentUri = presentation?.current?.uri ?: incomingUri
-                    val latestDisplayedIndex by rememberUpdatedState(displayedData.currentIndex)
+                    val latestDisplayedData by rememberUpdatedState(displayedData)
                     val latestSwipeThumbnail by rememberUpdatedState(swipeThumbnail)
                     val latestCanSkipNext by rememberUpdatedState(canSkipNext)
                     val latestCanSkipPrevious by rememberUpdatedState(canSkipPrevious)
+                    val swipeState = remember(thumbnailLazyGridState) { ArtworkSwipeState() }
 
-                    // Observe offsets without recomposing/relaunching the whole artwork for
-                    // every pixel. Keep the existing swipe thresholds and player calls.
+                    fun swipeContext(): ArtworkSwipeContext {
+                        val player = playerConnection.player
+                        val timeline = player.currentTimeline
+                        val index = player.currentMediaItemIndex
+                        return ArtworkSwipeContext(
+                            player = player,
+                            playingUid = if (index in 0 until timeline.windowCount) {
+                                timeline.getWindow(index, Timeline.Window()).uid
+                            } else null,
+                            displayedKeys = latestDisplayedData.items.map(::playerArtworkKey),
+                            displayedIndex = latestDisplayedData.currentIndex,
+                        )
+                    }
+
+                    // Only a real drag can own a skip. Its fling retains that ownership,
+                    // while native positioning and cancelled gestures cannot issue commands.
                     LaunchedEffect(thumbnailLazyGridState) {
-                        snapshotFlow { thumbnailLazyGridState.firstVisibleItemScrollOffset }
-                            .collect { offset ->
-                                if (!thumbnailLazyGridState.isScrollInProgress || !latestSwipeThumbnail ||
-                                    offset != 0 || latestDisplayedIndex < 0
-                                ) return@collect
-                                val currentItem = thumbnailLazyGridState.firstVisibleItemIndex
-                                if (currentItem > latestDisplayedIndex && latestCanSkipNext) {
-                                    playerConnection.player.seekToNext()
-                                } else if (currentItem < latestDisplayedIndex && latestCanSkipPrevious) {
-                                    playerConnection.player.seekToPreviousMediaItem()
+                        launch {
+                            thumbnailLazyGridState.interactionSource.interactions.collect { interaction ->
+                                when (interaction) {
+                                    is DragInteraction.Start -> {
+                                        val layout = thumbnailLazyGridState.layoutInfo
+                                        val anchor = layout.visibleItemsInfo.minByOrNull {
+                                            abs(calculateDistanceToDesiredSnapPosition(layout, it) { size, item ->
+                                                size / 2f - item / 2f
+                                            })
+                                        }?.index ?: thumbnailLazyGridState.firstVisibleItemIndex
+                                        swipeState.start(interaction, swipeContext(), anchor)
+                                    }
+                                    is DragInteraction.Cancel -> swipeState.cancel(interaction.start)
+                                    else -> Unit
+                                }
+                            }
+                        }
+                        snapshotFlow {
+                            Triple(
+                                thumbnailLazyGridState.firstVisibleItemIndex,
+                                thumbnailLazyGridState.firstVisibleItemScrollOffset,
+                                thumbnailLazyGridState.isScrollInProgress,
+                            )
+                        }.collect { (index, offset, scrolling) ->
+                                if (offset != 0) return@collect
+                                when (swipeState.onScroll(
+                                    context = swipeContext(),
+                                    index = index,
+                                    offset = offset,
+                                    scrolling = scrolling,
+                                    enabled = latestSwipeThumbnail,
+                                    canSkipNext = latestCanSkipNext,
+                                    canSkipPrevious = latestCanSkipPrevious,
+                                )) {
+                                    ArtworkSwipeCommand.NEXT -> playerConnection.player.seekToNext()
+                                    ArtworkSwipeCommand.PREVIOUS -> playerConnection.player.seekToPreviousMediaItem()
+                                    null -> Unit
                                 }
                             }
                     }
@@ -473,8 +565,12 @@ fun Thumbnail(
                         if (!initiallyPositioned || !incumbentInWindow) {
                             initiallyPositioned = true
                             // Preserve initial positioning and nonanimated/disjoint windows.
-                            if (!alreadyPositioned) thumbnailLazyGridState.scrollToItem(index)
+                            if (!alreadyPositioned) {
+                                swipeState.cancel()
+                                thumbnailLazyGridState.scrollToItem(index)
+                            }
                         } else if (!alreadyPositioned) {
+                            swipeState.cancel()
                             val systemScale = currentCoroutineContext()[MotionDurationScale]
                             val artworkScale = object : MotionDurationScale {
                                 override val scaleFactor: Float

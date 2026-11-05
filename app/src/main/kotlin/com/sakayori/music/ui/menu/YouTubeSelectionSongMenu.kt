@@ -43,8 +43,9 @@ import com.sakayori.music.LocalDownloadUtil
 import com.sakayori.music.LocalPlayerConnection
 import com.sakayori.music.LocalSyncUtils
 import com.sakayori.music.R
-import com.sakayori.music.extensions.toMediaItem
+import com.sakayori.music.extensions.toPlaylistMediaItems
 import com.sakayori.music.models.toMediaMetadata
+import com.sakayori.music.models.playlistOccurrenceKeys
 import com.sakayori.music.playback.ExoDownloadService
 import com.sakayori.music.playback.queues.ListQueue
 import com.sakayori.music.ui.component.DefaultDialog
@@ -58,6 +59,8 @@ fun YouTubeSelectionSongMenu(
     songSelection: List<SongItem>,
     onDismiss: () -> Unit,
     clearAction: () -> Unit,
+    playlistId: String = "",
+    occurrenceKeys: List<String> = playlistOccurrenceKeys(songSelection),
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
@@ -124,6 +127,7 @@ fun YouTubeSelectionSongMenu(
 
     AddToPlaylistDialogOnline(
         isVisible = showChoosePlaylistDialog,
+        knownSongs = songSelection,
         songs =
             remember {
                 songSelection
@@ -233,7 +237,7 @@ fun YouTubeSelectionSongMenu(
                                 playerConnection.playQueue(
                                     ListQueue(
                                         title = queueAllSongsStr,
-                                        items = songSelection.map { it.toMediaItem() },
+                                        items = songSelection.toPlaylistMediaItems(playlistId, occurrenceKeys),
                                     ),
                                 )
                                 clearAction()
@@ -251,7 +255,7 @@ fun YouTubeSelectionSongMenu(
                                 playerConnection.playQueue(
                                     ListQueue(
                                         title = queueAllSongsStr,
-                                        items = songSelection.shuffled().map { it.toMediaItem() },
+                                        items = songSelection.toPlaylistMediaItems(playlistId, occurrenceKeys).shuffled(),
                                     ),
                                 )
                                 clearAction()
@@ -266,7 +270,7 @@ fun YouTubeSelectionSongMenu(
                             icon = { Icon(painterResource(R.drawable.queue_music), null) },
                             title = { Text(stringResource(R.string.add_to_queue)) },
                             onClick = {
-                                playerConnection.addToQueue(songSelection.map { it.toMediaItem() })
+                                playerConnection.addToQueue(songSelection.toPlaylistMediaItems(playlistId, occurrenceKeys))
                                 clearAction()
                                 onDismiss()
                             },

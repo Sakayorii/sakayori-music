@@ -35,11 +35,11 @@ import com.sakayori.music.extensions.filterExplicitAlbums
 import com.sakayori.music.utils.SyncUtils
 import com.sakayori.music.utils.ArtistNameAliases
 import com.sakayori.music.utils.dataStore
-import com.sakayori.music.utils.get
 import com.sakayori.music.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -122,9 +123,10 @@ class ArtistViewModel @Inject constructor(
             if (cachedJson != null) {
                 val cachedDto = withContext(Dispatchers.IO) { deserializeArtistPage(cachedJson) }
                 val page = cachedDto.toArtistPage()
-                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                val preferences = context.dataStore.data.first()
+                val hideExplicit = preferences[HideExplicitKey] ?: false
+                val hideVideoSongs = preferences[HideVideoSongsKey] ?: false
+                val hideYoutubeShorts = preferences[HideYoutubeShortsKey] ?: false
 
                 val filteredSections = page.sections
                     .map { section ->
@@ -135,6 +137,8 @@ class ArtistViewModel @Inject constructor(
                 artistPage = page.copy(sections = filteredSections)
                 _apiSubscribed.value = page.isSubscribed
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             reportException(e)
         }
@@ -142,9 +146,10 @@ class ArtistViewModel @Inject constructor(
 
     fun fetchArtistsFromYTM() {
         viewModelScope.launch {
-            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+            val preferences = context.dataStore.data.first()
+            val hideExplicit = preferences[HideExplicitKey] ?: false
+            val hideVideoSongs = preferences[HideVideoSongsKey] ?: false
+            val hideYoutubeShorts = preferences[HideYoutubeShortsKey] ?: false
             YouTube.artist(artistId)
                 .onSuccess { page ->
                     // Collect all items from all sections and resolve artist IDs once

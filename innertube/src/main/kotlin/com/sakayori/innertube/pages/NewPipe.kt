@@ -131,7 +131,7 @@ private class NewPipeDownloaderImpl : Downloader() {
         }
 
         val latestUrl = response.request.url.toString()
-        val responseBodyToReturn = normalizeResponseBody(latestUrl, response.body?.string())
+        val responseBodyToReturn = normalizeResponseBody(latestUrl, response.body.string())
         return Response(
             response.code,
             response.message,
@@ -147,9 +147,9 @@ private class NewPipeDownloaderImpl : Downloader() {
         val call = newCall(request)
         val pending = CancellableCall(call)
         call.enqueue(object : Callback {
-            override fun onFailure(call: Call, error: IOException) {
+            override fun onFailure(call: Call, e: IOException) {
                 try {
-                    callback?.onError(error)
+                    callback?.onError(e)
                 } finally {
                     pending.setFinished()
                 }

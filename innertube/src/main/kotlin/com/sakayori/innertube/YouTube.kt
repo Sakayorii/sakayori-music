@@ -1171,7 +1171,9 @@ object YouTube {
                     if (contents == null && declaredCount != 0L) snapshotUsable = false
                     val rows = contents?.getItems().orEmpty()
                     val parsed = rows.mapNotNull { renderer ->
-                        PlaylistPage.fromMusicResponsiveListItemRenderer(renderer).also { if (it == null) snapshotUsable = false }
+                        PlaylistPage.fromMusicResponsiveListItemRenderer(renderer).also {
+                            if (it == null || it.setVideoId.isNullOrBlank()) snapshotUsable = false
+                        }
                     }
                     if (parsed.isEmpty() && declaredCount != null && declaredCount > 0) snapshotUsable = false
                     parsed
@@ -1242,7 +1244,7 @@ object YouTube {
                 allContents
                     .mapNotNull { content: MusicShelfRenderer.Content -> content.musicResponsiveListItemRenderer }
                     .mapNotNull { renderer -> PlaylistPage.fromMusicResponsiveListItemRenderer(renderer)
-                        .also { if (it == null) snapshotUsable = false } }
+                        .also { if (it == null || it.setVideoId.isNullOrBlank()) snapshotUsable = false } }
                     .filter { song -> song.setVideoId?.let(seenOccurrences::add) ?: true }
 
             val nextContinuation =
@@ -1956,7 +1958,7 @@ object YouTube {
                     val parsed = rows.mapNotNull(LibraryPage.Companion::fromMusicResponsiveListItemRenderer)
                     LibraryContinuationPage(
                         items = parsed,
-                        continuation = contents?.musicShelfContinuation?.continuations?.getContinuation(),
+                        continuation = contents.musicShelfContinuation.continuations?.getContinuation(),
                         isSnapshotUsableForSync = parsed.size == rows.size,
                     )
                 }

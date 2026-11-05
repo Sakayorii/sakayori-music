@@ -487,7 +487,8 @@ class MusicService :
     private var crossfadePreparationJob: Job? = null
     private var crossfadeOutgoingMediaId: String? = null
     private var crossfadeOutgoingCompleted = false
-    private var isRunning = false
+    private val isRunning: Boolean
+        get() = runningInstance === this
     private var mediaSession: MediaLibrarySession? = null
     private var controllerFuture: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
 
@@ -686,7 +687,7 @@ class MusicService :
 
     override fun onCreate() {
         super.onCreate()
-        isRunning = true
+        runningInstance = this
         shutdownDeferred = kotlinx.coroutines.CompletableDeferred<Unit>()
 
         setListener(
@@ -4093,7 +4094,7 @@ class MusicService :
                     ) return@withTimeoutOrNull
                     // Native STREAMINFO is not enough: the muted player has now extracted and
                     // decoded its initial media. Promotion reuses these bytes instead of refetching.
-                    budget?.promote()
+                    budget.promote()
                     prepared.playWhenReady = true
                     audioClockStarted.await()
                     awaitPlayerCondition(prepared) { prepared.isPlaying }
@@ -4627,7 +4628,7 @@ class MusicService :
         cancelRenditionChanges()
         crossfadePreparationJob?.cancel()
         val shutdownSignal = shutdownDeferred
-        isRunning = false
+        if (runningInstance === this) runningInstance = null
         losslessResolver.cancelPending()
         currentRendition.value = null
         preloadControllers.values.forEach { it.release() }
@@ -5533,8 +5534,10 @@ class MusicService :
         private const val TAG = "MusicService"
 
         @Volatile
-        var isRunning = false
-            private set
+        private var runningInstance: MusicService? = null
+
+        val isRunning: Boolean
+            get() = runningInstance != null
             
         @Volatile
         var shutdownDeferred = kotlinx.coroutines.CompletableDeferred<Unit>().apply { complete(Unit) }
