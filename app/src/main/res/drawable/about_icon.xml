@@ -13,7 +13,7 @@
             android:pathData="M160,145L370,145L358,201L148,201Z" />
         <path
             android:fillColor="#00000000"
-            android:pathData="M252,106C260,158 266,200 270,244C220,226 160,240 148,288C136,334 182,376 254,380C314,383 354,362 356,334C357,312 342,297 320,293"
+            android:pathData="M252,106C259,156 264,198 267,242C224,224 172,236 162,278C154,308 168,340 200,360C232,379 288,378 316,356C338,339 344,318 336,302C330,291 322,290 314,291"
             android:strokeColor="#FFFFFFFF"
             android:strokeWidth="50"
             android:strokeLineCap="butt" />
