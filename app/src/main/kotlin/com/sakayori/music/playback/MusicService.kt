@@ -236,6 +236,7 @@ import kotlinx.coroutines.CancellationException
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -427,6 +428,9 @@ class MusicService :
     // playQueue requests replace this with their uncommitted generation first.
     private val _queueLoadState = MutableStateFlow(QueueLoadState(committed = true))
     internal val queueLoadState = _queueLoadState.asStateFlow()
+    private var automixRequestSequence = 0L
+    private var automixJob: Job? = null
+    private data class AutomixRequestOwner(val queueGeneration: Int, val sequence: Long)
 
     val currentMediaMetadata = MutableStateFlow<com.sakayori.music.models.MediaMetadata?>(null)
     private val currentSong =
@@ -1867,32 +1871,37 @@ class MusicService :
         queue: Queue,
         playWhenReady: Boolean = true,
         restoringQueue: Boolean = false,
-    ) {
-        if (!playerInitialized.value) {
-            val requestGeneration = ++playQueueGeneration
-            _queueLoadState.value = QueueLoadState(requestGeneration)
-            Timber.tag(TAG).w("playQueue called before player initialization, queuing request")
-            scope.launch {
-                playerInitialized.first { it }
-                if (requestGeneration == playQueueGeneration) playQueue(queue, playWhenReady, restoringQueue)
-            }
-            return
-        }
-
+    ): Int? {
+        if (!scope.isActive) return null
         val generation = ++playQueueGeneration
-        // Claim ownership before any preload/shuffle/crossfade callback can
-        // expose a temporary singleton to the UI's automatic recommendation path.
         _queueLoadState.value = QueueLoadState(generation)
+        invalidateAutomixRequests()
         queueLoadJob?.cancel()
         queuePageJob?.cancel()
         isLoadingMore = false
+        if (!playerInitialized.value) {
+            Timber.tag(TAG).w("playQueue called before player initialization, queuing request")
+            scope.launch {
+                playerInitialized.first { it }
+                if (generation == playQueueGeneration) startQueue(queue, playWhenReady, restoringQueue, generation)
+            }
+        } else {
+            startQueue(queue, playWhenReady, restoringQueue, generation)
+        }
+        return generation
+    }
+
+    private fun startQueue(queue: Queue, playWhenReady: Boolean, restoringQueue: Boolean, generation: Int) {
+        if (generation != playQueueGeneration || !playerInitialized.value) return
         cancelCrossfadeForReload()
+        if (generation != playQueueGeneration) return
         currentQueue = queue
         queueTitle = null
         val persistShuffleAcrossQueues = startupPrefs?.get(PersistentShuffleAcrossQueuesKey) ?: false
         if (!persistShuffleAcrossQueues && !restoringQueue) {
             player.shuffleModeEnabled = false
         }
+        if (generation != playQueueGeneration || currentQueue !== queue) return
         originalQueueSize = 0
         val preload = queue.preloadItem?.takeUnless {
             (cachedHideExplicit && it.explicit) || (cachedHideVideoSongs && it.isVideoSong)
@@ -1901,9 +1910,12 @@ class MusicService :
         }
         if (preload != null) {
             player.setMediaItem(preload, queue.preloadPosition.coerceAtLeast(0L))
+            if (generation != playQueueGeneration || currentQueue !== queue) return
             player.prepare()
+            if (generation != playQueueGeneration || currentQueue !== queue) return
             player.playWhenReady = playWhenReady
         }
+        if (generation != playQueueGeneration || currentQueue !== queue) return
         val preloadPlayer = player
         val preloadUid = if (preload != null && player.currentMediaItemIndex in 0 until player.currentTimeline.windowCount) {
             player.currentTimeline.getWindow(player.currentMediaItemIndex, Timeline.Window()).uid
@@ -1967,6 +1979,7 @@ class MusicService :
 
     fun adoptQueue(queue: Queue, title: String? = null, initialQueueSize: Int = 0) {
         val generation = ++playQueueGeneration
+        invalidateAutomixRequests()
         queueLoadJob?.cancel()
         queuePageJob?.cancel()
         isLoadingMore = false
@@ -2074,80 +2087,91 @@ class MusicService :
         }
     }
 
-    fun getAutomixAlbum(albumId: String) {
-        scope.launch(SilentHandler) {
+    fun getAutomixAlbum(albumId: String, requestGeneration: Int? = playQueueGeneration) {
+        val owner = beginAutomixRequest(requestGeneration) ?: return
+        automixJob = scope.launch(SilentHandler) {
             YouTube
                 .album(albumId)
                 .onSuccess {
-                    getAutomix(it.album.playlistId)
+                    if (isActiveAutomixOwner(owner)) loadAutomix(it.album.playlistId, owner)
                 }
         }
     }
 
-    fun getAutomix(playlistId: String) {
-        if (dataStore.get(SimilarContent, true) &&
-            !(dataStore.get(DisableLoadMoreWhenRepeatAllKey, false) && player.repeatMode == REPEAT_MODE_ALL)
-        ) {
-            scope.launch(SilentHandler) {
-                try {
-                    YouTube
-                        .next(WatchEndpoint(playlistId = playlistId))
-                        .onSuccess { firstResult ->
-                            YouTube
-                                .next(WatchEndpoint(playlistId = firstResult.endpoint.playlistId))
-                                .onSuccess { secondResult ->
-                                    automixItems.value =
-                                        secondResult.items.map { song ->
-                                            song.toMediaItem()
-                                        }
-                                }.onFailure {
-                                    if (firstResult.items.isNotEmpty()) {
-                                        automixItems.value =
-                                            firstResult.items.map { song ->
-                                                song.toMediaItem()
-                                            }
-                                    }
-                                }
-                        }.onFailure {
-                            val currentSong = player.currentMetadata
-                            if (currentSong != null) {
-                                // Use simple videoId for better personalized recommendations
-                                YouTube
-                                    .next(
-                                        WatchEndpoint(
-                                            videoId = currentSong.id,
-                                        ),
-                                    ).onSuccess { radioResult ->
-                                        val filteredItems =
-                                            radioResult.items
-                                                .filter { it.id != currentSong.id }
-                                                .map { it.toMediaItem() }
-                                        if (filteredItems.isNotEmpty()) {
-                                            automixItems.value = filteredItems
-                                        }
-                                    }.onFailure {
-                                        YouTube
-                                            .next(WatchEndpoint(videoId = currentSong.id))
-                                            .getOrNull()
-                                            ?.relatedEndpoint
-                                            ?.let { relatedEndpoint ->
-                                                YouTube.related(relatedEndpoint).onSuccess { relatedPage ->
-                                                    val relatedItems =
-                                                        relatedPage.songs
-                                                            .filter { it.id != currentSong.id }
-                                                            .map { it.toMediaItem() }
-                                                    if (relatedItems.isNotEmpty()) {
-                                                        automixItems.value = relatedItems
-                                                    }
-                                                }
-                                            }
-                                    }
+    fun getAutomix(playlistId: String, requestGeneration: Int? = playQueueGeneration) {
+        val owner = beginAutomixRequest(requestGeneration) ?: return
+        if (isAutomixAllowed()) {
+            automixJob = scope.launch(SilentHandler) { loadAutomix(playlistId, owner) }
+        }
+    }
+
+    private suspend fun loadAutomix(playlistId: String, owner: AutomixRequestOwner) {
+        if (!isActiveAutomixOwner(owner) || !isAutomixAllowed()) return
+        try {
+            YouTube.next(WatchEndpoint(playlistId = playlistId))
+                .onSuccess firstPage@ { firstResult ->
+                    if (!isActiveAutomixOwner(owner)) return@firstPage
+                    YouTube.next(WatchEndpoint(playlistId = firstResult.endpoint.playlistId))
+                        .onSuccess { secondResult ->
+                            publishAutomix(owner, secondResult.items.map { it.toMediaItem() })
+                        }.onFailure { error ->
+                            if (error is CancellationException) throw error
+                            if (isActiveAutomixOwner(owner) && firstResult.items.isNotEmpty()) {
+                                publishAutomix(owner, firstResult.items.map { it.toMediaItem() })
                             }
                         }
-                } catch (_: Exception) {
+                }.onFailure playlistFailure@ { error ->
+                    if (error is CancellationException) throw error
+                    if (!isActiveAutomixOwner(owner) || !this::player.isInitialized) return@playlistFailure
+                    val currentSong = player.currentMetadata ?: return@playlistFailure
+                    // Preserve personalized current-track and related fallbacks.
+                    YouTube.next(WatchEndpoint(videoId = currentSong.id))
+                        .onSuccess { radioResult ->
+                            val items = radioResult.items.filter { it.id != currentSong.id }.map { it.toMediaItem() }
+                            if (items.isNotEmpty()) publishAutomix(owner, items)
+                        }.onFailure radioFailure@ { failure ->
+                            if (failure is CancellationException) throw failure
+                            if (!isActiveAutomixOwner(owner)) return@radioFailure
+                            YouTube.next(WatchEndpoint(videoId = currentSong.id)).getOrNull()
+                                ?.relatedEndpoint?.let { endpoint ->
+                                    YouTube.related(endpoint).onSuccess { relatedPage ->
+                                        val items = relatedPage.songs.filter { it.id != currentSong.id }.map { it.toMediaItem() }
+                                        if (items.isNotEmpty()) publishAutomix(owner, items)
+                                    }
+                                }
+                        }
                 }
-            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
         }
+    }
+
+    private fun isAutomixAllowed(): Boolean {
+        val prefs = startupPrefs
+        val repeat = if (this::player.isInitialized) player.repeatMode else prefs?.get(RepeatModeKey) ?: REPEAT_MODE_OFF
+        return prefs?.get(SimilarContent) != false &&
+            !(prefs?.get(DisableLoadMoreWhenRepeatAllKey) == true && repeat == REPEAT_MODE_ALL)
+    }
+
+    private fun invalidateAutomixRequests() {
+        ++automixRequestSequence
+        automixJob?.cancel()
+        automixJob = null
+    }
+
+    private fun beginAutomixRequest(generation: Int?): AutomixRequestOwner? {
+        if (generation == null || generation != playQueueGeneration || !scope.isActive) return null
+        invalidateAutomixRequests()
+        return AutomixRequestOwner(generation, automixRequestSequence)
+    }
+
+    private suspend fun isActiveAutomixOwner(owner: AutomixRequestOwner): Boolean =
+        currentCoroutineContext().isActive && scope.isActive &&
+            owner.queueGeneration == playQueueGeneration && owner.sequence == automixRequestSequence
+
+    private suspend fun publishAutomix(owner: AutomixRequestOwner, items: List<MediaItem>) {
+        if (isActiveAutomixOwner(owner)) automixItems.value = items
     }
 
     internal fun promoteAutomixIfNeeded(
@@ -2175,8 +2199,8 @@ class MusicService :
     ) {
         val items = automixItems.value
         if (!canConsumeAutomix(items, item, position, expectedItems)) return
-        addToQueue(listOf(item))
-        if (automixItems.value === items) {
+        val generation = addToQueue(listOf(item)) ?: return
+        if (generation == playQueueGeneration && automixItems.value === items) {
             automixItems.value = items.toMutableList().apply { removeAt(position) }
         }
     }
@@ -2188,8 +2212,8 @@ class MusicService :
     ) {
         val items = automixItems.value
         if (!canConsumeAutomix(items, item, position, expectedItems)) return
-        playNext(listOf(item))
-        if (automixItems.value === items) {
+        val generation = playNext(listOf(item)) ?: return
+        if (generation == playQueueGeneration && automixItems.value === items) {
             automixItems.value = items.toMutableList().apply { removeAt(position) }
         }
     }
@@ -2204,10 +2228,14 @@ class MusicService :
         (expectedItems == null || expectedItems === items) &&
         position in items.indices && items[position] === item
 
-    private fun preserveManualEditDuringInitialization() {
+    private fun preserveManualEditDuringInitialization(commandGeneration: Int): Int? {
+        // Player callbacks are synchronous: an earlier edit must not claim a
+        // newer request admitted by one of its own timeline/prepare listeners.
+        if (commandGeneration != playQueueGeneration) return null
         val load = _queueLoadState.value
-        if (load.committed || load.generation != playQueueGeneration) return
+        if (load.committed || load.generation != commandGeneration) return commandGeneration
         val generation = ++playQueueGeneration
+        invalidateAutomixRequests()
         queueLoadJob?.cancel()
         queuePageJob?.cancel()
         isLoadingMore = false
@@ -2217,25 +2245,30 @@ class MusicService :
         originalQueueSize = player.mediaItemCount
         _queueLoadState.value = QueueLoadState(generation, committed = true)
         if (cachedPersistentQueue) saveQueueToDisk()
+        return generation
     }
 
     fun clearAutomix() {
+        invalidateAutomixRequests()
         automixItems.value = emptyList()
     }
 
-    fun playNext(items: List<MediaItem>) {
+    fun playNext(items: List<MediaItem>): Int? {
+        val commandGeneration = playQueueGeneration
         // If queue is empty or player is idle, play immediately instead
         if (player.mediaItemCount == 0 || player.playbackState == STATE_IDLE) {
             player.setMediaItems(items)
+            if (commandGeneration != playQueueGeneration) return null
             player.prepare()
+            if (commandGeneration != playQueueGeneration) return null
             if (castConnectionHandler?.isCasting?.value != true) {
                 player.play()
             }
-            if (items.isNotEmpty()) preserveManualEditDuringInitialization()
-            return
+            return if (items.isNotEmpty()) preserveManualEditDuringInitialization(commandGeneration)
+                else commandGeneration.takeIf { it == playQueueGeneration }
         }
 
-        if (dataStore.get(PreventDuplicateTracksInQueueKey, false)) {
+        if (startupPrefs?.get(PreventDuplicateTracksInQueueKey) == true) {
             val itemIds = items.map { it.mediaId }.toSet()
             val indicesToRemove = mutableListOf<Int>()
             val currentIndex = player.currentMediaItemIndex
@@ -2249,6 +2282,7 @@ class MusicService :
             // Remove from highest index to lowest to maintain index stability
             indicesToRemove.sortedDescending().forEach { index ->
                 player.removeMediaItem(index)
+                if (commandGeneration != playQueueGeneration) return null
             }
         }
 
@@ -2257,9 +2291,9 @@ class MusicService :
 
         // Insert items immediately after the current item in the window/index space
         player.addMediaItems(insertIndex, items)
+        if (commandGeneration != playQueueGeneration) return null
         player.prepare()
-
-        if (items.isNotEmpty()) preserveManualEditDuringInitialization()
+        if (commandGeneration != playQueueGeneration) return null
 
         if (shuffleEnabled) {
             // Rebuild shuffle order so that newly inserted items are played next
@@ -2315,12 +2349,16 @@ class MusicService :
                 }
 
                 player.setShuffleOrder(DefaultShuffleOrder(finalOrder, System.currentTimeMillis()))
+                if (commandGeneration != playQueueGeneration) return null
             }
         }
+        return if (items.isNotEmpty()) preserveManualEditDuringInitialization(commandGeneration)
+            else commandGeneration.takeIf { it == playQueueGeneration }
     }
 
-    fun addToQueue(items: List<MediaItem>) {
-        if (dataStore.get(PreventDuplicateTracksInQueueKey, false)) {
+    fun addToQueue(items: List<MediaItem>): Int? {
+        val commandGeneration = playQueueGeneration
+        if (startupPrefs?.get(PreventDuplicateTracksInQueueKey) == true) {
             val itemIds = items.map { it.mediaId }.toSet()
             val indicesToRemove = mutableListOf<Int>()
             val currentIndex = player.currentMediaItemIndex
@@ -2334,16 +2372,21 @@ class MusicService :
             // Remove from highest index to lowest to maintain index stability
             indicesToRemove.sortedDescending().forEach { index ->
                 player.removeMediaItem(index)
+                if (commandGeneration != playQueueGeneration) return null
             }
         }
 
         player.addMediaItems(items)
+        if (commandGeneration != playQueueGeneration) return null
         if (player.shuffleModeEnabled) {
             val shufflePlaylistFirst = cachedShufflePlaylistFirst
             applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
+            if (commandGeneration != playQueueGeneration) return null
         }
         player.prepare()
-        if (items.isNotEmpty()) preserveManualEditDuringInitialization()
+        if (commandGeneration != playQueueGeneration) return null
+        return if (items.isNotEmpty()) preserveManualEditDuringInitialization(commandGeneration)
+            else commandGeneration
     }
 
     fun toggleLibrary() {

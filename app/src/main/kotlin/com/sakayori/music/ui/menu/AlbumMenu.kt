@@ -346,15 +346,15 @@ fun AlbumMenu(
                                 onClick = {
                                     onDismiss()
                                     if (songs.isNotEmpty()) {
-                                        album.album.playlistId?.let { playlistId ->
-                                            playerConnection.service.getAutomix(playlistId)
-                                        }
-                                        playerConnection.playQueue(
+                                        val request = playerConnection.playQueue(
                                             ListQueue(
                                                 title = album.album.title,
                                                 items = songs.shuffled().map(Song::toMediaItem),
                                             ),
                                         )
+                                        if (request != null) album.album.playlistId?.let { playlistId ->
+                                            playerConnection.service.getAutomix(playlistId, request)
+                                        }
                                     }
                                 },
                             )

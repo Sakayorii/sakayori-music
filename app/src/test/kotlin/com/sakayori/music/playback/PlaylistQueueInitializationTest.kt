@@ -13,6 +13,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.test.core.app.ApplicationProvider
 import com.sakayori.innertube.models.SongItem
@@ -346,6 +347,45 @@ class PlaylistQueueInitializationTest {
         assertEquals(listOf("a", "b", "c"), snapshot.queue?.items?.map { it.id })
         assertEquals(1, snapshot.queue?.mediaItemIndex)
         assertEquals("persisted", snapshot.queue?.title)
+    }
+
+    @Test
+    fun `a newer listener admitted queue wins over older add bookkeeping`() {
+        assertReentrantQueueWins { service.addToQueue(listOf(item("old-manual"))) }
+    }
+
+    @Test
+    fun `a newer listener admitted queue wins over older play next bookkeeping`() {
+        assertReentrantQueueWins { service.playNext(listOf(item("old-manual"))) }
+    }
+
+    @Test
+    fun `older recommendation consumption cannot remove a carried pool after a newer admission`() {
+        val recommendation = item("old-manual")
+        val pool = listOf(recommendation)
+        service.automixItems.value = pool
+        assertReentrantQueueWins { service.addToQueueAutomix(recommendation, 0) }
+
+        assertEquals(pool, service.automixItems.value)
+    }
+
+    private fun assertReentrantQueueWins(command: () -> Unit) {
+        var admitted = false
+        nativePlayer.addListener(object : Player.Listener {
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                if (!admitted && nativePlayer.mediaItemCount == 2) {
+                    admitted = true
+                    service.playQueue(ListQueue("newer", listOf(item("new-a"), item("new-b")), 0))
+                }
+            }
+        })
+        command()
+        val latest = ReflectionHelpers.getField<Job>(service, "queueLoadJob")
+        pumpUntil { latest.isCompleted }
+
+        assertTrue("The actual native callback must admit the newer request", admitted)
+        assertEquals(listOf("new-a", "new-b"), ids())
+        assertEquals("newer", service.queueTitle)
     }
 
     private fun startHeldQueue(

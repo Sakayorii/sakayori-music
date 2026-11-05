@@ -25,10 +25,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -168,6 +170,7 @@ class BottomSheetState(
     private val animatable: Animatable<Dp, AnimationVector1D>,
     private val onAnchorChanged: (Int) -> Unit,
     val collapsedBound: Dp,
+    private val isCollapsedAnchorRebasing: () -> Boolean = { false },
 ) : DraggableState by draggableState {
     val dismissedBound: Dp
         get() = animatable.lowerBound!!
@@ -182,7 +185,7 @@ class BottomSheetState(
     }
 
     val isCollapsed by derivedStateOf {
-        value == collapsedBound
+        value == collapsedBound || isCollapsedAnchorRebasing()
     }
 
     val isExpanded by derivedStateOf {
@@ -334,6 +337,11 @@ const val expandedAnchor = 2
 const val collapsedAnchor = 1
 const val dismissedAnchor = 0
 
+private class CollapsedAnchorRebase {
+    var previousBound: Dp? = null
+    var current: MutableState<Boolean>? = null
+}
+
 @Composable
 fun rememberBottomSheetState(
     dismissedBound: Dp,
@@ -350,8 +358,14 @@ fun rememberBottomSheetState(
     val animatable = remember {
         Animatable(0.dp, Dp.VectorConverter)
     }
+    val rebase = remember { CollapsedAnchorRebase() }
 
     return remember(dismissedBound, expandedBound, collapsedBound, coroutineScope) {
+        val wasCollapsed = previousAnchor == collapsedAnchor &&
+            (rebase.current?.value == true || rebase.previousBound == animatable.value)
+        val rebasingCollapsed = mutableStateOf(wasCollapsed)
+        rebase.current = rebasingCollapsed
+        rebase.previousBound = collapsedBound
         val initialValue = when (previousAnchor) {
             expandedAnchor -> expandedBound
             collapsedAnchor -> collapsedBound
@@ -361,19 +375,32 @@ fun rememberBottomSheetState(
 
         animatable.updateBounds(dismissedBound.coerceAtMost(expandedBound), expandedBound)
         coroutineScope.launch {
-            animatable.animateTo(initialValue, NavigationBarAnimationSpec)
+            try {
+                animatable.animateTo(initialValue, NavigationBarAnimationSpec)
+            } finally {
+                // Each wrapper owns its flag: cancellation of the old anchor's
+                // animation must not release a newer wrapper's rebase protection.
+                rebasingCollapsed.value = false
+            }
         }
 
         BottomSheetState(
             draggableState = DraggableState { delta ->
+                rebase.current?.value = false
                 coroutineScope.launch {
                     animatable.snapTo(animatable.value - with(density) { delta.toDp() })
                 }
             },
-            onAnchorChanged = { previousAnchor = it },
+            onAnchorChanged = {
+                rebase.current?.value = false
+                previousAnchor = it
+            },
             coroutineScope = coroutineScope,
             animatable = animatable,
-            collapsedBound = collapsedBound
+            collapsedBound = collapsedBound,
+            // Route/inset-only migration is still collapsed; a real expansion,
+            // collapse or drag retains the original value-based content lifetime.
+            isCollapsedAnchorRebasing = { rebasingCollapsed.value && previousAnchor == collapsedAnchor },
         )
     }
 }
