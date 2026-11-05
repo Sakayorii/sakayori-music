@@ -120,3 +120,7 @@ app/src/main/cpp/coverart/
 # Keystore files
 *.jks
 *.keystore
+
+# Local documentation
+/doc/
+/docs/
