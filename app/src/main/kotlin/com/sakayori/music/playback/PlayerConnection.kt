@@ -138,14 +138,6 @@ class PlayerConnection(
                 }
             }
         }
-        scope.launch {
-            service.queueLoadState.collect { load ->
-                if (load.committed) {
-                    queueTitle.value = service.queueTitle
-                }
-            }
-        }
-
         Timber.tag(TAG).d("PlayerConnection state flows initialized successfully")
     }
 
@@ -212,6 +204,15 @@ class PlayerConnection(
     private var attachedPlayer: Player? = null
 
     init {
+        // lifecycleScope uses Main.immediate: StateFlow can replay inside launch,
+        // so register this collector only after queueTitle has been initialized.
+        scope.launch {
+            service.queueLoadState.collect { load ->
+                if (load.committed) {
+                    queueTitle.value = service.queueTitle
+                }
+            }
+        }
         scope.launch {
             service.playerFlow.collect { newPlayer ->
                 if (newPlayer != null && newPlayer != attachedPlayer) {
