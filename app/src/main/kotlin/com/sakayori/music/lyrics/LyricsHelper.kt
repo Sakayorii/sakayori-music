@@ -7,6 +7,7 @@ package com.sakayori.music.lyrics
 
 import android.content.Context
 import android.util.LruCache
+import androidx.datastore.preferences.core.Preferences
 import com.sakayori.music.constants.LyricsProviderOrderKey
 import com.sakayori.music.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
 import com.sakayori.music.models.MediaMetadata
@@ -18,6 +19,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -45,6 +50,13 @@ constructor(
 
     private val cache = LruCache<String, List<LyricsResult>>(MAX_CACHE_SIZE)
     private var currentLyricsJob: Job? = null
+    private class FetchGate {
+        val mutex = Mutex()
+        var callers = 0
+        var result: LyricsWithProvider? = null
+    }
+    private val fetchGates = mutableMapOf<String, FetchGate>()
+    private val fetchGatesLock = Any()
 
     // Single key derivation for the lyrics LRU: getLyrics() and getAllLyrics()
     // must use the same key or cache reads never hit (previously getLyrics read
@@ -61,9 +73,29 @@ constructor(
             return LyricsWithProvider(cached.lyrics, cached.providerName)
         }
 
-        val orderedProviders = context.dataStore.data
-            .map { preferences -> resolveLyricsProviders(preferences) }
-            .first()
+        val gate = synchronized(fetchGatesLock) {
+            fetchGates.getOrPut(cacheKey) { FetchGate() }.also { it.callers++ }
+        }
+        try {
+            return gate.mutex.withLock {
+                gate.result?.let { return@withLock it }
+                val shared = cache.get(cacheKey)?.firstOrNull()
+                val result = if (shared != null) LyricsWithProvider(shared.lyrics, shared.providerName)
+                    else fetchLyrics(mediaMetadata, cacheKey)
+                gate.result = result
+                result
+            }
+        } finally {
+            synchronized(fetchGatesLock) {
+                gate.callers--
+                if (gate.callers == 0 && fetchGates[cacheKey] === gate) fetchGates.remove(cacheKey)
+            }
+        }
+    }
+
+    private suspend fun fetchLyrics(mediaMetadata: MediaMetadata, cacheKey: String): LyricsWithProvider {
+        val preferences = context.dataStore.data.first()
+        val orderedProviders = resolveLyricsProviders(preferences)
 
         val isNetworkAvailable = try {
             networkConnectivity.isCurrentlyConnected()
@@ -77,7 +109,7 @@ constructor(
 
         val result = withTimeoutOrNull(MAX_LYRICS_FETCH_MS) {
             val cleanedTitle = LyricsUtils.cleanTitleForSearch(mediaMetadata.title)
-            val enabledProviders = orderedProviders.filter { it.isEnabled(context) }
+            val enabledProviders = orderedProviders.filter { isEnabled(it, preferences) }
 
             Timber.tag("LyricsHelper").d("Starting sequential fetch for: $cleanedTitle by ${mediaMetadata.artists.joinToString { it.name }}")
             Timber.tag("LyricsHelper").d("Enabled providers in order: ${enabledProviders.joinToString { it.name }}")
@@ -147,10 +179,9 @@ constructor(
         val allResult = mutableListOf<LyricsResult>()
         currentLyricsJob = CoroutineScope(SupervisorJob(coroutineContext[Job])).launch {
             val cleanedTitle = LyricsUtils.cleanTitleForSearch(songTitle)
-            val allProviders = context.dataStore.data
-                .map { preferences -> resolveLyricsProviders(preferences) }
-                .first()
-            val enabledProviders = allProviders.filter { it.isEnabled(context) }
+            val preferences = context.dataStore.data.first()
+            val allProviders = resolveLyricsProviders(preferences)
+            val enabledProviders = allProviders.filter { isEnabled(it, preferences) }
 
             val otherProviders = enabledProviders.filter { it.name != "LyricsPlus" }
             val lyricsPlusProvider = enabledProviders.find { it.name == "LyricsPlus" }
@@ -209,7 +240,11 @@ constructor(
         currentLyricsJob?.join()
     }
 
-    private fun resolveLyricsProviders(preferences: androidx.datastore.preferences.core.Preferences): List<LyricsProvider> {
+    private suspend fun isEnabled(provider: LyricsProvider, preferences: Preferences): Boolean =
+        LyricsProviderRegistry.enabledFromSnapshot(provider, preferences)
+            ?: withContext(Dispatchers.IO) { provider.isEnabled(context) }
+
+    private fun resolveLyricsProviders(preferences: Preferences): List<LyricsProvider> {
         val providerOrder = preferences[LyricsProviderOrderKey].orEmpty()
         if (providerOrder.isNotBlank()) {
             return LyricsProviderRegistry.getOrderedProviders(providerOrder)

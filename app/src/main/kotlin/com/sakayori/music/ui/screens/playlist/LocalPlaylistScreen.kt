@@ -276,7 +276,7 @@ fun LocalPlaylistScreen(
         }
         if (songs.isEmpty()) return@LaunchedEffect
         downloadUtil.downloads.collect { downloads ->
-            downloadState =
+            val newState = withContext(Dispatchers.Default) {
                 if (songs.all { downloads[it.song.id]?.state == Download.STATE_COMPLETED }) {
                     Download.STATE_COMPLETED
                 } else if (songs.all {
@@ -289,6 +289,8 @@ fun LocalPlaylistScreen(
                 } else {
                     Download.STATE_STOPPED
                 }
+            }
+            downloadState = newState
         }
     }
 

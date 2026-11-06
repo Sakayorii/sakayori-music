@@ -5,6 +5,7 @@
 
 package com.sakayori.music.ui.component
 
+import com.sakayori.music.ui.utils.collectLyricsAsState
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -231,7 +232,7 @@ fun OriginalLyrics(
     val scope = rememberCoroutineScope()
 
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
-    val lyricsEntity by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
+    val lyricsEntity by playerConnection.currentLyrics.collectLyricsAsState()
     val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val lyrics = remember(lyricsEntity) { lyricsEntity?.lyrics?.trim() }
 

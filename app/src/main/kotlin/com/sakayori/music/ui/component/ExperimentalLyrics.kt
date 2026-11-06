@@ -5,6 +5,7 @@
 
 package com.sakayori.music.ui.component
 
+import com.sakayori.music.ui.utils.collectLyricsAsState
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -183,7 +184,7 @@ fun ExperimentalLyrics(
 
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val translationStatus by LyricsTranslationHelper.status.collectAsStateWithLifecycle()
-    val currentLyricsEntity by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
+    val currentLyricsEntity by playerConnection.currentLyrics.collectLyricsAsState()
     var lastValidLyricsEntity by remember { mutableStateOf<com.sakayori.music.db.entities.LyricsEntity?>(null) }
     
     LaunchedEffect(currentLyricsEntity) {

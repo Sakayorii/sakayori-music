@@ -237,17 +237,17 @@ fun LibraryMixScreen(
     val songs = viewModel.songs.collectAsStateWithLifecycle()
     val playlist = viewModel.playlists.collectAsStateWithLifecycle()
 
-    var allItems = albums.value + artist.value + playlist.value
     val locale = LocalLocale.current.platformLocale
     val collator = remember(locale) {
         Collator.getInstance(locale).apply {
             strength = Collator.PRIMARY
         }
     }
-    allItems =
+    val allItems = remember(albums.value, artist.value, playlist.value, sortType, sortDescending, collator) {
+        val items = albums.value + artist.value + playlist.value
         when (sortType) {
             MixSortType.CREATE_DATE -> {
-                allItems.sortedBy { item ->
+                items.sortedBy { item ->
                     when (item) {
                         is Album -> item.album.bookmarkedAt
                         is Artist -> item.artist.bookmarkedAt
@@ -258,7 +258,7 @@ fun LibraryMixScreen(
             }
 
             MixSortType.NAME -> {
-                allItems.sortedWith(
+                items.sortedWith(
                     compareBy(collator) { item ->
                         when (item) {
                             is Album -> item.album.title
@@ -271,7 +271,7 @@ fun LibraryMixScreen(
             }
 
             MixSortType.LAST_UPDATED -> {
-                allItems.sortedBy { item ->
+                items.sortedBy { item ->
                     when (item) {
                         is Album -> item.album.lastUpdateTime
                         is Artist -> item.artist.lastUpdateTime
@@ -281,31 +281,33 @@ fun LibraryMixScreen(
                 }
             }
         }.reversed(sortDescending)
+    }
 
-    val searchableItems = if (normalizedQuery.isBlank()) allItems else allItems + songs.value
+    val searchableItems = remember(allItems, normalizedQuery, songs.value) {
+        if (normalizedQuery.isBlank()) allItems else allItems + songs.value
+    }
 
     val filteredItems = remember(searchableItems, normalizedQuery, collator) {
-        val matchedItems =
-            searchableItems.filter { item ->
-                when (item) {
-                    is Song -> {
-                        val artistNames = item.orderedArtists.map { it.name }.toTypedArray()
-                        matchesNormalizedQuery(normalizedQuery, item.song.title, item.song.albumName, *artistNames)
-                    }
-
-                    is Album -> {
-                        val artistNames = item.artists.map { it.name }.toTypedArray()
-                        matchesNormalizedQuery(normalizedQuery, item.album.title, *artistNames)
-                    }
-
-                    is Artist -> matchesNormalizedQuery(normalizedQuery, item.artist.name)
-                    is Playlist -> matchesNormalizedQuery(normalizedQuery, item.playlist.name)
-                }
-            }
-
         if (normalizedQuery.isBlank()) {
-            matchedItems.distinctBy { it.id }
+            searchableItems
         } else {
+            val matchedItems =
+                searchableItems.filter { item ->
+                    when (item) {
+                        is Song -> {
+                            val artistNames = item.orderedArtists.map { it.name }.toTypedArray()
+                            matchesNormalizedQuery(normalizedQuery, item.song.title, item.song.albumName, *artistNames)
+                        }
+
+                        is Album -> {
+                            val artistNames = item.artists.map { it.name }.toTypedArray()
+                            matchesNormalizedQuery(normalizedQuery, item.album.title, *artistNames)
+                        }
+
+                        is Artist -> matchesNormalizedQuery(normalizedQuery, item.artist.name)
+                        is Playlist -> matchesNormalizedQuery(normalizedQuery, item.playlist.name)
+                    }
+                }
             matchedItems
                 .sortedWith { first, second ->
                     val firstPriority =

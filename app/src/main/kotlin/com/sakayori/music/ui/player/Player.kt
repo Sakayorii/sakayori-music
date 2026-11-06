@@ -169,6 +169,9 @@ import com.sakayori.music.ui.component.BottomSheetState
 import com.sakayori.music.ui.component.LocalBottomSheetPageState
 import com.sakayori.music.ui.component.LocalMenuState
 import com.sakayori.music.ui.component.Lyrics
+import com.sakayori.music.ui.utils.collectLyricsAsState
+import com.sakayori.music.ui.utils.collectLyricsQueueAsState
+import com.sakayori.music.ui.utils.collectLyricsWindowAsState
 import com.sakayori.music.ui.component.PlayerSliderTrack
 import com.sakayori.music.ui.component.ResizableIconButton
 import com.sakayori.music.ui.component.SquigglySlider
@@ -1201,7 +1204,7 @@ fun BottomSheetPlayer(
 
                         AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
                             if (showLyrics) {
-                                val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
+                                val currentLyrics by playerConnection.currentLyrics.collectLyricsAsState()
                                 FilledIconButton(
                                     onClick = {
                                         menuState.show {
@@ -1322,7 +1325,7 @@ fun BottomSheetPlayer(
 
                     AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
                         if (showLyrics) {
-                            val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
+                            val currentLyrics by playerConnection.currentLyrics.collectLyricsAsState()
                             Box(
                                 modifier =
                                     Modifier
@@ -1506,7 +1509,11 @@ fun BottomSheetPlayer(
                 )
 
                 Text(
-                    text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
+                    text = if (duration != C.TIME_UNSET) {
+                        makeTimeString((duration - (sliderPosition ?: effectivePosition)).coerceAtLeast(0L))
+                    } else {
+                        ""
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = TextBackgroundColor,
                     maxLines = 1,
@@ -2003,9 +2010,9 @@ fun InlineLyricsView(
     positionProvider: () -> Long?,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
-    val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
-    val queueWindows by playerConnection.queueWindows.collectAsStateWithLifecycle(initialValue = emptyList())
-    val currentWindowIndex by playerConnection.currentWindowIndex.collectAsStateWithLifecycle(initialValue = -1)
+    val currentLyrics by playerConnection.currentLyrics.collectLyricsAsState()
+    val queueWindows by playerConnection.queueWindows.collectLyricsQueueAsState()
+    val currentWindowIndex by playerConnection.currentWindowIndex.collectLyricsWindowAsState()
     val lyrics = remember(currentLyrics) { currentLyrics?.lyrics?.trim() }
     val context = LocalContext.current
     val database = LocalDatabase.current

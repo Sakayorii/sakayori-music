@@ -154,10 +154,6 @@ fun AutoPlaylistScreen(
         }
 
     val songs by viewModel.likedSongs.collectAsStateWithLifecycle(null)
-    val mutableSongs =
-        remember {
-            mutableStateListOf<Song>()
-        }
 
     var isSearching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf(TextFieldValue()) }
@@ -378,13 +374,9 @@ fun AutoPlaylistScreen(
     }
 
     LaunchedEffect(songs) {
-        mutableSongs.apply {
-            clear()
-            songs?.let { addAll(it) }
-        }
-        if (songs?.isEmpty() == true) return@LaunchedEffect
+        if (songs.isNullOrEmpty()) return@LaunchedEffect
         downloadUtil.downloads.collect { downloads ->
-            downloadState =
+            val newState = withContext(Dispatchers.Default) {
                 if (songs?.all { downloads[it.song.id]?.state == Download.STATE_COMPLETED } == true) {
                     Download.STATE_COMPLETED
                 } else if (songs?.all {
@@ -397,6 +389,8 @@ fun AutoPlaylistScreen(
                 } else {
                     Download.STATE_STOPPED
                 }
+            }
+            downloadState = newState
         }
     }
 

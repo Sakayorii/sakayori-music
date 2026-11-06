@@ -5,6 +5,13 @@
 
 package com.sakayori.music.lyrics
 
+import androidx.datastore.preferences.core.Preferences
+import com.sakayori.music.constants.EnableBetterLyricsKey
+import com.sakayori.music.constants.EnablePaxsenixKey
+import com.sakayori.music.constants.EnableLrcLibKey
+import com.sakayori.music.constants.EnableKugouKey
+import com.sakayori.music.constants.EnableLyricsPlus
+
 object LyricsProviderRegistry {
     private val providerMap = mapOf(
         "BetterLyrics" to BetterLyricsProvider,
@@ -22,6 +29,18 @@ object LyricsProviderRegistry {
 
     fun getProviderName(provider: LyricsProvider): String? =
         providerMap.entries.find { it.value == provider }?.key
+
+    /** Same switches/defaults as provider.isEnabled, from one suspending snapshot. */
+    internal fun enabledFromSnapshot(provider: LyricsProvider, preferences: Preferences): Boolean? =
+        when (getProviderName(provider)) {
+            "BetterLyrics" -> preferences[EnableBetterLyricsKey] ?: true
+            "Paxsenix" -> preferences[EnablePaxsenixKey] ?: true
+            "LrcLib" -> preferences[EnableLrcLibKey] ?: true
+            "KuGou" -> preferences[EnableKugouKey] ?: true
+            "LyricsPlus" -> preferences[EnableLyricsPlus] ?: false
+            "YouTubeSubtitle", "YouTube" -> true
+            else -> null
+        }
 
     fun deserializeProviderOrder(orderString: String): List<String> {
         if (orderString.isBlank()) {
