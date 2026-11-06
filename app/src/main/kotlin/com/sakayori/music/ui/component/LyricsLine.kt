@@ -123,7 +123,7 @@ internal fun LyricsLine(
     bgVisible: Boolean,
     isSelected: Boolean,
     isSelectionModeActive: Boolean,
-    currentPositionState: Long,
+    currentPositionProvider: () -> Long,
     lyricsOffset: Long,
     playerConnection: PlayerConnection,
     lyricsTextSize: Float,
@@ -253,12 +253,12 @@ internal fun LyricsLine(
                     }
                 } else null
 
-                if (isSynced && effectiveWords != null && (isActiveLine || abs(index - displayedCurrentLineIndex) <= 3) && mainText != null) {
+                if (isSynced && effectiveWords != null && isActiveLine && mainText != null) {
                     WordLevelLyrics(
                         mainText = mainText,
                         words = effectiveWords,
                         isActiveLine = isActiveLine,
-                        currentPositionState = currentPositionState,
+                        currentPositionProvider = currentPositionProvider,
                         lyricsOffset = lyricsOffset,
                         playerConnection = playerConnection,
                         lyricStyle = lyricStyle,
@@ -322,7 +322,7 @@ private fun WordLevelLyrics(
     mainText: String,
     words: List<WordTimestamp>,
     isActiveLine: Boolean,
-    currentPositionState: Long,
+    currentPositionProvider: () -> Long,
     lyricsOffset: Long,
     playerConnection: PlayerConnection,
     lyricStyle: TextStyle,
@@ -340,7 +340,7 @@ private fun WordLevelLyrics(
         }
     }
     
-    var smoothPosition by remember { mutableLongStateOf(currentPositionState + lyricsOffset) }
+    var smoothPosition by remember { mutableLongStateOf(currentPositionProvider() + lyricsOffset) }
     
     LaunchedEffect(isActiveLine) {
         if (isActiveLine) {
@@ -358,12 +358,6 @@ private fun WordLevelLyrics(
                     smoothPosition = lastPlayerPos + lyricsOffset + (if (playerConnection.player.isPlaying) elapsed else 0)
                 }
             }
-        }
-    }
-    
-    LaunchedEffect(isActiveLine, currentPositionState) {
-        if (!isActiveLine) {
-            smoothPosition = currentPositionState + lyricsOffset
         }
     }
 

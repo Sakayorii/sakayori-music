@@ -85,6 +85,7 @@ import com.sakayori.music.db.entities.Song
 import com.sakayori.music.extensions.toMediaItem
 import com.sakayori.music.playback.ExoDownloadService
 import com.sakayori.music.playback.queues.ListQueue
+import com.sakayori.music.playback.queues.buildPlaylistQueueFromDisplayed
 import com.sakayori.music.ui.component.DraggableScrollbar
 import com.sakayori.music.ui.component.EmptyPlaceholder
 import com.sakayori.music.ui.component.IconButton
@@ -301,10 +302,13 @@ fun CachePlaylistScreen(
                                         playerConnection.togglePlayPause()
                                     } else {
                                         playerConnection.playQueue(
-                                            ListQueue(
+                                            buildPlaylistQueueFromDisplayed(
                                                 title = "Cache Songs",
-                                                items = cachedSongs.map { it.toMediaItem() },
-                                                startIndex = cachedSongs.indexOfFirst { it.id == song.id }
+                                                allItems = sortedSongs,
+                                                displayedItems = filteredSongs,
+                                                clickedItem = song,
+                                                isSameItem = { first, second -> first.id == second.id },
+                                                toMediaItem = { it.toMediaItem() },
                                             )
                                         )
                                     }

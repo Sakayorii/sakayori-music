@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -96,6 +98,59 @@ fun Material3SettingsGroup(
                     Material3SettingsItemRow(item = item)
                 }
             }
+        }
+    }
+}
+
+fun LazyListScope.material3SettingsGroupItems(
+    keyPrefix: String,
+    title: String? = null,
+    items: List<Material3SettingsItem>,
+    useLowContrast: Boolean = false,
+) {
+    if (title != null) {
+        item(key = "${keyPrefix}_title", contentType = "settings_title") {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp, top = 8.dp),
+            )
+        }
+    }
+    itemsIndexed(
+        items = items,
+        key = { index, _ -> "${keyPrefix}_item_$index" },
+        contentType = { _, _ -> "settings_item" },
+    ) { index, item ->
+        val shape = when {
+            items.size == 1 -> RoundedCornerShape(24.dp)
+            index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
+            index == items.size - 1 -> RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
+            else -> RoundedCornerShape(6.dp)
+        }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = if (index < items.lastIndex) 4.dp else 0.dp)
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = 250,
+                        easing = FastOutSlowInEasing,
+                    )
+                ),
+            shape = shape,
+            colors = CardDefaults.cardColors(
+                containerColor = if (!useLowContrast) {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                }
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        ) {
+            Material3SettingsItemRow(item = item)
         }
     }
 }

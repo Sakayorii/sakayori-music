@@ -15,6 +15,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
@@ -23,6 +24,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
+import com.sakayori.music.LocalPlayerAwareWindowInsets
+import com.sakayori.music.LocalTopLevelPlayerAwareWindowInsets
 import com.sakayori.music.constants.DarkModeKey
 import com.sakayori.music.constants.PureBlackKey
 import com.sakayori.music.ui.screens.artist.ArtistAlbumsScreen
@@ -75,7 +78,9 @@ fun NavGraphBuilder.navigationBuilder(
     snackbarHostState: SnackbarHostState,
 ) {
     composable(Screens.Home.route) {
-        HomeScreen(snackbarHostState = snackbarHostState)
+        CompositionLocalProvider(LocalPlayerAwareWindowInsets provides LocalTopLevelPlayerAwareWindowInsets.current) {
+            HomeScreen(snackbarHostState = snackbarHostState)
+        }
     }
 
     composable(Screens.Search.route) { backStackEntry ->
@@ -90,18 +95,24 @@ fun NavGraphBuilder.navigationBuilder(
             remember(pureBlackEnabled, useDarkTheme) {
                 pureBlackEnabled && useDarkTheme
             }
-        SearchScreen(
-            pureBlack = pureBlack,
-            savedStateHandle = backStackEntry.savedStateHandle
-        )
+        CompositionLocalProvider(LocalPlayerAwareWindowInsets provides LocalTopLevelPlayerAwareWindowInsets.current) {
+            SearchScreen(
+                pureBlack = pureBlack,
+                savedStateHandle = backStackEntry.savedStateHandle
+            )
+        }
     }
 
     composable(Screens.Library.route) {
-        LibraryScreen()
+        CompositionLocalProvider(LocalPlayerAwareWindowInsets provides LocalTopLevelPlayerAwareWindowInsets.current) {
+            LibraryScreen()
+        }
     }
 
     composable(Screens.ListenTogether.route) {
-        ListenTogetherScreen(navController, showTopBar = false)
+        CompositionLocalProvider(LocalPlayerAwareWindowInsets provides LocalTopLevelPlayerAwareWindowInsets.current) {
+            ListenTogetherScreen(navController, showTopBar = false)
+        }
     }
 
     composable(
@@ -178,9 +189,11 @@ fun NavGraphBuilder.navigationBuilder(
             fadeOut(tween(200))
         },
     ) { backStackEntry ->
-        OnlineSearchResult(
-            savedStateHandle = backStackEntry.savedStateHandle
-        )
+        CompositionLocalProvider(LocalPlayerAwareWindowInsets provides LocalTopLevelPlayerAwareWindowInsets.current) {
+            OnlineSearchResult(
+                savedStateHandle = backStackEntry.savedStateHandle
+            )
+        }
 
     }
 

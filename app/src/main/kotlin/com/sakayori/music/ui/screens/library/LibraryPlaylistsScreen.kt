@@ -91,7 +91,6 @@ import com.sakayori.music.utils.rememberPreference
 import com.sakayori.music.viewmodels.LibraryPlaylistsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 private data class VisiblePlaylistItem(
     val key: String,
@@ -142,57 +141,66 @@ fun LibraryPlaylistsScreen(
     }
 
     val topSize by viewModel.topValue.collectAsStateWithLifecycle(initialValue = 50)
+    val likedName = stringResource(R.string.liked)
+    val offlineName = stringResource(R.string.offline)
+    val topName = stringResource(R.string.my_top) + " $topSize"
+    val uploadedName = stringResource(R.string.uploaded_playlist)
+    val cachedName = stringResource(R.string.cached_playlist)
 
-    val likedPlaylist =
+    val likedPlaylist = remember(likedName) {
         Playlist(
             playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.liked)
+                id = "auto_liked",
+                name = likedName
             ),
             songCount = 0,
             songThumbnails = emptyList(),
         )
+    }
 
-    val downloadPlaylist =
+    val downloadPlaylist = remember(offlineName) {
         Playlist(
             playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.offline)
+                id = "auto_downloaded",
+                name = offlineName
             ),
             songCount = 0,
             songThumbnails = emptyList(),
         )
+    }
 
-    val topPlaylist =
+    val topPlaylist = remember(topName) {
         Playlist(
             playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.my_top) + " $topSize"
+                id = "auto_top",
+                name = topName
             ),
             songCount = 0,
             songThumbnails = emptyList(),
         )
+    }
 
-
-    val uploadedPlaylist =
+    val uploadedPlaylist = remember(uploadedName) {
         Playlist(
             playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.uploaded_playlist)
+                id = "auto_uploaded",
+                name = uploadedName
             ),
             songCount = 0,
             songThumbnails = emptyList(),
         )
+    }
 
-    val cachedPlaylist =
+    val cachedPlaylist = remember(cachedName) {
         Playlist(
             playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.cached_playlist)
+                id = "auto_cached",
+                name = cachedName
             ),
             songCount = 0,
             songThumbnails = emptyList(),
         )
+    }
 
     val (showLiked) = rememberPreference(ShowLikedPlaylistKey, true)
     val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)

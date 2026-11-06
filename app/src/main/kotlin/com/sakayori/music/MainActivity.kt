@@ -31,7 +31,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -620,6 +619,7 @@ class MainActivity : ComponentActivity() {
                                         ImageRequest
                                             .Builder(this@MainActivity)
                                             .data(song.thumbnailUrl)
+                                            .size(100, 100)
                                             .allowHardware(false)
                                             .memoryCachePolicy(CachePolicy.ENABLED)
                                             .diskCachePolicy(CachePolicy.ENABLED)
@@ -627,7 +627,9 @@ class MainActivity : ComponentActivity() {
                                             .crossfade(false)
                                             .build(),
                                     )
-                                val extractedColor = result.image?.toBitmap()?.extractThemeColor() ?: selectedThemeColor
+                                val extractedColor = result.image?.toBitmap()?.let { bmp ->
+                                    withContext(Dispatchers.Default) { bmp.extractThemeColor() }
+                                } ?: selectedThemeColor
                                 themeColorCache[song.thumbnailUrl] = extractedColor
                                 withFrameNanos { }
                                 themeColor = extractedColor
@@ -642,10 +644,53 @@ class MainActivity : ComponentActivity() {
                 }
         }
 
+        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor) {
+            val conn = playerConnection ?: return@LaunchedEffect
+            if (!enableDynamicTheme) return@LaunchedEffect
+            kotlinx.coroutines.flow.combine(conn.queueWindows, conn.currentWindowIndex) { windows, idx ->
+                listOfNotNull(
+                    windows.getOrNull(idx + 1)?.mediaItem?.mediaMetadata?.artworkUri?.toString(),
+                    windows.getOrNull(idx - 1)?.mediaItem?.mediaMetadata?.artworkUri?.toString(),
+                )
+            }.collectLatest { urls ->
+                withContext(Dispatchers.IO) {
+                    for (url in urls) {
+                        if (url.isNotBlank() && !themeColorCache.containsKey(url)) {
+                            runCatching {
+                                val res = imageLoader.execute(
+                                    ImageRequest.Builder(this@MainActivity)
+                                        .data(url)
+                                        .size(100, 100)
+                                        .allowHardware(false)
+                                        .memoryCachePolicy(CachePolicy.ENABLED)
+                                        .diskCachePolicy(CachePolicy.ENABLED)
+                                        .networkCachePolicy(CachePolicy.ENABLED)
+                                        .crossfade(false)
+                                        .build()
+                                )
+                                val color = res.image?.toBitmap()?.let { bmp ->
+                                    withContext(Dispatchers.Default) { bmp.extractThemeColor() }
+                                } ?: selectedThemeColor
+                                withContext(Dispatchers.Main) {
+                                    themeColorCache[url] = color
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        var isPlayerSheetExpanded by remember { mutableStateOf(false) }
+        var scaffoldThemeColor by remember { mutableStateOf(themeColor) }
+        if (!isPlayerSheetExpanded && scaffoldThemeColor != themeColor) {
+            scaffoldThemeColor = themeColor
+        }
+
         SakayoriTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
-            themeColor = themeColor,
+            themeColor = scaffoldThemeColor,
         ) {
             val currentDensity = LocalDensity.current
             val windowInfo = LocalWindowInfo.current
@@ -672,7 +717,7 @@ class MainActivity : ComponentActivity() {
             }
 
             CompositionLocalProvider(LocalDensity provides scaledDensity) {
-            BoxWithConstraints(
+            Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -813,8 +858,12 @@ class MainActivity : ComponentActivity() {
                                 (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
                                 (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
                                 MiniPlayerHeight,
-                        expandedBound = maxHeight,
+                        expandedBound = configuration.containerDpSize.height,
                     )
+                val currentSheetExpanded = playerBottomSheetState.isExpanded
+                if (isPlayerSheetExpanded != currentSheetExpanded) {
+                    isPlayerSheetExpanded = currentSheetExpanded
+                }
 
                 val playerReadyState =
                     playerConnection?.service?.isPlayerReady?.collectAsStateWithLifecycle()
@@ -822,15 +871,14 @@ class MainActivity : ComponentActivity() {
                 val playerReady by playerReadyState
                 val activePlayerConnection = if (playerReady) playerConnection else null
 
-                val playerAwareWindowInsets =
+                val topLevelPlayerAwareWindowInsets =
                     remember(
                         bottomInset,
-                        shouldShowNavigationBar,
                         playerBottomSheetState.isDismissed,
                         showRail,
                     ) {
                         var bottom = bottomInset
-                        if (shouldShowNavigationBar && !showRail) {
+                        if (!showRail) {
                             bottom += NavigationBarHeight
                         }
                         if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
@@ -838,6 +886,21 @@ class MainActivity : ComponentActivity() {
                             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
                             .add(WindowInsets(top = AppBarHeight, bottom = bottom))
                     }
+
+                val detailPlayerAwareWindowInsets =
+                    remember(
+                        bottomInset,
+                        playerBottomSheetState.isDismissed,
+                    ) {
+                        var bottom = bottomInset
+                        if (!playerBottomSheetState.isDismissed) bottom += MiniPlayerHeight
+                        windowsInsets
+                            .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top)
+                            .add(WindowInsets(top = AppBarHeight, bottom = bottom))
+                    }
+
+                val playerAwareWindowInsets =
+                    if (shouldShowNavigationBar) topLevelPlayerAwareWindowInsets else detailPlayerAwareWindowInsets
                 appBarScrollBehavior(
                     canScroll = {
                         !inSearchScreen &&
@@ -1001,6 +1064,8 @@ class MainActivity : ComponentActivity() {
                     LocalContentColor provides if (pureBlack) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
                     LocalPlayerConnection provides playerConnection,
                     LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
+                    LocalTopLevelPlayerAwareWindowInsets provides topLevelPlayerAwareWindowInsets,
+                    LocalDetailPlayerAwareWindowInsets provides detailPlayerAwareWindowInsets,
                     LocalDownloadUtil provides downloadUtil,
                     LocalShimmerTheme provides ShimmerTheme,
                     LocalSyncUtils provides syncUtils,
@@ -1172,11 +1237,17 @@ class MainActivity : ComponentActivity() {
                             if (!showRail && currentRoute != "wrapped") {
                                 Box {
                                     if (activePlayerConnection != null) {
-                                        BottomSheetPlayer(
-                                            state = playerBottomSheetState,
-                                            navController = navController,
+                                        SakayoriTheme(
+                                            darkTheme = useDarkTheme,
                                             pureBlack = pureBlack,
-                                        )
+                                            themeColor = themeColor,
+                                        ) {
+                                            BottomSheetPlayer(
+                                                state = playerBottomSheetState,
+                                                navController = navController,
+                                                pureBlack = pureBlack,
+                                            )
+                                        }
                                     }
 
                                     AppNavigationBar(
@@ -1233,11 +1304,17 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 if (currentRoute != "wrapped") {
                                     if (activePlayerConnection != null) {
-                                        BottomSheetPlayer(
-                                            state = playerBottomSheetState,
-                                            navController = navController,
+                                        SakayoriTheme(
+                                            darkTheme = useDarkTheme,
                                             pureBlack = pureBlack,
-                                        )
+                                            themeColor = themeColor,
+                                        ) {
+                                            BottomSheetPlayer(
+                                                state = playerBottomSheetState,
+                                                navController = navController,
+                                                pureBlack = pureBlack,
+                                            )
+                                        }
                                     }
                                 }
 
@@ -1305,6 +1382,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             Box(Modifier.weight(1f)) {
+                                CompositionLocalProvider(LocalPlayerAwareWindowInsets provides detailPlayerAwareWindowInsets) {
                                 // NavHost with animations (Material 3 Expressive style)
                                 NavHost(
                                     navController = navController,
@@ -1363,6 +1441,7 @@ class MainActivity : ComponentActivity() {
                                         activity = this@MainActivity,
                                         snackbarHostState = snackbarHostState,
                                     )
+                                }
                                 }
                             }
                         }
@@ -1613,6 +1692,8 @@ val LocalDatabase = staticCompositionLocalOf<MusicDatabase> { error("No database
 val LocalNavController = staticCompositionLocalOf<NavController> { error("No NavController provided") }
 val LocalPlayerConnection = staticCompositionLocalOf<PlayerConnection?> { error("No PlayerConnection provided") }
 val LocalPlayerAwareWindowInsets = compositionLocalOf<WindowInsets> { error("No WindowInsets provided") }
+val LocalTopLevelPlayerAwareWindowInsets = compositionLocalOf<WindowInsets> { error("No TopLevel WindowInsets provided") }
+val LocalDetailPlayerAwareWindowInsets = compositionLocalOf<WindowInsets> { error("No Detail WindowInsets provided") }
 val LocalDownloadUtil = staticCompositionLocalOf<DownloadUtil> { error("No DownloadUtil provided") }
 val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils provided") }
 val LocalListenTogetherManager = staticCompositionLocalOf<com.sakayori.music.listentogether.ListenTogetherManager?> { null }

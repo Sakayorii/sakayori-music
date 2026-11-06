@@ -76,7 +76,6 @@ fun AlarmSettingsSection(showTitle: Boolean = true) {
     val locale = LocalLocale.current.platformLocale
     val database = LocalDatabase.current
     val scope = rememberCoroutineScope()
-    val playlists by database.playlistsByNameAsc().collectAsStateWithLifecycle(initialValue = emptyList())
     val persistMutex = remember { Mutex() }
     val selectPlaylistText = stringResource(R.string.alarm_select_playlist)
     val randomEnabledText = stringResource(R.string.alarm_random_enabled)
@@ -87,16 +86,25 @@ fun AlarmSettingsSection(showTitle: Boolean = true) {
     var showEditor by remember { mutableStateOf(false) }
     var editorTarget by remember { mutableStateOf<MusicAlarmEntry?>(null) }
 
-    val alarmManager = context.getSystemService(AlarmManager::class.java)
-    val canScheduleExact =
+    val playlistsFlow = remember(database, showEditor, alarms.isNotEmpty()) {
+        if (showEditor || alarms.isNotEmpty()) {
+            database.playlistsByNameAsc()
+        } else {
+            kotlinx.coroutines.flow.flowOf(emptyList())
+        }
+    }
+    val playlists by playlistsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val canScheduleExact = remember(context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            alarmManager?.canScheduleExactAlarms() == true
+            context.getSystemService(AlarmManager::class.java)?.canScheduleExactAlarms() == true
         } else {
             true
         }
-    val powerManager = context.getSystemService(PowerManager::class.java)
-    val ignoringBatteryOptimization =
-        powerManager?.isIgnoringBatteryOptimizations(context.packageName) == true
+    }
+    val ignoringBatteryOptimization = remember(context) {
+        context.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) == true
+    }
     val systemItems = buildList {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !canScheduleExact) {
             add(

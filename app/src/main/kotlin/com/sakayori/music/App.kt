@@ -103,7 +103,11 @@ class App :
             cachedCoilCacheSize = dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
         }
         applicationScope.launch(Dispatchers.IO) {
-            dataStore.data.collect { playbackPreferences = it }
+            val store = dataStore
+            store.data.collect {
+                playbackPreferences = it
+                com.sakayori.music.utils.updateCachedPreferences(store, it)
+            }
         }
 
         // تهيئة إعدادات التطبيق عند الإقلاع

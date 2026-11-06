@@ -31,6 +31,24 @@ import java.io.IOException
 
 @Volatile private var dataStoreInstance: DataStore<Preferences>? = null
 private val dataStoreLock = Any()
+@Volatile private var cachedStore: DataStore<Preferences>? = null
+@Volatile private var cachedPrefs: Preferences? = null
+
+@PublishedApi
+internal fun updateCachedPreferences(store: DataStore<Preferences>, prefs: Preferences) {
+    cachedStore = store
+    cachedPrefs = prefs
+}
+
+@PublishedApi
+internal fun <T> initialPreferenceValue(
+    store: DataStore<Preferences>,
+    key: Preferences.Key<T>,
+    defaultValue: T,
+): T {
+    val prefs = if (cachedStore === store) cachedPrefs else null
+    return prefs?.get(key) ?: defaultValue
+}
 
 val Context.dataStore: DataStore<Preferences>
     get() {
@@ -58,7 +76,9 @@ suspend fun Context.safeDataStoreEdit(
 ): Boolean {
     return try {
         File(filesDir, "datastore").mkdirs()
-        dataStore.edit(transform)
+        val store = dataStore
+        val updated = store.edit(transform)
+        updateCachedPreferences(store, updated)
         true
     } catch (e: IOException) {
         Timber.e(e, "DataStore edit failed")
@@ -99,15 +119,22 @@ fun <T> rememberPreference(
 ): MutableState<T> {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val store = context.dataStore
+    val initialValue = remember(store, key) {
+        initialPreferenceValue(store, key, defaultValue)
+    }
 
     val state =
-        remember {
-            context.dataStore.data
-                .map { it[key] ?: defaultValue }
+        remember(store, key) {
+            store.data
+                .map {
+                    updateCachedPreferences(store, it)
+                    it[key] ?: defaultValue
+                }
                 .distinctUntilChanged()
-        }.collectAsStateWithLifecycle(defaultValue)
+        }.collectAsStateWithLifecycle(initialValue)
 
-    return remember {
+    return remember(state, store, key) {
         object : MutableState<T> {
             override var value: T
                 get() = state.value
@@ -133,15 +160,22 @@ inline fun <reified T : Enum<T>> rememberEnumPreference(
 ): MutableState<T> {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val store = context.dataStore
+    val initialValue = remember(store, key) {
+        initialPreferenceValue(store, key, defaultValue.name).toEnum(defaultValue = defaultValue)
+    }
 
     val state =
-        remember {
-            context.dataStore.data
-                .map { it[key].toEnum(defaultValue = defaultValue) }
+        remember(store, key) {
+            store.data
+                .map {
+                    updateCachedPreferences(store, it)
+                    it[key].toEnum(defaultValue = defaultValue)
+                }
                 .distinctUntilChanged()
-        }.collectAsStateWithLifecycle(defaultValue)
+        }.collectAsStateWithLifecycle(initialValue)
 
-    return remember {
+    return remember(state, store, key) {
         object : MutableState<T> {
             override var value: T
                 get() = state.value

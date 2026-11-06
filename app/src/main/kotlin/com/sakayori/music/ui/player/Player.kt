@@ -584,9 +584,11 @@ fun BottomSheetPlayer(
             }
         }
 
-    val download by LocalDownloadUtil.current
-        .getDownload(mediaMetadata?.id ?: "")
-        .collectAsStateWithLifecycle(initialValue = null)
+    val downloadUtil = LocalDownloadUtil.current
+    val currentDownloadId = mediaMetadata?.id ?: ""
+    val download by remember(downloadUtil, currentDownloadId) {
+        downloadUtil.getDownload(currentDownloadId)
+    }.collectAsStateWithLifecycle(initialValue = downloadUtil.downloads.value[currentDownloadId])
 
     val sleepTimerEnabled =
         remember(
@@ -995,14 +997,10 @@ fun BottomSheetPlayer(
                         Spacer(modifier = Modifier.width(0.dp))
                     }
                 }
-                Column(
-                    modifier = Modifier.weight(1f),
-                ) {
-                    AnimatedContent(
-                        targetState = mediaMetadata.title,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "",
-                    ) { title ->
+                    Column(
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        val title = mediaMetadata.title
                         Text(
                             text = title,
                             style = MaterialTheme.typography.titleLarge,
@@ -1035,7 +1033,6 @@ fun BottomSheetPlayer(
                                         },
                                     ),
                         )
-                    }
 
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1880,7 +1877,7 @@ fun BottomSheetPlayer(
                                 InlineLyricsView(
                                     mediaMetadata = mediaMetadata,
                                     showLyrics = showLyrics,
-                                    positionProvider = { effectivePosition },
+                                    positionProvider = sliderPositionProvider,
                                 )
                             } else {
                                 Thumbnail(
@@ -1943,7 +1940,7 @@ fun BottomSheetPlayer(
                                 InlineLyricsView(
                                     mediaMetadata = mediaMetadata,
                                     showLyrics = showLyrics,
-                                    positionProvider = { effectivePosition },
+                                    positionProvider = sliderPositionProvider,
                                 )
                             } else {
                                 Thumbnail(
@@ -1999,7 +1996,7 @@ fun BottomSheetPlayer(
 fun InlineLyricsView(
     mediaMetadata: MediaMetadata?,
     showLyrics: Boolean,
-    positionProvider: () -> Long,
+    positionProvider: () -> Long?,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)

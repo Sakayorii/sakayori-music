@@ -24,3 +24,25 @@ class ListQueue(
 
     override suspend fun nextPage() = throw UnsupportedOperationException()
 }
+
+internal fun <T> buildPlaylistQueueFromDisplayed(
+    title: String?,
+    allItems: List<T>,
+    displayedItems: List<T>,
+    clickedItem: T,
+    isSameItem: (T, T) -> Boolean,
+    toMediaItem: (T) -> MediaItem,
+    precomputedDisplayedMediaItems: List<MediaItem>? = null,
+): ListQueue {
+    val source = displayedItems.ifEmpty { allItems }
+    val mediaItems = if (displayedItems.isNotEmpty() && precomputedDisplayedMediaItems?.size == displayedItems.size) {
+        precomputedDisplayedMediaItems
+    } else {
+        source.map(toMediaItem)
+    }
+    return ListQueue(
+        title = title,
+        items = mediaItems,
+        startIndex = source.indexOfFirst { isSameItem(it, clickedItem) }.coerceAtLeast(0),
+    )
+}

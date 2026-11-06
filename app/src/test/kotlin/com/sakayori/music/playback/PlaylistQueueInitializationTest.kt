@@ -388,6 +388,24 @@ class PlaylistQueueInitializationTest {
         assertEquals("newer", service.queueTitle)
     }
 
+    @Test
+    fun `switching rows inside an already committed list queue seeks without rebuilding the timeline or re-preparing`() {
+        val items = listOf(item("a"), item("b"), item("c"))
+        service.playQueue(ListQueue("playlist", items, startIndex = 0))
+        val firstJob = ReflectionHelpers.getField<Job>(service, "queueLoadJob")
+        pumpUntil { firstJob.isCompleted }
+        assertEquals(listOf("a", "b", "c"), ids())
+        assertEquals(0, player.currentMediaItemIndex)
+        val preparationsAfterInitialCommit = preparationCount
+
+        service.playQueue(ListQueue("playlist", items, startIndex = 2))
+
+        assertEquals(listOf("a", "b", "c"), ids())
+        assertEquals(2, player.currentMediaItemIndex)
+        assertEquals("playlist", service.queueTitle)
+        assertEquals(preparationsAfterInitialCommit, preparationCount)
+    }
+
     private fun startHeldQueue(
         items: List<MediaItem> = listOf(item("before"), item("selected"), item("after")),
         startIndex: Int = 1,

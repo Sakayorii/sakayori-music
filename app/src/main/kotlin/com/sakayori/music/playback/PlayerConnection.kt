@@ -138,6 +138,13 @@ class PlayerConnection(
                 }
             }
         }
+        scope.launch {
+            service.queueLoadState.collect { load ->
+                if (load.committed) {
+                    queueTitle.value = service.queueTitle
+                }
+            }
+        }
 
         Timber.tag(TAG).d("PlayerConnection state flows initialized successfully")
     }
@@ -625,6 +632,7 @@ class PlayerConnection(
         reason: Int,
     ) {
         mediaMetadata.value = mediaItem?.metadata
+        queueTitle.value = service.queueTitle
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
@@ -634,7 +642,9 @@ class PlayerConnection(
         timeline: Timeline,
         reason: Int,
     ) {
-        queueWindows.value = player.getQueueWindows()
+        if (!service.isSplicingInitialQueue) {
+            queueWindows.value = player.getQueueWindows()
+        }
         queueTitle.value = service.queueTitle
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()

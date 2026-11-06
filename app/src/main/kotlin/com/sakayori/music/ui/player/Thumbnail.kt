@@ -47,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -85,6 +86,7 @@ import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import coil3.toBitmap
 import com.sakayori.music.LocalListenTogetherManager
 import com.sakayori.music.LocalPlayerConnection
 import com.sakayori.music.R
@@ -104,6 +106,7 @@ import com.sakayori.music.ui.component.CastButton
 import com.sakayori.music.utils.rememberEnumPreference
 import com.sakayori.music.utils.rememberPreference
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -454,17 +457,50 @@ fun Thumbnail(
                     } else null
                     val incomingPainter = incoming?.first
                     val incomingState = incoming?.second?.value
+                    val preloadedImages = remember { mutableStateMapOf<String, CoilImage>() }
                     var presentation by remember { mutableStateOf<PlayerArtworkPresentation?>(null) }
 
-                    LaunchedEffect(mediaItemsData, incomingPainter, incomingState, hidePlayerThumbnail) {
+                    LaunchedEffect(mediaItemsData, imageSizePx, hidePlayerThumbnail, context) {
+                        if (hidePlayerThumbnail) return@LaunchedEffect
+                        withContext(Dispatchers.IO) {
+                            for (candidate in mediaItemsData.items) {
+                                val uri = candidate.mediaMetadata.artworkUri?.toString()
+                                    ?: candidate.metadata?.thumbnailUrl
+                                if (uri.isNullOrBlank() || preloadedImages.containsKey(uri)) continue
+                                runCatching {
+                                    val req = ImageRequest.Builder(context)
+                                        .data(uri)
+                                        .size(imageSizePx, imageSizePx)
+                                        .crossfade(false)
+                                        .memoryCachePolicy(CachePolicy.ENABLED)
+                                        .diskCachePolicy(CachePolicy.ENABLED)
+                                        .networkCachePolicy(CachePolicy.ENABLED)
+                                        .build()
+                                    val res = context.imageLoader.execute(req)
+                                    val img = res.image
+                                    if (img != null) {
+                                        runCatching { img.toBitmap().prepareToDraw() }
+                                        withContext(Dispatchers.Main) {
+                                            preloadedImages[uri] = img
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    val readyIncomingImage = (incomingState as? AsyncImagePainter.State.Success)?.result?.image
+                        ?: incomingUri?.let { preloadedImages[it] }
+
+                    LaunchedEffect(mediaItemsData, incomingPainter, readyIncomingImage, hidePlayerThumbnail) {
                         if (hidePlayerThumbnail || incomingItem == null) {
                             presentation = null
-                        } else if (incomingState is AsyncImagePainter.State.Success) {
+                        } else if (readyIncomingImage != null) {
                             val ready = ReadyPlayerArtwork(
                                 key = playerArtworkKey(incomingItem),
                                 mediaId = incomingItem.mediaId,
                                 uri = incomingUri,
-                                image = incomingState.result.image,
+                                image = readyIncomingImage,
                             )
                             val old = presentation
                             presentation = PlayerArtworkPresentation(
@@ -632,7 +668,8 @@ fun Thumbnail(
                                 isListenTogetherGuest = isListenTogetherGuest,
                                 currentMediaId = displayedCurrentId,
                                 currentMediaThumbnail = displayedCurrentUri,
-                                readyImage = presentation?.imageFor(item),
+                                readyImage = presentation?.imageFor(item)
+                                    ?: item.mediaMetadata.artworkUri?.toString()?.let { preloadedImages[it] },
                                 incomingPainter = incomingPainter.takeIf {
                                     presentation == null && item.mediaId == incomingItem?.mediaId
                                 },

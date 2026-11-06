@@ -302,10 +302,13 @@ fun ExperimentalLyrics(
     }
 
     var activeLineIndices by remember { mutableStateOf(emptySet<Int>()) }
+    var bgVisibleLineIndices by remember { mutableStateOf(emptySet<Int>()) }
+    var visibleIndicatorAfterIndices by remember { mutableStateOf(emptySet<Int>()) }
     var scrollTargetIndex by rememberSaveable { mutableIntStateOf(-1) }
     var previousScrollActiveIndices by remember { mutableStateOf(emptySet<Int>()) }
     
     var currentPositionState by remember { mutableLongStateOf(0L) }
+    val currentPositionProvider = remember { { currentPositionState } }
     var deferredCurrentLineIndex by rememberSaveable { mutableIntStateOf(0) }
     var lastPreviewTime by rememberSaveable { mutableLongStateOf(0L) }
     var isSeeking by remember { mutableStateOf(false) }
@@ -335,9 +338,11 @@ fun ExperimentalLyrics(
     var lastMainMaxSeen by remember(lyrics, lines) { mutableIntStateOf(-1) }
     var smoothPositionForSync by remember { mutableLongStateOf(0L) }
 
-    LaunchedEffect(lyrics, lines) {
+    LaunchedEffect(lyrics, lines, mergedLyricsList) {
         if (lyrics.isNullOrEmpty() || lines.isEmpty()) {
             activeLineIndices = emptySet()
+            bgVisibleLineIndices = emptySet()
+            visibleIndicatorAfterIndices = emptySet()
             return@LaunchedEffect
         }
         
@@ -438,9 +443,41 @@ fun ExperimentalLyrics(
             if (scrollMax > lastMainMaxSeen && scrollMax != -1) {
                 lastMainMaxSeen = scrollMax
             }
-            
-            previousScrollActiveIndices = scrollActiveIndices
-            activeLineIndices = newActiveIndices
+
+            val newBgVisibleIndices = mutableSetOf<Int>()
+            for (i in lines.indices) {
+                val entry = lines[i]
+                if (entry.isBackground) {
+                    val pairedMain = (i - 1 downTo 0).firstOrNull { lines.getOrNull(it)?.isBackground == false } ?: -1
+                    val inGap = pairedMain != -1 && effectivePosition >= lines[pairedMain].time && effectivePosition <= entry.time
+                    if (newActiveIndices.contains(pairedMain) || newActiveIndices.contains(i) || inGap) {
+                        newBgVisibleIndices.add(i)
+                    }
+                }
+            }
+
+            val newVisibleIndicators = mutableSetOf<Int>()
+            for (listItem in mergedLyricsList) {
+                if (listItem is LyricsListItem.Indicator &&
+                    position >= listItem.gapStartMs &&
+                    position <= listItem.gapEndMs - 650L
+                ) {
+                    newVisibleIndicators.add(listItem.afterLineIndex)
+                }
+            }
+
+            if (scrollActiveIndices != previousScrollActiveIndices) {
+                previousScrollActiveIndices = scrollActiveIndices
+            }
+            if (newActiveIndices != activeLineIndices) {
+                activeLineIndices = newActiveIndices
+            }
+            if (newBgVisibleIndices != bgVisibleLineIndices) {
+                bgVisibleLineIndices = newBgVisibleIndices
+            }
+            if (newVisibleIndicators != visibleIndicatorAfterIndices) {
+                visibleIndicatorAfterIndices = newVisibleIndicators
+            }
         }
     }
 
@@ -482,6 +519,13 @@ fun ExperimentalLyrics(
                 (it is LyricsListItem.Line && it.index == deferredCurrentLineIndex) ||
                 (it is LyricsListItem.Indicator && it.afterLineIndex == deferredCurrentLineIndex)
             }.coerceAtLeast(0)
+        }
+    }
+    var transitionOriginListIndex by remember(lyrics, mergedLyricsList) { mutableIntStateOf(0) }
+    LaunchedEffect(activeListIndex) {
+        if (transitionOriginListIndex != activeListIndex) {
+            delay(950)
+            transitionOriginListIndex = activeListIndex
         }
     }
 
@@ -709,9 +753,6 @@ fun ExperimentalLyrics(
                         }
                     }
             ) {
-                val lyricsOffsetVal = (currentSong?.song?.lyricsOffset ?: 0).toLong()
-                val currentEffectivePosition = currentPositionState + lyricsOffsetVal
-                
                 if (isLyricsProviderShown) {
                     val targetProviderBase = anchorY + (positions[0] ?: 0f) - with(density) { 32.dp.toPx() }
                     val animatedProviderBase by animateFloatAsState(
@@ -729,10 +770,16 @@ fun ExperimentalLyrics(
                     )
                 }
 
+                val windowMinIndex = (minOf(activeListIndex, transitionOriginListIndex) - 10).coerceAtLeast(0)
+                val windowMaxIndex = (maxOf(activeListIndex, transitionOriginListIndex) + 14).coerceAtMost((mergedLyricsList.size - 1).coerceAtLeast(0))
+
                 mergedLyricsList.forEachIndexed { listIndex, listItem ->
+                    val targetOffset = anchorY + positions.getOrDefault(listIndex, (listIndex - activeListIndex) * lineHeightPx)
+                    val inAutoWindow = listIndex in windowMinIndex..windowMaxIndex || (isLyricsProviderShown && listIndex == 0)
+                    val inManualViewport = !isAutoScrollEnabled && (targetOffset + userManualOffset) in (-maxHeightPx)..(2f * maxHeightPx)
+                    if (!inAutoWindow && !inManualViewport && !isSelectionModeActive) return@forEachIndexed
                     key(listItem) {
                         val distance = abs(listIndex - activeListIndex)
-                        val targetOffset = anchorY + positions.getOrDefault(listIndex, (listIndex - activeListIndex) * lineHeightPx)
                         val frozenOffset = remember { mutableFloatStateOf(targetOffset) }
                         LaunchedEffect(isAutoScrollEnabled, targetOffset, isInitialLayout) {
                             if (isAutoScrollEnabled || isInitialLayout) frozenOffset.floatValue = targetOffset
@@ -754,38 +801,47 @@ fun ExperimentalLyrics(
                         ) {
                             when (listItem) {
                                 is LyricsListItem.Indicator -> {
-                                    val visible =
-                                        isAutoScrollEnabled &&
-                                            currentPositionState >= listItem.gapStartMs &&
-                                            currentPositionState <= listItem.gapEndMs - 650L
-                                    IntervalIndicator(listItem.gapStartMs, listItem.gapEndMs - 650L, currentPositionState, visible, expressiveAccent, 
-                                        Modifier.fillMaxWidth().onSizeChanged { itemHeights[listIndex] = it.height }.padding(horizontal = 24.dp).wrapContentWidth(Alignment.CenterHorizontally))
+                                    val visible = isAutoScrollEnabled && visibleIndicatorAfterIndices.contains(listItem.afterLineIndex)
+                                    IntervalIndicator(
+                                        gapStartMs = listItem.gapStartMs,
+                                        gapEndMs = listItem.gapEndMs - 650L,
+                                        currentPositionProvider = currentPositionProvider,
+                                        visible = visible,
+                                        color = expressiveAccent,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .onSizeChanged {
+                                                if (itemHeights[listIndex] != it.height) {
+                                                    itemHeights[listIndex] = it.height
+                                                }
+                                            }
+                                            .padding(horizontal = 24.dp)
+                                            .wrapContentWidth(Alignment.CenterHorizontally)
+                                    )
                                 }
                                 is LyricsListItem.Line -> {
                                     val index = listItem.index
                                     val item = listItem.entry
                                     val isActiveLine = activeLineIndices.contains(index)
-                                    val pairedMainLineIndex = if (item.isBackground) (index - 1 downTo 0).firstOrNull { lines.getOrNull(it)?.isBackground == false } ?: -1 else -1
-                                    
-                                    val isInGapWithMain = if (item.isBackground && pairedMainLineIndex != -1) {
-                                        val pairedMainLine = lines[pairedMainLineIndex]
-                                        currentEffectivePosition >= pairedMainLine.time && currentEffectivePosition <= item.time
-                                    } else false
-                                    
-                                    val bgVisible = item.isBackground && (activeLineIndices.contains(pairedMainLineIndex) || activeLineIndices.contains(index) || isInGapWithMain)
+                                    val bgVisible = item.isBackground && bgVisibleLineIndices.contains(index)
                                     
                                     LyricsLine(
                                         index = index, item = item, isSynced = isSynced,
                                         isActiveLine = isActiveLine,
                                         bgVisible = bgVisible, isSelected = selectedIndices.contains(index),
-                                        isSelectionModeActive = isSelectionModeActive, currentPositionState = currentPositionState,
+                                        isSelectionModeActive = isSelectionModeActive,
+                                        currentPositionProvider = currentPositionProvider,
                                         lyricsOffset = (currentSong?.song?.lyricsOffset ?: 0).toLong(),
                                         playerConnection = playerConnection, lyricsTextSize = 36f, lyricsLineSpacing = 1.3f,
                                         expressiveAccent = expressiveAccent, lyricsTextPosition = lyricsTextPosition,
                                         respectAgentPositioning = respectAgentPositioning, isAutoScrollEnabled = isAutoScrollEnabled,
                                         displayedCurrentLineIndex = deferredCurrentLineIndex, romanizeAsMain = romanizeAsMain,
                                         enabledLanguages = enabledLanguages, romanizeLyrics = currentSong?.romanizeLyrics == true,
-                                        onSizeChanged = { itemHeights[listIndex] = it },
+                                        onSizeChanged = {
+                                            if (itemHeights[listIndex] != it) {
+                                                itemHeights[listIndex] = it
+                                            }
+                                        },
                                         onClick = {
                                             if (isSelectionModeActive) {
                                                 if (selectedIndices.contains(index)) {

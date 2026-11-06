@@ -86,6 +86,7 @@ import com.sakayori.music.db.entities.Song
 import com.sakayori.music.extensions.toMediaItem
 import com.sakayori.music.playback.ExoDownloadService
 import com.sakayori.music.playback.queues.ListQueue
+import com.sakayori.music.playback.queues.buildPlaylistQueueFromDisplayed
 import com.sakayori.music.ui.component.DefaultDialog
 import com.sakayori.music.ui.component.DraggableScrollbar
 import com.sakayori.music.ui.component.EmptyPlaceholder
@@ -355,10 +356,13 @@ fun TopPlaylistScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                ListQueue(
+                                                buildPlaylistQueueFromDisplayed(
                                                     title = name,
-                                                    items = songs!!.map { it.toMediaItem() },
-                                                    startIndex = songs!!.indexOfFirst { it.id == song.id }
+                                                    allItems = songs!!,
+                                                    displayedItems = filteredSongs,
+                                                    clickedItem = song,
+                                                    isSameItem = { first, second -> first.id == second.id },
+                                                    toMediaItem = { it.toMediaItem() },
                                                 ),
                                             )
                                         }

@@ -15,8 +15,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Badge
@@ -82,6 +81,7 @@ import com.sakayori.music.ui.component.EnumDialog
 import com.sakayori.music.ui.component.IconButton
 import com.sakayori.music.ui.component.Material3SettingsGroup
 import com.sakayori.music.ui.component.Material3SettingsItem
+import com.sakayori.music.ui.component.material3SettingsGroupItems
 import com.sakayori.music.ui.component.TextFieldDialog
 import com.sakayori.music.playback.flac.LosslessApiHttp
 import com.sakayori.music.ui.utils.backToMain
@@ -172,67 +172,6 @@ fun PlayerSettings(
         SeekExtraSeconds,
         defaultValue = false
     )
-
-    val (autoLoadMore, onAutoLoadMoreChange) = rememberPreference(
-        AutoLoadMoreKey,
-        defaultValue = true
-    )
-    val (autoRadioQueue, onAutoRadioQueueChange) = rememberPreference(
-        AutoRadioQueueKey,
-        defaultValue = true
-    )
-    val (disableLoadMoreWhenRepeatAll, onDisableLoadMoreWhenRepeatAllChange) = rememberPreference(
-        DisableLoadMoreWhenRepeatAllKey,
-        defaultValue = false
-    )
-    val (autoDownloadOnLike, onAutoDownloadOnLikeChange) = rememberPreference(
-        AutoDownloadOnLikeKey,
-        defaultValue = false
-    )
-    val (similarContentEnabled, similarContentEnabledChange) = rememberPreference(
-        key = SimilarContent,
-        defaultValue = true
-    )
-    val (autoSkipNextOnError, onAutoSkipNextOnErrorChange) = rememberPreference(
-        AutoSkipNextOnErrorKey,
-        defaultValue = false
-    )
-    val (autoplay, onAutoplayChange) = rememberPreference(
-        AutoplayKey,
-        defaultValue = true
-    )
-    val (persistentShuffleAcrossQueues, onPersistentShuffleAcrossQueuesChange) = rememberPreference(
-        PersistentShuffleAcrossQueuesKey,
-        defaultValue = false
-    )
-    val (rememberShuffleAndRepeat, onRememberShuffleAndRepeatChange) = rememberPreference(
-        RememberShuffleAndRepeatKey,
-        defaultValue = true
-    )
-    val (shufflePlaylistFirst, onShufflePlaylistFirstChange) = rememberPreference(
-        ShufflePlaylistFirstKey,
-        defaultValue = false
-    )
-    val (preventDuplicateTracksInQueue, onPreventDuplicateTracksInQueueChange) = rememberPreference(
-        PreventDuplicateTracksInQueueKey,
-        defaultValue = false
-    )
-    val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
-        StopMusicOnTaskClearKey,
-        defaultValue = false
-    )
-    val (pauseOnMute, onPauseOnMuteChange) = rememberPreference(
-        PauseOnMute,
-        defaultValue = false
-    )
-    val (resumeOnBluetoothConnect, onResumeOnBluetoothConnectChange) = rememberPreference(
-        ResumeOnBluetoothConnectKey,
-        defaultValue = false
-    )
-    val (keepScreenOn, onKeepScreenOnChange) = rememberPreference(
-        KeepScreenOn,
-        defaultValue = false
-    )
     val (historyDuration, onHistoryDurationChange) = rememberPreference(
         HistoryDuration,
         defaultValue = 30f
@@ -293,27 +232,9 @@ fun PlayerSettings(
         )
     }
 
-    Column(
-        Modifier
-            .windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-                )
-            )
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
-    ) {
-        Spacer(
-            Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top
-                )
-            )
-        )
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.player),
-            items = buildList {
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
+    val playerSectionTitle = stringResource(R.string.player)
+    val playerItems = buildList {
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.graphic_eq),
                     title = { Text(stringResource(R.string.audio_quality)) },
@@ -637,72 +558,94 @@ fun PlayerSettings(
                     onClick = { onSeekExtraSeconds(!seekExtraSeconds) }
                 ))
             }
-        )
 
-        Spacer(modifier = Modifier.height(27.dp))
-
-        var showSleepTimerDialog by remember { mutableStateOf(false) }
-
-        val (sleepTimerEnabled, onSleepTimerEnabledChange) = rememberPreference(
-            SleepTimerEnabledKey,
-            defaultValue = false
-        )
-        val (sleepTimerRepeat, onSleepTimerRepeatChange) = rememberPreference(
-            SleepTimerRepeatKey,
-            defaultValue = "daily"
-        )
-        val (sleepTimerStartTime, onSleepTimerStartTimeChange) = rememberPreference(
-            SleepTimerStartTimeKey,
-            defaultValue = "22:00"
-        )
-        val (sleepTimerEndTime, onSleepTimerEndTimeChange) = rememberPreference(
-            SleepTimerEndTimeKey,
-            defaultValue = "06:00"
-        )
-        val (sleepTimerCustomDays, onSleepTimerCustomDaysChange) = rememberPreference(
-            SleepTimerCustomDaysKey,
-            defaultValue = "0,1,2,3,4"
-        )
-        // Per-day time ranges used in custom mode
-        val (sleepTimerDayTimes, onSleepTimerDayTimesChange) = rememberPreference(
-            SleepTimerDayTimesKey,
-            defaultValue = ""
-        )
-
-        val (sleepTimerStopAfterCurrentSong, onSleepTimerStopAfterCurrentSongChange) = rememberPreference (
-        SleepTimerStopAfterCurrentSongKey,
-        defaultValue = false)
-        val (sleepTimerFadeOut, onSleepTimerFadeOutChange) = rememberPreference(
-            SleepTimerFadeOutKey,
-            false
-        )
-
-        if (showSleepTimerDialog) {
-            val customDays = sleepTimerCustomDays.split(",").mapNotNull { it.toIntOrNull() }
-            val dayTimesMap = decodeDayTimes(sleepTimerDayTimes)
-
-            SleepTimerDialog(
-                isVisible = true,
-                onDismiss = { showSleepTimerDialog = false },
-                onConfirm = { repeat, startTime, endTime, days, dayTimes ->
-                    onSleepTimerRepeatChange(repeat)
-                    onSleepTimerStartTimeChange(startTime)
-                    onSleepTimerEndTimeChange(endTime)
-                    onSleepTimerCustomDaysChange(days?.joinToString(",") ?: "0,1,2,3,4")
-                    onSleepTimerDayTimesChange(encodeDayTimes(dayTimes))
-                    showSleepTimerDialog = false
-                },
-                initialRepeat = sleepTimerRepeat,
-                initialStartTime = sleepTimerStartTime,
-                initialEndTime = sleepTimerEndTime,
-                initialCustomDays = customDays,
-                initialDayTimes = dayTimesMap
+    LazyColumn(
+        Modifier
+            .windowInsetsPadding(
+                LocalPlayerAwareWindowInsets.current.only(
+                    WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+                )
+            )
+            .padding(horizontal = 16.dp)
+    ) {
+        item(key = "top_spacer") {
+            Spacer(
+                Modifier.windowInsetsPadding(
+                    LocalPlayerAwareWindowInsets.current.only(
+                        WindowInsetsSides.Top
+                    )
+                )
             )
         }
 
-        Material3SettingsGroup(
-            title = stringResource(R.string.sleep_timer),
-            items = buildList {
+        material3SettingsGroupItems(
+            keyPrefix = "player",
+            title = playerSectionTitle,
+            items = playerItems,
+        )
+
+        item(key = "sleep_timer_section", contentType = "settings_section") {
+            Spacer(modifier = Modifier.height(27.dp))
+
+            val (sleepTimerEnabled, onSleepTimerEnabledChange) = rememberPreference(
+                SleepTimerEnabledKey,
+                defaultValue = false
+            )
+            val (sleepTimerRepeat, onSleepTimerRepeatChange) = rememberPreference(
+                SleepTimerRepeatKey,
+                defaultValue = "daily"
+            )
+            val (sleepTimerStartTime, onSleepTimerStartTimeChange) = rememberPreference(
+                SleepTimerStartTimeKey,
+                defaultValue = "22:00"
+            )
+            val (sleepTimerEndTime, onSleepTimerEndTimeChange) = rememberPreference(
+                SleepTimerEndTimeKey,
+                defaultValue = "06:00"
+            )
+            val (sleepTimerCustomDays, onSleepTimerCustomDaysChange) = rememberPreference(
+                SleepTimerCustomDaysKey,
+                defaultValue = "0,1,2,3,4"
+            )
+            val (sleepTimerDayTimes, onSleepTimerDayTimesChange) = rememberPreference(
+                SleepTimerDayTimesKey,
+                defaultValue = ""
+            )
+            val (sleepTimerStopAfterCurrentSong, onSleepTimerStopAfterCurrentSongChange) = rememberPreference(
+                SleepTimerStopAfterCurrentSongKey,
+                defaultValue = false
+            )
+            val (sleepTimerFadeOut, onSleepTimerFadeOutChange) = rememberPreference(
+                SleepTimerFadeOutKey,
+                false
+            )
+
+            if (showSleepTimerDialog) {
+                val customDays = sleepTimerCustomDays.split(",").mapNotNull { it.toIntOrNull() }
+                val dayTimesMap = decodeDayTimes(sleepTimerDayTimes)
+
+                SleepTimerDialog(
+                    isVisible = true,
+                    onDismiss = { showSleepTimerDialog = false },
+                    onConfirm = { repeat, startTime, endTime, days, dayTimes ->
+                        onSleepTimerRepeatChange(repeat)
+                        onSleepTimerStartTimeChange(startTime)
+                        onSleepTimerEndTimeChange(endTime)
+                        onSleepTimerCustomDaysChange(days?.joinToString(",") ?: "0,1,2,3,4")
+                        onSleepTimerDayTimesChange(encodeDayTimes(dayTimes))
+                        showSleepTimerDialog = false
+                    },
+                    initialRepeat = sleepTimerRepeat,
+                    initialStartTime = sleepTimerStartTime,
+                    initialEndTime = sleepTimerEndTime,
+                    initialCustomDays = customDays,
+                    initialDayTimes = dayTimesMap
+                )
+            }
+
+            Material3SettingsGroup(
+                title = stringResource(R.string.sleep_timer),
+                items = buildList {
                 add(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.time_auto),
@@ -805,17 +748,65 @@ fun PlayerSettings(
                 )
 
             }
-        )
+            )
+        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        item(key = "alarm_section", contentType = "settings_section") {
+            Spacer(modifier = Modifier.height(16.dp))
+            AlarmSettingsSection()
+        }
 
-        AlarmSettingsSection()
+        item(key = "queue_section", contentType = "settings_section") {
+            Spacer(modifier = Modifier.height(27.dp))
 
-        Spacer(modifier = Modifier.height(27.dp))
+            val (autoLoadMore, onAutoLoadMoreChange) = rememberPreference(
+                AutoLoadMoreKey,
+                defaultValue = true
+            )
+            val (autoRadioQueue, onAutoRadioQueueChange) = rememberPreference(
+                AutoRadioQueueKey,
+                defaultValue = true
+            )
+            val (disableLoadMoreWhenRepeatAll, onDisableLoadMoreWhenRepeatAllChange) = rememberPreference(
+                DisableLoadMoreWhenRepeatAllKey,
+                defaultValue = false
+            )
+            val (autoDownloadOnLike, onAutoDownloadOnLikeChange) = rememberPreference(
+                AutoDownloadOnLikeKey,
+                defaultValue = false
+            )
+            val (similarContentEnabled, similarContentEnabledChange) = rememberPreference(
+                key = SimilarContent,
+                defaultValue = true
+            )
+            val (autoSkipNextOnError, onAutoSkipNextOnErrorChange) = rememberPreference(
+                AutoSkipNextOnErrorKey,
+                defaultValue = false
+            )
+            val (autoplay, onAutoplayChange) = rememberPreference(
+                AutoplayKey,
+                defaultValue = true
+            )
+            val (persistentShuffleAcrossQueues, onPersistentShuffleAcrossQueuesChange) = rememberPreference(
+                PersistentShuffleAcrossQueuesKey,
+                defaultValue = false
+            )
+            val (rememberShuffleAndRepeat, onRememberShuffleAndRepeatChange) = rememberPreference(
+                RememberShuffleAndRepeatKey,
+                defaultValue = true
+            )
+            val (shufflePlaylistFirst, onShufflePlaylistFirstChange) = rememberPreference(
+                ShufflePlaylistFirstKey,
+                defaultValue = false
+            )
+            val (preventDuplicateTracksInQueue, onPreventDuplicateTracksInQueueChange) = rememberPreference(
+                PreventDuplicateTracksInQueueKey,
+                defaultValue = false
+            )
 
-        Material3SettingsGroup(
-            title = stringResource(R.string.queue),
-            items = listOf(
+            Material3SettingsGroup(
+                title = stringResource(R.string.queue),
+                items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.queue_music),
                     title = { Text(stringResource(R.string.persistent_queue)) },
@@ -1069,13 +1060,32 @@ fun PlayerSettings(
                     onClick = { onAutoSkipNextOnErrorChange(!autoSkipNextOnError) }
                 )
             )
-        )
+            )
+        }
 
-        Spacer(modifier = Modifier.height(27.dp))
+        item(key = "misc_section", contentType = "settings_section") {
+            Spacer(modifier = Modifier.height(27.dp))
 
-        Material3SettingsGroup(
-            title = stringResource(R.string.misc),
-            items = listOf(
+            val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(
+                StopMusicOnTaskClearKey,
+                defaultValue = false
+            )
+            val (pauseOnMute, onPauseOnMuteChange) = rememberPreference(
+                PauseOnMute,
+                defaultValue = false
+            )
+            val (resumeOnBluetoothConnect, onResumeOnBluetoothConnectChange) = rememberPreference(
+                ResumeOnBluetoothConnectKey,
+                defaultValue = false
+            )
+            val (keepScreenOn, onKeepScreenOnChange) = rememberPreference(
+                KeepScreenOn,
+                defaultValue = false
+            )
+
+            Material3SettingsGroup(
+                title = stringResource(R.string.misc),
+                items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.clear_all),
                     title = { Text(stringResource(R.string.stop_music_on_task_clear)) },
@@ -1157,8 +1167,9 @@ fun PlayerSettings(
                     onClick = { onKeepScreenOnChange(!keepScreenOn) }
                 )
             )
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 
     TopAppBar(

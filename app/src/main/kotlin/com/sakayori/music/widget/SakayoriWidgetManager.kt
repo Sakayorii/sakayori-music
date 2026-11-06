@@ -59,54 +59,66 @@ class SakayoriWidgetManager @Inject constructor(
         currentPosition: Long = 0
     ) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
-
-        // Use cached album art if URI hasn't changed, otherwise load new one
-        val albumArt: Bitmap?
-        val circularAlbumArt: Bitmap?
-        
-        if (artworkUri != null && artworkUri == cachedArtworkUri && cachedAlbumArt != null) {
-            albumArt = cachedAlbumArt
-            circularAlbumArt = cachedCircularAlbumArt
-        } else {
-            albumArt = artworkUri?.let { loadAlbumArt(it, 300) }
-            circularAlbumArt = albumArt?.let { getCircularBitmap(it) }
-            // Update cache
-            cachedArtworkUri = artworkUri
-            cachedAlbumArt = albumArt
-            cachedCircularAlbumArt = circularAlbumArt
-        }
-
-        // Update main music player widgets
         val componentName = ComponentName(context, MusicWidgetReceiver::class.java)
         val widgetIds = appWidgetManager.getAppWidgetIds(componentName)
-        if (widgetIds.isNotEmpty()) {
-            widgetIds.forEach { widgetId ->
-                val options = appWidgetManager.getAppWidgetOptions(widgetId)
-                val views = createRemoteViewsForSize(
-                    options,
-                    title,
-                    artist,
-                    albumArt,
-                    isPlaying,
-                    isLiked,
-                    duration,
-                    currentPosition
-                )
-                appWidgetManager.updateAppWidget(widgetId, views)
-            }
-        }
-
-        // Update turntable widgets
         val turntableComponentName = ComponentName(context, TurntableWidgetReceiver::class.java)
         val turntableWidgetIds = appWidgetManager.getAppWidgetIds(turntableComponentName)
-        if (turntableWidgetIds.isNotEmpty()) {
-            val turntableViews = createTurntableRemoteViews(
-                circularAlbumArt,
-                isPlaying,
-                isLiked
-            )
-            turntableWidgetIds.forEach { widgetId ->
-                appWidgetManager.updateAppWidget(widgetId, turntableViews)
+
+        if (widgetIds.isNotEmpty() || turntableWidgetIds.isNotEmpty()) {
+            // Use cached album art if URI hasn't changed, otherwise load new one
+            val albumArt: Bitmap?
+            val circularAlbumArt: Bitmap?
+
+            val existingArt = cachedAlbumArt
+            if (artworkUri != null && artworkUri == cachedArtworkUri && existingArt != null) {
+                albumArt = existingArt
+                circularAlbumArt = if (turntableWidgetIds.isNotEmpty()) {
+                    cachedCircularAlbumArt ?: withContext(Dispatchers.Default) { getCircularBitmap(existingArt) }.also {
+                        cachedCircularAlbumArt = it
+                    }
+                } else {
+                    cachedCircularAlbumArt
+                }
+            } else {
+                val loadedArt = artworkUri?.let { loadAlbumArt(it, 300) }
+                albumArt = loadedArt
+                circularAlbumArt = if (turntableWidgetIds.isNotEmpty() && loadedArt != null) {
+                    withContext(Dispatchers.Default) { getCircularBitmap(loadedArt) }
+                } else {
+                    null
+                }
+                // Update cache
+                cachedArtworkUri = artworkUri
+                cachedAlbumArt = loadedArt
+                cachedCircularAlbumArt = circularAlbumArt
+            }
+
+            if (widgetIds.isNotEmpty()) {
+                widgetIds.forEach { widgetId ->
+                    val options = appWidgetManager.getAppWidgetOptions(widgetId)
+                    val views = createRemoteViewsForSize(
+                        options,
+                        title,
+                        artist,
+                        albumArt,
+                        isPlaying,
+                        isLiked,
+                        duration,
+                        currentPosition
+                    )
+                    appWidgetManager.updateAppWidget(widgetId, views)
+                }
+            }
+
+            if (turntableWidgetIds.isNotEmpty()) {
+                val turntableViews = createTurntableRemoteViews(
+                    circularAlbumArt,
+                    isPlaying,
+                    isLiked
+                )
+                turntableWidgetIds.forEach { widgetId ->
+                    appWidgetManager.updateAppWidget(widgetId, turntableViews)
+                }
             }
         }
 

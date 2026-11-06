@@ -127,6 +127,7 @@ import com.sakayori.music.extensions.toMediaItem
 import com.sakayori.music.models.toMediaMetadata
 import com.sakayori.music.playback.ExoDownloadService
 import com.sakayori.music.playback.queues.ListQueue
+import com.sakayori.music.playback.queues.buildPlaylistQueueFromDisplayed
 import com.sakayori.music.ui.component.ActionPromptDialog
 import com.sakayori.music.ui.component.DefaultDialog
 import com.sakayori.music.ui.component.DraggableScrollbar
@@ -217,6 +218,9 @@ fun LocalPlaylistScreen(
                 }
             }
         }
+    val displayedSongs = if (isSearching) filteredSongs else mutableSongs
+    val displayedMediaItems = remember(displayedSongs.toList()) { displayedSongs.map { it.song.toMediaItem() } }
+    val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(isSearching) {
@@ -549,8 +553,6 @@ fun LocalPlaylistScreen(
                 }
             }
 
-            val displayedSongs = if (isSearching) filteredSongs else mutableSongs
-
             itemsIndexed(
                 items = displayedSongs,
                 key = { _, song -> song.map.id },
@@ -581,27 +583,6 @@ fun LocalPlaylistScreen(
                             ) {
                                 setVideoId
                             }
-                        }
-                    }
-
-                    val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
-                    val dismissBoxState =
-                        rememberSwipeToDismissBoxState(
-                            positionalThreshold = { totalDistance -> totalDistance },
-                        )
-                    var processedDismiss by remember { mutableStateOf(false) }
-                    LaunchedEffect(dismissBoxState.currentValue) {
-                        val dv = dismissBoxState.currentValue
-                        if (swipeRemoveEnabled && !processedDismiss && (
-                                dv == SwipeToDismissBoxValue.StartToEnd ||
-                                    dv == SwipeToDismissBoxValue.EndToStart
-                            )
-                        ) {
-                            processedDismiss = true
-                            deleteFromPlaylist()
-                        }
-                        if (dv == SwipeToDismissBoxValue.Settled) {
-                            processedDismiss = false
                         }
                     }
 
@@ -668,10 +649,14 @@ fun LocalPlaylistScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    ListQueue(
+                                                    buildPlaylistQueueFromDisplayed(
                                                         title = playlist!!.playlist.name,
-                                                        items = songs.map { it.song.toMediaItem() },
-                                                        startIndex = songs.indexOfFirst { it.map.id == song.map.id },
+                                                        allItems = songs,
+                                                        displayedItems = displayedSongs,
+                                                        clickedItem = song,
+                                                        isSameItem = { first, second -> first.map.id == second.map.id },
+                                                        toMediaItem = { it.song.toMediaItem() },
+                                                        precomputedDisplayedMediaItems = displayedMediaItems,
                                                     ),
                                                 )
                                             }
@@ -711,6 +696,25 @@ fun LocalPlaylistScreen(
                             content()
                         }
                     } else {
+                        val dismissBoxState =
+                            rememberSwipeToDismissBoxState(
+                                positionalThreshold = { totalDistance -> totalDistance },
+                            )
+                        var processedDismiss by remember { mutableStateOf(false) }
+                        LaunchedEffect(dismissBoxState.currentValue) {
+                            val dv = dismissBoxState.currentValue
+                            if (!processedDismiss && (
+                                    dv == SwipeToDismissBoxValue.StartToEnd ||
+                                        dv == SwipeToDismissBoxValue.EndToStart
+                                )
+                            ) {
+                                processedDismiss = true
+                                deleteFromPlaylist()
+                            }
+                            if (dv == SwipeToDismissBoxValue.Settled) {
+                                processedDismiss = false
+                            }
+                        }
                         SwipeToDismissBox(
                             state = dismissBoxState,
                             backgroundContent = {},

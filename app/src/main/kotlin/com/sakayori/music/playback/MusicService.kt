@@ -428,6 +428,7 @@ class MusicService :
     // playQueue requests replace this with their uncommitted generation first.
     private val _queueLoadState = MutableStateFlow(QueueLoadState(committed = true))
     internal val queueLoadState = _queueLoadState.asStateFlow()
+    @Volatile internal var isSplicingInitialQueue = false
     private var automixRequestSequence = 0L
     private var automixJob: Job? = null
     private data class AutomixRequestOwner(val queueGeneration: Int, val sequence: Long)
@@ -1873,6 +1874,7 @@ class MusicService :
         restoringQueue: Boolean = false,
     ): Int? {
         if (!scope.isActive) return null
+        val wasCommitted = _queueLoadState.value.committed
         val generation = ++playQueueGeneration
         _queueLoadState.value = QueueLoadState(generation)
         invalidateAutomixRequests()
@@ -1883,24 +1885,62 @@ class MusicService :
             Timber.tag(TAG).w("playQueue called before player initialization, queuing request")
             scope.launch {
                 playerInitialized.first { it }
-                if (generation == playQueueGeneration) startQueue(queue, playWhenReady, restoringQueue, generation)
+                if (generation == playQueueGeneration) startQueue(queue, playWhenReady, restoringQueue, generation, false)
             }
         } else {
-            startQueue(queue, playWhenReady, restoringQueue, generation)
+            startQueue(queue, playWhenReady, restoringQueue, generation, wasCommitted)
         }
         return generation
     }
 
-    private fun startQueue(queue: Queue, playWhenReady: Boolean, restoringQueue: Boolean, generation: Int) {
+    private fun matchesLoadedListQueue(items: List<MediaItem>): Boolean {
+        if (items.isEmpty() || player.mediaItemCount != items.size) return false
+        val timeline = player.currentTimeline
+        if (timeline.windowCount != items.size) return false
+        for (i in items.indices) {
+            if (player.getMediaItemAt(i).mediaId != items[i].mediaId) return false
+        }
+        return true
+    }
+
+    private fun startQueue(
+        queue: Queue,
+        playWhenReady: Boolean,
+        restoringQueue: Boolean,
+        generation: Int,
+        wasCommitted: Boolean = false,
+    ) {
         if (generation != playQueueGeneration || !playerInitialized.value) return
         cancelCrossfadeForReload()
         if (generation != playQueueGeneration) return
-        currentQueue = queue
-        queueTitle = null
         val persistShuffleAcrossQueues = startupPrefs?.get(PersistentShuffleAcrossQueuesKey) ?: false
         if (!persistShuffleAcrossQueues && !restoringQueue) {
             player.shuffleModeEnabled = false
         }
+        if (generation != playQueueGeneration) return
+        if (wasCommitted && !restoringQueue && !player.shuffleModeEnabled &&
+            player.playbackState != STATE_IDLE && queue is ListQueue &&
+            !cachedHideExplicit && !cachedHideVideoSongs && matchesLoadedListQueue(queue.items)
+        ) {
+            currentQueue = queue
+            queueTitle = queue.title
+            originalQueueSize = queue.items.size
+            val targetIndex = queue.startIndex.coerceIn(0, queue.items.lastIndex)
+            val targetPosition = queue.preloadPosition.coerceAtLeast(0L)
+            player.seekTo(targetIndex, targetPosition)
+            if (generation != playQueueGeneration || currentQueue !== queue) return
+            player.playWhenReady = playWhenReady
+            if (generation != playQueueGeneration || currentQueue !== queue) return
+            _queueLoadState.value = QueueLoadState(generation, committed = true)
+            queueLoadJob = scope.launch(SilentHandler) {
+                if (generation == playQueueGeneration && currentQueue === queue && cachedPersistentQueue) {
+                    saveQueueToDisk()
+                }
+            }
+            return
+        }
+        currentQueue = queue
+        queueTitle = null
         if (generation != playQueueGeneration || currentQueue !== queue) return
         originalQueueSize = 0
         val preload = queue.preloadItem?.takeUnless {
@@ -1941,18 +1981,29 @@ class MusicService :
             originalQueueSize = initialStatus.items.size
             val initialIndex = initialStatus.mediaItemIndex.coerceIn(0, initialStatus.items.lastIndex)
             if (preload != null && initialStatus.items[initialIndex].mediaId == preload.mediaId) {
-                player.addMediaItems(
-                    0,
-                    initialStatus.items.subList(0, initialIndex),
-                )
-                if (generation != playQueueGeneration || currentQueue !== queue) return@launch
-                player.addMediaItems(
-                    initialStatus.items.subList(
-                        initialIndex + 1,
-                        initialStatus.items.size,
-                    ),
-                )
-                if (generation != playQueueGeneration || currentQueue !== queue) return@launch
+                val hasPrefix = initialIndex > 0
+                val hasSuffix = initialIndex + 1 < initialStatus.items.size
+                if (hasPrefix) {
+                    isSplicingInitialQueue = hasSuffix
+                    try {
+                        player.addMediaItems(
+                            0,
+                            initialStatus.items.subList(0, initialIndex),
+                        )
+                    } finally {
+                        isSplicingInitialQueue = false
+                    }
+                    if (generation != playQueueGeneration || currentQueue !== queue) return@launch
+                }
+                if (hasSuffix) {
+                    player.addMediaItems(
+                        initialStatus.items.subList(
+                            initialIndex + 1,
+                            initialStatus.items.size,
+                        ),
+                    )
+                    if (generation != playQueueGeneration || currentQueue !== queue) return@launch
+                }
             } else {
                 player.setMediaItems(
                     initialStatus.items,
@@ -2836,7 +2887,7 @@ class MusicService :
             }
         }
 
-        if (cachedPersistentQueue) {
+        if (cachedPersistentQueue && _queueLoadState.value.committed) {
             saveQueueToDisk()
         }
     }
@@ -2879,7 +2930,7 @@ class MusicService :
         }
 
         // Save state when playback state changes (but not during silence skipping)
-        if (cachedPersistentQueue && !isSilenceSkipping) {
+        if (cachedPersistentQueue && !isSilenceSkipping && _queueLoadState.value.committed) {
             saveQueueToDisk()
         }
 
