@@ -108,6 +108,7 @@ app/src/main/java/com/sakayori-music/music/listentogether/proto/*
 app/src/main/cpp/coverart/
 
 # Agents dir
+AGENTS.md
 .claude
 .antigravity*
 .gemini
