@@ -26,10 +26,10 @@ class YouTubeUtilsTest {
     }
 
     @Test
-    fun `i_ytimg url is upgraded to maxresdefault when requesting large size`() {
+    fun `i_ytimg preserves a provider supplied variant when requesting a larger display size`() {
         val url = "https://i.ytimg.com/vi/abc/hqdefault.jpg?sqp=-oaymwE"
         assertEquals(
-            "https://i.ytimg.com/vi/abc/maxresdefault.jpg?sqp=-oaymwE",
+            url,
             url.resize(544, 544),
         )
     }

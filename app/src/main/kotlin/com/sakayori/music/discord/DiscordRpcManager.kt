@@ -2,6 +2,8 @@ package com.sakayori.music.discord
 
 import android.app.Activity
 import android.content.Context
+import coil3.imageLoader
+import coil3.request.ImageRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -118,6 +120,7 @@ object DiscordRpcManager {
     }
 
     private var scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var applicationContext: Context? = null
 
     private val appId: String = BuildConfigProvider.appId
 
@@ -139,6 +142,7 @@ object DiscordRpcManager {
     }
 
     fun init(context: Context) {
+        applicationContext = context.applicationContext
         DiscordTokenStore.init(context.applicationContext)
         if (initialized && scope.isActive) {
             Timber.tag(TAG).i("init: already initialized and active, skipping")
@@ -385,7 +389,15 @@ object DiscordRpcManager {
         imageResolutionJob = scope.launch {
             val tokenHeader = "Bearer $currentToken"
             val largeResolved = if (!largeImageUrl.isNullOrEmpty()) {
-                DiscordExternalAssets.resolve(largeImageUrl, appId, tokenHeader)
+                val context = applicationContext
+                val availableUrl = if (context != null) {
+                    resolveDiscordArtworkUrl(largeImageUrl) { url ->
+                        context.imageLoader.execute(
+                            ImageRequest.Builder(context).data(url).size(128, 128).build(),
+                        )
+                    }
+                } else largeImageUrl
+                availableUrl?.let { DiscordExternalAssets.resolve(it, appId, tokenHeader) }
             } else null
             val smallResolved = if (!smallImageUrl.isNullOrEmpty()) {
                 DiscordExternalAssets.resolve(smallImageUrl, appId, tokenHeader)

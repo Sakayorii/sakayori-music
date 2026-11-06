@@ -216,6 +216,7 @@ fun BottomSheetPlayer(
     val copiedArtistStr = stringResource(R.string.copied_artist)
     val bottomSheetPageState = LocalBottomSheetPageState.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    if (com.sakayori.music.BuildConfig.PLAYER_TRACE_ENABLED) android.os.Trace.beginSection("Sakayori.Player")
 
     val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
         rememberPreference(
@@ -943,6 +944,7 @@ fun BottomSheetPlayer(
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
+            if (com.sakayori.music.BuildConfig.PLAYER_TRACE_ENABLED) android.os.Trace.beginSection("Sakayori.Player.controls")
             val playPauseRoundness by animateDpAsState(
                 targetValue = if (isPlaying) 24.dp else 36.dp,
                 animationSpec = tween(durationMillis = 90, easing = LinearEasing),
@@ -1835,6 +1837,7 @@ fun BottomSheetPlayer(
                     }
                 }
             }
+            if (com.sakayori.music.BuildConfig.PLAYER_TRACE_ENABLED) android.os.Trace.endSection()
         }
 
         when (LocalConfiguration.current.orientation) {
@@ -1989,6 +1992,7 @@ fun BottomSheetPlayer(
             )
         }
     }
+    if (com.sakayori.music.BuildConfig.PLAYER_TRACE_ENABLED) android.os.Trace.endSection()
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

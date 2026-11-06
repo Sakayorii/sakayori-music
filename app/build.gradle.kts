@@ -35,6 +35,7 @@ val debugKeyAlias = System.getenv("SAKAYORI_DEBUG_KEY_ALIAS")?.takeIf { it.isNot
 val debugKeyPassword = System.getenv("SAKAYORI_DEBUG_KEY_PASSWORD")?.takeIf { it.isNotBlank() } ?: "android"
 val persistentDebugKeystoreFile = file("persistent-debug.keystore")
 val workflowDebugKeystoreFile = debugKeystorePathOverride?.let(::file)
+val playerTraceEnabled = System.getenv("SAKAYORI_PLAYER_TRACE") == "1"
 
 plugins {
     id("com.android.application")
@@ -112,6 +113,9 @@ android {
         versionName = "2.1.8"
         val baseVersionName = requireNotNull(versionName)
         buildConfigField("String", "BASE_VERSION_NAME", "\"$baseVersionName\"")
+        // Diagnostic-only markers; the default release constant lets R8 remove
+        // every marker without changing composition, content or motion.
+        buildConfigField("Boolean", "PLAYER_TRACE_ENABLED", playerTraceEnabled.toString())
         buildCommit?.let { versionName = "$baseVersionName+$it" }
         resValue("string", "app_name", appNameOverride ?: "Sakayori Music")
 

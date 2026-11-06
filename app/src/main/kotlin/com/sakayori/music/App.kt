@@ -36,6 +36,7 @@ import com.sakayori.music.extensions.toInetSocketAddress
 import com.sakayori.music.utils.CrashHandler
 import com.sakayori.music.utils.ArtistNameAliases
 import com.sakayori.music.utils.YTPlayerUtils
+import com.sakayori.music.utils.YouTubeArtworkInterceptor
 import com.sakayori.music.utils.cipher.CipherDeobfuscator
 import com.sakayori.music.utils.dataStore
 import com.sakayori.music.utils.safeDataStoreEdit
@@ -326,6 +327,7 @@ class App :
         }
         return ImageLoader
             .Builder(this)
+            .components { add(YouTubeArtworkInterceptor()) }
             .apply {
                 crossfade(true)
                 allowHardware(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)

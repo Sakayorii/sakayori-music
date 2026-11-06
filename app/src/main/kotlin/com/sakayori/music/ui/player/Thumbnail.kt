@@ -136,26 +136,6 @@ data class MediaItemsData(
     val currentIndex: Int
 )
 
-private data class ReadyPlayerArtwork(
-    val key: String,
-    val mediaId: String,
-    val uri: String?,
-    val image: CoilImage,
-)
-
-/** Display state only: never changes the player's queue, selected track or metadata. */
-private data class PlayerArtworkPresentation(
-    val mediaItems: MediaItemsData,
-    val current: ReadyPlayerArtwork,
-    val previous: ReadyPlayerArtwork?,
-) {
-    fun imageFor(item: MediaItem): CoilImage? {
-        val key = playerArtworkKey(item)
-        return current.takeIf { it.key == key }?.image
-            ?: previous?.takeIf { it.key == key }?.image
-    }
-}
-
 private const val ARTWORK_OCCURRENCE_EXTRA = "sakayori.artwork.occurrence"
 
 internal fun playerArtworkKey(item: MediaItem): String {
@@ -292,6 +272,7 @@ fun Thumbnail(
     isListenTogetherGuest: Boolean = false,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
+    if (com.sakayori.music.BuildConfig.PLAYER_TRACE_ENABLED) android.os.Trace.beginSection("Sakayori.Player.thumbnail")
     val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
 
@@ -492,24 +473,22 @@ fun Thumbnail(
                     val readyIncomingImage = (incomingState as? AsyncImagePainter.State.Success)?.result?.image
                         ?: incomingUri?.let { preloadedImages[it] }
 
-                    LaunchedEffect(mediaItemsData, incomingPainter, readyIncomingImage, hidePlayerThumbnail) {
+                    val imageUnavailable = incomingState is AsyncImagePainter.State.Error || incomingUri.isNullOrBlank()
+                    LaunchedEffect(mediaItemsData, incomingPainter, readyIncomingImage, imageUnavailable, hidePlayerThumbnail) {
                         if (hidePlayerThumbnail || incomingItem == null) {
                             presentation = null
-                        } else if (readyIncomingImage != null) {
-                            val ready = ReadyPlayerArtwork(
-                                key = playerArtworkKey(incomingItem),
-                                mediaId = incomingItem.mediaId,
-                                uri = incomingUri,
-                                image = readyIncomingImage,
-                            )
-                            val old = presentation
-                            presentation = PlayerArtworkPresentation(
+                        } else {
+                            presentation = updatePlayerArtworkPresentation(
+                                previous = presentation,
                                 mediaItems = mediaItemsData,
-                                current = ready,
-                                previous = if (old?.current?.key != ready.key) old?.current else old.previous,
+                                incoming = incomingItem,
+                                incomingUri = incomingUri,
+                                readyImage = readyIncomingImage,
+                                imageUnavailable = imageUnavailable,
                             )
                         }
-                        // Loading/error keeps the decoded incumbent and its grid window.
+                        // A pending load retains the incumbent. Terminal failure advances
+                        // to the failed track's own tile so it cannot pin an old window.
                     }
 
                     val displayedData = presentation?.mediaItems ?: mediaItemsData
@@ -697,6 +676,7 @@ fun Thumbnail(
             SeekEffectOverlay(seekDirection = seekDirection)
         }
     }
+    if (com.sakayori.music.BuildConfig.PLAYER_TRACE_ENABLED) android.os.Trace.endSection()
 }
 
 /**

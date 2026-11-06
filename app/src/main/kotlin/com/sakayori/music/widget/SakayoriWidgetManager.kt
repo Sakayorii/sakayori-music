@@ -26,6 +26,7 @@ import coil3.toBitmap
 import com.sakayori.music.MainActivity
 import com.sakayori.music.R
 import com.sakayori.music.db.MusicDatabase
+import com.sakayori.music.utils.YouTubeArtworkInterceptor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,6 +41,7 @@ class SakayoriWidgetManager @Inject constructor(
 ) {
     private val imageLoader by lazy {
         ImageLoader.Builder(context)
+            .components { add(YouTubeArtworkInterceptor()) }
             .crossfade(false)
             .build()
     }
