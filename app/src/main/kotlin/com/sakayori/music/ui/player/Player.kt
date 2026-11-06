@@ -1509,11 +1509,7 @@ fun BottomSheetPlayer(
                 )
 
                 Text(
-                    text = if (duration != C.TIME_UNSET) {
-                        makeTimeString((duration - (sliderPosition ?: effectivePosition)).coerceAtLeast(0L))
-                    } else {
-                        ""
-                    },
+                    text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
                     style = MaterialTheme.typography.labelMedium,
                     color = TextBackgroundColor,
                     maxLines = 1,
