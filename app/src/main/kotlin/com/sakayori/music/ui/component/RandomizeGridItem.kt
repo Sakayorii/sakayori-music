@@ -112,11 +112,14 @@ fun RandomizeGridItem(
         )
 
         // Loading Indicator overlay
-        Box(modifier = Modifier.alpha(loadingAlpha)) {
-            LoadingIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
+        // ponytail: compose indeterminate LoadingIndicator only while visible/fading; upgrade if M3 adds a paused parameter
+        if (loadingAlpha > 0f) {
+            Box(modifier = Modifier.alpha(loadingAlpha)) {
+                LoadingIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
         }
     }
 }
