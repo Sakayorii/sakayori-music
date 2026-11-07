@@ -271,8 +271,13 @@ internal fun LyricsLine(
                 } else {
                     Text(
                         text = mainText ?: "",
-                        style = lyricStyle.copy(color = if (isActiveLine) expressiveAccent else lineColor),
-                        modifier = Modifier.fillMaxWidth()
+                        style = lyricStyle,
+                        color = expressiveAccent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = if (isActiveLine) 1f else if (item.isBackground) focusedAlpha else animatedAlpha
+                            }
                     )
                 }
                 
@@ -340,27 +345,7 @@ private fun WordLevelLyrics(
         }
     }
     
-    var smoothPosition by remember { mutableLongStateOf(currentPositionProvider() + lyricsOffset) }
-    
-    LaunchedEffect(isActiveLine) {
-        if (isActiveLine) {
-            var lastPlayerPos = playerConnection.player.currentPosition
-            var lastUpdateTime = System.currentTimeMillis()
-            while (isActive) {
-                withFrameMillis {
-                    val now = System.currentTimeMillis()
-                    val playerPos = playerConnection.player.currentPosition
-                    if (playerPos != lastPlayerPos) {
-                        lastPlayerPos = playerPos
-                        lastUpdateTime = now
-                    }
-                    val elapsed = now - lastUpdateTime
-                    smoothPosition = lastPlayerPos + lyricsOffset + (if (playerConnection.player.isPlaying) elapsed else 0)
-                }
-            }
-        }
-    }
-
+    // Defer position read to the Canvas draw phase; ExperimentalLyrics updates currentPositionProvider() at 120Hz when playing/seeking.
     val (effectiveWords, effectiveToOriginalIdx) = remember(words, isBackground) {
         words.flatMapIndexed { originalIdx, word ->
             val shouldSplit = word.text.contains('-') && word.text.length > 1 &&
@@ -516,6 +501,7 @@ private fun WordLevelLyrics(
             if (!isActiveLine) {
                 drawText(layoutResult, color = lineColor)
             } else {
+                val smoothPosition = currentPositionProvider() + lyricsOffset
                 if (isRtlText) {
                     val (wordIdxMap, _, _) = charToWordData
                     val wordFactors = effectiveWords.map { word ->

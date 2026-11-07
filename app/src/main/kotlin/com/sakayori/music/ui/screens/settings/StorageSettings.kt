@@ -133,7 +133,10 @@ fun StorageSettings(
         label = "playerCacheProgress",
     )
 
+    var initialMaxImageCacheSize by remember { mutableStateOf(maxImageCacheSize) }
     LaunchedEffect(maxImageCacheSize) {
+        if (maxImageCacheSize == initialMaxImageCacheSize) return@LaunchedEffect
+        initialMaxImageCacheSize = maxImageCacheSize
         SingletonImageLoader.reset()
         if (maxImageCacheSize == 0) {
             coroutineScope.launch(Dispatchers.IO) {

@@ -349,9 +349,17 @@ fun ExperimentalLyrics(
         
         var lastPlayerPos = playerConnection.player.currentPosition
         var lastUpdateTime = System.currentTimeMillis()
+        var lastSyncedEffectivePos = Long.MIN_VALUE
+        var lastSyncedWasSeeking = false
         
         while (isActive) {
-            withFrameNanos { _ -> }
+            val sliderPosBefore = sliderPositionProvider()
+            val playingNow = playerConnection.player.isPlaying
+            if (playingNow || sliderPosBefore != null || lastSyncedEffectivePos == Long.MIN_VALUE) {
+                withFrameNanos { _ -> }
+            } else {
+                delay(100)
+            }
             val now = System.currentTimeMillis()
             val sliderPosition = sliderPositionProvider()
             isSeeking = sliderPosition != null
@@ -368,11 +376,16 @@ fun ExperimentalLyrics(
                 lastPlayerPos + (if (playerConnection.player.isPlaying) elapsed else 0)
             }
             
-            currentPositionState = position
-            smoothPositionForSync = position
-            
             val lyricsOffset = currentSong?.song?.lyricsOffset ?: 0
             val effectivePosition = position + lyricsOffset
+            if (!playerConnection.player.isPlaying && !isSeeking && effectivePosition == lastSyncedEffectivePos && !lastSyncedWasSeeking) {
+                continue
+            }
+            lastSyncedEffectivePos = effectivePosition
+            lastSyncedWasSeeking = isSeeking
+
+            currentPositionState = position
+            smoothPositionForSync = position
             
             val initialActiveIndices = findActiveLineIndices(lines, effectivePosition)
             val scrollActiveIndicesRaw = findActiveLineIndices(lines, effectivePosition + (if (hasWordTimings) 0L else 250L))

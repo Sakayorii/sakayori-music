@@ -51,6 +51,13 @@ class SakayoriWidgetManager @Inject constructor(
     private var cachedAlbumArt: Bitmap? = null
     private var cachedCircularAlbumArt: Bitmap? = null
 
+    fun hasActiveWidgets(): Boolean {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        return appWidgetManager.getAppWidgetIds(ComponentName(context, MusicWidgetReceiver::class.java)).isNotEmpty() ||
+            appWidgetManager.getAppWidgetIds(ComponentName(context, TurntableWidgetReceiver::class.java)).isNotEmpty() ||
+            appWidgetManager.getAppWidgetIds(ComponentName(context, PlaylistWidgetReceiver::class.java)).isNotEmpty()
+    }
+
     suspend fun updateWidgets(
         title: String,
         artist: String,

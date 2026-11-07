@@ -646,7 +646,7 @@ fun SongGridItem(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth().basicMarquee()
+            modifier = if (isActive && isPlaying) Modifier.fillMaxWidth().basicMarquee() else Modifier.fillMaxWidth()
         )
     },
     subtitle = {
@@ -881,7 +881,7 @@ fun AlbumGridItem(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth().basicMarquee()
+            modifier = if (isActive && isPlaying) Modifier.fillMaxWidth().basicMarquee() else Modifier.fillMaxWidth()
         )
     },
      subtitle = {
@@ -1043,7 +1043,7 @@ fun PlaylistGridItem(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth().basicMarquee()
+            modifier = Modifier.fillMaxWidth()
         )
     },
     subtitle = {
@@ -1321,7 +1321,7 @@ fun YouTubeGridItem(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = if (item is ArtistItem) TextAlign.Center else TextAlign.Start,
-            modifier = Modifier.fillMaxWidth().basicMarquee()
+            modifier = if (isActive && isPlaying) Modifier.fillMaxWidth().basicMarquee() else Modifier.fillMaxWidth()
         )
     },
      subtitle = {
@@ -1408,11 +1408,15 @@ fun LocalSongsGrid(
             color = MaterialTheme.colorScheme.secondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.basicMarquee(
-                iterations = 3,
-                initialDelayMillis = 1000,
-                velocity = 30.dp
-            )
+            modifier = if (isActive && isPlaying) {
+                Modifier.basicMarquee(
+                    iterations = 3,
+                    initialDelayMillis = 1000,
+                    velocity = 30.dp
+                )
+            } else {
+                Modifier
+            }
         )
     },
     badges = badges,
@@ -1450,11 +1454,6 @@ fun LocalArtistsGrid(
             color = MaterialTheme.colorScheme.secondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.basicMarquee(
-                iterations = 3,
-                initialDelayMillis = 1000,
-                velocity = 30.dp
-            )
         )
     },
     badges = badges,
@@ -1492,11 +1491,15 @@ fun LocalAlbumsGrid(
             color = MaterialTheme.colorScheme.secondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.basicMarquee(
-                iterations = 3,
-                initialDelayMillis = 1000,
-                velocity = 30.dp
-            )
+            modifier = if (isActive && isPlaying) {
+                Modifier.basicMarquee(
+                    iterations = 3,
+                    initialDelayMillis = 1000,
+                    velocity = 30.dp
+                )
+            } else {
+                Modifier
+            }
         )
     },
     badges = badges,

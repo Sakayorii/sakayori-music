@@ -561,14 +561,19 @@ fun OriginalLyrics(
             currentLineIndex = -1
             return@LaunchedEffect
         }
+        var lastSyncedPos = Long.MIN_VALUE
         while (isActive) {
-            delay(8) // Faster update for word-by-word animation
             val sliderPosition = sliderPositionProvider()
             isSeeking = sliderPosition != null
             val position = sliderPosition ?: playerConnection.player.currentPosition
-            currentPlaybackPosition = position
             val lyricsOffset = currentSong?.song?.lyricsOffset ?: 0
-            currentLineIndex = findCurrentLineIndex(lines, position + lyricsOffset)
+            val effectivePos = position + lyricsOffset
+            if (effectivePos != lastSyncedPos) {
+                lastSyncedPos = effectivePos
+                currentPlaybackPosition = position
+                currentLineIndex = findCurrentLineIndex(lines, effectivePos)
+            }
+            delay(if (playerConnection.player.isPlaying || isSeeking) 16L else 100L)
         }
     }
 

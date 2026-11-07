@@ -1376,26 +1376,17 @@ class MusicService :
             }
         }
 
-        // Save queue periodically to prevent queue loss from crash or force kill
+        // Save queue periodically while playing to prevent queue loss from crash or force kill
         scope.launch {
             while (isActive) {
                 delay(15.seconds)
-                if (cachedPersistentQueue) {
+                if (cachedPersistentQueue && player.isPlaying && _queueLoadState.value.committed) {
                     saveQueueToDisk()
                 }
                 val currentMetadata = player.currentMediaItem?.metadata
                 if (currentMetadata?.isEpisode == true && player.isPlaying && player.currentPosition > 0) {
                     previousEpisodePosition = player.currentPosition
                     saveEpisodePosition(currentMetadata.id, player.currentPosition)
-                }
-            }
-        }
-
-        scope.launch {
-            while (isActive) {
-                delay(10.seconds)
-                if (cachedPersistentQueue && player.isPlaying) {
-                    saveQueueToDisk()
                 }
             }
         }
@@ -5251,7 +5242,7 @@ class MusicService :
         widgetUpdateJob =
             scope.launch {
                 while (isActive) {
-                    if (player.isPlaying) {
+                    if (player.isPlaying && !isScreenOff && widgetManager.hasActiveWidgets()) {
                         updateWidgetUI(true)
                     }
                     delay(200)
