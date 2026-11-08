@@ -1382,7 +1382,10 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             Box(Modifier.weight(1f)) {
-                                CompositionLocalProvider(LocalPlayerAwareWindowInsets provides detailPlayerAwareWindowInsets) {
+                                CompositionLocalProvider(
+                                    LocalPlayerAwareWindowInsets provides detailPlayerAwareWindowInsets,
+                                    com.sakayori.music.ui.component.LocalUnderlayOccluded provides isPlayerSheetExpanded,
+                                ) {
                                 // NavHost with animations (Material 3 Expressive style)
                                 NavHost(
                                     navController = navController,

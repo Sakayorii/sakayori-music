@@ -20,12 +20,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,8 @@ import com.sakayori.music.constants.ThumbnailCornerRadius
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+
+val LocalUnderlayOccluded = compositionLocalOf { false }
 
 @Composable
 fun PlayingIndicator(
@@ -65,7 +69,7 @@ fun PlayingIndicator(
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Bottom,
-        modifier = modifier,
+        modifier = modifier.graphicsLayer(),
     ) {
         animatables.forEach { animatable ->
             Canvas(
@@ -92,6 +96,7 @@ fun PlayingIndicatorBox(
     playWhenReady: Boolean,
     color: Color = Color.White,
 ) {
+    val isOccluded = LocalUnderlayOccluded.current
     AnimatedVisibility(
         visible = isActive,
         enter = fadeIn(tween(500)),
@@ -101,7 +106,7 @@ fun PlayingIndicatorBox(
             contentAlignment = Alignment.Center,
             modifier = modifier,
         ) {
-            if (playWhenReady) {
+            if (playWhenReady && !isOccluded) {
                 PlayingIndicator(
                     color = color,
                     modifier = Modifier.height(24.dp),
