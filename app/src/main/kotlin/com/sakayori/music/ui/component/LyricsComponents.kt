@@ -71,7 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.palette.graphics.Palette
-import coil3.ImageLoader
+import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
@@ -321,7 +321,7 @@ internal fun LyricsColorPickerDialog(
         if (thumbnailUrl != null) {
             withContext(Dispatchers.IO) {
                 try {
-                    val res = ImageLoader(context).execute(ImageRequest.Builder(context).data(thumbnailUrl).allowHardware(false).build())
+                    val res = context.imageLoader.execute(ImageRequest.Builder(context).data(thumbnailUrl).size(128, 128).allowHardware(false).build())
                     val bmp = res.image?.toBitmap()
                     if (bmp != null) {
                         val swatches = Palette.from(bmp).generate().swatches.sortedByDescending { it.population }

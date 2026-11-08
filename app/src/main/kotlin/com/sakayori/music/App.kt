@@ -107,6 +107,7 @@ class App :
             val store = dataStore
             store.data.collect {
                 playbackPreferences = it
+                cachedCoilCacheSize = it[MaxImageCacheSizeKey] ?: 512
                 com.sakayori.music.utils.updateCachedPreferences(store, it)
             }
         }

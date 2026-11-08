@@ -439,6 +439,7 @@ fun Thumbnail(
                     val incomingPainter = incoming?.first
                     val incomingState = incoming?.second?.value
                     val preloadedImages = remember { mutableStateMapOf<String, CoilImage>() }
+                    val preloadedOrder = remember { ArrayDeque<String>() }
                     var presentation by remember { mutableStateOf<PlayerArtworkPresentation?>(null) }
 
                     LaunchedEffect(mediaItemsData, imageSizePx, hidePlayerThumbnail, context) {
@@ -462,7 +463,33 @@ fun Thumbnail(
                                     if (img != null) {
                                         runCatching { img.toBitmap().prepareToDraw() }
                                         withContext(Dispatchers.Main) {
+                                            if (!preloadedImages.containsKey(uri)) {
+                                                preloadedOrder.addLast(uri)
+                                            }
                                             preloadedImages[uri] = img
+                                            if (preloadedImages.size > 12) {
+                                                val protectedUris = buildSet {
+                                                    incomingUri?.let(::add)
+                                                    presentation?.current?.uri?.let(::add)
+                                                    presentation?.previous?.uri?.let(::add)
+                                                    for (it in mediaItemsData.items) {
+                                                        it.mediaMetadata.artworkUri?.toString()?.let(::add)
+                                                        it.metadata?.thumbnailUrl?.let(::add)
+                                                    }
+                                                    for (it in presentation?.mediaItems?.items.orEmpty()) {
+                                                        it.mediaMetadata.artworkUri?.toString()?.let(::add)
+                                                        it.metadata?.thumbnailUrl?.let(::add)
+                                                    }
+                                                }
+                                                val iterator = preloadedOrder.iterator()
+                                                while (preloadedImages.size > 12 && iterator.hasNext()) {
+                                                    val candidateUri = iterator.next()
+                                                    if (candidateUri !in protectedUris) {
+                                                        iterator.remove()
+                                                        preloadedImages.remove(candidateUri)
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }

@@ -49,8 +49,8 @@ class CoilBitmapLoader(
     override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> =
         scope.future(Dispatchers.IO) {
             try {
-                val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
-                bitmap?.createIndependentCopy() ?: createFallbackBitmap()
+                BitmapFactory.decodeByteArray(data, 0, data.size)?.takeUnless { it.isRecycled }
+                    ?: createFallbackBitmap()
             } catch (e: Exception) {
                 Timber.tag("CoilBitmapLoader").w(e, "Failed to decode bitmap data")
                 createFallbackBitmap()
@@ -64,6 +64,7 @@ class CoilBitmapLoader(
                     ImageRequest
                         .Builder(context)
                         .data(uri)
+                        .size(512, 512)
                         .allowHardware(false)
                         .build()
 
