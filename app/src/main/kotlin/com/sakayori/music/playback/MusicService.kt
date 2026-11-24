@@ -428,6 +428,9 @@ class MusicService :
     // playQueue requests replace this with their uncommitted generation first.
     private val _queueLoadState = MutableStateFlow(QueueLoadState(committed = true))
     internal val queueLoadState = _queueLoadState.asStateFlow()
+    private var checkpointOwner: Player? = null
+    private var checkpointGeneration = -1
+    private var checkpointReasons = 0
     @Volatile internal var isSplicingInitialQueue = false
     private var automixRequestSequence = 0L
     private var automixJob: Job? = null
@@ -1305,9 +1308,11 @@ class MusicService :
                 }
         }
         scope.launch {
-            dataStore.data.map { it[PersistentQueueKey] ?: true }.distinctUntilChanged().collect {
-                cachedPersistentQueue = it
-                queueStore.enabled = it
+            dataStore.data.map { it[PersistentQueueKey] ?: true }.distinctUntilChanged().collect { enabled ->
+                val becameEnabled = enabled && !cachedPersistentQueue
+                cachedPersistentQueue = enabled
+                queueStore.enabled = enabled
+                if (becameEnabled && playerInitialized.value) saveQueueToDisk()
             }
         }
         scope.launch {
@@ -2038,10 +2043,25 @@ class MusicService :
         }
 
         val currentMediaMetadata = player.currentMetadata ?: return
-
         val currentMediaId = currentMediaMetadata.id
+        val requestPlayer = player
+        val requestQueue = currentQueue
+        val requestGeneration = playQueueGeneration
+        val requestIndex = requestPlayer.currentMediaItemIndex
+        if (requestIndex !in 0 until requestPlayer.currentTimeline.windowCount) return
+        val requestUid = requestPlayer.currentTimeline.getWindow(requestIndex, Timeline.Window()).uid
+
+        fun isCurrentRequest(): Boolean {
+            if (!scope.isActive || player !== requestPlayer || currentQueue !== requestQueue ||
+                playQueueGeneration != requestGeneration
+            ) return false
+            val index = player.currentMediaItemIndex
+            return index in 0 until player.currentTimeline.windowCount &&
+                player.currentTimeline.getWindow(index, Timeline.Window()).uid == requestUid
+        }
 
         scope.launch(SilentHandler) {
+            if (!isCurrentRequest()) return@launch
             // Use simple videoId to let YouTube personalize recommendations
             val radioQueue =
                 YouTubeQueue(
@@ -2060,9 +2080,7 @@ class MusicService :
                             .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
                     }
 
-                if (initialStatus.title != null) {
-                    queueTitle = initialStatus.title
-                }
+                if (!isCurrentRequest()) return@launch
 
                 val radioItems =
                     initialStatus.items.filter { item ->
@@ -2076,27 +2094,34 @@ class MusicService :
 
                     if (itemCount > liveIndex + 1) {
                         player.removeMediaItems(liveIndex + 1, itemCount)
+                        if (!isCurrentRequest()) return@launch
                     }
 
                     player.addMediaItems(liveIndex + 1, radioItems)
+                    if (!isCurrentRequest()) return@launch
                     if (player.shuffleModeEnabled) {
                         val shufflePlaylistFirst = cachedShufflePlaylistFirst
                         applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
                     }
                 }
 
-                currentQueue = radioQueue
+                if (!isCurrentRequest()) return@launch
+                adoptQueue(radioQueue, initialStatus.title ?: queueTitle, player.mediaItemCount)
+                if (currentQueue === radioQueue && player === requestPlayer && cachedPersistentQueue) saveQueueToDisk()
             } catch (e: Exception) {
+                if (!isCurrentRequest()) return@launch
                 try {
                     val nextResult =
                         withContext(Dispatchers.IO) {
                             YouTube.next(WatchEndpoint(videoId = currentMediaId)).getOrNull()
                         }
+                    if (!isCurrentRequest()) return@launch
                     nextResult?.relatedEndpoint?.let { relatedEndpoint ->
                         val relatedPage =
                             withContext(Dispatchers.IO) {
                                 YouTube.related(relatedEndpoint).getOrNull()
                             }
+                        if (!isCurrentRequest()) return@launch
                         relatedPage?.songs?.let { songs ->
                             val radioItems =
                                 songs
@@ -2111,8 +2136,10 @@ class MusicService :
                                 val itemCount = player.mediaItemCount
                                 if (itemCount > liveIndex + 1) {
                                     player.removeMediaItems(liveIndex + 1, itemCount)
+                                    if (!isCurrentRequest()) return@launch
                                 }
                                 player.addMediaItems(liveIndex + 1, radioItems)
+                                if (!isCurrentRequest()) return@launch
                                 if (player.shuffleModeEnabled) {
                                     applyShuffleOrder(
                                         player.currentMediaItemIndex,
@@ -2120,6 +2147,8 @@ class MusicService :
                                         cachedShufflePlaylistFirst,
                                     )
                                 }
+                                if (!isCurrentRequest()) return@launch
+                                preserveManualEditDuringInitialization(requestGeneration)
                             }
                         }
                     }
@@ -2948,6 +2977,7 @@ class MusicService :
         playWhenReady: Boolean,
         reason: Int,
     ) {
+        if (!playWhenReady) requestQueueCheckpoint(Player.EVENT_PLAY_WHEN_READY_CHANGED)
         normalFallbackPlayer?.playWhenReady = playWhenReady
         qualityCandidate?.playWhenReady = playWhenReady
         // Safety net: if local player tries to start while casting, immediately pause it
@@ -3027,11 +3057,35 @@ class MusicService :
             }
     }
 
+    override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+        if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
+            requestQueueCheckpoint(EVENT_TIMELINE_CHANGED)
+        }
+    }
+
+    private fun requestQueueCheckpoint(event: Int) {
+        val load = _queueLoadState.value
+        if (!scope.isActive || !playerInitialized.value || !load.committed) return
+        if (checkpointOwner !== player || checkpointGeneration != load.generation) {
+            checkpointOwner = player
+            checkpointGeneration = load.generation
+            checkpointReasons = 0
+        }
+        checkpointReasons = checkpointReasons or (1 shl event)
+    }
+
     override fun onEvents(
         player: Player,
         events: Player.Events,
     ) {
         if (player !== this.player) return
+        // Take this batch's causes before any handler can admit a newer queue.
+        val checkpointOwner = this.checkpointOwner
+        val checkpointGeneration = this.checkpointGeneration
+        val checkpointReasons = this.checkpointReasons
+        this.checkpointOwner = null
+        this.checkpointGeneration = -1
+        this.checkpointReasons = 0
         if (events.containsAny(
                 Player.EVENT_MEDIA_ITEM_TRANSITION, Player.EVENT_PLAYBACK_STATE_CHANGED,
                 Player.EVENT_PLAY_WHEN_READY_CHANGED, Player.EVENT_IS_PLAYING_CHANGED,
@@ -3097,6 +3151,19 @@ class MusicService :
 
         if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
             scrobbleManager?.onPlayerStateChanged(player.isPlaying, player.currentMetadata, duration = player.duration)
+        }
+
+        val dirtyBatch =
+            (events.contains(EVENT_TIMELINE_CHANGED) && (checkpointReasons and (1 shl EVENT_TIMELINE_CHANGED)) != 0) ||
+                (events.contains(EVENT_POSITION_DISCONTINUITY) && (checkpointReasons and (1 shl EVENT_POSITION_DISCONTINUITY)) != 0) ||
+                (events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED) && !player.playWhenReady &&
+                    (checkpointReasons and (1 shl Player.EVENT_PLAY_WHEN_READY_CHANGED)) != 0)
+        val load = _queueLoadState.value
+        if (dirtyBatch && checkpointOwner === player && player === this.player &&
+            checkpointGeneration == load.generation && checkpointGeneration == playQueueGeneration &&
+            load.committed && playerInitialized.value && cachedPersistentQueue && player.mediaItemCount > 0
+        ) {
+            saveQueueToDisk()
         }
     }
 
@@ -4656,8 +4723,8 @@ class MusicService :
     }
 
     private fun saveQueueToDisk() {
-        if (!cachedPersistentQueue || player.mediaItemCount == 0) {
-            Timber.tag(TAG).d("Skipping queue save - no media items")
+        if (!cachedPersistentQueue || !_queueLoadState.value.committed || player.mediaItemCount == 0) {
+            Timber.tag(TAG).d("Skipping queue save - no committed media items")
             return
         }
 
@@ -5310,6 +5377,12 @@ class MusicService :
         newPosition: Player.PositionInfo,
         reason: Int,
     ) {
+        if (reason == Player.DISCONTINUITY_REASON_SEEK ||
+            reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT ||
+            reason == Player.DISCONTINUITY_REASON_REMOVE
+        ) {
+            requestQueueCheckpoint(EVENT_POSITION_DISCONTINUITY)
+        }
         if (reason == Player.DISCONTINUITY_REASON_SEEK) {
             val mediaId = player.currentMediaItem?.mediaId
             val existingLookup = sourceOwners[player]?.let { qualityLookups[it]?.second }

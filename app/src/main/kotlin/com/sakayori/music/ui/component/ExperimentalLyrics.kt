@@ -336,10 +336,10 @@ fun ExperimentalLyrics(
         }
     }
 
-    var lastMainMaxSeen by remember(lyrics, lines) { mutableIntStateOf(-1) }
+    var lastMainMaxSeen by remember(playerConnection, mediaMetadata?.id, lyrics, lines) { mutableIntStateOf(-1) }
     var smoothPositionForSync by remember { mutableLongStateOf(0L) }
 
-    LaunchedEffect(lyrics, lines, mergedLyricsList) {
+    LaunchedEffect(playerConnection, mediaMetadata?.id, lyrics, lines, mergedLyricsList) {
         if (lyrics.isNullOrEmpty() || lines.isEmpty()) {
             activeLineIndices = emptySet()
             bgVisibleLineIndices = emptySet()
@@ -363,11 +363,14 @@ fun ExperimentalLyrics(
             val now = System.currentTimeMillis()
             val sliderPosition = sliderPositionProvider()
             isSeeking = sliderPosition != null
+            val previousRawPosition = lastPlayerPos
+            var sampledRawPosition = lastPlayerPos
             
             val position = if (isSeeking) {
                 sliderPosition!!
             } else {
                 val playerPos = playerConnection.player.currentPosition
+                sampledRawPosition = playerPos
                 if (playerPos != lastPlayerPos) {
                     lastPlayerPos = playerPos
                     lastUpdateTime = now
@@ -378,7 +381,8 @@ fun ExperimentalLyrics(
             
             val lyricsOffset = currentSong?.song?.lyricsOffset ?: 0
             val effectivePosition = position + lyricsOffset
-            if (!playerConnection.player.isPlaying && !isSeeking && effectivePosition == lastSyncedEffectivePos && !lastSyncedWasSeeking) {
+            val nativeBackwards = nativeLyricsPositionMovedBackwards(previousRawPosition, sampledRawPosition, isSeeking)
+            if (!nativeBackwards && !playerConnection.player.isPlaying && !isSeeking && effectivePosition == lastSyncedEffectivePos && !lastSyncedWasSeeking) {
                 continue
             }
             lastSyncedEffectivePos = effectivePosition
@@ -418,45 +422,16 @@ fun ExperimentalLyrics(
                 .filter { lines.getOrNull(it)?.isBackground == false }
                 .maxOrNull() ?: (scrollActiveIndices.maxOrNull() ?: -1)
 
-            val isCurrentTargetStillActive = scrollTargetIndex in scrollActiveIndices
-            val anyStillActive = scrollActiveIndices.isNotEmpty()
-
-            val shouldScroll = when {
-                isSeeking -> true
-                // If current target just ended and there are other active lines, scroll to the new max
-                !isCurrentTargetStillActive && anyStillActive && scrollMax > scrollTargetIndex -> true
-                
-                // If current target just ended and no other active lines
-                !isCurrentTargetStillActive && !anyStillActive && previousScrollActiveIndices.isNotEmpty() -> true
-                
-                // If we don't have a target yet and lines became active
-                scrollTargetIndex == -1 && anyStillActive -> true
-                
-                // New line started while nothing was active before
-                previousScrollActiveIndices.isEmpty() && anyStillActive && scrollMax > scrollTargetIndex -> true
-
-                else -> false
-            }
-
-            if (shouldScroll) {
-                val targetToScroll = when {
-                    isSeeking -> scrollMax
-                    !isCurrentTargetStillActive && anyStillActive -> scrollMax
-                    !isCurrentTargetStillActive && !anyStillActive -> {
-                        (lastMainMaxSeen + 1 until lines.size).firstOrNull {
-                            lines.getOrNull(it)?.isBackground == false
-                        } ?: scrollTargetIndex
-                    }
-                    else -> scrollMax
-                }
-                if (targetToScroll != -1 && (isSeeking || targetToScroll > scrollTargetIndex)) {
-                    scrollTargetIndex = targetToScroll
-                }
-            }
+            val resolvedTarget = resolveLyricsScrollTarget(
+                lines, scrollActiveIndices, scrollMax, scrollTargetIndex,
+                previousScrollActiveIndices, lastMainMaxSeen, effectivePosition,
+                previousRawPosition, sampledRawPosition, isSeeking,
+            )
+            if (resolvedTarget != scrollTargetIndex) scrollTargetIndex = resolvedTarget
             
-            if (scrollMax > lastMainMaxSeen && scrollMax != -1) {
-                lastMainMaxSeen = scrollMax
-            }
+            lastMainMaxSeen = resolveLyricsMainFrontier(
+                lines, scrollMax, lastMainMaxSeen, effectivePosition, nativeBackwards,
+            )
 
             val newBgVisibleIndices = mutableSetOf<Int>()
             for (i in lines.indices) {
